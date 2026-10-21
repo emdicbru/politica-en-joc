@@ -1,0 +1,1310 @@
+// Funcions en línia: compte de Google, progrés al núvol, rànquing i duels 1 vs 1 en temps real.
+// Fa servir Firebase (Authentication + Firestore). Sense configuració a js/firebase-config.js,
+// l'app continua funcionant en mode local i aquestes seccions ho expliquen.
+
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+const cfg = window.FIREBASE_CONFIG;
+const configured = !!(cfg && cfg.apiKey);
+const USER_CACHE_KEY = "r29n-user";
+
+let A = null, F = null, auth = null, db = null, ready = false, authLoading = configured;
+
+function cacheUser(u) {
+  if (u) {
+    store.set(USER_CACHE_KEY, {
+      uid: u.uid,
+      displayName: u.displayName || "Jugador",
+      email: u.email || "",
+      photoURL: u.photoURL || "",
+    });
+  } else {
+    try { localStorage.removeItem(USER_CACHE_KEY); } catch { /* sense emmagatzematge */ }
+  }
+}
+
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const DUEL_LEN = 10;
+let roomUnsub = null;
+
+const Online = {
+  user: store.get(USER_CACHE_KEY, null),
+  accountClick() {
+    if (this.user) { location.hash = "#perfil"; return; }
+    if (authLoading) return toast("Connectant amb el servidor…");
+    if (!ready) return toast(configured ? "No s'ha pogut connectar amb el servidor" : "Els comptes s'activaran aviat");
+    signIn();
+  },
+  renderAccountBox,
+  renderDuel,
+};
+window.Online = Online;
+
+// ---------- Utilitats ----------
+const me = () => ({ uid: Online.user.uid, name: Online.user.displayName || "Jugador", photo: Online.user.photoURL || "" });
+const firstName = (n) => (n || "Rival").split(" ")[0];
+const fresh = () => ({ i: 0, score: 0, hits: 0, done: false, picks: [], res: [], msgs: [], emote: null });
+const genCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
+const avatar = (p, size = 40) => p?.photo
+  ? `<img class="avatar" src="${esc(p.photo)}" alt="" width="${size}" height="${size}" referrerpolicy="no-referrer">`
+  : `<span class="avatar ph" style="width:${size}px;height:${size}px">${esc((p?.name || "?")[0])}</span>`;
+const duelLink = (code) => `${location.origin}${location.pathname}#duel/${code}`;
+const currentView = () => location.hash.slice(1).split("/")[0] || "jocs";
+function refreshView() {
+  if (["perfil", "duel", "jocs", "ranking"].includes(currentView())) route();
+}
+async function safe(fn, msg = "Hi ha hagut un problema de connexió") {
+  try { return await fn(); } catch (e) { console.warn(e); toast(msg); return null; }
+}
+
+// ---------- Sessió ----------
+async function signIn() {
+  const provider = new A.GoogleAuthProvider();
+  try {
+    await A.signInWithPopup(auth, provider);
+  } catch (e) {
+    if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) {
+      return A.signInWithRedirect(auth, provider);
+    }
+    if (!["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) toast("No s'ha pogut iniciar la sessió");
+  }
+}
+
+async function signOutNow() {
+  closeRoom();
+  Progress.onSave = null;
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+    await pushProfile();
+  }
+  cacheUser(null);
+  Online.user = null;
+  renderAccountBtn();
+  refreshView();
+  if (auth && A) await A.signOut(auth).catch(() => {});
+  toast("Sessió tancada. El progrés es queda en aquest dispositiu.");
+}
+
+function renderAccountBtn() {
+  const b = $("#account-btn");
+  if (!b) return;
+  const u = Online.user;
+  if (u) {
+    b.innerHTML = `${avatar(me(), 28)}<span>${esc(firstName(u.displayName))}</span>`;
+    b.title = "El teu compte";
+    b.classList.add("in");
+  } else {
+    b.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg><span>Entra</span>`;
+    b.title = "Inicia sessió amb Google";
+    b.classList.remove("in");
+  }
+}
+
+// ---------- Progrés al núvol ----------
+function mergeProgress(local, cloud) {
+  const maxMap = (a = {}, b = {}) => {
+    const o = { ...a };
+    for (const [k, v] of Object.entries(b)) o[k] = Math.max(o[k] ?? -Infinity, v);
+    return o;
+  };
+  const ld = local.daily || {}, cd = cloud.daily || {};
+  const last = (cd.last || "") >= (ld.last || "") ? (cd.last || null) : (ld.last || null);
+  const streak = (cd.last || "") === (ld.last || "")
+    ? Math.max(ld.streak || 0, cd.streak || 0)
+    : ((cd.last || "") > (ld.last || "") ? (cd.streak || 0) : (ld.streak || 0));
+  return {
+    xp: Math.max(local.xp || 0, cloud.xp || 0),
+    best: maxMap(local.best, cloud.best),
+    plays: maxMap(local.plays, cloud.plays),
+    ach: { ...(cloud.ach || {}), ...(local.ach || {}) },
+    daily: { last, streak, scores: { ...(ld.scores || {}), ...(cd.scores || {}) } },
+  };
+}
+
+let pushTimer = null;
+function schedulePush() {
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => { pushTimer = null; pushProfile(); }, 1500);
+}
+function flushPush() {
+  if (!pushTimer) return;
+  clearTimeout(pushTimer);
+  pushTimer = null;
+  pushProfile();
+}
+window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushPush(); });
+window.addEventListener("pagehide", flushPush);
+
+async function pushProfile() {
+  if (!ready || !Online.user) return;
+  const d = Progress.data;
+  await safe(() => F.setDoc(F.doc(db, "users", Online.user.uid), {
+    name: Online.user.displayName || "Jugador",
+    photo: Online.user.photoURL || "",
+    xp: d.xp, level: Progress.levelIndex() + 1,
+    best: d.best, plays: d.plays, ach: d.ach, daily: d.daily,
+    updatedAt: F.serverTimestamp(),
+  }), "No s'ha pogut desar el progrés al núvol");
+}
+
+async function syncDown() {
+  const snap = await safe(() => F.getDoc(F.doc(db, "users", Online.user.uid)));
+  if (snap?.exists()) {
+    Progress.data = mergeProgress(Progress.data, snap.data());
+    store.set("r29n", Progress.data);
+    renderLevel();
+  }
+  await pushProfile();
+}
+
+
+// ---------- Perfil: compte i rànquing ----------
+function renderAccountBox() {
+  const box = $("#account-box");
+  if (!box) return;
+  const u = Online.user;
+  if (u) {
+    box.innerHTML = `<div class="card account-card in">
+      ${avatar(me(), 56)}
+      <div class="ac-body"><b>${esc(u.displayName || "Jugador")}</b><p>${esc(u.email || "")}${u.email ? " · " : ""}<span class="synced">${ready ? "Progrés sincronitzat" : authLoading ? "Connectant…" : "Mode sense connexió"}</span></p></div>
+      <button class="btn ghost" data-signout>Tanca la sessió</button>
+    </div>`;
+    $("[data-signout]", box).addEventListener("click", signOutNow);
+    if (ready) {
+      box.insertAdjacentHTML("beforeend", `<div class="account-tools">
+        <p class="muted">Les teves dades, sota el teu control (<a href="#legal/privacitat">Privadesa</a>).</p>
+        <button class="btn ghost" data-export>Descarrega les meves dades</button>
+        <button class="btn ghost danger" data-delete>Elimina el meu compte</button>
+      </div>`);
+      $("[data-export]", box).addEventListener("click", exportMyData);
+      $("[data-delete]", box).addEventListener("click", deleteMyAccount);
+      renderLeaderboard();
+    }
+    return;
+  }
+  if (authLoading) {
+    box.innerHTML = `<div class="card account-card"><div class="ac-body"><p class="muted">Comprovant la sessió…</p></div></div>`;
+    return;
+  }
+  if (!ready) {
+    box.innerHTML = `<div class="card account-card off">
+      <div class="ac-ico">☁</div>
+      <div class="ac-body"><b>Mode local</b><p>El teu progrés es desa en aquest navegador. ${configured ? "Ara mateix no podem connectar amb el servidor." : "Aviat podràs iniciar sessió amb Google per desar-lo al núvol i jugar duels."}</p></div>
+    </div>`;
+    return;
+  }
+  box.innerHTML = `<div class="card account-card">
+    <div class="ac-ico">☁</div>
+    <div class="ac-body"><b>Desa la teva carrera al núvol</b><p>Inicia sessió per conservar el progrés a tots els dispositius, sortir al rànquing i reptar amics en duels 1 vs 1.</p></div>
+    <button class="btn google-btn" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}
+  </div>`;
+  $("[data-signin]", box).addEventListener("click", signIn);
+}
+
+// ---------- Drets RGPD: portabilitat i supressió ----------
+function dailyKeysSinceStart() {
+  const keys = [];
+  for (let off = 0; off <= 90; off++) {
+    const k = dateKeyOffset(-off);
+    keys.push(k);
+    if (dailyNumber(k) <= 1) break;
+  }
+  return keys;
+}
+
+async function exportMyData() {
+  const uid = Online.user.uid;
+  const out = { exportat: new Date().toISOString(), compte: { uid, nom: Online.user.displayName, correu: Online.user.email }, progresLocal: Progress.data };
+  const prof = await safe(() => F.getDoc(F.doc(db, "users", uid)));
+  out.perfil = prof?.exists() ? prof.data() : null;
+  out.repteDiari = [];
+  for (const k of dailyKeysSinceStart()) {
+    const s = await safe(() => F.getDoc(F.doc(db, "dailies", k, "entries", uid)));
+    if (s?.exists()) out.repteDiari.push({ dia: k, ...s.data() });
+  }
+  const duels = await safe(() => F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", uid), F.limit(200))));
+  out.duels = duels ? duels.docs.map((d) => d.data()) : [];
+  const leagues = await safe(() => F.getDocs(F.query(F.collection(db, "leagues"), F.where("members", "array-contains", uid), F.limit(100))));
+  out.lligues = leagues ? leagues.docs.map((d) => d.data()) : [];
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "politica-en-joc-les-meves-dades.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast("Dades descarregades");
+}
+
+async function deleteMyAccount() {
+  if (!confirm("Vols eliminar el teu compte? S'esborraran el perfil, els temps del repte diari, els duels i la teva pertinença a lligues. No es pot desfer. El progrés d'aquest dispositiu es manté.")) return;
+  const uid = Online.user.uid;
+  closeRoom();
+  Progress.onSave = null;
+  if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+  toast("Eliminant el compte…");
+  try {
+    for (const k of dailyKeysSinceStart()) await F.deleteDoc(F.doc(db, "dailies", k, "entries", uid)).catch(() => {});
+    const duels = await F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", uid), F.limit(500)));
+    for (const d of duels.docs) await F.deleteDoc(d.ref).catch(() => {});
+    const leagues = await F.getDocs(F.query(F.collection(db, "leagues"), F.where("members", "array-contains", uid), F.limit(100)));
+    for (const l of leagues.docs) await F.updateDoc(l.ref, { members: F.arrayRemove(uid) }).catch(() => {});
+    await F.deleteDoc(F.doc(db, "users", uid));
+    try {
+      await A.deleteUser(auth.currentUser);
+    } catch (e) {
+      if (e.code !== "auth/requires-recent-login") throw e;
+      await A.reauthenticateWithPopup(auth.currentUser, new A.GoogleAuthProvider());
+      await A.deleteUser(auth.currentUser);
+    }
+  } catch (e) {
+    console.warn(e);
+    toast("No s'ha pogut eliminar del tot. Torna-ho a provar o escriu-nos.");
+    return;
+  }
+  cacheUser(null);
+  Online.user = null;
+  renderAccountBtn();
+  refreshView();
+  toast("Compte eliminat.");
+}
+
+async function renderLeaderboard() {
+  const box = $("#leaderboard-box");
+  if (!box || !ready || !Online.user) return;
+  box.innerHTML = `<h2 class="section-title sm">Rànquing</h2><div class="lb"><p class="muted">Carregant…</p></div>`;
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "users"), F.orderBy("xp", "desc"), F.limit(20))));
+  if (!snap) return;
+  const rows = snap.docs.map((d, i) => {
+    const u = d.data();
+    const lvl = LEVELS[Math.min(LEVELS.length - 1, (u.level || 1) - 1)].name;
+    return `<div class="lb-row ${d.id === Online.user.uid ? "me" : ""}">
+      <b class="lb-pos">${i + 1}</b>${avatar(u, 36)}
+      <span class="lb-name">${esc(u.name || "Jugador")}<small>${lvl}</small></span>
+      <strong>${fmt(u.xp || 0)} XP</strong>
+    </div>`;
+  }).join("");
+  $(".lb", box).innerHTML = rows || `<p class="muted">Encara no hi ha ningú al rànquing.</p>`;
+}
+
+const googleIcon = () => `<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+
+// ---------- Duels ----------
+function closeRoom() {
+  roomUnsub?.();
+  roomUnsub = null;
+}
+window.addEventListener("hashchange", () => {
+  if (currentView() !== "duel") closeRoom();
+});
+
+function renderDuel(code) {
+  closeRoom();
+  const root = $("#duel-root");
+  if (authLoading) {
+    root.innerHTML = `<div class="card"><p class="muted">Carregant…</p></div>`;
+    return;
+  }
+  if (!ready) {
+    root.innerHTML = `<div class="card online-off">
+      <div class="gc-icon" style="--c:var(--blue)">${duelIcon()}</div>
+      <h3>Els duels arriben aviat</h3>
+      <p>${configured ? "Ara mateix no podem connectar amb el servidor. Torna-ho a provar més tard." : "Podràs reptar els teus amics a un duel de 10 preguntes en temps real, amb les mateixes preguntes per a tots dos."}</p>
+    </div>`;
+    return;
+  }
+  if (!Online.user) {
+    if (code) sessionStorage.setItem("pendingDuel", code.toUpperCase());
+    root.innerHTML = `<div class="card online-off">
+      <div class="gc-icon" style="--c:var(--blue)">${duelIcon()}</div>
+      <h3>${code ? "T'han reptat a un duel!" : "Repta els teus amics"}</h3>
+      <p>Inicia sessió amb Google per jugar duels 1 vs 1: 10 preguntes, les mateixes per a tots dos, i veureu la puntuació de l'altre en directe.</p>
+      <button class="btn google-btn lg" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}
+    </div>`;
+    $("[data-signin]", root).addEventListener("click", signIn);
+    return;
+  }
+  if (code) return renderRoom(code.toUpperCase());
+  renderLobby();
+}
+
+function duelIcon() {
+  return icon(`<path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/>`);
+}
+
+function renderLobby() {
+  const root = $("#duel-root");
+  root.innerHTML = `
+    <div class="duel-steps">
+      <div><b>1</b><span>Crea un duel i envia l'enllaç o el codi a un amic.</span></div>
+      <div><b>2</b><span>Trieu 5 parelles de preguntes: una te la quedes per a tu i l'altra l'envies al rival!</span></div>
+      <div><b>3</b><span>Xateja, envia icones i segueix el marcador en directe. Guanya qui en faci més!</span></div>
+    </div>
+    <div class="duel-grid">
+      <div class="card duel-card">
+        <p class="kicker">Nou repte</p>
+        <h3>Crea un duel</h3>
+        <p class="muted">5 preguntes triades per tu + 5 enviades pel rival · Xat i icones en viu.</p>
+        <button class="btn primary lg" data-create>Crea el duel</button>
+      </div>
+      <div class="card duel-card">
+        <p class="kicker">T'han passat un codi?</p>
+        <h3>Uneix-te</h3>
+        <form class="join-form" data-join>
+          <input type="text" maxlength="6" placeholder="CODI" autocomplete="off" spellcheck="false" aria-label="Codi del duel">
+          <button class="btn lg" type="submit">Entra</button>
+        </form>
+      </div>
+    </div>
+    <h2 class="section-title sm">Els teus duels</h2>
+    <div class="duel-list"><p class="muted">Carregant…</p></div>`;
+  $("[data-create]", root).addEventListener("click", () => createDuel());
+  $("[data-join]", root).addEventListener("submit", (e) => {
+    e.preventDefault();
+    const c = $("input", e.target).value.trim().toUpperCase();
+    if (c.length === 6) joinDuel(c);
+    else toast("El codi té 6 caràcters");
+  });
+  loadMyDuels();
+}
+
+async function loadMyDuels() {
+  const list = $(".duel-list");
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", Online.user.uid), F.limit(30))));
+  if (!snap || !list) return;
+  const uid = Online.user.uid;
+  const duels = snap.docs.map((d) => d.data()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 12);
+  if (!duels.length) { list.innerHTML = `<p class="muted">Encara no has jugat cap duel. Crea'n un i repta algú!</p>`; return; }
+  list.innerHTML = duels.map((d) => {
+    const rival = d.host?.uid === uid ? d.guest : d.host;
+    const mine = d[`p_${uid}`] || fresh(), theirs = rival ? d[`p_${rival.uid}`] || fresh() : null;
+    let label = "Esperant rival", cls = "wait";
+    if (d.status !== "waiting") {
+      if (mine.done && theirs?.done) {
+        label = mine.score > theirs.score ? "Victòria" : mine.score < theirs.score ? "Derrota" : "Empat";
+        cls = mine.score > theirs.score ? "win" : mine.score < theirs.score ? "lose" : "tie";
+      } else { label = "En joc"; cls = "live"; }
+    }
+    return `<a class="duel-row" href="#duel/${d.code}">
+      ${avatar(rival || { name: "?" }, 36)}
+      <span class="dr-name">${rival ? esc(rival.name) : "Sense rival"}<small>Codi ${d.code}</small></span>
+      ${theirs ? `<span class="dr-score">${fmt(mine.score)} – ${fmt(theirs.score)}</span>` : ""}
+      <span class="dr-tag ${cls}">${label}</span>
+    </a>`;
+  }).join("");
+}
+
+async function createDuel(fromCode = null, prevData = null) {
+  const uid = Online.user.uid;
+  const code = genCode();
+  const ok = await safe(() => F.setDoc(F.doc(db, "duels", code), {
+    code, createdAt: F.serverTimestamp(), status: "waiting",
+    seed: Math.floor(Math.random() * 2 ** 31),
+    players: [uid], host: me(), guest: null,
+    [`p_${uid}`]: fresh(),
+  }), "No s'ha pogut crear el duel");
+  if (ok !== null) {
+    if (fromCode && prevData) {
+      patchMyDuel(F.doc(db, "duels", fromCode), uid, prevData, { rematch: code }).catch(() => {});
+    }
+    location.hash = `#duel/${code}`;
+  }
+}
+
+async function requestRematch(code) {
+  const uid = Online.user.uid;
+  const snap = await safe(() => F.getDoc(F.doc(db, "duels", code)));
+  const d = snap?.data();
+  if (!d) return;
+  const rival = d.host.uid === uid ? d.guest : d.host;
+  const theirs = rival && d[`p_${rival.uid}`];
+  if (theirs?.rematch) return joinDuel(theirs.rematch);
+  const mine = d[`p_${uid}`]?.rematch;
+  if (mine) { location.hash = `#duel/${mine}`; return; }
+  createDuel(code, d);
+}
+
+async function joinDuel(code) {
+  const uid = Online.user.uid;
+  const ref = F.doc(db, "duels", code);
+  const snap = await safe(() => F.getDoc(ref));
+  if (!snap) return;
+  if (!snap.exists()) return toast("No existeix cap duel amb aquest codi");
+  const d = snap.data();
+  if (d.players.includes(uid)) { location.hash = `#duel/${code}`; return; }
+  if (d.guest) return toast("Aquest duel ja està complet");
+  const ok = await safe(() => F.updateDoc(ref, { guest: me(), players: F.arrayUnion(uid), status: "playing", [`p_${uid}`]: fresh() }), "No t'has pogut unir al duel");
+  if (ok !== null) {
+    if (location.hash === `#duel/${code}`) renderRoom(code);
+    else location.hash = `#duel/${code}`;
+  }
+}
+
+// Estat propi autoritari en local: els instantànies del servidor poden arribar endarrerides
+// i no han de desfer escriptures anteriors (p. ex. una tria de pregunta).
+const localProg = {};
+function patchMyDuel(ref, uid, dataObj, patch) {
+  const field = `p_${uid}`;
+  const key = ref.id + field;
+  const cur = localProg[key] || (dataObj && dataObj[field]) || fresh();
+  const next = { ...fresh(), ...cur, ...patch };
+  localProg[key] = next;
+  if (dataObj) dataObj[field] = next;
+  return F.updateDoc(ref, { [field]: next });
+}
+
+// ---------- Xat i icones en viu per als duels ----------
+const DUEL_EMOTES = ["😂", "🔥", "😱", "👏", "💀", "🏛️", "🤔", "⚡"];
+const DUEL_QUICK_MSGS = ["Bona sort!", "Quina pregunta!", "Uf, difícil!", "Bona!", "Revenja?"];
+
+function popEmoteBubble(player, emoji) {
+  let layer = $("#duel-emote-layer");
+  if (!layer) {
+    layer = h(`<div id="duel-emote-layer" class="duel-emote-layer" aria-live="polite"></div>`);
+    document.body.appendChild(layer);
+  }
+  const el = h(`<div class="duel-emote-pop">
+    ${avatar(player, 34)}
+    <span class="dep-name">${esc(firstName(player?.name))}</span>
+    <span class="dep-ico">${esc(emoji)}</span>
+  </div>`);
+  layer.appendChild(el);
+  const big = h(`<div class="duel-emote-big" aria-hidden="true">${esc(emoji)}</div>`);
+  document.body.appendChild(big);
+  setTimeout(() => big.remove(), 1900);
+  Sfx.play("pick");
+  setTimeout(() => el.remove(), 2600);
+}
+
+function mountDuelSocial(container, ref, uid) {
+  const wrap = h(`<div class="card duel-social">
+    <div class="ds-head">
+      <span class="kicker">En directe amb el rival</span>
+      <div class="ds-emotes" role="group" aria-label="Envia una icona">
+        ${DUEL_EMOTES.map((e) => `<button type="button" class="ds-emote-btn" data-emote="${e}" title="Envia ${e}">${e}</button>`).join("")}
+      </div>
+    </div>
+    <div class="ds-quick">
+      ${DUEL_QUICK_MSGS.map((m) => `<button type="button" class="ds-chip" data-qmsg="${esc(m)}">${esc(m)}</button>`).join("")}
+    </div>
+    <div class="ds-msgs" aria-live="polite"><p class="muted">Envia una icona o escriu al teu rival…</p></div>
+    <form class="ds-form" autocomplete="off">
+      <input type="text" maxlength="120" placeholder="Escriu un missatge al rival…" aria-label="Missatge">
+      <button class="btn primary" type="submit">Envia</button>
+    </form>
+  </div>`);
+  container.appendChild(wrap);
+
+  let latestData = null;
+  const seenEmotes = {};
+  let lastRivalMsgT = 0;
+  let initialized = false;
+
+  const myField = `p_${uid}`;
+
+  async function sendEmote(emoji) {
+    const t = Date.now();
+    seenEmotes[uid] = t;
+    popEmoteBubble(me(), emoji);
+    if (!latestData) return;
+    patchMyDuel(ref, uid, latestData, { emote: { e: emoji, t } }).catch(() => {});
+  }
+
+  async function sendMsg(text) {
+    const clean = text.trim().slice(0, 120);
+    if (!clean || !latestData) return;
+    const prev = ((localProg[ref.id + myField] || latestData[myField])?.msgs || []).slice(-24);
+    const nextMsgs = [...prev, { m: clean, t: Date.now() }];
+    patchMyDuel(ref, uid, latestData, { msgs: nextMsgs }).catch(() => {});
+  }
+
+  $$("[data-emote]", wrap).forEach((b) => b.addEventListener("click", () => sendEmote(b.dataset.emote)));
+  $$("[data-qmsg]", wrap).forEach((b) => b.addEventListener("click", () => sendMsg(b.dataset.qmsg)));
+  $(".ds-form", wrap).addEventListener("submit", (e) => {
+    e.preventDefault();
+    const inp = $("input", e.target);
+    if (!inp.value.trim()) return;
+    sendMsg(inp.value);
+    inp.value = "";
+  });
+
+  function update(d) {
+    latestData = d;
+    const players = [d.host, d.guest].filter(Boolean);
+    const now = Date.now();
+
+    players.forEach((p) => {
+      const em = d[`p_${p.uid}`]?.emote;
+      if (!em || !em.t) return;
+      if (!initialized) {
+        seenEmotes[p.uid] = em.t;
+      } else if (em.t > (seenEmotes[p.uid] || 0) && now - em.t < 15000) {
+        seenEmotes[p.uid] = em.t;
+        popEmoteBubble(p, em.e);
+      }
+    });
+
+    const allMsgs = [];
+    players.forEach((p) => {
+      const list = d[`p_${p.uid}`]?.msgs || [];
+      list.forEach((item) => {
+        if (item && item.m) allMsgs.push({ ...item, user: p, isMe: p.uid === uid });
+      });
+    });
+    allMsgs.sort((a, b) => a.t - b.t);
+
+    const rivalMsgs = allMsgs.filter((x) => !x.isMe);
+    const newestRival = rivalMsgs[rivalMsgs.length - 1];
+    if (!initialized) {
+      if (newestRival) lastRivalMsgT = newestRival.t;
+    } else if (newestRival && newestRival.t > lastRivalMsgT) {
+      lastRivalMsgT = newestRival.t;
+      Sfx.play("pick");
+      if (currentView() === "joc") {
+        toast(`💬 ${firstName(newestRival.user.name)}: ${newestRival.m}`);
+      }
+    }
+    initialized = true;
+
+    const msgBox = $(".ds-msgs", wrap);
+    if (!allMsgs.length) {
+      msgBox.innerHTML = `<p class="muted">Envia una icona o escriu al teu rival…</p>`;
+    } else {
+      msgBox.innerHTML = allMsgs.slice(-30).map((x) => `
+        <div class="ds-msg ${x.isMe ? "me" : "them"}">
+          ${avatar(x.user, 24)}
+          <div class="ds-bubble"><b>${esc(firstName(x.user.name))}</b><span>${esc(x.m)}</span></div>
+        </div>`).join("");
+      msgBox.scrollTop = msgBox.scrollHeight;
+    }
+  }
+
+  return { update, wrap };
+}
+
+function dotsRow(res = [], total = DUEL_LEN) {
+  return `<div class="duel-mini-dots">${Array.from({ length: total }, (_, i) => {
+    const v = res[i];
+    return `<i class="${v === true ? "ok" : v === false ? "ko" : ""}"></i>`;
+  }).join("")}</div>`;
+}
+
+function liveBarHtml(d, uid) {
+  const meP = d.host.uid === uid ? d.host : d.guest || me();
+  const rival = d.host.uid === uid ? d.guest : d.host;
+  const side = (p, cls) => {
+    const pr = (p && d[`p_${p.uid}`]) || fresh();
+    const pk = (pr.picks || []).length;
+    const sub = !p ? "Esperant que entri…" : pr.done ? `Acabat · ${pr.hits}/${DUEL_LEN}` : pr.i > 0 ? `Pregunta ${Math.min(pr.i + 1, DUEL_LEN)}/${DUEL_LEN}` : pk >= 5 ? "Tria feta" : `Triant (${pk}/5)`;
+    return `<div class="dlb-side ${cls}">
+      ${avatar(p || { name: "?" }, 38)}
+      <div class="dlb-info">
+        <b><span>${p ? esc(cls === "me" ? "Tu" : firstName(p.name)) : "Rival"}</span><span class="dlb-pts">${fmt(pr.score)}</span></b>
+        ${dotsRow(pr.res, DUEL_LEN)}
+        <small class="dlb-sub">${sub}</small>
+      </div>
+    </div>`;
+  };
+  return `${side(meP, "me")}<span class="dlb-vs">VS</span>${side(rival, "them")}`;
+}
+
+// Les 10 preguntes d'un jugador amb el resultat de cadascuna (per al resum final)
+function duelRecap(d, uid) {
+  const isHost = d.host.uid === uid;
+  const rival = isHost ? d.guest : d.host;
+  const mine = d[`p_${uid}`] || fresh(), theirs = (rival && d[`p_${rival.uid}`]) || fresh();
+  if ((mine.picks || []).length < 5) return [];
+  return buildPlayerRounds(d.seed, isHost, mine.picks, theirs.picks, firstName(rival?.name)).map((r, i) => ({
+    ok: mine.res?.[i], q: r.recapQ, a: r.recapA, origin: r.origin,
+  }));
+}
+
+function recapListHtml(items, rivalName) {
+  if (!items.length) return "";
+  return `<div class="duel-qlist">
+    <p class="kicker">Les teves 10 preguntes</p>
+    ${items.map((x, i) => `<div class="dq ${x.ok === true ? "ok" : x.ok === false ? "ko" : ""}">
+      <span class="dq-n">${i + 1}</span>
+      <div><b>${esc(x.q)}</b><small>${x.origin === "mine" ? "🎯 Triada per tu" : `💣 Enviada per ${esc(rivalName)}`} · Resposta: ${esc(x.a)}</small></div>
+      <span class="dq-r">${x.ok === true ? "✓" : x.ok === false ? "✗" : "–"}</span>
+    </div>`).join("")}
+  </div>`;
+}
+
+function buildPlayerRounds(seed, isHost, myPicks, rivalPicks, rivalName) {
+  const allPairs = duelPairs(seed);
+  const myPairs = isHost ? allPairs.slice(0, 5) : allPairs.slice(5, 10);
+  const rivalPairs = isHost ? allPairs.slice(5, 10) : allPairs.slice(0, 5);
+  const rounds = [];
+  for (let k = 0; k < 5; k++) {
+    const mPick = myPicks?.[k] ?? 0;
+    const rPick = rivalPicks?.[k] ?? 0;
+    const kept = myPairs[k][mPick];
+    const sent = rivalPairs[k][1 - rPick]; // La que el rival ha descartat i t'ha enviat a tu!
+    rounds.push({
+      ...kept,
+      origin: "mine",
+      label: `${kept.label} · <span class="q-origin mine">🎯 Triada per tu</span>`,
+    });
+    rounds.push({
+      ...sent,
+      origin: "rival",
+      label: `${sent.label} · <span class="q-origin rival">💣 Enviada per ${esc(rivalName)}</span>`,
+    });
+  }
+  return rounds;
+}
+
+function renderRoom(code) {
+  const root = $("#duel-root");
+  root.innerHTML = `<div id="duel-room-main"><div class="card"><p class="muted">Carregant el duel…</p></div></div><div id="duel-room-social"></div>`;
+  const mainBox = $("#duel-room-main", root);
+  const socialBox = $("#duel-room-social", root);
+  const uid = Online.user.uid;
+  const ref = F.doc(db, "duels", code);
+  let social = null;
+
+  roomUnsub = F.onSnapshot(ref, (snap) => {
+    if (!snap.exists()) {
+      mainBox.innerHTML = `<div class="card online-off"><h3>Aquest duel no existeix</h3><p>Revisa el codi o crea'n un de nou.</p><a class="btn primary" href="#duel">Torna</a></div>`;
+      socialBox.innerHTML = "";
+      return;
+    }
+    const d = snap.data();
+    const isPlayer = d.players.includes(uid);
+    const rival = d.host.uid === uid ? d.guest : d.host;
+
+    // Algú ha obert l'enllaç i encara hi ha lloc
+    if (!isPlayer && !d.guest) {
+      mainBox.innerHTML = `<div class="card online-off invite">
+        ${avatar(d.host, 72)}
+        <h3>${esc(d.host.name)} et repta!</h3>
+        <p>Duel 1 vs 1 d'elecció: cadascú tria 5 preguntes per a si mateix i n'envia 5 al rival!</p>
+        <button class="btn primary lg" data-accept>Accepta el repte</button>
+      </div>`;
+      $("[data-accept]", mainBox).addEventListener("click", () => joinDuel(code));
+      return;
+    }
+
+    if (isPlayer && !social) {
+      social = mountDuelSocial(socialBox, ref, uid);
+    }
+    social?.update(d);
+
+    const prog = (p) => d[`p_${p.uid}`] || fresh();
+    const myProg = isPlayer ? prog({ uid }) : null;
+    const myPicksCount = (myProg?.picks || []).length;
+
+    if (d.status === "waiting") {
+      mainBox.innerHTML = `<div class="duel-live-bar card">${liveBarHtml(d, uid)}</div><div class="card waiting-room">
+        <p class="kicker">Duel creat</p>
+        <h3>Envia aquest codi al teu rival</h3>
+        <div class="code-tiles">${[...code].map((c) => `<span>${c}</span>`).join("")}</div>
+        <div class="row center">
+          <button class="btn primary" data-copy>Copia l'enllaç</button>
+          ${navigator.share ? `<button class="btn" data-share>Comparteix</button>` : ""}
+          ${isPlayer && myPicksCount < 5 ? `<button class="btn" data-predraft>Ves triant les 5 preguntes (${myPicksCount}/5)</button>` : ""}
+        </div>
+        ${myPicksCount >= 5 ? `<p class="synced">Ja has triat les teves 5 preguntes! Esperant que entri el rival…</p>` : `<p class="waiting-dots">Esperant el rival<span>.</span><span>.</span><span>.</span></p>`}
+      </div>`;
+      $("[data-copy]", mainBox).addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(duelLink(code)); toast("Enllaç copiat"); } catch { toast(duelLink(code)); }
+      });
+      $("[data-share]", mainBox)?.addEventListener("click", () => navigator.share({ title: "Política en Joc", text: "Et repto a un duel de política! Codi: " + code, url: duelLink(code) }).catch(() => {}));
+      $("[data-predraft]", mainBox)?.addEventListener("click", () => startDuelGame(code, d));
+      return;
+    }
+
+    // Marcador (en joc o acabat)
+    const players = [d.host, d.guest].filter(Boolean);
+    const allDone = players.length === 2 && players.every((p) => prog(p).done);
+    const rivalProg = rival ? prog(rival) : null;
+    let banner = "";
+    if (allDone) {
+      const [a, b] = players.map(prog);
+      const winner = a.score === b.score ? null : a.score > b.score ? players[0] : players[1];
+      banner = winner
+        ? `<div class="duel-banner ${isPlayer ? (winner.uid === uid ? "win" : "lose") : ""}">${isPlayer ? (winner.uid === uid ? "Has guanyat!" : `Guanya ${esc(firstName(winner.name))}`) : `Guanya ${esc(firstName(winner.name))}`}</div>`
+        : `<div class="duel-banner tie">Empat!</div>`;
+    }
+    const rematchCode = rivalProg?.rematch || myProg?.rematch;
+    mainBox.innerHTML = `<div class="card scoreboard">
+      ${banner}
+      <div class="sb-players">${players.map((p, k) => {
+        const pr = prog(p);
+        const pk = (pr.picks || []).length;
+        const statusTxt = pr.done
+          ? `Acabat · ${pr.hits}/${DUEL_LEN} encerts`
+          : pr.i > 0
+            ? `Pregunta ${pr.i}/${DUEL_LEN} · ${pr.hits} encerts`
+            : pk >= 5
+              ? "5/5 preguntes triades · A punt!"
+              : `Triant preguntes (${pk}/5)…`;
+        return `${k === 1 ? `<span class="sb-vs">VS</span>` : ""}
+        <div class="sb-player ${p.uid === uid ? "me" : ""}">
+          ${avatar(p, 64)}
+          <b>${esc(firstName(p.name))}${p.uid === uid ? " (tu)" : ""}</b>
+          <strong>${fmt(pr.score)}</strong>
+          <div class="sb-bar"><div style="width:${(pr.i / DUEL_LEN) * 100}%"></div></div>
+          ${dotsRow(pr.res, DUEL_LEN)}
+          <small>${statusTxt}</small>
+        </div>`;
+      }).join("")}</div>
+      ${rivalProg?.rematch ? `<div class="rematch-alert"><b>🔥 ${esc(firstName(rival.name))} et demana la revenja!</b><button class="btn primary" data-go-rematch="${esc(rivalProg.rematch)}">Accepta la revenja →</button></div>` : ""}
+      <div class="row center">
+        ${isPlayer && !myProg.done ? `<button class="btn primary lg" data-play>${myPicksCount < 5 ? (myPicksCount ? `Continua l'elecció (${myPicksCount}/5)` : "Tria les preguntes i juga") : (myProg.i ? "Continua la partida" : "Juga ara")}</button>` : ""}
+        ${allDone && isPlayer && !rematchCode ? `<button class="btn primary lg" data-rematch>Demana revenja</button>` : ""}
+        ${myProg?.rematch && !rivalProg?.rematch ? `<a class="btn primary lg" href="#duel/${esc(myProg.rematch)}">Ves a la sala de revenja →</a>` : ""}
+        <a class="btn lg" href="#duel">Tots els duels</a>
+      </div>
+      ${isPlayer && myProg.done ? recapListHtml(duelRecap(d, uid), firstName(rival?.name)) : ""}
+      ${isPlayer && myProg.done && !allDone ? `<p class="waiting-dots">Esperant que ${esc(firstName(rival?.name))} acabi<span>.</span><span>.</span><span>.</span></p>` : ""}
+    </div>`;
+    $("[data-play]", mainBox)?.addEventListener("click", () => startDuelGame(code, d));
+    $("[data-rematch]", mainBox)?.addEventListener("click", () => requestRematch(code));
+    $("[data-go-rematch]", mainBox)?.addEventListener("click", (e) => joinDuel(e.currentTarget.dataset.goRematch));
+  }, () => {
+    mainBox.innerHTML = `<div class="card online-off"><h3>No es pot obrir el duel</h3><p>Comprova la connexió i torna-ho a provar.</p></div>`;
+  });
+}
+
+function startDuelGame(code, data) {
+  const uid = Online.user.uid;
+  const isHost = data.host.uid === uid;
+  const id = `duel-${code}`;
+  const game = {
+    id, kicker: `Duel 1 vs 1`, title: "Duel d'Elecció", color: "#3554ff",
+    autostart: true, noReplay: true, backHref: `#duel/${code}`, backLabel: "Torna al duel",
+    start(ctx) {
+      const ref = F.doc(db, "duels", code);
+      const field = `p_${uid}`;
+      let liveData = data;
+      let rival = isHost ? liveData.guest : liveData.host;
+      let myPicks = [...(liveData[field]?.picks || [])];
+      let lastHits = 0, finished = null, questionsStarted = false, waitingForRival = false;
+
+      // Estructura fixa: marcador 1 vs 1 en viu a dalt + escenari al mig + xat i icones a sota
+      ctx.body.innerHTML = `
+        <div class="duel-live-bar card" id="duel-live-bar"></div>
+        <div id="duel-stage-inner"></div>
+        <div id="duel-game-social"></div>`;
+      const liveBar = $("#duel-live-bar", ctx.body);
+      const stageInner = $("#duel-stage-inner", ctx.body);
+      const socialContainer = $("#duel-game-social", ctx.body);
+      const social = mountDuelSocial(socialContainer, ref, uid);
+
+      function renderLiveBar() {
+        liveBar.innerHTML = liveBarHtml(liveData, uid);
+      }
+
+      renderLiveBar();
+      social.update(liveData);
+
+      ctx.onCleanup(F.onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const prevRival = rival ? (liveData[`p_${rival.uid}`] || fresh()) : null;
+        liveData = snap.data();
+        rival = isHost ? liveData.guest : liveData.host;
+        const o = rival ? (liveData[`p_${rival.uid}`] || fresh()) : null;
+
+        // Avisos en viu quan el rival avança o respon
+        if (prevRival && o && o.i > (prevRival.i || 0)) {
+          const lastOk = o.res?.[o.i - 1];
+          const rName = firstName(rival?.name);
+          if (lastOk === true) toast(`⚡ ${rName} ha encertat la pregunta ${o.i}! (${fmt(o.score)} pts)`);
+          else if (lastOk === false) toast(`💥 ${rName} ha fallat la pregunta ${o.i}!`);
+        }
+
+        renderLiveBar();
+        social.update(liveData);
+
+        if (waitingForRival && !questionsStarted && o && (o.picks || []).length >= 5) {
+          waitingForRival = false;
+          beginQuestions();
+        } else if (waitingForRival && !questionsStarted) {
+          renderWaitingForRivalPicks();
+        }
+        if (finished && o?.done) settle(liveData, o);
+      }));
+
+      // Fase 1: Escollir les 5 parelles (1 per a tu, 1 per al rival)
+      const allPairs = duelPairs(liveData.seed);
+      const myPairs = isHost ? allPairs.slice(0, 5) : allPairs.slice(5, 10);
+
+      if (myPicks.length < 5) {
+        renderDraftStep();
+      } else {
+        afterMyDraft();
+      }
+
+      function renderDraftStep() {
+        const k = myPicks.length;
+        if (k >= 5) return afterMyDraft();
+        const [cardA, cardB] = myPairs[k];
+        const rName = rival ? firstName(rival.name) : "el teu rival";
+        ctx.hud([["d", "Elecció", `${k + 1}/5`]]);
+        stageInner.innerHTML = "";
+        const el = h(`<div class="card draft-stage">
+          <div class="draft-head">
+            <span class="draft-step-badge">Parella ${k + 1} de 5</span>
+            <h3>Quina pregunta et quedes per a tu?</h3>
+            <p class="muted">Toca la que vulguis respondre tu. <b>L'altra s'enviarà directament a ${esc(rName)}!</b></p>
+          </div>
+          <div class="draft-pair">
+            <button type="button" class="draft-card" data-pick="0">
+              <span class="dc-cat">${esc(cardA.catBadge)}</span>
+              <p class="dc-preview">${esc(cardA.preview)}</p>
+              <span class="dc-cta">✓ Me la quedo per a mi</span>
+              <small class="dc-sub">L'altra va per a ${esc(rName)}</small>
+            </button>
+            <div class="draft-or">O</div>
+            <button type="button" class="draft-card" data-pick="1">
+              <span class="dc-cat">${esc(cardB.catBadge)}</span>
+              <p class="dc-preview">${esc(cardB.preview)}</p>
+              <span class="dc-cta">✓ Me la quedo per a mi</span>
+              <small class="dc-sub">L'altra va per a ${esc(rName)}</small>
+            </button>
+          </div>
+        </div>`);
+        stageInner.appendChild(el);
+
+        let picked = false;
+        const draftTimer = questionTimer(ctx, $(".draft-head", el), 10, () => {
+          toast("Temps esgotat: s'ha triat a l'atzar");
+          choose(Math.random() < 0.5 ? 0 : 1);
+        });
+        $$("[data-pick]", el).forEach((btn) => btn.addEventListener("click", () => choose(Number(btn.dataset.pick))));
+        function choose(choice) {
+          if (picked) return;
+          picked = true;
+          draftTimer.stop();
+          const btn = $(`[data-pick="${choice}"]`, el);
+          const otherBtn = $(`[data-pick="${1 - choice}"]`, el);
+          btn.classList.add("chosen-mine");
+          $(".dc-cta", btn).textContent = "✓ PER A TU";
+          otherBtn.classList.add("chosen-rival");
+          $(".dc-cta", otherBtn).textContent = `↗ ENVIADA A ${rName.toUpperCase()}`;
+          Sfx.play("pick");
+
+          myPicks.push(choice);
+          patchMyDuel(ref, uid, liveData, { picks: [...myPicks] }).catch(() => {});
+          ctx.after(650, renderDraftStep);
+        }
+      }
+
+      function afterMyDraft() {
+        const o = rival ? (liveData[`p_${rival.uid}`] || fresh()) : null;
+        if (o && (o.picks || []).length >= 5) {
+          beginQuestions();
+        } else {
+          waitingForRival = true;
+          renderWaitingForRivalPicks();
+        }
+      }
+
+      function renderWaitingForRivalPicks() {
+        const o = rival ? (liveData[`p_${rival.uid}`] || fresh()) : null;
+        const rName = rival ? firstName(rival.name) : null;
+        const rPicks = (o?.picks || []).length;
+        ctx.hud([["d", "Elecció", "5/5"]]);
+        stageInner.innerHTML = `<div class="card waiting-room">
+          <p class="kicker">Tria completada (5/5)</p>
+          <h3>Ja has triat les 5 preguntes teves i les 5 per al rival!</h3>
+          ${rName
+            ? `<p class="waiting-dots">Esperant que <b>${esc(rName)}</b> acabi d'escollir les seves (${rPicks}/5)<span>.</span><span>.</span><span>.</span></p>
+               <p class="muted">Tan bon punt acabi de triar començarà sol, o pots començar ja les teves preguntes.</p>
+               <div class="row center">
+                 <button class="btn primary lg" data-start-now>Comença ja les preguntes →</button>
+                 <a class="btn lg" href="#duel/${code}">Torna a la sala</a>
+               </div>`
+            : `<p class="waiting-dots">Esperant que el teu rival s'uneixi al duel<span>.</span><span>.</span><span>.</span></p>
+               <a class="btn lg" href="#duel/${code}">Torna a la sala del duel</a>`}
+        </div>`;
+        $("[data-start-now]", stageInner)?.addEventListener("click", () => {
+          waitingForRival = false;
+          beginQuestions();
+        });
+      }
+
+      function beginQuestions() {
+        if (questionsStarted) return;
+        questionsStarted = true;
+        const o = rival ? (liveData[`p_${rival.uid}`] || fresh()) : fresh();
+        const rName = firstName(rival?.name);
+        const rounds = buildPlayerRounds(liveData.seed, isHost, myPicks, o.picks, rName);
+        const subCtx = { ...ctx, body: stageInner };
+        const myRes = [];
+
+        subCtx.countIn(() => {
+          runChoiceRounds(subCtx, rounds, {
+            timer: 15, lifelines: false,
+            points: (left, timer) => 100 + Math.round((60 * left) / timer),
+            onAnswer: ({ index, correct, score, hits }) => {
+              lastHits = hits;
+              myRes[index] = correct;
+              patchMyDuel(ref, uid, liveData, {
+                i: index + 1,
+                score,
+                hits,
+                res: [...myRes],
+                done: false,
+              }).catch(() => {});
+              renderLiveBar();
+            },
+            onFinish: async (res) => {
+              finished = res;
+              await safe(() => patchMyDuel(ref, uid, liveData, {
+                i: DUEL_LEN,
+                score: res.score,
+                hits: lastHits,
+                res: [...myRes],
+                done: true,
+              }));
+              stageInner.innerHTML = `<div class="card waiting-room">
+                <p class="kicker">Has acabat</p>
+                <div class="result-score">${fmt(res.score)}</div>
+                <p class="waiting-dots">Esperant que ${esc(firstName(rival?.name))} acabi<span>.</span><span>.</span><span>.</span></p>
+                <a class="btn" href="#duel/${code}">Torna al duel</a>
+              </div>`;
+              const snap = await safe(() => F.getDoc(ref));
+              const d = snap?.data();
+              const latestO = d && rival ? d[`p_${rival.uid}`] : null;
+              if (latestO?.done) settle(d, latestO);
+            },
+          });
+        });
+      }
+
+      let settled = false;
+      function settle(d, o) {
+        if (settled || !ctx.alive()) return;
+        settled = true;
+        if (d.status !== "done") F.updateDoc(ref, { status: "done" }).catch(() => {});
+        const mine = finished.score, theirs = o.score;
+        const outcome = mine > theirs ? "win" : mine < theirs ? "lose" : "tie";
+        const xp = finished.xp + (outcome === "win" ? 60 : outcome === "tie" ? 25 : 10);
+        Progress.record("duel", mine, xp);
+        if (outcome === "win") Progress.unlock("duelista");
+        const name = firstName(rival?.name);
+        ctx.finish({
+          ...finished, xp, noRecord: true,
+          verdict: outcome === "win" ? `Has guanyat a ${name}: ${fmt(mine)} a ${fmt(theirs)}!`
+            : outcome === "lose" ? `${name} t'ha guanyat: ${fmt(theirs)} a ${fmt(mine)}.`
+            : `Empat a ${fmt(mine)} punts amb ${name}.`,
+          recap: [],
+          extraHtml: `<div class="duel-live-bar card">${liveBarHtml(d, uid)}</div>
+            <div class="rematch-slot"></div>
+            <div class="row center"><button class="btn primary lg" data-rematch>Tornar a jugar (Revenja)</button></div>
+            ${recapListHtml(duelRecap(d, uid), name)}`,
+          onShown(body) {
+            $("[data-rematch]", body)?.addEventListener("click", () => requestRematch(code));
+            // Continua escoltant: si el rival demana la revenja, avisa en directe
+            closeRoom();
+            let alerted = false;
+            roomUnsub = F.onSnapshot(ref, (s2) => {
+              const dd = s2.data();
+              const r = dd && rival && dd[`p_${rival.uid}`];
+              if (!r?.rematch || alerted || !document.body.contains(body)) return;
+              alerted = true;
+              Sfx.play("pick");
+              toast(`🔥 ${name} et demana la revenja!`);
+              const slot = $(".rematch-slot", body);
+              if (slot) {
+                slot.innerHTML = `<div class="rematch-alert"><b>🔥 ${esc(name)} et demana la revenja!</b><button class="btn primary" data-go>Accepta la revenja →</button></div>`;
+                $("[data-go]", slot).addEventListener("click", () => joinDuel(r.rematch));
+              }
+            }, () => {});
+          },
+        });
+      }
+    },
+  };
+  DYNAMIC_GAMES.set(id, game);
+  endSession();
+  if (location.hash === `#joc/${id}`) route();
+  else location.hash = `#joc/${id}`;
+}
+
+// ---------- Repte diari: rànquing mundial i lligues d'amics ----------
+// dailies/{data}/entries/{uid}: { uid, name, photo, ms, hits, errors, createdAt } (només el primer intent)
+// leagues/{codi}: { code, name, owner, members: [uid], createdAt }
+const LEAGUE_LEN = 5;
+let rankTab = "world";
+
+Online.submitDaily = async (key, { ms, hits, errors }) => {
+  if (!ready || !Online.user) return;
+  const ref = F.doc(db, "dailies", key, "entries", Online.user.uid);
+  const snap = await safe(() => F.getDoc(ref), "No s'ha pogut publicar el temps");
+  if (!snap || snap.exists()) return;
+  await safe(() => F.setDoc(ref, { ...me(), ms: Math.max(3000, Math.round(ms)), hits, errors, createdAt: F.serverTimestamp() }), "No s'ha pogut publicar el temps");
+};
+
+async function worldTop(key, n = 50) {
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "dailies", key, "entries"), F.orderBy("ms", "asc"), F.limit(n))));
+  return snap ? snap.docs.map((d) => d.data()) : null;
+}
+async function myPosition(key) {
+  const mine = await safe(() => F.getDoc(F.doc(db, "dailies", key, "entries", Online.user.uid)));
+  if (!mine?.exists()) return null;
+  const ms = mine.data().ms;
+  const c = await safe(() => F.getCountFromServer(F.query(F.collection(db, "dailies", key, "entries"), F.where("ms", "<", ms))));
+  return c ? c.data().count + 1 : null;
+}
+
+Online.fillDailyRank = async (key) => {
+  if (!$("#dh-rank") || !ready || !Online.user || !dailyResult(key)) return;
+  const pos = await myPosition(key);
+  if (pos && $("#dh-rank")) $("#dh-rank").textContent = `#${fmt(pos)}`;
+};
+
+Online.renderDailyMini = async (box, key) => {
+  if (!box || !ready) return;
+  if (!Online.user) {
+    box.innerHTML = `<div class="card account-card"><div class="ac-ico">🏆</div><div class="ac-body"><b>Entra al rànquing mundial</b><p>Inicia sessió per publicar el teu temps i comparar-te amb tothom.</p></div><button class="btn google-btn" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}</div>`;
+    $("[data-signin]", box).addEventListener("click", signIn);
+    return;
+  }
+  // Donem un moment perquè s'hagi desat el temps
+  await new Promise((r) => setTimeout(r, 900));
+  const top = await worldTop(key, 5);
+  const pos = await myPosition(key);
+  if (!top) return;
+  box.innerHTML = `<h4 class="section-title sm" style="margin-top:0">Rànquing mundial d'avui${pos ? ` · ets el #${fmt(pos)}` : ""}</h4>${rankRows(top)}`;
+};
+
+function rankRows(list) {
+  if (!list.length) return `<p class="muted">Encara no hi ha cap temps. Sigues el primer!</p>`;
+  return `<div class="lb">${list.map((e, i) => `
+    <div class="lb-row ${e.uid === Online.user?.uid ? "me" : ""}">
+      <b class="lb-pos">${i + 1}</b>${avatar(e, 34)}
+      <span class="lb-name">${esc(e.name || "Jugador")}<small>${e.hits}/10 · ${e.errors} ${e.errors === 1 ? "error" : "errors"}</small></span>
+      <strong>${fmtTime(e.ms)}</strong>
+    </div>`).join("")}</div>`;
+}
+
+Online.renderRanking = (root, arg) => {
+  const key = todayKey();
+  if (arg) sessionStorage.setItem("pendingLeague", arg.toUpperCase());
+  if (authLoading) {
+    root.innerHTML = `<div class="card"><p class="muted">Carregant…</p></div>`;
+    return;
+  }
+  if (!ready) {
+    root.innerHTML = `<div class="card rank-off"><h3>El rànquing s'activarà aviat</h3><p>${configured ? "Ara mateix no podem connectar amb el servidor." : "Quan l'app estigui publicada podràs comparar el teu temps amb tothom i crear lligues amb els teus amics."}</p></div>`;
+    return;
+  }
+  if (!Online.user) {
+    root.innerHTML = `<div class="card rank-off">
+      <h3>${arg ? "T'han convidat a una lliga!" : "Competeix cada dia"}</h3>
+      <p>Inicia sessió per publicar el temps del repte diari, veure el rànquing mundial i crear lligues amb els teus amics.</p>
+      <button class="btn google-btn lg" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}
+    </div>`;
+    $("[data-signin]", root).addEventListener("click", signIn);
+    return;
+  }
+  const pending = sessionStorage.getItem("pendingLeague");
+  if (pending) { sessionStorage.removeItem("pendingLeague"); joinLeaguePrompt(root, pending); return; }
+  root.innerHTML = `
+    <div class="rank-tabs">
+      <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
+      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amics</button>
+    </div>
+    <div id="rank-body"><p class="muted">Carregant…</p></div>`;
+  $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
+  if (rankTab === "world") renderWorld($("#rank-body"), key);
+  else renderLeagues($("#rank-body"), key);
+};
+
+async function renderWorld(box, key) {
+  const top = await worldTop(key, 50);
+  if (!top) return;
+  const done = dailyResult(key);
+  const pos = done ? await myPosition(key) : null;
+  box.innerHTML = `
+    <p class="muted" style="margin-bottom:12px">Repte #${dailyNumber(key)} · ${pos ? `Ets el <b>#${fmt(pos)}</b> del món.` : done ? "" : `Encara no l'has fet. <a href="#joc/diari">Juga ara</a>.`}</p>
+    ${rankRows(top)}`;
+}
+
+async function myLeagues() {
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "leagues"), F.where("members", "array-contains", Online.user.uid), F.limit(20))));
+  return snap ? snap.docs.map((d) => d.data()) : [];
+}
+
+async function renderLeagues(box, key) {
+  const leagues = await myLeagues();
+  box.innerHTML = `
+    <div class="duel-grid">
+      <div class="card duel-card">
+        <p class="kicker">Nova lliga</p>
+        <h3>Crea una lliga</h3>
+        <form class="join-form" data-create-league>
+          <input type="text" class="name-input" maxlength="30" placeholder="Nom de la lliga" aria-label="Nom de la lliga">
+          <button class="btn primary" type="submit">Crea</button>
+        </form>
+      </div>
+      <div class="card duel-card">
+        <p class="kicker">T'han passat un codi?</p>
+        <h3>Uneix-te</h3>
+        <form class="join-form" data-join-league>
+          <input type="text" maxlength="${LEAGUE_LEN}" placeholder="CODI" autocomplete="off" aria-label="Codi de la lliga">
+          <button class="btn" type="submit">Entra</button>
+        </form>
+      </div>
+    </div>
+    <div id="league-list"></div>`;
+  $("[data-create-league]", box).addEventListener("submit", (e) => { e.preventDefault(); createLeague($("input", e.target).value.trim()); });
+  $("[data-join-league]", box).addEventListener("submit", (e) => {
+    e.preventDefault();
+    const c = $("input", e.target).value.trim().toUpperCase();
+    if (c.length === LEAGUE_LEN) joinLeague(c);
+    else toast(`El codi té ${LEAGUE_LEN} caràcters`);
+  });
+  const list = $("#league-list", box);
+  if (!leagues.length) {
+    list.innerHTML = `<p class="muted" style="margin-top:18px">Encara no estàs a cap lliga. Crea'n una i convida els teus amics!</p>`;
+    return;
+  }
+  for (const lg of leagues) {
+    const sec = h(`<section class="league">
+      <div class="group-head"><span class="group-dot" style="--c:var(--yellow)"></span><h3>${esc(lg.name)}</h3>
+        <p>${lg.members.length} ${lg.members.length === 1 ? "membre" : "membres"} · codi ${lg.code}</p>
+        <button class="btn ghost" data-invite style="margin-left:auto">Convida</button></div>
+      <div class="league-body"><p class="muted">Carregant…</p></div>
+    </section>`);
+    list.appendChild(sec);
+    $("[data-invite]", sec).addEventListener("click", () => inviteLeague(lg));
+    // Temps d'avui dels membres (de 30 en 30, el límit de Firestore per a «in»)
+    const entries = [];
+    for (let i = 0; i < lg.members.length; i += 30) {
+      const chunk = lg.members.slice(i, i + 30);
+      const snap = await safe(() => F.getDocs(F.query(F.collection(db, "dailies", key, "entries"), F.where("uid", "in", chunk))));
+      if (snap) entries.push(...snap.docs.map((d) => d.data()));
+    }
+    entries.sort((a, b) => a.ms - b.ms);
+    const missing = lg.members.length - entries.length;
+    $(".league-body", sec).innerHTML = rankRows(entries) +
+      (missing > 0 ? `<p class="muted" style="margin-top:8px">${missing} ${missing === 1 ? "membre encara no ha" : "membres encara no han"} fet el repte d'avui.</p>` : "");
+  }
+}
+
+const leagueLink = (code) => `${location.origin}${location.pathname}#ranking/${code}`;
+async function inviteLeague(lg) {
+  const text = `Uneix-te a la meva lliga «${lg.name}» a Política en Joc i competim cada dia al repte diari! Codi: ${lg.code}`;
+  try {
+    if (navigator.share) await navigator.share({ title: "Política en Joc", text, url: leagueLink(lg.code) });
+    else { await navigator.clipboard.writeText(`${text}\n${leagueLink(lg.code)}`); toast("Invitació copiada"); }
+  } catch { /* cancel·lat */ }
+}
+
+async function createLeague(name) {
+  if (!name) return toast("Posa un nom a la lliga");
+  const code = Array.from({ length: LEAGUE_LEN }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
+  const ok = await safe(() => F.setDoc(F.doc(db, "leagues", code), {
+    code, name: name.slice(0, 30), owner: Online.user.uid, members: [Online.user.uid], createdAt: F.serverTimestamp(),
+  }), "No s'ha pogut crear la lliga");
+  if (ok === null) return;
+  rankTab = "friends";
+  toast("Lliga creada! Convida els teus amics.");
+  Online.renderRanking($("#ranking-root"));
+}
+
+async function joinLeague(code) {
+  const ref = F.doc(db, "leagues", code);
+  const snap = await safe(() => F.getDoc(ref));
+  if (!snap) return;
+  if (!snap.exists()) return toast("No existeix cap lliga amb aquest codi");
+  if (!snap.data().members.includes(Online.user.uid)) {
+    const ok = await safe(() => F.updateDoc(ref, { members: F.arrayUnion(Online.user.uid) }), "No t'has pogut unir a la lliga");
+    if (ok === null) return;
+    toast(`T'has unit a «${snap.data().name}»`);
+  }
+  rankTab = "friends";
+  if (location.hash !== "#ranking") location.hash = "#ranking";
+  else Online.renderRanking($("#ranking-root"));
+}
+
+async function joinLeaguePrompt(root, code) {
+  const snap = await safe(() => F.getDoc(F.doc(db, "leagues", code)));
+  if (!snap?.exists()) { toast("Aquesta lliga no existeix"); location.hash = "#ranking"; return; }
+  const lg = snap.data();
+  root.innerHTML = `<div class="card online-off invite">
+    <h3>Et conviden a «${esc(lg.name)}»</h3>
+    <p>${lg.members.length} ${lg.members.length === 1 ? "persona ja hi juga" : "persones ja hi juguen"}. Compareu els vostres temps del repte diari cada dia.</p>
+    <button class="btn primary lg" data-accept>Uneix-m'hi</button>
+  </div>`;
+  $("[data-accept]", root).addEventListener("click", () => joinLeague(code));
+}
+
+// ---------- Arrencada (al final, quan ja hi ha totes les funcions definides) ----------
+renderAccountBtn();
+refreshView();
+
+if (configured) {
+  try {
+    const [appMod, authMod, fsMod] = await Promise.all([
+      import(`${SDK}/firebase-app.js`),
+      import(`${SDK}/firebase-auth.js`),
+      import(`${SDK}/firebase-firestore.js`),
+    ]);
+    const app = appMod.initializeApp(cfg);
+    A = authMod;
+    F = fsMod;
+    try {
+      auth = A.initializeAuth(app, {
+        persistence: [A.indexedDBLocalPersistence, A.browserLocalPersistence],
+        popupRedirectResolver: A.browserPopupRedirectResolver,
+      });
+    } catch {
+      auth = A.getAuth(app);
+      await A.setPersistence(auth, A.browserLocalPersistence).catch(() => {});
+    }
+    db = F.getFirestore(app);
+    ready = !!db;
+  } catch (e) {
+    console.warn("No s'ha pogut carregar Firebase:", e);
+  }
+  authLoading = false;
+}
+
+if (ready) {
+  // Demana al navegador que no esborri les dades de la sessió quan va just d'espai
+  try { navigator.storage?.persist?.(); } catch { /* no disponible */ }
+  // El resultat d'una redirecció no ha de bloquejar mai l'escolta de la sessió
+  A.getRedirectResult(auth).catch(() => {});
+  let firstAuthEvent = true;
+  A.onAuthStateChanged(auth, async (user) => {
+    // Si el navegador encara no ha restaurat la sessió i hi ha un usuari desat, no el donem per sortit
+    // abans d'hora: reintentem un cop després d'una breu espera.
+    if (!user && firstAuthEvent && store.get(USER_CACHE_KEY, null)) {
+      firstAuthEvent = false;
+      await new Promise((r) => setTimeout(r, 1500));
+      if (auth.currentUser) user = auth.currentUser;
+    }
+    firstAuthEvent = false;
+    Online.user = user;
+    cacheUser(user);
+    renderAccountBtn();
+    if (user) {
+      await syncDown();
+      Progress.onSave = schedulePush;
+      // Si ha fet el repte d'avui sense sessió, el publiquem ara (només compta si encara no hi és)
+      const today = dailyResult(todayKey());
+      if (today) Online.submitDaily(todayKey(), today);
+      const pending = sessionStorage.getItem("pendingDuel");
+      if (pending) {
+        sessionStorage.removeItem("pendingDuel");
+        // Si ja som a l'enllaç del duel no hi ha hashchange: cal tornar a pintar
+        if (location.hash === `#duel/${pending}`) route();
+        else location.hash = `#duel/${pending}`;
+        return;
+      }
+    } else {
+      Progress.onSave = null;
+    }
+    refreshView();
+  });
+} else {
+  renderAccountBtn();
+  refreshView();
+}

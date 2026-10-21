@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#17173d">
+  <title>Política en Joc</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23ffcf3d'/%3E%3Crect x='7' y='18' width='26' height='16' rx='3' fill='%2317173d'/%3E%3Cpath d='M14 6h12v12H14z' fill='%23fffaf0' stroke='%2317173d' stroke-width='2'/%3E%3Cpath d='M17 12l2.2 2.2 4-4.5' stroke='%23ff4b2b' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/unbounded-latin-3.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/dmsans-latin-1.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/fonts.css?v=12">
+  <link rel="stylesheet" href="css/styles.css?v=12">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#jocs" aria-label="Política en Joc, inici">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40">
+            <rect x="5" y="17" width="30" height="19" rx="3" fill="var(--ink)"/>
+            <rect x="12" y="15" width="16" height="4" rx="1" fill="var(--paper)"/>
+            <path d="M14 4h12v13H14z" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>
+            <path d="M17 10.5l2.2 2.2 4-4.5" stroke="var(--red)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="brand-name">Política en<b>Joc</b></span>
+      </a>
+      <nav class="nav" aria-label="Seccions">
+        <a href="#jocs" data-nav="jocs">Inici</a>
+        <a href="#ranking" data-nav="ranking">Rànquing</a>
+        <a href="#duel" data-nav="duel">1 vs 1</a>
+        <a href="#apren" data-nav="apren">Aprèn</a>
+        <a href="#perfil" data-nav="perfil">Perfil</a>
+      </nav>
+      <div class="top-actions">
+        <button class="sound-btn" id="sound-btn" aria-label="So activat" title="So"></button>
+        <button class="account-btn" id="account-btn" title="Inicia sessió">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+          <span>Entra</span>
+        </button>
+        <a class="level-chip" id="level-chip" href="#perfil">
+          <span class="level-ring" id="level-ring"></span>
+          <span class="level-text"><small id="level-name">Votant</small><strong id="level-xp">0 XP</strong></span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ JOCS ============ -->
+    <section id="view-jocs" class="view">
+      <div class="home-hero">
+        <div class="hh-copy">
+          <p class="kicker"><span class="dot-live"></span><span>Eleccions generals<span class="k-date"> · 29.11.2026</span> · <b id="hero-days">—</b></span></p>
+          <h1 class="hero-title"><span>La política,</span><span class="hl">en joc</span></h1>
+          <p class="lede">Juga tant com vulguis. Però cada dia t'espera un repte nou: 10 proves, un cronòmetre i un rànquing mundial.</p>
+        </div>
+        <section class="daily-hero" id="daily-hero" aria-label="Repte diari"></section>
+      </div>
+
+      <div class="section-head">
+        <h2 class="section-title">Minijocs</h2>
+        <div class="filters" role="group" aria-label="Filtra per categoria">
+          <button class="filter active" data-filter="all">Tots</button>
+          <button class="filter" data-filter="rapid" style="--c:#ff4b2b">Ràpids</button>
+          <button class="filter" data-filter="parlament" style="--c:#3554ff">Parlament</button>
+          <button class="filter" data-filter="historia" style="--c:#ffcf3d">Història</button>
+        </div>
+      </div>
+      <div class="games" id="games-grid"></div>
+      <div class="news-teaser" id="news-teaser" hidden></div>
+    </section>
+
+    <!-- ============ PARTIDA ============ -->
+    <section id="view-joc" class="view stage" hidden>
+      <div class="stage-head">
+        <button class="icon-btn back" id="stage-back" aria-label="Tornar als jocs">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="stage-title">
+          <small id="stage-kicker"></small>
+          <h2 id="stage-title"></h2>
+        </div>
+        <div class="hud" id="hud"></div>
+      </div>
+      <div class="stage-body" id="stage-body"></div>
+    </section>
+
+    <!-- ============ RÀNQUING ============ -->
+    <section id="view-ranking" class="view" hidden>
+      <div class="page-head">
+        <p class="kicker">Repte diari</p>
+        <h1 class="page-title">Rànquing</h1>
+      </div>
+      <div id="ranking-root"></div>
+    </section>
+
+    <!-- ============ APRÈN ============ -->
+    <section id="view-apren" class="view learn" hidden>
+      <div class="learn-hero">
+        <div>
+          <p class="kicker">Guia visual del 29N</p>
+          <h1 class="page-title">Aprèn abans de jugar</h1>
+          <p class="lede">Tot el que cal saber per votar el 29 de novembre, explicat en un cop d'ull.</p>
+        </div>
+        <aside class="countdown-card" aria-label="Compte enrere per al 29N">
+          <p class="cd-label">Falten per obrir les urnes</p>
+          <div class="cd-grid">
+            <div><span id="cd-d">--</span><small>dies</small></div>
+            <div><span id="cd-h">--</span><small>hores</small></div>
+            <div><span id="cd-m">--</span><small>min</small></div>
+            <div><span id="cd-s">--</span><small>seg</small></div>
+          </div>
+        </aside>
+      </div>
+
+      <nav class="learn-nav" aria-label="Apartats">
+        <a href="#apren" data-go="sec-xifres">Xifres</a>
+        <a href="#apren" data-go="sec-congres">El Congrés</a>
+        <a href="#apren" data-go="sec-partits">Partits</a>
+        <a href="#apren" data-go="sec-pacto">Pactòmetre</a>
+        <a href="#apren" data-go="sec-actualitat">Actualitat</a>
+        <a href="#apren" data-go="sec-vot">Com es vota</a>
+        <a href="#apren" data-go="sec-tipus">Blanc o nul</a>
+        <a href="#apren" data-go="sec-escons">Vots i escons</a>
+        <a href="#apren" data-go="sec-despres">Després</a>
+        <a href="#apren" data-go="sec-diccionari">Diccionari</a>
+      </nav>
+
+      <section class="learn-sec" id="sec-xifres">
+        <div class="ls-head"><span class="ls-num">01</span><h2>El 29N en xifres</h2></div>
+        <div class="num-grid" id="learn-numbers"></div>
+      </section>
+
+      <section class="learn-sec" id="sec-congres">
+        <div class="ls-head"><span class="ls-num">02</span><h2>El Congrés que es renova</h2><p>Així va quedar després del 23-J. El 29N es tornen a repartir els 350 escons.</p></div>
+        <div class="congress-band">
+          <div class="hero-art">
+            <div class="hero-hemi" id="hero-hemi" role="img" aria-label="Composició del Congrés sorgit de les eleccions del 23 de juliol de 2023"></div>
+            <div class="stamp" aria-hidden="true"><span>Eleccions</span><b>29N</b><span>Generals</span></div>
+          </div>
+          <div class="band-side">
+            <div class="maj-box"><strong>176</strong><span>escons per a la majoria absoluta. Cap partit en té prou sol: cal pactar.</span><a class="btn primary" href="#joc/majoria">Juga a Fes majoria</a></div>
+            <div class="hemi-legend" id="hemi-legend"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="learn-sec" id="sec-partits">
+        <div class="ls-head"><span class="ls-num">03</span><h2>Els partits, cara a cara</h2><p>Qui es presenta, què defensa i com ha votat. Tria'n dos per comparar-los.</p></div>
+        <div class="party-map" id="party-map"></div>
+        <div class="cmp-pick" id="cmp-pick"></div>
+        <div class="cmp" id="cmp"></div>
+        <div class="face" id="face"></div>
+        <div class="args" id="args"></div>
+        <h3 class="sub-h">Tots els caps de llista</h3>
+        <div class="cand-grid" id="cand-grid"></div>
+        <p class="src-note">Candidatures segons la <a href="https://es.wikipedia.org/wiki/Elecciones_generales_de_Espa%C3%B1a_de_2026" target="_blank" rel="noopener">Viquipèdia</a> (consulta del 20-10-2026), pendents de la proclamació oficial de les juntes electorals. Resultats del 23-J del 2023. Les posicions al mapa són orientatives. Fotos: Wikimedia Commons, amb l'autor i la llicència al peu.</p>
+      </section>
+
+      <section class="learn-sec" id="sec-pacto">
+        <div class="ls-head"><span class="ls-num">04</span><h2>Pactòmetre</h2><p>Qui pot governar? Parteix de la mitjana de les últimes enquestes, d'una enquesta concreta o crea el teu propi escenari.</p></div>
+        <div class="pacte" id="pacte-root"></div>
+      </section>
+
+      <section class="learn-sec" id="sec-actualitat">
+        <div class="ls-head"><span class="ls-num">05</span><h2>Actualitat política</h2><p>Els titulars dels mitjans. Cada enllaç t'hi porta a la seva web.</p></div>
+        <div class="news" id="news-root"></div>
+      </section>
+
+      <section class="learn-sec" id="sec-vot">
+        <div class="ls-head"><span class="ls-num">06</span><h2>Com es vota</h2><p>De casa a l'urna en cinc passos.</p></div>
+        <ol class="vote-steps" id="vote-steps"></ol>
+      </section>
+
+      <section class="learn-sec" id="sec-tipus">
+        <div class="ls-head"><span class="ls-num">07</span><h2>Blanc, nul o abstenció?</h2><p>No són el mateix, i el vot en blanc té efectes.</p></div>
+        <div class="vote-types" id="vote-types"></div>
+      </section>
+
+      <section class="learn-sec" id="sec-escons">
+        <div class="ls-head"><span class="ls-num">08</span><h2>De vots a escons</h2><p>Cada província reparteix els seus escons amb la Llei d'Hondt.</p></div>
+        <div class="hondt-steps" id="hondt-steps"></div>
+      <div class="panel" id="simulador">
+        <div class="panel-head">
+          <p class="kicker">Prova-ho tu</p>
+          <h2 class="section-title">Simulador de la Llei d'Hondt</h2>
+          <p class="muted">Al Congrés només entren al repartiment les candidatures que superen el 3&nbsp;% dels vots vàlids de la província, que inclouen el vot en blanc.</p>
+        </div>
+        <div class="hondt-config">
+          <label>Escons <input type="number" id="h-seats" min="1" max="60" value="7"></label>
+          <label>Vots en blanc <input type="number" id="h-blank" min="0" value="2000"></label>
+          <label>Llindar % <input type="number" id="h-threshold" min="0" max="20" step="0.5" value="3"></label>
+        </div>
+        <div id="h-parties" class="h-parties"></div>
+        <div class="row">
+          <button class="btn ghost" id="h-add">+ Candidatura</button>
+          <button class="btn ghost" id="h-example">Exemple</button>
+          <button class="btn primary" id="h-calc">Calcular</button>
+        </div>
+        <div id="h-result" hidden></div>
+      </div>
+      </section>
+
+      <section class="learn-sec" id="sec-despres">
+        <div class="ls-head"><span class="ls-num">09</span><h2>Després del 29N</h2><p>Del recompte a la investidura.</p></div>
+        <ol class="after-flow" id="after-flow"></ol>
+      </section>
+
+      <section class="learn-sec" id="sec-diccionari">
+        <div class="ls-head"><span class="ls-num">10</span><h2>Diccionari parlamentari</h2><p>Toca una targeta per girar-la.</p></div>
+        <div class="dict-grid" id="dict-grid"></div>
+      </section>
+
+      <a class="cal-link" href="#calendari">
+        <span class="cal-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+        <span><small>Calendari electoral</small><b>Totes les dates fins al 29N</b></span>
+        <span class="cal-go">→</span>
+      </a>
+    </section>
+
+    <!-- ============ CALENDARI ============ -->
+    <section id="view-calendari" class="view" hidden>
+      <div class="page-head">
+        <p class="kicker">Reial decret 806/2026 · BOE del 6 d'octubre</p>
+        <h1 class="page-title">El camí cap al 29N</h1>
+      </div>
+      <ol class="timeline" id="timeline"></ol>
+    </section>
+
+    <!-- ============ DUEL 1 VS 1 ============ -->
+    <section id="view-duel" class="view" hidden>
+      <div class="page-head">
+        <p class="kicker">Repta els teus amics</p>
+        <h1 class="page-title">1 vs 1</h1>
+      </div>
+      <div id="duel-root"></div>
+    </section>
+
+    <!-- ============ LEGAL ============ -->
+    <section id="view-legal" class="view" hidden>
+      <div id="legal-root"></div>
+    </section>
+
+    <!-- ============ PERFIL ============ -->
+    <section id="view-perfil" class="view" hidden>
+      <div class="page-head">
+        <p class="kicker">La teva carrera política</p>
+        <h1 class="page-title">Perfil</h1>
+      </div>
+      <div id="profile"></div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Seccions">
+    <span class="lg-glass" aria-hidden="true"></span>
+    <span class="lg-edge" aria-hidden="true"></span>
+    <span class="tab-indicator" aria-hidden="true"></span>
+    <a href="#jocs" data-nav="jocs">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>
+      <span>Inici</span>
+    </a>
+    <a href="#ranking" data-nav="ranking">
+      <svg viewBox="0 0 24 24"><path d="M8 21V11H3v10zM15 21V5h-5v16zM21 21v-7h-5v7z"/></svg>
+      <span>Rànquing</span>
+    </a>
+    <a href="#duel" data-nav="duel">
+      <svg viewBox="0 0 24 24"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>
+      <span>1 vs 1</span>
+    </a>
+    <a href="#apren" data-nav="apren">
+      <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5zM4 20.5A2.5 2.5 0 006.5 23H20v-5"/></svg>
+      <span>Aprèn</span>
+    </a>
+    <a href="#perfil" data-nav="perfil">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+      <span>Perfil</span>
+    </a>
+  </nav>
+
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <script src="js/data.js?v=12"></script>
+  <script src="js/frases.js?v=12"></script>
+  <script src="js/gamedata.js?v=12"></script>
+  <script src="js/partits.js?v=12"></script>
+  <script src="js/partits2.js?v=12"></script>
+  <script src="js/art.js?v=12"></script>
+  <script src="js/core.js?v=12"></script>
+  <script src="js/games.js?v=12"></script>
+  <script src="js/reptes.js?v=12"></script>
+  <script src="js/pacte.js?v=12"></script>
+  <script src="js/firebase-config.js?v=12"></script>
+  <script src="js/analytics.js?v=12"></script>
+  <script src="js/legal.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
+  <!-- Funcions en línia (Google + duels). Sense configuració, l'app funciona en mode local. -->
+  <script type="module" src="js/online.js?v=12"></script>
+</body>
+</html>

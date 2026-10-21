@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// Regles de seguretat de Firestore per a Política en Joc.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Perfil públic de cada jugador (nom, foto, XP, rècords). Tothom amb sessió el pot llegir
+    // per al rànquing; només el propietari el pot escriure.
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Duels 1 vs 1. El progrés de cada jugador viu al camp p_<uid>.
+    match /duels/{code} {
+      allow read: if request.auth != null;
+
+      // Crear: només com a amfitrió i sol.
+      allow create: if request.auth != null
+        && request.resource.data.host.uid == request.auth.uid
+        && request.resource.data.players == [request.auth.uid]
+        && request.resource.data.guest == null;
+
+      allow update: if request.auth != null && (
+        // Unir-se com a convidat a un duel que encara té lloc
+        (resource.data.guest == null
+          && request.resource.data.guest.uid == request.auth.uid
+          && request.resource.data.players.size() == 2
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['guest', 'players', 'status', 'p_' + request.auth.uid]))
+        ||
+        // Cada jugador només pot actualitzar el seu propi progrés (i l'estat del duel)
+        (request.auth.uid in resource.data.players
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['p_' + request.auth.uid, 'status']))
+      );
+
+      // Cada jugador pot esborrar els duels on participa (dret de supressió)
+      allow delete: if request.auth != null && request.auth.uid in resource.data.players;
+    }
+
+    // Repte diari: un sol temps per persona i dia (el primer intent), que no es pot modificar.
+    match /dailies/{day}/entries/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.ms is int && request.resource.data.ms >= 3000
+        && request.resource.data.hits is int && request.resource.data.hits >= 0 && request.resource.data.hits <= 10;
+      allow update: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Lligues d'amics: qualsevol amb el codi s'hi pot afegir (només a si mateix).
+    match /leagues/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.members == [request.auth.uid];
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+        && (
+          // afegir-se a si mateix
+          (request.resource.data.members.hasAll(resource.data.members)
+            && request.resource.data.members.size() == resource.data.members.size() + 1
+            && request.auth.uid in request.resource.data.members)
+          ||
+          // marxar de la lliga
+          (request.auth.uid in resource.data.members
+            && resource.data.members.hasAll(request.resource.data.members)
+            && !(request.auth.uid in request.resource.data.members))
+        );
+      allow delete: if false;
+    }
+  }
+}

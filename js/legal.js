@@ -73,7 +73,7 @@ const LEGAL_TEXT = {
       <li><b>Altres jugadors registrats</b> veuen el teu nom, la teva foto, el teu nivell i XP, el teu temps al rànquing del repte diari, i, en un duel o lliga, els teus resultats i missatges. <b>No es mostra l'adreça electrònica.</b> Si no vols aparèixer, no facis servir el compte o elimina'l.</li>
       <li><b>Google Ireland Ltd. / Google LLC</b> (Firebase Authentication, Cloud Firestore i Hosting), com a encarregat del tractament. Pot haver-hi transferències a Estats Units emparades per les clàusules contractuals tipus de la Comissió Europea i/o el Marc de Privadesa de Dades UE-EUA.</li>
       <li><b>Wikimedia Foundation:</b> les fotografies de persones es carreguen des dels servidors de Wikimedia Commons, que reben la teva adreça IP quan les veus.</li>
-      <li><b>Mitjans de comunicació:</b> per mostrar titulars recents, el teu navegador consulta directament els RSS públics d'alguns mitjans (actualment El País i VilaWeb), que reben la teva adreça IP. Si fas clic a un titular, passes a la seva web amb les seves pròpies polítiques.</li>
+      <li><b>Mitjans de comunicació:</b> per mostrar titulars recents, el teu navegador consulta directament els RSS públics d'alguns mitjans (actualment El País i VilaWeb), que reben la teva adreça IP; la llista de titulars es descarrega des de GitHub (GitHub Inc.), que també rep la IP. Si fas clic a un titular, passes a la seva web amb les seves pròpies polítiques.</li>
       <li>Autoritats, només quan una llei ho exigeixi.</li>
     </ul>
     <h2>6. Quant de temps les conservem</h2>
@@ -163,7 +163,7 @@ const LEGAL_TEXT = {
     <h2>Tipografies i tecnologia</h2>
     <ul>
       <li>Tipografies <b>Unbounded</b> i <b>DM Sans</b>, sota la llicència <a href="https://openfontlicense.org" target="_blank" rel="noopener">SIL Open Font License 1.1</a>.</li>
-      <li>Inici de sessió, base de dades i allotjament: <a href="https://firebase.google.com" target="_blank" rel="noopener">Google Firebase</a>.</li>
+      <li>Inici de sessió, base de dades i allotjament: <a href="https://firebase.google.com" target="_blank" rel="noopener">Google Firebase</a>. Recull automàtic de titulars: GitHub Actions; el fitxer de titulars es serveix des de GitHub (raw.githubusercontent.com).</li>
     </ul>`;
   },
 };

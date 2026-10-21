@@ -304,7 +304,7 @@ function renderNews() {
 
 // Si es defineix una adreça (p. ex. el data/news.json que genera GitHub Actions cada pocs minuts), es llegeix d'allà;
 // si no, del fitxer del propi web. A més, els mitjans amb CORS obert es consulten directament des del navegador.
-const NEWS_REMOTE = "";
+const NEWS_REMOTE = "https://raw.githubusercontent.com/emdicbru/politica-en-joc/main/data/news.json";
 const NEWS_REFRESH_MS = 3 * 60 * 1000;
 const NEWS_POLITICS = /elecci|electoral|29-?n|congreso|congr[eé]s|senado|senat|gobierno|govern|sánchez|sanchez|feijóo|feijoo|abascal|\bpp\b|psoe|vox|sumar|podemos|erc\b|junts|bildu|pnv|bng|amnist|investidura|moci[oó]n|presupuestos|pressupostos|partido|partit|ministr|diputad|encuesta|enquesta|puigdemont|illa|mazón|ayuso|colau|rufián|rufian|campaña|campanya|urnas|urnes|votaci|legislat/i;
 const NEWS_LIVE = [
@@ -341,7 +341,8 @@ function mergeNews() {
 
 async function refreshNews() {
   const results = await Promise.all([
-    fetch(NEWS_REMOTE || `data/news.json?t=${Math.floor(Date.now() / 120000)}`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    (NEWS_REMOTE ? fetch(NEWS_REMOTE, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null))
+      .then((j) => j || fetch(`data/news.json?t=${Math.floor(Date.now() / 120000)}`, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null)),
     ...NEWS_LIVE.map(fetchLiveFeed),
   ]);
   const [snap, ...live] = results;

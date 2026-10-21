@@ -366,11 +366,6 @@ function renderNewsTeaser() {
   if (!el || !newsData?.items.length) return;
   el.hidden = false;
   el.innerHTML = `
-    <div class="nt-head"><b>Última hora política</b><a href="#apren" data-go="sec-actualitat">Veure-ho tot →</a></div>
+    <div class="nt-head"><b>Última hora política</b><a href="#apren/actualitat">Veure-ho tot →</a></div>
     <ul>${newsData.items.slice(0, 3).map((x) => `<li><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer"><span>${esc(x.s)}</span>${esc(x.t)}</a></li>`).join("")}</ul>`;
-  $("[data-go]", el).addEventListener("click", (e) => {
-    e.preventDefault();
-    location.hash = "#apren";
-    setTimeout(() => $("#sec-actualitat")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
-  });
 }

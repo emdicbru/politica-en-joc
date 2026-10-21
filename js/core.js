@@ -114,10 +114,11 @@ const ACHIEVEMENTS = [
   { id: "duelista", name: "Duelista", desc: "Guanya un duel 1 vs 1 contra un amic." },
   { id: "diputat", name: "Escó propi", desc: "Arriba al nivell Diputat." },
   { id: "president", name: "La Moncloa", desc: "Arriba al nivell President." },
+  { id: "informat", name: "Votant informat", desc: "Supera els 8 capítols de la guia de l'Aprèn." },
 ];
 
 const Progress = {
-  data: Object.assign({ xp: 0, best: {}, plays: {}, ach: {}, daily: { last: null, streak: 0, scores: {} } }, store.get("r29n", {})),
+  data: Object.assign({ xp: 0, best: {}, plays: {}, ach: {}, learn: {}, daily: { last: null, streak: 0, scores: {} } }, store.get("r29n", {})),
   onSave: null, // ganxo per sincronitzar amb el núvol (online.js)
   save() { store.set("r29n", this.data); this.onSave?.(); },
   levelIndex(xp = this.data.xp) {
@@ -152,7 +153,7 @@ const Progress = {
     return { isRecord: isRecord && score > 0, prevBest, levelUp: newLevel > prevLevel ? LEVELS[newLevel].name : null };
   },
   reset() {
-    this.data = { xp: 0, best: {}, plays: {}, ach: {}, daily: { last: null, streak: 0, scores: {} } };
+    this.data = { xp: 0, best: {}, plays: {}, ach: {}, learn: {}, daily: { last: null, streak: 0, scores: {} } };
     this.save();
     renderLevel();
   },
@@ -263,6 +264,7 @@ function route() {
   }
   if (v === "jocs") renderGames();
   if (v === "perfil") renderProfile();
+  if (v === "apren") renderApren(arg);
   if (v === "legal") renderLegal(arg);
   if (v === "duel") renderDuelView(arg);
   if (v === "ranking") renderRankingView(arg);

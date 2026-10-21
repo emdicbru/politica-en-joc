@@ -303,7 +303,7 @@ const QUESTIONS = [
 const FITXES = [
   { tag: "Bàsic", title: "Què s'elegeix el 29N?", items: [
     "<strong>Congrés dels Diputats:</strong> 350 diputats elegits per província amb llistes tancades.",
-    "<strong>Senat:</strong> 208 senadors elegits directament amb llistes obertes. A més, els parlaments autonòmics en designen d'altres.",
+    "<strong>Senat:</strong> 209 senadors elegits directament amb llistes obertes. A més, els parlaments autonòmics en designen 58.",
     "La nova cambra elegeix el president del Govern a la investidura.",
     "Les eleccions s'avancen respecte al final de la legislatura, que acabava el 2027.",
   ]},
@@ -361,8 +361,9 @@ const CALENDAR = [
   { date: "2026-11-02", label: "A partir del 2 de novembre", text: "Enviament de les targetes censals." },
   { date: "2026-11-13", label: "13 de novembre", text: "Comença la campanya electoral (0:00 h).", key: true },
   { date: "2026-11-19", label: "19 de novembre", text: "Últim dia per demanar el vot per correu." },
-  { date: "2026-11-23", label: "23 de novembre", text: "Comença la prohibició de publicar enquestes." },
-  { date: "2026-11-26", label: "26 de novembre", text: "Últim dia per enviar el vot per correu." },
+  { date: "2026-11-21", label: "21-26 de novembre", text: "Vot a les ambaixades i els consolats per als residents a l'estranger." },
+  { date: "2026-11-24", label: "24 de novembre", text: "Comença la prohibició de publicar enquestes (fins al 28)." },
+  { date: "2026-11-25", label: "25 de novembre", text: "Últim dia per enviar el vot per correu." },
   { date: "2026-11-27", label: "27 de novembre", text: "Acaba la campanya (24:00 h)." },
   { date: "2026-11-28", label: "28 de novembre", text: "Jornada de reflexió." },
   { date: "2026-11-29", label: "29 de novembre", text: "JORNADA ELECTORAL: es vota de 9:00 a 20:00 h.", key: true },

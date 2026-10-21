@@ -117,6 +117,7 @@ function mergeProgress(local, cloud) {
     best: maxMap(local.best, cloud.best),
     plays: maxMap(local.plays, cloud.plays),
     ach: { ...(cloud.ach || {}), ...(local.ach || {}) },
+    learn: maxMap(local.learn, cloud.learn),
     daily: { last, streak, scores: { ...(ld.scores || {}), ...(cd.scores || {}) } },
   };
 }
@@ -142,7 +143,7 @@ async function pushProfile() {
     name: Online.user.displayName || "Jugador",
     photo: Online.user.photoURL || "",
     xp: d.xp, level: Progress.levelIndex() + 1,
-    best: d.best, plays: d.plays, ach: d.ach, daily: d.daily,
+    best: d.best, plays: d.plays, ach: d.ach, learn: d.learn || {}, daily: d.daily,
     updatedAt: F.serverTimestamp(),
   }), "No s'ha pogut desar el progrés al núvol");
 }

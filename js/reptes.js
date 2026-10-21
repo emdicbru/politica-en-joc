@@ -219,7 +219,7 @@ function versusItem(rng) {
       [a.name, b.name], a.seats > b.seats ? 0 : 1, `${a.name}: ${a.seats} · ${b.name}: ${b.seats}.`, `${a.name} / ${b.name}`);
   }
   const [a, b] = two(PROVINCES, (x, y) => x.seats !== y.seats);
-  return binary("Diputats per província (2023)", `<div class="q-text">Quina província elegeix més diputats?</div>`,
+  return binary("Diputats per província (29N)", `<div class="q-text">Quina província elegeix més diputats?</div>`,
     [a.name, b.name], a.seats > b.seats ? 0 : 1, `${a.name}: ${a.seats} · ${b.name}: ${b.seats}.`, `${a.name} / ${b.name}`);
 }
 

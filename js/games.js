@@ -617,7 +617,7 @@ function makeStatement(rng = Math.random) {
       const p = pick(PROVINCES);
       let n = p.seats;
       if (!t) { n = p.seats + pick([-2, -1, 1, 2, 3]); if (n < 1) n = p.seats + 1; }
-      return { text: `${p.name} va elegir ${n} ${n === 1 ? "diputat" : "diputats"} a les eleccions del 2023.`, truth: n === p.seats, exp: `${p.name} en va elegir ${p.seats}.` };
+      return { text: `${p.name} elegeix ${n} ${n === 1 ? "diputat" : "diputats"} el 29N.`, truth: n === p.seats, exp: `${p.name} n'elegeix ${p.seats}.` };
     },
     () => {
       const e = pick(EVENTS);
@@ -1154,7 +1154,7 @@ registerGame({
       const tie = Math.random() < 0.2;
       const cands = PROVINCES.filter((p) => p !== a && (tie ? p.seats === a.seats : p.seats !== a.seats));
       const b = cands.length ? pick(cands) : PROVINCES.find((p) => p !== a);
-      return { mode, label: "Diputats per província · 2023", q: "Quina província elegeix més diputats?", a: { name: a.name, v: a.seats, show: a.seats }, b: { name: b.name, v: b.seats, show: b.seats }, tie: true, unit: "diputats" };
+      return { mode, label: "Diputats per província · 29N", q: "Quina província elegeix més diputats?", a: { name: a.name, v: a.seats, show: a.seats }, b: { name: b.name, v: b.seats, show: b.seats }, tie: true, unit: "diputats" };
     }
 
     function next() {

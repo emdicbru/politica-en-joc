@@ -133,6 +133,7 @@ function renderProfile() {
 
 // ---------- Portada: Congrés de l'última legislatura ----------
 function renderHeroHemicycle() {
+  if (!$("#hero-hemi")) return;
   const { parties } = CONGRESS[2023];
   const seats = hemicycleSeats(350);
   let k = 0;
@@ -339,143 +340,25 @@ $("#account-btn").addEventListener("click", () => {
 // ---------- Compte enrere ----------
 function tickCountdown() {
   const diff = ELECTION_DATE - Date.now();
+  const set = (sel, v) => { const el = $(sel); if (el) el.textContent = v; };
   if (diff <= 0) {
-    $(".cd-grid").innerHTML = `<div style="grid-column:1/-1"><span>Avui es vota!</span></div>`;
+    const c = $(".ap-count");
+    if (c) c.innerHTML = "<b>Avui es vota!</b> Els col·legis són oberts de 9 a 20 h.";
+    set("#hero-days", "avui es vota");
     return;
   }
   const s = Math.floor(diff / 1000);
   const days = Math.floor(s / 86400);
-  $("#cd-d").textContent = days;
-  if ($("#hero-days")) $("#hero-days").textContent = `falten ${days} dies`;
-  $("#cd-h").textContent = String(Math.floor((s % 86400) / 3600)).padStart(2, "0");
-  $("#cd-m").textContent = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-  $("#cd-s").textContent = String(s % 60).padStart(2, "0");
+  set("#cd-d", days);
+  set("#hero-days", `falten ${days} dies`);
+  set("#cd-h", String(Math.floor((s % 86400) / 3600)).padStart(2, "0"));
+  set("#cd-m", String(Math.floor((s % 3600) / 60)).padStart(2, "0"));
+  set("#cd-s", String(s % 60).padStart(2, "0"));
   tickNextDaily();
   setTimeout(tickCountdown, 1000);
 }
 
-// ---------- Aprèn: guia visual ----------
-const LI = "#17173d", LC = "#fffaf0", LY = "#ffcf3d", LR = "#ff4b2b", LB = "#3554ff", LG = "#0f9d58", LS = "#e2bf8c";
-const lsvg = (body, vb = "0 0 160 110") => `<svg viewBox="${vb}" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
-
-const LEARN_NUMBERS = [
-  { n: 350, label: "diputats al Congrés", c: LR },
-  { n: 208, label: "senadors elegits a les urnes", c: "#c39a5f" },
-  { n: 176, label: "escons per tenir majoria absoluta", c: LB },
-  { n: 52, label: "circumscripcions: 50 províncies, Ceuta i Melilla", c: "#f2b600" },
-  { n: 3, suffix: " %", label: "dels vots vàlids per entrar al repartiment", c: "#00a37a" },
-  { n: 38.7, dec: 1, suffix: " M", label: "persones cridades a votar", c: "#7b3fe4" },
-];
-
-const VOTE_STEPS = [
-  { t: "Mira on et toca", d: "La targeta censal t'indica el col·legi i la mesa. També ho pots consultar al web de l'INE.",
-    art: lsvg(`<rect x="22" y="30" width="96" height="62" rx="8" fill="${LC}" stroke="${LI}" stroke-width="4"/><path d="M36 50h40M36 64h56M36 78h30" stroke="${LI}" stroke-width="4"/>
-      <path d="M118 12c-12 0-20 9-20 20 0 15 20 34 20 34s20-19 20-34c0-11-8-20-20-20z" fill="${LR}" stroke="${LI}" stroke-width="4"/><circle cx="118" cy="32" r="7" fill="${LC}" stroke="${LI}" stroke-width="3"/>`) },
-  { t: "Porta un document", d: "DNI, passaport o carnet de conduir originals i amb foto. El resguard del DNI no serveix.",
-    art: lsvg(`<rect x="20" y="20" width="120" height="74" rx="10" fill="${LY}" stroke="${LI}" stroke-width="4"/><rect x="32" y="34" width="34" height="42" rx="6" fill="${LC}" stroke="${LI}" stroke-width="4"/>
-      <circle cx="49" cy="50" r="7" fill="${LI}"/><path d="M38 72c2-8 20-8 22 0" stroke="${LI}" stroke-width="4"/><path d="M78 42h48M78 56h36M78 70h44" stroke="${LI}" stroke-width="4"/>`) },
-  { t: "Papereta blanca: Congrés", d: "Tries una llista sencera, tancada i bloquejada. No hi pots tatxar ni afegir noms.",
-    art: lsvg(`<g transform="rotate(-4 80 56)"><rect x="40" y="8" width="80" height="96" rx="6" fill="#fff" stroke="${LI}" stroke-width="4"/><rect x="48" y="16" width="64" height="14" rx="3" fill="${LR}"/>
-      <path d="M52 44h56M52 56h56M52 68h56M52 80h40M52 92h48" stroke="${LI}" stroke-width="3.5"/></g>`) },
-  { t: "Papereta sèpia: Senat", d: "Llista oberta: marques fins a 3 candidats (de qualsevol partit) a les províncies que n'elegeixen 4.",
-    art: lsvg(`<g transform="rotate(3 80 56)"><rect x="40" y="8" width="80" height="96" rx="6" fill="${LS}" stroke="${LI}" stroke-width="4"/>
-      ${[24, 42, 60, 78].map((y, i) => `<rect x="50" y="${y}" width="12" height="12" rx="2" fill="#fff" stroke="${LI}" stroke-width="3"/><path d="M70 ${y + 6}h38" stroke="${LI}" stroke-width="3.5"/>${i !== 2 ? `<path d="M52 ${y + 6}l3 4 6-8" stroke="${LR}" stroke-width="3.5"/>` : ""}`).join("")}</g>`) },
-  { t: "A l'urna", d: "Es vota de 9 a 20 h. Si a les 20 h encara hi ha gent a la cua dins del local, pot votar.",
-    art: lsvg(`<g transform="rotate(-8 80 30)"><rect x="60" y="4" width="40" height="44" rx="3" fill="#fff" stroke="${LI}" stroke-width="4"/><path d="M68 18h24M68 28h18" stroke="${LI}" stroke-width="3.5"/></g>
-      <rect x="24" y="46" width="112" height="58" rx="8" fill="${LI}"/><rect x="56" y="40" width="48" height="10" rx="3" fill="${LC}" stroke="${LI}" stroke-width="3"/><path d="M48 76h64" stroke="${LY}" stroke-width="5"/>`) },
-];
-
-const VOTE_TYPES = [
-  { t: "Vot en blanc", d: "El sobre buit o una papereta en blanc oficial.", c: "#fff",
-    facts: [[true, "És un vot vàlid"], [true, "Compta per calcular el 3 %"], [false, "No dona escons a ningú"]],
-    art: lsvg(`<rect x="30" y="30" width="100" height="62" rx="6" fill="#fff" stroke="${LI}" stroke-width="4"/><path d="M30 34l50 34 50-34" stroke="${LI}" stroke-width="4"/>`) },
-  { t: "Vot nul", d: "Papereta ratllada, de més d'un partit, amb objectes o no oficial.", c: "#ffd5cb",
-    facts: [[false, "No és un vot vàlid"], [false, "No compta per al 3 %"], [false, "No dona escons a ningú"]],
-    art: lsvg(`<rect x="44" y="10" width="72" height="92" rx="6" fill="#fff" stroke="${LI}" stroke-width="4"/><path d="M54 30h52M54 44h52M54 58h40" stroke="${LI}" stroke-width="3.5"/>
-      <path d="M50 24l60 64M110 24l-60 64" stroke="${LR}" stroke-width="7"/>`) },
-  { t: "Abstenció", d: "No anar a votar.", c: "#e6d9bf",
-    facts: [[false, "No es compta enlloc"], [false, "No afecta el càlcul del 3 %"], [false, "Els escons es reparteixen igualment"]],
-    art: lsvg(`<rect x="46" y="12" width="68" height="90" rx="4" fill="${LS}" stroke="${LI}" stroke-width="4"/><circle cx="100" cy="60" r="4" fill="${LI}"/>
-      <path d="M20 102h120" stroke="${LI}" stroke-width="4"/><path d="M122 30l10-10M126 44h14M122 58l10 10" stroke="${LI}" stroke-width="4"/>`) },
-];
-
-const HONDT_STEPS = [
-  { t: "1 · Llindar", d: "Fora les candidatures que no arriben al 3 % dels vots vàlids de la província.",
-    art: lsvg(`<path d="M16 96h128" stroke="${LI}" stroke-width="4"/>${[[24, 70, LR], [52, 52, LB], [80, 34, LY], [108, 10, "#c9c2b0"]].map(([x, hgt, f]) => `<rect x="${x}" y="${96 - hgt}" width="22" height="${hgt}" rx="3" fill="${f}" stroke="${LI}" stroke-width="3"/>`).join("")}
-      <path d="M12 80h136" stroke="${LR}" stroke-width="3" stroke-dasharray="6 6"/>`) },
-  { t: "2 · Divideix", d: "Els vots de cada partit es divideixen entre 1, 2, 3… fins al nombre d'escons.",
-    art: lsvg(`${["÷1", "÷2", "÷3"].map((h2, i) => `<rect x="${20 + i * 42}" y="14" width="36" height="22" rx="4" fill="${LI}"/><text x="${38 + i * 42}" y="30" text-anchor="middle" font-family="Unbounded,sans-serif" font-weight="800" font-size="12" fill="${LC}">${h2}</text>`).join("")}
-      ${[0, 1].map((r) => [0, 1, 2].map((c) => `<rect x="${20 + c * 42}" y="${44 + r * 28}" width="36" height="22" rx="4" fill="${(r === 0 && c < 2) || (r === 1 && c === 0) ? LY : "#fff"}" stroke="${LI}" stroke-width="3"/>`).join("")).join("")}`) },
-  { t: "3 · Reparteix", d: "Els escons van als quocients més alts. Afavoreix els partits grans a les províncies petites.",
-    art: lsvg(`${[LR, LR, LR, LB, LB, LY, LR].map((f, i) => `<rect x="${18 + (i % 4) * 32}" y="${18 + Math.floor(i / 4) * 40}" width="26" height="30" rx="6" fill="${f}" stroke="${LI}" stroke-width="3"/>`).join("")}`) },
-];
-
-const AFTER_FLOW = [
-  { k: "29 nov", t: "Votació i recompte", d: "La nit electoral ja dona el resultat provisional." },
-  { k: "4-7 des", t: "Escrutini oficial", d: "Les juntes electorals proclamen els resultats." },
-  { k: "23 des", t: "Es constitueixen les Corts", d: "Congrés i Senat elegeixen les seves presidències." },
-  { k: "Consultes", t: "El Rei proposa un candidat", d: "Després de parlar amb tots els grups." },
-  { k: "Investidura", t: "176 o més sís que nos", d: "1a votació: majoria absoluta. 2a, 48 hores després: majoria simple." },
-  { k: "2 mesos", t: "O noves eleccions", d: "Si en dos mesos ningú no és investit, les Corts es dissolen.", warn: true },
-];
-
-function renderLearn() {
-  // 01 Xifres
-  $("#learn-numbers").innerHTML = LEARN_NUMBERS.map((x, i) => `
-    <div class="num-tile" style="--nc:${x.c};--i:${i}">
-      <strong data-count="${x.n}" data-dec="${x.dec || 0}" data-suffix="${x.suffix || ""}">0${x.suffix || ""}</strong>
-      <span>${x.label}</span>
-    </div>`).join("");
-  // 03 Com es vota
-  $("#vote-steps").innerHTML = VOTE_STEPS.map((s, i) => `
-    <li class="vote-step" style="--i:${i}">
-      <div class="vs-art">${s.art}</div>
-      <b class="vs-n">${i + 1}</b>
-      <h3>${s.t}</h3><p>${s.d}</p>
-    </li>`).join("");
-  // 04 Blanc, nul o abstenció
-  $("#vote-types").innerHTML = VOTE_TYPES.map((v) => `
-    <article class="vtype" style="--vc:${v.c}">
-      <div class="vt-art">${v.art}</div>
-      <h3>${v.t}</h3><p>${v.d}</p>
-      <ul>${v.facts.map(([ok, f]) => `<li class="${ok ? "yes" : "no"}"><i>${ok ? "✓" : "✕"}</i>${f}</li>`).join("")}</ul>
-    </article>`).join("");
-  // 05 Vots i escons
-  $("#hondt-steps").innerHTML = HONDT_STEPS.map((s) => `
-    <div class="hstep"><div class="hs-art">${s.art}</div><h3>${s.t}</h3><p>${s.d}</p></div>`).join("");
-  // 06 Després
-  $("#after-flow").innerHTML = AFTER_FLOW.map((s, i) => `
-    <li class="af ${s.warn ? "warn" : ""}" style="--i:${i}">
-      <span class="af-k">${s.k}</span><b>${s.t}</b><p>${s.d}</p>
-    </li>`).join("");
-  // 07 Diccionari
-  const tones = [LR, LB, LY, "#00a37a", "#7b3fe4", "#e0306f"];
-  $("#dict-grid").innerHTML = [...WORDS].sort((a, b) => a.w.localeCompare(b.w, "ca")).map((w, i) => `
-    <button class="flip" style="--fc:${tones[i % tones.length]}" aria-label="${esc(w.w)}">
-      <span class="flip-in">
-        <span class="flip-front"><b class="${Math.max(...w.w.split(" ").map((x) => x.length)) > 10 ? "long" : ""}">${esc(w.w)}</b><small>Toca per veure-ho</small></span>
-        <span class="flip-back"><b>${esc(w.w)}</b><span>${esc(w.d)}</span></span>
-      </span>
-    </button>`).join("");
-  $$(".flip").forEach((b) => b.addEventListener("click", () => { b.classList.toggle("on"); Sfx.play("pick"); }));
-
-  // Navegació interna
-  $$(".learn-nav a").forEach((a) => a.addEventListener("click", (e) => {
-    e.preventDefault();
-    document.getElementById(a.dataset.go)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }));
-
-  // Animacions en entrar a la vista: comptadors i hemicicle que es desplega
-  const io = new IntersectionObserver((entries) => entries.forEach((en) => {
-    if (!en.isIntersecting) return;
-    io.unobserve(en.target);
-    if (en.target.id === "hero-hemi") en.target.classList.add("play");
-    else countUp(en.target);
-  }), { threshold: 0.35 });
-  io.observe($("#hero-hemi"));
-  $$("[data-count]").forEach((el) => io.observe(el));
-}
-
+// ---------- Aprèn: comptadors animats (els fa servir apren.js) ----------
 function countUp(el) {
   const target = Number(el.dataset.count), dec = Number(el.dataset.dec), suf = el.dataset.suffix;
   const t0 = performance.now();
@@ -586,6 +469,17 @@ function renderCompare() {
       </dl>
     </article>`;
   $("#cmp").innerHTML = col(A, "A") + `<span class="cmp-vs">VS</span>` + col(B, "B");
+  const seg = $("#cmp-seg");
+  if (seg) {
+    const show = seg.dataset.show || "A";
+    $("#cmp").dataset.show = show;
+    seg.innerHTML = [["A", A], ["B", B]].map(([k, p]) => `<button type="button" class="${k === show ? "on" : ""}" data-show="${k}" style="--pc:${p.color}"><i>${k}</i>${p.sig}</button>`).join("");
+    $$("button", seg).forEach((b) => b.addEventListener("click", () => {
+      seg.dataset.show = b.dataset.show;
+      $("#cmp").dataset.show = b.dataset.show;
+      $$("button", seg).forEach((x) => x.classList.toggle("on", x === b));
+    }));
+  }
   renderFace(A, B);
   const argA = PARTY_ARGS[A.id] || {}, argB = PARTY_ARGS[B.id] || {};
   const cell = (p, txt) => `<div class="args-cell" style="--pc:${p.color}"><b>${p.sig}</b>${txt ? `<p>${txt}</p>` : `<p class="muted">Sense proposta destacada en aquest tema.</p>`}</div>`;
@@ -750,8 +644,6 @@ function renderCalendar() {
 // ---------- Arrencada ----------
 renderLevel();
 renderSound();
-renderHeroHemicycle();
-renderLearn();
 renderParties();
 renderPacte();
 loadNews();

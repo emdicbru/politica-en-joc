@@ -114,7 +114,7 @@ const ACHIEVEMENTS = [
   { id: "duelista", name: "Duelista", desc: "Guanya un duel 1 vs 1 contra un amic." },
   { id: "diputat", name: "Escó propi", desc: "Arriba al nivell Diputat." },
   { id: "president", name: "La Moncloa", desc: "Arriba al nivell President." },
-  { id: "informat", name: "Votant informat", desc: "Supera els 8 capítols de la guia de l'Aprèn." },
+  { id: "informat", name: "Votant informat", desc: "Supera tots els capítols de la guia de l'Aprèn." },
 ];
 
 const Progress = {

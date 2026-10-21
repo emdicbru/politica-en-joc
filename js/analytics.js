@@ -56,7 +56,7 @@ function saveConsent(analytics) {
   store.set(CONSENT_KEY, { analytics: !!analytics, ts: Date.now() });
   closeConsent();
   if (analytics) enableAnalytics(); else disableAnalytics();
-  toast(analytics ? "Gràcies! Hem activat l'analítica." : "Entesos: sense analítica.");
+  toast("S'han desat les preferències de galetes.");
 }
 
 window.Track = (name, params) => {
@@ -75,21 +75,21 @@ function openConsent(settings = false) {
   const el = document.createElement("div");
   el.id = "consent";
   el.setAttribute("role", "dialog");
-  el.setAttribute("aria-label", "Preferències de cookies");
+  el.setAttribute("aria-label", "Preferències de galetes");
   el.innerHTML = `
     <div class="cs-body">
-      <b>Cookies i privadesa</b>
-      <p>Fem servir emmagatzematge tècnic imprescindible (per desar el teu progrés i la sessió). Si ho acceptes, també cookies d'<b>analítica</b> (Google Analytics) per saber quanta gent fa servir el web i millorar-lo. <b>No fem servir cookies publicitàries.</b> Detalls a la <a href="#legal/cookies">política de cookies</a>.</p>
+      <b>Galetes</b>
+      <p>Aquest lloc web utilitza emmagatzematge tècnic necessari per al seu funcionament i, amb el consentiment previ de la persona usuària, galetes d'analítica de Google Analytics per elaborar estadístiques d'ús. No s'utilitzen galetes publicitàries. Més informació a la <a href="#legal/cookies">Política de galetes</a>.</p>
       <div class="cs-settings" ${settings ? "" : "hidden"}>
-        <label class="cs-row"><span><b>Necessàries</b><small>Progrés, sessió i preferències. Sempre actives.</small></span><input type="checkbox" checked disabled></label>
-        <label class="cs-row"><span><b>Analítica</b><small>Mesura anònima de l'ús del web (Google Analytics).</small></span><input type="checkbox" id="cs-an" ${cur?.analytics ? "checked" : ""}></label>
+        <label class="cs-row"><span><b>Tècniques</b><small>Necessàries per al funcionament del lloc web. No es poden desactivar.</small></span><input type="checkbox" checked disabled></label>
+        <label class="cs-row"><span><b>Analítica</b><small>Estadístiques d'ús agregades (Google Analytics).</small></span><input type="checkbox" id="cs-an" ${cur?.analytics ? "checked" : ""}></label>
       </div>
     </div>
     <div class="cs-actions">
-      <button class="btn" data-cs="reject">Rebutja</button>
-      <button class="btn ghost" data-cs="settings" ${settings ? "hidden" : ""}>Configura</button>
-      <button class="btn ghost" data-cs="save" ${settings ? "" : "hidden"}>Desa la meva elecció</button>
-      <button class="btn primary" data-cs="accept">Accepta-ho tot</button>
+      <button class="btn" data-cs="reject">Rebutjar</button>
+      <button class="btn ghost" data-cs="settings" ${settings ? "hidden" : ""}>Configurar</button>
+      <button class="btn ghost" data-cs="save" ${settings ? "" : "hidden"}>Desar la selecció</button>
+      <button class="btn primary" data-cs="accept">Acceptar</button>
     </div>`;
   document.body.appendChild(el);
   document.body.classList.add("consent-open");

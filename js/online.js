@@ -173,9 +173,9 @@ function renderAccountBox() {
     $("[data-signout]", box).addEventListener("click", signOutNow);
     if (ready) {
       box.insertAdjacentHTML("beforeend", `<div class="account-tools">
-        <p class="muted">Les teves dades, sota el teu control (<a href="#legal/privacitat">Privadesa</a>).</p>
-        <button class="btn ghost" data-export>Descarrega les meves dades</button>
-        <button class="btn ghost danger" data-delete>Elimina el meu compte</button>
+        <p class="muted">Dades personals: es pot descarregar una còpia de les dades del compte o suprimir-lo. Més informació a la <a href="#legal/privacitat">Política de privadesa</a>.</p>
+        <button class="btn ghost" data-export>Descarregar les meves dades</button>
+        <button class="btn ghost danger" data-delete>Suprimir el compte</button>
       </div>`);
       $("[data-export]", box).addEventListener("click", exportMyData);
       $("[data-delete]", box).addEventListener("click", deleteMyAccount);
@@ -235,16 +235,16 @@ async function exportMyData() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  toast("Dades descarregades");
+  toast("S'ha descarregat la còpia de les dades.");
 }
 
 async function deleteMyAccount() {
-  if (!confirm("Vols eliminar el teu compte? S'esborraran el perfil, els temps del repte diari, els duels i la teva pertinença a lligues. No es pot desfer. El progrés d'aquest dispositiu es manté.")) return;
+  if (!confirm("Se suprimiran el compte i les dades associades: perfil, resultats del repte diari, duels i pertinença a lligues. Aquesta acció no es pot desfer. El progrés desat en aquest dispositiu no es veurà afectat.\n\nVoleu continuar?")) return;
   const uid = Online.user.uid;
   closeRoom();
   Progress.onSave = null;
   if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
-  toast("Eliminant el compte…");
+  toast("S'està suprimint el compte…");
   try {
     for (const k of dailyKeysSinceStart()) await F.deleteDoc(F.doc(db, "dailies", k, "entries", uid)).catch(() => {});
     const duels = await F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", uid), F.limit(500)));
@@ -261,14 +261,14 @@ async function deleteMyAccount() {
     }
   } catch (e) {
     console.warn(e);
-    toast("No s'ha pogut eliminar del tot. Torna-ho a provar o escriu-nos.");
+    toast("No s'ha pogut completar la supressió. Torneu-ho a provar o escriviu a l'adreça de contacte.");
     return;
   }
   cacheUser(null);
   Online.user = null;
   renderAccountBtn();
   refreshView();
-  toast("Compte eliminat.");
+  toast("El compte s'ha suprimit.");
 }
 
 async function renderLeaderboard() {

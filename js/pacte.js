@@ -164,7 +164,7 @@ function renderPacte() {
 
   const blocked = pollsBlocked();
   root.innerHTML = `
-    ${blocked ? `<div class="pc-blackout"><b>Enquestes ocultes</b><p>La llei electoral (LOREG, art. 69.7) prohibeix difondre enquestes durant els cinc dies previs a la votació i fins que es tanquin els col·legis. Pots seguir fent servir el teu escenari, que parteix del resultat del 23-J del 2023.</p></div>` : ""}
+    ${blocked ? `<div class="pc-blackout"><b>Enquestes no disponibles</b><p>D'acord amb l'article 69.7 de la Llei orgànica del règim electoral general, no es poden publicar ni difondre enquestes electorals durant els cinc dies anteriors a la votació. Fins al tancament dels col·legis electorals, el pactòmetre només permet treballar amb un escenari propi, que parteix dels resultats del 23 de juliol de 2023.</p></div>` : ""}
     <div class="pc-src" role="tablist" aria-label="Font dels escons">
       ${blocked ? "" : `<button class="pc-chip ${pacte.src === "avg" ? "on" : ""}" data-src="avg">Mitjana de les enquestes</button>
       ${POLL_SEATS.map((p, i) => `<button class="pc-chip ${pacte.src === String(i) ? "on" : ""}" data-src="${i}">${p.n}<small>${p.d}</small></button>`).join("")}`}
@@ -222,7 +222,7 @@ function renderPacte() {
         <b>${p.avg.toFixed(1).replace(".", ",")} %</b>
         <small>${p.min.toFixed(1).replace(".", ",")}–${p.max.toFixed(1).replace(".", ",")}</small>
       </div>`).join("")}</div>
-    <p class="src-note">Font: <a href="${POLL_SOURCE}" target="_blank" rel="noopener">Viquipèdia, recull d'enquestes</a> (consulta del ${POLL_UPDATED}). Els escons són estimacions de cada enquestadora; quan en donen un interval hem agafat el punt mitjà i hem ajustat el total a 350. La mitjana és simple (sense ponderar). Les enquestes no són pronòstics.</p>`}`;
+    <p class="src-note">Font: <a href="${POLL_SOURCE}" target="_blank" rel="noopener">Viquipèdia, recull d'enquestes</a> (consulta del ${POLL_UPDATED}). Les xifres d'escons són estimacions de cada empresa demoscòpica; quan s'expressen en forquilla, s'ha pres el valor central i el total s'ha ajustat a 350. La mitjana és aritmètica i no ponderada. Les enquestes no constitueixen un pronòstic.</p>`}`;
 
   $$("[data-src]", root).forEach((b) => b.addEventListener("click", () => {
     const v = b.dataset.src;
@@ -297,7 +297,7 @@ function renderNews() {
         <span class="nw-meta">${timeAgo(x.d)} <i>↗</i></span>
       </a></li>`).join("")}</ul>
     ${list.length > newsShown ? `<button class="btn ghost" id="news-more">Més titulars</button>` : ""}
-    <p class="src-note">Només mostrem el titular i l'enllaç: tot el contingut és dels mitjans i s'obre a la seva web. Titulars de política recollits dels seus RSS; última actualització: ${new Date(newsData.updated).toLocaleString("ca-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.</p>`;
+    <p class="src-note">Només es mostren el titular i l'enllaç a la publicació original; els continguts pertanyen als mitjans respectius. Titulars obtinguts dels canals RSS públics dels mitjans. Darrera actualització: ${new Date(newsData.updated).toLocaleString("ca-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.</p>`;
   $$("[data-nf]", root).forEach((b) => b.addEventListener("click", () => { newsFilter = b.dataset.nf; newsShown = 24; renderNews(); }));
   $("#news-more", root)?.addEventListener("click", () => { newsShown += 24; renderNews(); });
 }

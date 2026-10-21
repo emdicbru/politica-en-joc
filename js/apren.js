@@ -403,7 +403,7 @@ function renderAprenHub() {
       <div class="ap-hero-copy">
         <p class="kicker">Guia del 29N</p>
         <h1 class="page-title">Aprèn</h1>
-        <p class="lede">Tot el que cal saber per votar amb criteri: 8 capítols curts, amb exemples per tocar i un petit test al final de cadascun.</p>
+        <p class="lede">Tot el que cal saber per votar amb criteri: el context polític i les regles del joc, en ${AP_CHAPTERS.length} capítols curts amb exemples per tocar i un petit test al final de cadascun.</p>
         <p class="ap-count"><span class="dot-live"></span> Falten <b id="cd-d">--</b> dies <b id="cd-h">--</b> h <b id="cd-m">--</b> min <b id="cd-s">--</b> s<span class="ap-count-tail"> per obrir les urnes</span></p>
       </div>
       <aside class="ap-prog card">
@@ -417,8 +417,10 @@ function renderAprenHub() {
       </aside>
     </header>
 
-    <h2 class="ap-h2"><span>La guia</span> en 8 capítols</h2>
-    <div class="ap-chapters">${AP_CHAPTERS.map((c) => {
+    ${[[1, "El context polític", "D'on venim, què ha passat aquesta legislatura, què hi ha en joc i les ideologies."], [2, "Les regles del joc", "Com es vota, com es reparteixen els escons i com es forma govern."]].map(([part, title, sub]) => `
+    <h2 class="ap-h2"><span>Part ${part}</span> · ${title}</h2>
+    <p class="ap-h2-sub">${sub}</p>
+    <div class="ap-chapters">${AP_CHAPTERS.filter((c) => c.part === part).map((c) => {
       const score = learnData()[c.slug];
       const status = score === undefined ? `<span class="ap-st new">${c.mins} min</span>` : score >= 2 ? `<span class="ap-st ok">✓ ${score}/3</span>` : `<span class="ap-st retry">${score}/3 · repeteix</span>`;
       return `<a class="ap-ch ${score !== undefined && score >= 2 ? "is-done" : ""}" href="#apren/${c.slug}" style="--tone:${c.tone};--i:${c.n}">
@@ -427,7 +429,7 @@ function renderAprenHub() {
         <span class="ap-ch-body"><b>${esc(c.title)}</b><small>${esc(c.short)}</small></span>
         ${status}
       </a>`;
-    }).join("")}</div>
+    }).join("")}</div>`).join("")}
 
     <h2 class="ap-h2"><span>Eines</span> per entendre el 29N</h2>
     <div class="ap-tools">${AP_TOOLS.map((t) => `
@@ -467,7 +469,7 @@ function renderChapter(ch) {
     <header class="ap-ch-head">
       <div class="ap-ch-headart">${ch.art}</div>
       <div>
-        <p class="kicker">Capítol ${ch.n} · ${ch.mins} min de lectura</p>
+        <p class="kicker">Part ${ch.part} · Capítol ${ch.n} · ${ch.mins} min</p>
         <h1 class="ap-title">${esc(ch.title)}</h1>
         <p class="ap-lead">${rich(ch.lead)}</p>
       </div>

@@ -524,7 +524,7 @@ function renderFace(A, B) {
         <div class="dist"><div class="dist-bar"><i style="width:${dist}%"></i></div><b>${dist}/100</b></div>
         <p class="muted">${dist < 25 ? "Molt a prop en el mapa ideològic." : dist < 55 ? "Posicions diferents però amb punts de contacte." : "Posicions molt allunyades."}</p>
         ${axis("Eix esquerra–dreta", "Esquerra", "Dreta", A.x, B.x)}
-        ${axis("Eix territorial", "Centralisme", "Sobiranisme", 10 - A.y, 10 - B.y)}
+        ${axis("Eix territorial", "Centralisme", "Sobiranisme", A.y, B.y)}
       </div>
       <div class="face-card">
         <h4>Escons 2019 → 2023</h4>

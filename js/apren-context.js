@@ -36,6 +36,11 @@ GLOSSARY.push(
   { w: "15-M", d: "Moviment de protesta iniciat el 15 de maig del 2011 contra la gestió de la crisi econòmica i la corrupció." },
   { w: "PRESUMPCIÓ D'INNOCÈNCIA", d: "Dret de tota persona a ser considerada innocent mentre una sentència ferma no la declari culpable." },
 );
+{
+  const uniq = [...new Map(GLOSSARY.map((g) => [apNorm(g.w), g])).values()];
+  GLOSSARY.length = 0;
+  GLOSSARY.push(...uniq);
+}
 GLOSSARY.sort((a, b) => a.w.localeCompare(b.w, "ca"));
 AP_TOOLS.find((t) => t.slug === "diccionari").text = `${GLOSSARY.length} conceptes, explicats fàcil.`;
 

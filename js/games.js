@@ -184,8 +184,8 @@ function yearRound(ev, rng) {
     explain: ev.d, recapQ: ev.t, recapA: String(ev.y),
   };
 }
-function figureRound(f, rng) {
-  const others = sample(FIGURES.filter((x) => x !== f), 3, rng);
+function figureRound(f, rng, pool = FIGURES) {
+  const others = sample(pool.filter((x) => x !== f), 3, rng);
   const { options, correctIndex } = prepOptions([f, ...others].map((x) => x.name), rng);
   return {
     label: "Qui és?",
@@ -374,15 +374,15 @@ registerGame({
 registerGame({
   id: "majoria",
   cat: "parlament",
-  tagline: "Arriba a 176 amb els escons reals del Congrés.",
+  tagline: "Arriba a la majoria amb els escons reals del Congrés i del Parlament.",
   kicker: "Aritmètica parlamentària",
   title: "Fes majoria",
   color: "#17173d",
   level: 3,
-  meta: "7 missions",
+  meta: "10 missions",
   icon: icon(`<path d="M3 19a9 9 0 0118 0M7 19a5 5 0 0110 0"/><circle cx="12" cy="19" r="1"/>`),
-  desc: "Dos congressos reals, el del 2019 i el del 2023. Reconstrueix investidures, troba les abstencions decisives i resol trencaclosques de pactes escó a escó.",
-  rules: ["2 legislatures", "7 missions", "2 intents per missió", "Majoria: 176"],
+  desc: "Els congressos del 2019 i del 2023 i el Parlament de Catalunya del 2024. Reconstrueix investidures, troba les abstencions decisives i resol trencaclosques de pactes escó a escó.",
+  rules: ["Congrés i Parlament", "10 missions", "2 intents per missió", "Majoria: 176 / 68"],
   start(ctx) {
     let m = 0, score = 0, firstTry = 0;
     const results = [];
@@ -398,6 +398,7 @@ registerGame({
       const mission = MAJORITY_MISSIONS[m];
       const congress = CONGRESS[mission.congress];
       const parties = congress.parties;
+      const TOTAL = congress.total || 350, MAJ = congress.majority || 176;
       const sel = new Set();
       let attempts = 0, locked = false;
       ctx.setHud("m", `${m + 1}/${N}`);
@@ -412,7 +413,7 @@ registerGame({
           ${progressDots(N, results, m)}
           <div class="hemi-wrap">
             ${hemicycleSVG(parties)}
-            <div class="hemi-center"><strong data-sum>0</strong><small>escons de 176</small></div>
+            <div class="hemi-center"><strong data-sum>0</strong><small>escons de ${MAJ}</small></div>
           </div>
           <div class="seat-meter"><div class="fill" style="width:0"></div><span class="mark"></span></div>
           <div class="party-chips">${parties.map((p) =>
@@ -434,10 +435,10 @@ registerGame({
         $$("circle", wrap).forEach((c) => { c.style.opacity = sel.has(c.dataset.p) ? 1 : 0.16; });
         $$(".party-chip", wrap).forEach((c) => c.classList.toggle("on", sel.has(c.dataset.id)));
         $("[data-sum]", wrap).textContent = sum;
-        $(".hemi-center", wrap).classList.toggle("win", sum >= 176);
+        $(".hemi-center", wrap).classList.toggle("win", sum >= MAJ);
         const fill = $(".seat-meter .fill", wrap);
-        fill.style.width = `${(sum / 350) * 100}%`;
-        fill.classList.toggle("win", sum >= 176);
+        fill.style.width = `${(sum / TOTAL) * 100}%`;
+        fill.classList.toggle("win", sum >= MAJ);
         return sum;
       }
       update();
@@ -460,7 +461,7 @@ registerGame({
         if (mission.type === "impossible") ok = kind === "impossible";
         else if (kind === "impossible") ok = false;
         else if (mission.type === "set") ok = sel.size === mission.answer.length && mission.answer.every((id) => sel.has(id));
-        else ok = sum >= 176 && sel.size === mission.min;
+        else ok = sum >= MAJ && sel.size === mission.min;
 
         attempts++;
         fb.innerHTML = "";
@@ -609,8 +610,10 @@ registerGame({
 // =========================================================
 // 5. VERIFICADOR (fet o fals)
 // =========================================================
-function makeStatement(rng = Math.random) {
+function makeStatement(rng = Math.random, key = null) {
   const pick = (arr) => arr[Math.floor(rng() * arr.length)];
+  // Al repte diari, només el contingut disponible aquell dia (perquè un repte ja començat no canviï)
+  const P = (arr) => (key ? arr.filter((x) => !x.since || x.since <= key) : arr);
   const t = rng() < 0.5;
   const gens = [
     () => {
@@ -620,7 +623,7 @@ function makeStatement(rng = Math.random) {
       return { text: `${p.name} elegeix ${n} ${n === 1 ? "diputat" : "diputats"} el 29N.`, truth: n === p.seats, exp: `${p.name} n'elegeix ${p.seats}.` };
     },
     () => {
-      const e = pick(EVENTS);
+      const e = pick(P(EVENTS));
       const y = t ? e.y : e.y + pick([-5, -3, -2, -1, 1, 2, 3, 5]);
       return { text: `${e.t}: l'any ${y}.`, truth: y === e.y, exp: `Va ser el ${e.y}. ${e.d}` };
     },
@@ -636,7 +639,7 @@ function makeStatement(rng = Math.random) {
       return { text: `${p.name} va obtenir ${n} ${n === 1 ? "escó" : "escons"} al Congrés el 23-J.`, truth: n === p.seats, exp: `${p.name} en va obtenir ${p.seats}.` };
     },
     () => {
-      const a = pick(ACRONYMS);
+      const a = pick(P(ACRONYMS));
       return { text: `${a.s} vol dir «${t ? a.a : pick(a.f)}».`, truth: t, exp: `${a.s}: ${a.a}.` };
     },
     () => {
@@ -652,16 +655,22 @@ function makeStatement(rng = Math.random) {
       return { text: `«${q.q}» és una frase de ${author}.`, truth: t, exp: `És de ${q.a}. ${q.c}` };
     },
     () => {
-      const f = pick(FIGURES);
-      const other = pick(FIGURES.filter((x) => x !== f && x.id !== f.id));
+      const f = pick(P(FIGURES));
+      const other = pick(P(FIGURES).filter((x) => x !== f && x.id !== f.id));
       const clue = t ? f.clues[3] : other.clues[3];
       return { text: `Sobre ${f.name}: «${clue}»`, truth: t, exp: t ? `Cert: ${f.clues[3]}` : `Fals. Això correspon a ${other.name}.` };
     },
     () => {
-      const q = pick(QUESTIONS);
+      const q = pick(P(QUESTIONS));
       const ans = t ? q.opts[0] : pick(q.opts.slice(1));
       return { text: `${q.q} → ${ans}`, truth: t, exp: q.exp };
     },
+    ...(key && key < EXTRA_SINCE ? [] : [() => {
+      const p = pick(CONGRESS.cat2024.parties);
+      let n = p.seats;
+      if (!t) { n = p.seats + pick([-5, -3, -2, -1, 1, 2, 3, 6]); if (n < 1) n = p.seats + 2; }
+      return { text: `${p.name} va obtenir ${n} ${n === 1 ? "escó" : "escons"} a les eleccions al Parlament de Catalunya del 2024.`, truth: n === p.seats, exp: `${p.name} en va obtenir ${p.seats}, de 135.` };
+    }]),
   ];
   return pick(gens)();
 }
@@ -802,14 +811,14 @@ registerGame({
 registerGame({
   id: "any",
   cat: "historia",
-  tagline: "De Cadis al 29N: clava l'any exacte.",
+  tagline: "Dels Segadors al 29N: clava l'any exacte.",
   kicker: "Memòria històrica",
   title: "Endevina l'any",
   color: "#f2b600",
   level: 2,
   meta: "8 esdeveniments",
   icon: icon(`<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>`),
-  desc: "De la Constitució de Cadis al 29N. Situa cada fet en l'any exacte. Com més a prop, més punts, i encertar-lo de ple té premi.",
+  desc: "De la Guerra dels Segadors al 29N, passant per la història de Catalunya i d'Espanya. Situa cada fet en l'any exacte. Com més a prop, més punts, i encertar-lo de ple té premi.",
   rules: ["8 rondes", "Any exacte: 150 punts", "Els punts baixen per cada any d'error", "Fletxes ← →"],
   start(ctx) {
     const ROUNDS = 8;
@@ -1124,8 +1133,8 @@ registerGame({
   level: 1,
   meta: "3 vides",
   icon: icon(`<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>`),
-  desc: "Quina província elegeix més diputats? Quin partit va treure més escons? Què va passar abans? Encadena encerts fins que perdis les tres vides.",
-  rules: ["3 vides", "3 tipus de duel", "Opció d'empat", "Tecles ← ↓ →"],
+  desc: "Quina província elegeix més diputats? Quin partit va treure més escons al Congrés o al Parlament? Què va passar abans? Encadena encerts fins que perdis les tres vides.",
+  rules: ["3 vides", "4 tipus de duel", "Opció d'empat", "Tecles ← ↓ →"],
   start(ctx) {
     let lives = 3, hits = 0, streak = 0, bestStreak = 0, busy = false, pickFn = null;
     const recap = [];
@@ -1140,7 +1149,11 @@ registerGame({
     next();
 
     function duel() {
-      const mode = pick(["prov", "prov", "party", "event"]);
+      const mode = pick(["prov", "prov", "party", "event", "cat"]);
+      if (mode === "cat") {
+        const [a, b] = sample(CONGRESS.cat2024.parties, 2);
+        return { mode, label: "Parlament de Catalunya · 2024", q: "Quin partit va treure més escons al Parlament?", a: { name: a.name, v: a.seats, show: a.seats }, b: { name: b.name, v: b.seats, show: b.seats }, tie: true, unit: "escons" };
+      }
       if (mode === "event") {
         const [a, b] = sample(EVENTS.filter((e, i, arr) => arr.findIndex((x) => x.y === e.y) === i), 2);
         return { mode, label: "Història", q: "Què va passar abans?", a: { name: a.t, v: a.y, show: a.y }, b: { name: b.t, v: b.y, show: b.y }, lowerWins: true, tie: false, unit: "" };

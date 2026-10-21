@@ -185,8 +185,8 @@ registerGame({
 const binary = (label, prompt, options, correctIndex, explainText, recapQ) =>
   ({ label, prompt, options, correctIndex, binary: true, explain: explainText, recapQ, recapA: options[correctIndex] });
 
-function tfItem(rng) {
-  const s = makeStatement(rng);
+function tfItem(rng, key = null) {
+  const s = makeStatement(rng, key);
   return binary("Cert o fals?", `<div class="q-text">${esc(s.text)}</div>`, ["✕ Fals", "✓ Cert"], s.truth ? 1 : 0, s.exp, s.text);
 }
 function matchItem(rng) {
@@ -199,7 +199,7 @@ function matchItem(rng) {
     ["✕ No match", "♥ Match"], yes ? 1 : 0,
     yes ? `${a.name} i «${t}» fan match.` : `${a.name} i «${t}» no fan match.`, `${a.name} + ${t}`);
 }
-function versusItem(rng) {
+function versusItem(rng, key = null) {
   const mode = ["prov", "party", "event"][Math.floor(rng() * 3)];
   const two = (arr, ok) => {
     for (let i = 0; i < 50; i++) {
@@ -209,7 +209,7 @@ function versusItem(rng) {
     return sample(arr, 2, rng);
   };
   if (mode === "event") {
-    const [a, b] = two(EVENTS, (x, y) => x.y !== y.y);
+    const [a, b] = two(EVENTS.filter((e) => !key || !e.since || e.since <= key), (x, y) => x.y !== y.y);
     return binary("Què va passar abans?", `<div class="q-text small">Toca el fet més antic</div>`,
       [a.t, b.t], a.y < b.y ? 0 : 1, `${a.t}: ${a.y}. ${b.t}: ${b.y}.`, `${a.t} / ${b.t}`);
   }
@@ -225,16 +225,18 @@ function versusItem(rng) {
 
 function dailyItems(key) {
   const rng = seededRng(hashString(`daily-${key}`));
-  const easy = QUESTIONS.filter((q) => !q.hard), hard = QUESTIONS.filter((q) => q.hard);
+  const avail = (arr) => arr.filter((x) => !x.since || x.since <= key);
+  const Q = avail(QUESTIONS);
+  const easy = Q.filter((q) => !q.hard), hard = Q.filter((q) => q.hard);
   const items = [
     questionRound(sample(easy, 1, rng)[0], rng),
-    tfItem(rng),
+    tfItem(rng, key),
     matchItem(rng),
     quoteRound(pickQuote(rng), rng),
-    versusItem(rng),
-    yearRound(sample(EVENTS, 1, rng)[0], rng),
-    figureRound(sample(FIGURES, 1, rng)[0], rng),
-    tfItem(rng),
+    versusItem(rng, key),
+    yearRound(sample(avail(EVENTS), 1, rng)[0], rng),
+    figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES)),
+    tfItem(rng, key),
     matchItem(rng),
     questionRound(sample(hard, 1, rng)[0], rng),
   ];

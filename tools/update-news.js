@@ -46,7 +46,7 @@ function parse(xml, feed) {
     const link = tag(b, "link") || (b.match(/<link[^>]*href="([^"]+)"/i) || [])[1] || tag(b, "guid");
     const date = new Date(tag(b, "pubDate") || tag(b, "dc:date") || tag(b, "published") || tag(b, "updated"));
     return { t: tag(b, "title"), u: link, s: feed.s, d: date.getTime() };
-  }).filter((x) => x.t && /^https?:\/\//.test(x.u) && Number.isFinite(x.d));
+  }).filter((x) => x.t && /^https?:\/\//.test(x.u) && Number.isFinite(x.d) && !/[^.]\.$/.test(x.t)); // els peus de foto acaben amb punt
 }
 
 (async () => {

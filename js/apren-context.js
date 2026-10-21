@@ -209,6 +209,7 @@ const AP_ISSUES = [
   { k: "clima", label: "Energia i clima", why: "L'apagada del 28 d'abril del 2025 va reobrir el debat sobre el model energètic: renovables, centrals nuclears i interconnexions." },
   { k: "ext", label: "Europa i món", why: "La guerra d'Ucraïna, Gaza, la despesa en defensa que reclama l'OTAN i la relació amb els Estats Units marquen la política exterior." },
 ];
+const AP_ISSUE_NEWS = { hab: "habitatge", ter: "territori", eco: "economia", treb: "economia", imm: "immigracio", clima: "energia", ext: "internacional" };
 const AP_FAMILIES = [
   { t: "Socialdemocràcia", c: "#e3101f", d: "Economia de mercat amb un estat del benestar fort: sanitat, educació i pensions públiques, finançades amb impostos progressius.", p: ["psoe"] },
   { t: "Esquerra alternativa", c: "#e0306f", d: "Més pes de l'Estat i dels serveis públics, i defensa de l'ecologisme, el feminisme i els drets socials. Inclou tradicions comunistes i ecosocialistes.", p: ["fa", "podemos"] },
@@ -290,9 +291,13 @@ Object.assign(AP_WIDGETS, {
         const i = AP_ISSUES.find((x) => x.k === cur);
         const rows = PARTIES.filter((p) => PARTY_ARGS[p.id]?.[cur]).map((p) => `
           <div class="ap-iss-row" style="--pc:${p.color}"><b>${p.sig}</b><p>${esc(PARTY_ARGS[p.id][cur])}</p></div>`).join("");
+        const news = typeof newsFor === "function" ? newsFor({ topic: AP_ISSUE_NEWS[cur], days: 10, n: 4 }) : [];
         $(".ap-iss-body", el).innerHTML = `<p class="ap-iss-why"><b>Per què importa.</b> ${esc(i.why)}</p><div class="ap-iss-rows">${rows}</div>
-          <p class="ap-note">Resum dels programes electorals del 2023 i de posicions públiques. Els programes del 29N poden introduir canvis.</p>`;
+          <p class="ap-note">Resum dels programes electorals del 2023 i de posicions públiques. Els programes del 29N poden introduir canvis.</p>
+          ${news.length ? `<div class="ap-iss-news"><h5>Als titulars aquests dies</h5><div class="nt-row">${news.map((x) => nwCard(x, "mini")).join("")}</div></div>` : ""}`;
       };
+      const onNews = () => { if (!el.isConnected) { document.removeEventListener("news:update", onNews); return; } draw(); };
+      document.addEventListener("news:update", onNews);
       $$("[data-k]", el).forEach((b) => b.addEventListener("click", () => {
         cur = b.dataset.k;
         $$("[data-k]", el).forEach((x) => x.classList.toggle("on", x === b));

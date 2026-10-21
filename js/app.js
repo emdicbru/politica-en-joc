@@ -467,6 +467,7 @@ function renderCompare() {
         <div><dt>Aliances</dt><dd>${PARTY_EXTRA[p.id].allies}</dd></div>
         <div><dt>Competeix amb</dt><dd>${PARTY_EXTRA[p.id].vs}</dd></div>` : ""}
       </dl>
+      <div class="cmp-news" data-party="${p.id}" style="--pc:${p.color}"></div>
     </article>`;
   $("#cmp").innerHTML = col(A, "A") + `<span class="cmp-vs">VS</span>` + col(B, "B");
   const seg = $("#cmp-seg");
@@ -481,6 +482,7 @@ function renderCompare() {
     }));
   }
   renderFace(A, B);
+  if (typeof fillPartyNews === "function") fillPartyNews();
   const argA = PARTY_ARGS[A.id] || {}, argB = PARTY_ARGS[B.id] || {};
   const cell = (p, txt) => `<div class="args-cell" style="--pc:${p.color}"><b>${p.sig}</b>${txt ? `<p>${txt}</p>` : `<p class="muted">Sense proposta destacada en aquest tema.</p>`}</div>`;
   $("#args").innerHTML = `

@@ -1,0 +1,154 @@
+{
+  "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
+  "updated": "2026-10-22",
+  "questions": [
+    {
+      "d": "2026-10-22",
+      "t": "campanya",
+      "q": "Qui serà la número dos de la llista del PP per Madrid, darrere d'Alberto Núñez Feijóo?",
+      "a": [
+        "Cayetana Álvarez de Toledo",
+        "Borja Sémper",
+        "Isabel Díaz Ayuso",
+        "Cuca Gamarra"
+      ],
+      "exp": "Feijóo encapçala la llista per Madrid. Cayetana Álvarez de Toledo n'és la número dos i Borja Sémper, el número tres. Al Congrés les llistes són tancades i bloquejades: es vota la llista sencera i en aquest ordre.",
+      "u": "https://naciodigital.cat/politica/el-pp-situa-alvarez-de-toledo-i-borja-semper-com-a-numeros-dos-i-tres-de-la-llista-de-feijoo-per-madrid-2026-10-22.html",
+      "ap": "dia-d"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "campanya",
+      "q": "Què ha anunciat l'expresident Felipe González que votarà el 29N?",
+      "a": [
+        "Votarà en blanc",
+        "Votarà el PSOE",
+        "Votarà el PP",
+        "No anirà a votar"
+      ],
+      "exp": "Ha dit que votarà en blanc perquè no veu «res que el representi». El vot en blanc és un vot vàlid, però no va a cap candidatura.",
+      "u": "https://www.20minutos.es/nacional/felipe-gonzalez-anuncia-que-votara-blanco-las-elecciones-29n-no-veo-nada-que-me-represente_7052112_0.html",
+      "ap": "blanc-nul"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "campanya",
+      "q": "Qui serà el portaveu de la campanya de Frente Amplio?",
+      "a": [
+        "Pablo Bustinduy",
+        "Ada Colau",
+        "Ernest Urtasun",
+        "Ione Belarra"
+      ],
+      "exp": "El ministre Pablo Bustinduy serà el portaveu de campanya de Frente Amplio, la candidatura que agrupa bona part de l'esquerra alternativa.",
+      "u": "https://www.20minutos.es/nacional/pablo-bustinduy-sera-portavoz-campana-frente-amplio-para-29-n_7051984_0.html"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "territori",
+      "q": "Què ha fet Toni Comín en tornar a Espanya després de ser amnistiat?",
+      "a": [
+        "Ha recollit l'acta d'eurodiputat després de prometre la Constitució",
+        "S'ha presentat com a cap de llista de Junts al Congrés",
+        "Ha anunciat que deixa la política",
+        "Ha demanat l'indult al Govern"
+      ],
+      "exp": "Ha promès la Constitució «per imperatiu legal» i ha recollit l'acta d'eurodiputat. Ho ha pogut fer perquè ja se li aplica l'amnistia.",
+      "u": "https://www.europapress.es/nacional/noticia-toni-comin-junts-recoge-acta-eurodiputado-madrid-prometer-constitucion-imperativo-legal-20261022134708.html",
+      "ap": "legislatura"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "campanya",
+      "q": "Per què el PSOE estudia demandar el PP?",
+      "a": [
+        "Per un vídeo fet amb intel·ligència artificial que posa paraules falses a dirigents socialistes",
+        "Per haver publicat una enquesta falsa",
+        "Per haver copiat el seu lema de campanya",
+        "Per haver repartit propaganda dins d'un col·legi electoral"
+      ],
+      "exp": "El PP ha difós un vídeo fet amb IA en què figures com Begoña Gómez o José Luis Rodríguez Zapatero semblen admetre irregularitats. El PSOE ho considera una suplantació d'identitat.",
+      "u": "https://www.eldiario.es/politica/psoe-estudia-demandar-pp-video-hecho-ia-suplantan-identidad-begona-gomez-zapatero-montse-minguez_1_13606707.html"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "internacional",
+      "q": "Amb quina dirigent del PP s'ha reunit el president argentí Javier Milei durant la seva visita a Madrid?",
+      "a": [
+        "Isabel Díaz Ayuso",
+        "Cuca Gamarra",
+        "Cayetana Álvarez de Toledo",
+        "Dolors Montserrat"
+      ],
+      "exp": "La presidenta de la Comunitat de Madrid ha defensat la trobada. Durant la visita, Milei va titllar Pedro Sánchez de «dictador», i la polèmica ha marcat la precampanya.",
+      "u": "https://www.lavanguardia.com/local/madrid/20261022/11665295/ayuso-defiende-reunion-milei-exige-le-respete-salido-urnas-herriko-taberna.html"
+    },
+    {
+      "d": "2026-10-20",
+      "t": "justicia",
+      "q": "Què ha fet el Tribunal Suprem amb Oriol Junqueras, Raül Romeva i altres condemnats pel procés?",
+      "a": [
+        "Els ha aplicat l'amnistia",
+        "Els ha tornat a condemnar per desobediència",
+        "Els ha prohibit presentar-se a les eleccions",
+        "Ha portat el cas al Tribunal Europeu de Drets Humans"
+      ],
+      "exp": "Després de dos anys de resistència, el Suprem ha aplicat la llei d'amnistia, que el Tribunal Constitucional havia avalat el 2025.",
+      "u": "https://www.infolibre.es/politica/supremo-obedece-anos-resistencia-aplica-amnistia-marcado-legislatura_1_2238754.html",
+      "ap": "legislatura"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "politica",
+      "q": "Què ha passat a la direcció de Podemos a l'Aragó?",
+      "a": [
+        "Ha dimitit per desacords amb la direcció estatal",
+        "S'ha integrat a Frente Amplio",
+        "L'ha expulsada la direcció estatal",
+        "Ha guanyat unes primàries contra Ione Belarra"
+      ],
+      "exp": "El coordinador general i la direcció aragonesa han dimitit per desacords amb la direcció estatal. Ara el partit a l'Aragó el gestiona una gestora.",
+      "u": "https://www.elmundo.es/aragon/2026/10/22/6ad9e5d0e85ece3f758b457e.html"
+    },
+    {
+      "d": "2026-10-21",
+      "t": "internacional",
+      "q": "Per què els Estats Units han impedit que Ada Colau entri a Puerto Rico?",
+      "a": [
+        "Pel seu activisme propalestí i la participació en la flotilla cap a Gaza",
+        "Perquè no tenia el passaport en regla",
+        "Per una condemna judicial a Espanya",
+        "Perquè és candidata a les eleccions"
+      ],
+      "exp": "El govern de Donald Trump ho vincula al seu activisme propalestí i a la flotilla humanitària cap a Gaza. Colau ho atribueix a motius ideològics.",
+      "u": "https://www.infolibre.es/politica/estados-unidos-veta-entrada-puerto-rico-ada-colau-entrevista-activismo_1_2238803.html"
+    },
+    {
+      "d": "2026-10-22",
+      "t": "campanya",
+      "q": "Què ha decidit la Junta Electoral Central sobre una nova denúncia del PP contra Pedro Sánchez?",
+      "a": [
+        "No obrir-li expedient, però recordar-li el deure de neutralitat",
+        "Multar-lo",
+        "Prohibir-li fer mítings",
+        "Obrir un expedient a tot el Govern"
+      ],
+      "exp": "La JEC ha descartat obrir-li un altre expedient, però li ha recordat que, com a president, ha de mantenir la neutralitat institucional durant el procés electoral.",
+      "u": "https://www.europapress.es/nacional/noticia-jec-descarta-expedientar-nuevo-sanchez-declaraciones-bruselas-le-ruega-neutralidad-20261022164035.html",
+      "ap": "campanya"
+    },
+    {
+      "d": "2026-10-21",
+      "t": "politica",
+      "q": "Què va passar a la Corunya durant un acte de Santiago Abascal?",
+      "a": [
+        "Hi va haver aldarulls i càrregues policials contra manifestants que hi protestaven",
+        "Es va suspendre per una amenaça de bomba",
+        "Abascal hi va presentar el programa electoral de Vox",
+        "Hi va assistir el president de la Xunta"
+      ],
+      "exp": "La policia va carregar contra manifestants que protestaven davant l'acte. Els aldarulls han obert un debat sobre l'actuació de la Delegació del Govern.",
+      "u": "https://www.elmundo.es/espana/2026/10/21/6ad894f4e4d4d85a288b4578.html"
+    }
+  ]
+}

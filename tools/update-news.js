@@ -23,8 +23,9 @@ const FEEDS = [
 // Als feeds generals només es queden els titulars de política i eleccions
 const POLITICS = /elecci|electoral|29-?n|congreso|congr[eé]s|senado|senat|gobierno|govern|sánchez|sanchez|feijóo|feijoo|abascal|\bpp\b|psoe|vox|sumar|podemos|erc\b|junts|bildu|pnv|bng|amnist|investidura|moci[oó]n|presupuestos|pressupostos|partido|partit|ministr|diputad|encuesta|enquesta|puigdemont|illa|mazón|ayuso|colau|rufián|rufian|campaña|campanya|urnas|urnes|votaci|legislat/i;
 
-const MAX_PER_SOURCE = 8;
-const MAX_AGE_DAYS = 10;
+const MAX_PER_SOURCE = 20;
+const MAX_AGE_DAYS = 14; // els titulars s'acumulen entre execucions: el termòmetre de Notícies en mostra l'evolució
+const MAX_ITEMS = 900;
 
 const decode = (s) => s
   .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -65,14 +66,18 @@ function parse(xml, feed) {
       return [];
     }
   }));
+  // Es conserven els titulars desats a les execucions anteriors que encara no han caducat
+  const out = path.join(__dirname, "..", "data", "news.json");
+  let prev = [];
+  try { prev = JSON.parse(fs.readFileSync(out, "utf8")).items || []; } catch { /* primera execució */ }
+  prev = prev.filter((x) => now - x.d < MAX_AGE_DAYS * 864e5);
   const seen = new Set();
-  const items = results.flat().sort((a, b) => b.d - a.d).filter((x) => {
+  const items = [...results.flat(), ...prev].sort((a, b) => b.d - a.d).filter((x) => {
     const k = x.u.split("?")[0];
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
-  }).slice(0, 120);
-  const out = path.join(__dirname, "..", "data", "news.json");
+  }).slice(0, MAX_ITEMS);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify({ updated: now, items }));
   console.log("Desat", items.length, "titulars a", out);

@@ -1,0 +1,30 @@
+name: Genera el quiz de l'actualitat
+# Un cop al dia, amb GitHub Models (capa gratuïta, amb el GITHUB_TOKEN; sense claus ni targeta).
+# El repositori és públic, així que GitHub Actions tampoc no té cost. Si s'arriba al límit gratuït, simplement no genera res.
+on:
+  schedule:
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  models: read
+jobs:
+  quiz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/update-quiz.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Desa el quiz si ha canviat
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add data/quiz.json
+          git diff --staged --quiet && exit 0
+          git commit -m "Quiz de l'actualitat"
+          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 5; done
+          exit 1

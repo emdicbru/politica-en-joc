@@ -11,7 +11,7 @@ const CTL_ROLES = {
   propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
 };
 // Què cal per veure cada pestanya
-const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, prev: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, equip: 4 };
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, errors: 1, prev: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, equip: 4 };
 let ctlRoleCache = { email: null, role: undefined, loading: false };
 function ctlRole() {
   const email = window.Online?.user?.email?.toLowerCase();
@@ -148,7 +148,7 @@ function renderControl(fromLive = false) {
   for (let i = todo.length - 1; i >= 0; i--) if (todo[i].tab && !ctlCan(CTL_TAB_ROLE[todo[i].tab] || 3)) todo.splice(i, 1);
   const changed = ctlDraft ? ctlChanges() : [];
   const dot = (keys) => (changed.some((x) => keys.some((k) => x.startsWith(k))) ? `<i class="ctl-dot"></i>` : "");
-  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
+  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["errors", "🐞 Errors", ctlRpt.list && ctlRpt.list.some((r) => r.status === "nou") ? `<i class="ctl-dot"></i>` : ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
   TABS.splice(1, 0, ...(ctlCan(4) ? [["equip", "👥 Equip", ""]] : []));
   const allowed = TABS.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3));
   TABS.length = 0; TABS.push(...allowed);
@@ -262,6 +262,8 @@ function renderControl(fromLive = false) {
 
     ${panel("equip", tab === "equip" ? ctlTeamHtml() : "")}
 
+    ${panel("errors", tab === "errors" ? ctlRptHtml() : "")}
+
     ${panel("notif", ctlNotifHtml())}
 
     ${panel("ajuda", `
@@ -286,6 +288,7 @@ function renderControl(fromLive = false) {
   if (tab === "usuaris") ctlStatsBind(root);
   if (tab === "noticies") ctlNewsBind(root);
   if (tab === "equip") ctlTeamBind(root);
+  if (tab === "errors") ctlRptBind(root);
   ctlLock(root);
   $$("[data-tab]", root).forEach((t) => t.addEventListener("click", () => { sessionStorage.setItem("ctl-tab", t.dataset.tab); renderControl(); window.scrollTo({ top: 0 }); }));
   const redraw = () => renderControl();
@@ -511,6 +514,7 @@ const CTL_LOCKS = [
   ["[data-pdiari], [data-phora]", 3],
   ["[data-custats]", 3],
   ["[data-news-redo]", 2],
+  ["[data-rpt-set], [data-rpt-del]", 2],
 ];
 function ctlLock(root) {
   CTL_LOCKS.forEach(([sel, n]) => {
@@ -578,5 +582,49 @@ function ctlTeamBind(root) {
   $$("[data-team-del]", root).forEach((b) => b.addEventListener("click", async () => {
     if (!confirm(`${b.dataset.teamDel} ja no podrà entrar al Centre de control. Continuar?`)) return;
     if (await O.staffRemove(b.dataset.teamDel)) { toast("Accés retirat"); ctlTeam.list = null; renderControl(true); }
+  }));
+}
+
+// ---------- Errors: els avisos que envia la gent («Avisa d'un error», report.js) ----------
+const ctlRpt = { list: null, loading: false, filter: "nou" };
+async function ctlRptLoad() {
+  if (ctlRpt.loading) return;
+  ctlRpt.loading = true;
+  ctlRpt.list = await window.Online.reportList();
+  ctlRpt.loading = false;
+  if (location.hash.startsWith("#control")) renderControl(true);
+}
+function ctlRptHtml() {
+  if (!ctlRpt.list) { ctlRptLoad(); return `<div class="card"><p class="muted">Carregant els avisos…</p></div>`; }
+  const L = ctlRpt.list;
+  const n = (s) => L.filter((r) => r.status === s).length;
+  const shown = ctlRpt.filter === "tots" ? L : L.filter((r) => r.status === ctlRpt.filter);
+  const lbl = { nou: "Nou", revisat: "Revisat", resolt: "Resolt" };
+  return `
+    <p class="ctl-intro">Els errors que la gent avisa des de l'app («Avisa d'un error», al peu de pàgina i a Perfil › Ajustos).</p>
+    <div class="ctu-top">
+      <div class="ctl-seg ctu-range">${[["nou", `Nous (${n("nou")})`], ["revisat", `Revisats (${n("revisat")})`], ["resolt", `Resolts (${n("resolt")})`], ["tots", `Tots (${L.length})`]].map(([k, t]) => `<button type="button" class="${ctlRpt.filter === k ? "on" : ""}" data-rpt-f="${k}"><b>${t}</b></button>`).join("")}</div>
+      <button class="linklike" type="button" data-rpt-reload>↻ Actualitza</button>
+    </div>
+    ${shown.length ? `<div class="ctl-rpts">${shown.map((r) => `<article class="card ctl-rpt ${r.status}">
+      <header><span class="ctl-tag ${r.status === "nou" ? "warn" : ""}">${lbl[r.status] || r.status}</span><small>${r.t ? ctlDate(r.t) : ""} · <code>${esc(r.where || "")}</code> · versió ${esc(r.ver || "?")}</small></header>
+      <p class="ctl-rpt-t">${esc(r.text || "")}</p>
+      <p class="muted ctl-rpt-d">${esc((r.ua || "").split(" · Mozilla")[0])} · pantalla ${esc(r.scr || "?")}${r.uid ? " · amb sessió" : " · sense sessió"}</p>
+      ${r.err ? `<details><summary>Error tècnic</summary><pre>${esc(r.err)}</pre></details>` : ""}
+      <div class="row">${r.email ? `<a class="btn" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Sobre l'error que ens vas avisar a Política en Joc")}">Respon a ${esc(r.email)}</a>` : ""}
+        ${r.status !== "revisat" ? `<button class="btn ghost" type="button" data-rpt-set="${r.id}" data-v="revisat">Marca com a revisat</button>` : ""}
+        ${r.status !== "resolt" ? `<button class="btn primary" type="button" data-rpt-set="${r.id}" data-v="resolt">Resolt</button>` : ""}
+        <button class="btn ghost danger" type="button" data-rpt-del="${r.id}">Esborra</button></div>
+    </article>`).join("")}</div>` : `<div class="card"><p class="muted">${ctlRpt.filter === "nou" ? "Cap avís nou. 🎉" : "No n'hi ha cap."}</p></div>`}`;
+}
+function ctlRptBind(root) {
+  $$("[data-rpt-f]", root).forEach((b) => b.addEventListener("click", () => { ctlRpt.filter = b.dataset.rptF; renderControl(true); }));
+  $("[data-rpt-reload]", root)?.addEventListener("click", () => { ctlRpt.list = null; renderControl(true); });
+  $$("[data-rpt-set]", root).forEach((b) => b.addEventListener("click", async () => {
+    if (await window.Online.reportSet(b.dataset.rptSet, b.dataset.v)) { const r = ctlRpt.list.find((x) => x.id === b.dataset.rptSet); if (r) r.status = b.dataset.v; renderControl(true); }
+  }));
+  $$("[data-rpt-del]", root).forEach((b) => b.addEventListener("click", async () => {
+    if (!confirm("Esborrar aquest avís?")) return;
+    if (await window.Online.reportDel(b.dataset.rptDel)) { ctlRpt.list = ctlRpt.list.filter((x) => x.id !== b.dataset.rptDel); renderControl(true); }
   }));
 }

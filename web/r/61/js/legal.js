@@ -5,7 +5,7 @@ const LEGAL = {
   nif: "", // opcional mentre el lloc web no tingui activitat econòmica; si s'omple, es mostra
   adreca: "", // opcional: adreça postal del titular
   correu: "brudomingosola@gmail.com",
-  domini: "politicaenjoc.com",
+  domini: "politicaenjoc.cat",
   actualitzat: "23 d'octubre de 2026",
 };
 
@@ -76,6 +76,7 @@ const LEGAL_TEXT = {
     <p><b>c) Notificacions.</b> Si una persona activa les notificacions, es desa l'adreça de subscripció que el navegador assigna al dispositiu per rebre-les (la proporciona el servei de notificacions del navegador: Google, Apple o Mozilla), els temes triats i el tipus de dispositiu. No s'associa al nom ni al compte. Es poden desactivar en qualsevol moment des de Perfil o des de la configuració del navegador, i aleshores l'identificador s'elimina.</p>
     <p><b>d) Estadística d'ús anònima.</b> L'app compta de manera agregada i anònima l'ús que se'n fa (visites per dia i per hora, seccions visitades, partides jugades, tipus de dispositiu i web d'origen per categories). No es recullen dades identificatives ni s'associa a cap compte. Es pot desactivar des de la Política de galetes.</p>
     <p><b>e) Monedes i botiga.</b> Si una persona amb compte compra articles de la botiga del joc, es desen al seu perfil els articles que té i els que porta posats; el marc i el títol són visibles als rànquings. Les monedes són una moneda fictícia del joc.</p>
+    <p><b>f) Avisos d'error.</b> Si una persona avisa d'un error, es desa el text que escriu, el correu electrònic si l'indica voluntàriament (per poder-li respondre), la secció de l'app on era, el tipus de dispositiu i navegador, la mida de la pantalla, la versió de l'app, l'últim error tècnic de la pàgina i, si té sessió iniciada, el seu identificador d'usuari. Només ho veu l'equip de l'app, s'utilitza exclusivament per corregir l'error i respondre-li, i s'esborra quan ja no és necessari i com a molt al cap de dotze mesos.</p>
     ${ANALYTICS_ON ? `<p><b>c) Dades d'analítica.</b> Únicament amb el consentiment previ de la persona usuària, es recullen dades d'ús agregades mitjançant Google Analytics: pàgines consultades, tipus de dispositiu i navegador, ubicació aproximada i durada de la visita.</p>` : ""}
     <p>No es tracten categories especials de dades ni es fan perfils amb finalitats publicitàries o decisions automatitzades.</p>
 
@@ -265,9 +266,9 @@ function legalFooter() {
   return `<footer class="site-foot">
     <p class="sf-line">Web no oficial. No té cap vincle amb partits, institucions ni mitjans de comunicació.</p>
     ${COFFEE_URL ? `<p class="sf-line sf-coffee">Gratuïta i sense anuncis. Si t'agrada, ${coffeeLink("convida'm a un cafè")}.</p>` : ""}
-    <p class="sf-line sf-author">Feta per <a href="https://www.instagram.com/emdicbru_/" target="_blank" rel="noopener">@emdicbru_</a> a Instagram i <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a> a X.</p>
+    <p class="sf-line"><button class="linklike" type="button" data-report>🐞 Avisa d'un error</button></p>
+    <p class="sf-line sf-author">Feta per <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a></p>
     <nav aria-label="Informació legal">${LEGAL_PAGES.map((p) => `<a href="#legal/${p.k}">${p.h}</a>`).join("")}${ANALYTICS_ON ? `<button class="linklike" data-open-consent>Configuració de galetes</button>` : ""}</nav>
-    <p class="sf-copy">© 2026 ${LEGAL.nom}</p>
   </footer>`;
 }
 

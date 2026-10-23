@@ -5119,3 +5119,25 @@ body.db-lock { overflow: hidden; }
 .ctl-roles dd { margin: 0; color: var(--ink-2); }
 .ctl-locked { opacity: .45; cursor: not-allowed !important; }
 @media (max-width: 700px) { .ctl-team-add { grid-template-columns: 1fr; } .ctl-roles { grid-template-columns: 1fr; } .ctl-roles dd { margin-bottom: 6px; } }
+
+/* ---------- Avisa d'un error ---------- */
+.rpt-card { width: min(520px, 100%); display: grid; gap: 12px; text-align: left; }
+.rpt-card h3 { margin: 0; font-family: var(--display); font-size: 1.3rem; }
+.rpt-card .muted { margin: 0; }
+.rpt-f { display: grid; gap: 6px; font-weight: 700; font-size: .9rem; }
+.rpt-f small { font-weight: 500; color: var(--muted); }
+.rpt-f textarea, .rpt-f input { font: inherit; font-weight: 500; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); color: var(--ink); resize: vertical; }
+.rpt-ctx { margin: 0; font-size: .8rem; color: var(--muted); }
+.rpt-err { margin: 0; color: var(--ko); font-weight: 700; font-size: .88rem; }
+.rpt-err:empty { display: none; }
+.rpt-card .row { justify-content: flex-end; }
+.ctl-rpts { display: grid; gap: 12px; }
+.ctl-rpt { display: grid; gap: 8px; }
+.ctl-rpt.nou { border-color: var(--red); }
+.ctl-rpt header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctl-rpt header .ctl-tag { background: var(--paper-2); color: var(--ink); }
+.ctl-rpt header .ctl-tag.warn { background: var(--yellow); }
+.ctl-rpt header small { color: var(--muted); }
+.ctl-rpt-t { margin: 0; white-space: pre-wrap; font-size: 1rem; }
+.ctl-rpt-d { margin: 0; font-size: .82rem; }
+.ctl-rpt pre { white-space: pre-wrap; font-size: .78rem; background: var(--paper); padding: 8px; border-radius: 8px; }

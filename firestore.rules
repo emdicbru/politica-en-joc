@@ -6,18 +6,70 @@ service cloud.firestore {
 
     // Perfil públic de cada jugador (nom, foto, XP, rècords). Tothom amb sessió el pot llegir
     // per al rànquing; només el propietari el pot escriure.
+    // El nom que es mostra ha de ser el nom d'usuari que la persona ha reservat (o «Jugador» si encara no en té), perquè
+    // ningú pugui fer-se passar per un altre i perquè el nom real del compte de Google no es publiqui mai.
+    // L'XP no pot pujar més de 20.000 punts d'una escriptura.
     match /users/{uid} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid && userOk(request.resource.data);
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    function userOk(d) {
+      return d.keys().hasOnly(['name', 'photo', 'handle', 'xp', 'level', 'best', 'plays', 'ach', 'learn', 'daily', 'updatedAt', 'frame', 'title', 'shop'])
+        && d.get('name', 'Jugador') is string && d.get('name', 'Jugador').size() <= 40
+        && (d.get('name', 'Jugador') == d.get('handle', null) || d.get('name', 'Jugador') == 'Jugador')
+        && (d.get('photo', null) == null || (d.photo is string && d.photo.size() < 60000))
+        && (d.get('handle', null) == null || handleSame(d.handle) || handleMine(d.handle))
+        && (!('xp' in d) || (d.xp is number && d.xp >= 0 && d.xp <= 2000000 && d.xp <= (resource == null ? 0 : resource.data.get('xp', 0)) + 20000))
+        && (!('level' in d) || (d.level is number && d.level >= 1 && d.level <= 8))
+        && (d.get('frame', null) == null || (d.frame is string && d.frame.size() <= 24))
+        && (d.get('title', null) == null || (d.title is string && d.title.size() <= 24))
+        && mapMax(d, 'best', 150) && mapMax(d, 'plays', 150) && mapMax(d, 'ach', 150) && mapMax(d, 'learn', 300) && mapMax(d, 'shop', 10)
+        && (!('daily' in d) || (d.daily is map && d.daily.get('scores', {}).size() <= 1000));
+    }
+    // El nom públic de qui escriu: el del seu perfil (que només pot ser el nom d'usuari o «Jugador»)
+    function publicName() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('name', 'Jugador');
+    }
+    function mapMax(d, k, n) { return !(k in d) || (d[k] is map && d[k].size() <= n); }
+    // Clau d'un nom d'usuari: minúscules, sense accents i només lletres, xifres, punt i guió baix (com handleKey a online.js)
+    function hkey(h) {
+      return h.lower().replace('[àáâãäåāăąÀÁÂÃÄÅĀĂĄ]', 'a').replace('[çćĉċčÇĆĈĊČ]', 'c').replace('[ďḍĎḌ]', 'd').replace('[èéêëēĕėęěÈÉÊËĒĔĖĘĚ]', 'e')
+        .replace('[ĝğġģĜĞĠĢ]', 'g').replace('[ĥĤ]', 'h').replace('[ìíîïĩīĭįÌÍÎÏĨĪĬĮ]', 'i').replace('[ĵĴ]', 'j').replace('[ķĶ]', 'k')
+        .replace('[ĺļľĹĻĽ]', 'l').replace('[ñńņňÑŃŅŇ]', 'n').replace('[òóôõöōŏőÒÓÔÕÖŌŎŐ]', 'o').replace('[ŕŗřŔŖŘ]', 'r').replace('[śŝşšșŚŜŞŠȘ]', 's')
+        .replace('[ţťțŢŤȚ]', 't').replace('[ùúûüũūŭůűųÙÚÛÜŨŪŬŮŰŲ]', 'u').replace('[ŵŴ]', 'w').replace('[ýÿŷÝŸŶ]', 'y').replace('[źżžŹŻŽ]', 'z')
+        .replace('[^a-z0-9_.]', '');
+    }
+    function handleSame(h) { return resource != null && resource.data.get('handle', null) == h; }
+    function handleMine(h) {
+      return h is string && h.size() >= 3 && h.size() <= 20
+        && exists(/databases/$(database)/documents/usernames/$(hkey(h)))
+        && get(/databases/$(database)/documents/usernames/$(hkey(h))).data.uid == request.auth.uid;
+    }
+
+    // Noms d'usuari: un document per nom (en minúscules i sense accents) que el reserva per a un sol usuari.
+    match /usernames/{key} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && key.matches('^[a-z0-9_.]{3,20}$')
+        && request.resource.data.keys().hasOnly(['uid', 'handle'])
+        && request.resource.data.handle is string && request.resource.data.handle.size() <= 20
+        && hkey(request.resource.data.handle) == key;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // Duels 1 vs 1. El progrés de cada jugador viu al camp p_<uid>.
     match /duels/{code} {
-      allow read: if request.auth != null;
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && request.auth.uid in resource.data.players;
 
       // Crear: només com a amfitrió i sol.
       allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['code', 'kind', 'createdAt', 'status', 'seed', 'players', 'host', 'guest', 'p_' + request.auth.uid])
         && request.resource.data.host.uid == request.auth.uid
+        && request.resource.data.host.name == publicName()
         && request.resource.data.players == [request.auth.uid]
         && request.resource.data.guest == null;
 
@@ -25,6 +77,7 @@ service cloud.firestore {
         // Unir-se com a convidat a un duel que encara té lloc
         (resource.data.guest == null
           && request.resource.data.guest.uid == request.auth.uid
+          && request.resource.data.guest.name == publicName()
           && request.resource.data.players.size() == 2
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['guest', 'players', 'status', 'p_' + request.auth.uid]))
@@ -43,17 +96,168 @@ service cloud.firestore {
     match /dailies/{day}/entries/{uid} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == uid
+        && day.matches('^20[0-9]{2}-[01][0-9]-[0-3][0-9]$') && dayNear(day)
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'frame', 'title', 'ms', 'hits', 'errors', 'createdAt'])
         && request.resource.data.uid == uid
-        && request.resource.data.ms is int && request.resource.data.ms >= 3000
-        && request.resource.data.hits is int && request.resource.data.hits >= 0 && request.resource.data.hits <= 10;
+        && request.resource.data.ms is int && request.resource.data.ms >= 3000 && request.resource.data.ms <= 3600000
+        && request.resource.data.hits is int && request.resource.data.hits >= 0 && request.resource.data.hits <= 10
+        && request.resource.data.errors is int && request.resource.data.errors >= 0 && request.resource.data.errors <= 50
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.name is string
+        && exists(/databases/$(database)/documents/users/$(uid))
+        && get(/databases/$(database)/documents/users/$(uid)).data.get('name', '') == request.resource.data.name
+        && (request.resource.data.get('photo', null) == null || (request.resource.data.photo is string && request.resource.data.photo.size() < 60000));
       allow update: if false;
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Lliga de pronòstics del 29N: cadascú escriu els seus fins a les 20:00 del 29N (hora peninsular),
+    // repartint exactament 1.000 fitxes (més les monedes de joc que hi afegeixi, «extra», fins a 2.000) entre almenys
+    // 5 preguntes. L'equip hi afegeix les fitxes finals en liquidar.
+    match /pron/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.time < timestamp.value(1795978800000)
+        && request.resource.data.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 't', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'extra'])
+        && request.resource.data.keys().hasAll(['uid', 'name', 'photo', 't'])
+        && request.resource.data.keys().size() - ('extra' in request.resource.data ? 1 : 0) >= 9
+        && (!('extra' in request.resource.data) || (request.resource.data.extra is int && request.resource.data.extra >= 0
+             && request.resource.data.extra <= 2000 && request.resource.data.extra % 50 == 0))
+        && request.resource.data.name == publicName()
+        && (!('photo' in request.resource.data) || (request.resource.data.photo is string && request.resource.data.photo.size() < 60000))
+        && pronOk(request.resource.data, 'm1') && pronOk(request.resource.data, 'm2') && pronOk(request.resource.data, 'm3') && pronOk(request.resource.data, 'm4')
+        && pronOk(request.resource.data, 'm5') && pronOk(request.resource.data, 'm6') && pronOk(request.resource.data, 'm7') && pronOk(request.resource.data, 'm8')
+        && pronA(request.resource.data, 'm1') + pronA(request.resource.data, 'm2') + pronA(request.resource.data, 'm3') + pronA(request.resource.data, 'm4')
+           + pronA(request.resource.data, 'm5') + pronA(request.resource.data, 'm6') + pronA(request.resource.data, 'm7') + pronA(request.resource.data, 'm8') == 1000 + request.resource.data.get('extra', 0);
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fitxes', 'liquidat']);
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    // El dia del repte ha de ser el d'ara (amb marge per als fusos horaris)
+    function dayNear(day) {
+      let t = timestamp.date(int(day[0:4]), int(day[5:7]), int(day[8:10]));
+      return request.time > t - duration.value(14, 'h') && request.time < t + duration.value(38, 'h');
+    }
+    function pronA(d, m) { return d.get(m, {'a': 0}).get('a', 0); }
+    function pronOk(d, m) {
+      return !(m in d) || (d[m] is map && d[m].keys().hasOnly(['o', 'a']) && d[m].o is string && d[m].o.size() <= 12
+        && d[m].a is int && d[m].a >= 10 && d[m].a <= 3000);
+    }
+    // ---------- Equip del Centre de control ----------
+    // El propietari ho pot tot i és l'únic que dona i treu accessos. La resta de l'equip té un grau a staff/{correu}:
+    //   observador (només mira) < editor (notificacions, històries i l'especial del 29N) < admin (tot menys l'equip).
+    function isOwner() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email in ['brudomingosola@gmail.com'];
+    }
+    function staffPath() { return /databases/$(database)/documents/staff/$(request.auth.token.email.lower()); }
+    function hasRole(roles) {
+      return isOwner() || (request.auth != null && request.auth.token.email_verified == true
+        && exists(staffPath()) && get(staffPath()).data.role in roles);
+    }
+    function isAdmin() { return hasRole(['admin']); }
+    function isEditor() { return hasRole(['admin', 'editor']); }
+    function isStaff() { return hasRole(['admin', 'editor', 'observador']); }
+    match /staff/{email} {
+      allow read: if isOwner() || (request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() == email);
+      allow create, update: if isOwner() && email == email.lower() && email.matches('^[^@/]+@[^@/]+$')
+        && request.resource.data.keys().hasOnly(['role', 't', 'by'])
+        && request.resource.data.role in ['admin', 'editor', 'observador'];
+      allow delete: if isOwner();
+    }
+
+    // Notificacions push: cada dispositiu desa la seva subscripció (l'identificador és el hash de l'adreça, que només
+    // coneix el dispositiu). Només l'equip les pot llegir; les envia GitHub Actions amb la clau privada.
+    match /push/{id} {
+      allow create, update: if request.resource.data.keys().hasOnly(['sub', 'topics', 't', 'ua'])
+        && request.resource.data.sub is map && request.resource.data.sub.keys().hasOnly(['endpoint', 'keys'])
+        && request.resource.data.sub.endpoint is string && request.resource.data.sub.endpoint.size() < 1000
+        && request.resource.data.sub.endpoint.matches('^https://.*')
+        && request.resource.data.topics is list && request.resource.data.topics.size() <= 3
+        && id.matches('^[a-f0-9]{64}$');
+      allow delete: if true;
+      allow read: if isStaff();
+    }
+    // Cua i historial d'avisos: tot l'equip el veu; envien els editors i els administradors
+    match /pushes/{id} {
+      allow read: if isStaff();
+      allow write: if isEditor();
+    }
+
+    // Radiografia d'ús: comptadors anònims per dia, repartits en 10 documents (stats.js). Qualsevol visita hi suma;
+    // només l'equip els llegeix. Només s'hi admeten els camps coneguts i mapes petits.
+    match /stats/{id} {
+      allow read: if isStaff();
+      allow create, update: if id.matches('^20[0-9]{2}-[01][0-9]-[0-3][0-9]_[0-9]$')
+        && request.resource.data.keys().hasOnly(['ses', 'dev', 'nous', 'torna', 'r1', 'r7', 'r30', 'acc', 'notifDev', 'notif', 'inst',
+             'xp', 'mon', 'monGast', 'aposta', 'diari', 'diariPts', 'h', 'v', 'g', 'f', 'src', 'disp', 'mode', 'lv', 'b'])
+        && statMap(request.resource.data, 'h', 24) && statMap(request.resource.data, 'v', 30) && statMap(request.resource.data, 'g', 80)
+        && statMap(request.resource.data, 'f', 80) && statMap(request.resource.data, 'src', 20) && statMap(request.resource.data, 'disp', 5)
+        && statMap(request.resource.data, 'mode', 3) && statMap(request.resource.data, 'lv', 10) && statMap(request.resource.data, 'b', 60)
+        && sInc('ses', 100) && sInc('dev', 3) && sInc('nous', 3) && sInc('torna', 3) && sInc('r1', 3) && sInc('r7', 3) && sInc('r30', 3)
+        && sInc('acc', 3) && sInc('notifDev', 3) && sInc('notif', 10) && sInc('inst', 5) && sInc('diari', 5) && sInc('diariPts', 60)
+        && sInc('xp', 60000) && sInc('mon', 40000) && sInc('monGast', 20000) && sInc('aposta', 2000);
+      allow delete: if false;
+    }
+    function statMap(d, k, n) { return !(k in d) || (d[k] is map && d[k].size() <= n); }
+    // Un comptador només pot créixer, i com a molt n en una escriptura
+    function sInc(k, n) {
+      return !(k in request.resource.data) || (request.resource.data[k] is int && request.resource.data[k] >= 0
+        && request.resource.data[k] - (resource == null ? 0 : resource.data.get(k, 0)) <= n
+        && request.resource.data[k] >= (resource == null ? 0 : resource.data.get(k, 0)));
+    }
+
+    // Avisos d'error: qualsevol persona n'envia (amb o sense sessió), només amb aquests camps i mides; l'equip els llegeix,
+    // i els editors els marquen com a revisats o els esborren.
+    match /reports/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['text', 'email', 'where', 'ver', 'ua', 'scr', 'err', 'uid', 'status', 't'])
+        && request.resource.data.text is string && request.resource.data.text.size() >= 10 && request.resource.data.text.size() <= 2000
+        && request.resource.data.email is string && request.resource.data.email.size() <= 120
+        && request.resource.data.where is string && request.resource.data.where.size() <= 100
+        && request.resource.data.ver is string && request.resource.data.ver.size() <= 10
+        && request.resource.data.ua is string && request.resource.data.ua.size() <= 300
+        && request.resource.data.scr is string && request.resource.data.scr.size() <= 20
+        && request.resource.data.err is string && request.resource.data.err.size() <= 800
+        && (request.resource.data.uid == null || (request.auth != null && request.resource.data.uid == request.auth.uid))
+        && request.resource.data.status == 'nou'
+        && request.resource.data.t == request.time;
+      allow read: if isStaff();
+      allow update: if isEditor() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['nou', 'revisat', 'resolt'];
+      allow delete: if isEditor();
+    }
+
+    // Premsa: contactes de mitjans (dades personals), notes, fotos i configuració. Només els administradors.
+    // Els correus els envia GitHub Actions (tools/premsa.js) amb la clau de servei, que no passa per aquestes regles.
+    match /press_contacts/{id} { allow read, write: if isAdmin(); }
+    match /press_media/{id} { allow read, write: if isAdmin(); }
+    match /press_cfg/{id} { allow read, write: if isAdmin(); }
+    match /press_notes/{id} {
+      allow read, write: if isAdmin();
+      match /sends/{c} { allow read: if isAdmin(); }
+    }
+    // Baixa de la llista de premsa des de l'enllaç del correu: només es pot crear (amb el codi del contacte) i res més
+    match /press_unsub/{tok} {
+      allow create, update: if tok.matches('^[A-Za-z0-9]{24}$')
+        && request.resource.data.keys().hasOnly(['t']) && request.resource.data.t == request.time;
+      allow read, delete: if isAdmin();
+    }
+
+    // Configuració (especial del 29N, històries, avisos): tothom la pot llegir. La canvien els editors; la del repte
+    // diari automàtic (config/push), només els administradors.
+    match /config/{id} {
+      allow read: if true;
+      allow write: if (id == 'push' && isAdmin()) || (id != 'push' && isEditor());
+    }
+
     // Lligues d'amics: qualsevol amb el codi s'hi pot afegir (només a si mateix).
     match /leagues/{code} {
-      allow read: if request.auth != null;
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && request.auth.uid in resource.data.members;
       allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['code', 'name', 'owner', 'members', 'createdAt'])
+        && request.resource.data.code == code
+        && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 30
         && request.resource.data.owner == request.auth.uid
         && request.resource.data.members == [request.auth.uid];
       allow update: if request.auth != null

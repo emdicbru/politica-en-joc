@@ -1,0 +1,28 @@
+name: Envia les notes de premsa
+# Cada 5 minuts (el repositori és públic: GitHub Actions no té cost) i a l'instant des del Centre de control.
+# Necessita els secrets FIREBASE_SA (clau de servei de Firebase en JSON) i BREVO_KEY (clau de l'API de Brevo).
+# Desa la foto i el text de cada nota a web/premsa/ i engega la publicació de GitHub Pages (pages.yml).
+on:
+  schedule:
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:
+concurrency:
+  group: premsa
+  cancel-in-progress: false
+permissions:
+  contents: write
+  actions: write
+jobs:
+  premsa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save --no-audit --no-fund firebase-admin@12
+      - run: node tools/premsa.js
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          BREVO_KEY: ${{ secrets.BREVO_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,41 @@
+name: Publica a GitHub Pages
+# Serveix els fitxers de l'app (web/r/<versió>/, els puja tools/publica.js) i les dades (data/: titulars, quiz i
+# resultats del 29N) des de GitHub Pages, perquè Firebase gratuït només hagi de servir la pàgina inicial.
+# El repositori és públic: GitHub Pages i Actions no tenen cost.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "data/**", ".github/workflows/pages.yml"]
+  # Els titulars i el quiz els desa el bot amb el GITHUB_TOKEN, que no engega altres fluxos: per això s'escolten aquí
+  workflow_run:
+    workflows: ["Actualitza els titulars", "Genera el quiz de l'actualitat"]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Prepara el lloc
+        run: |
+          mkdir -p _site/data
+          cp -r web/. _site/
+          cp data/*.json _site/data/ 2>/dev/null || true
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: d
+        uses: actions/deploy-pages@v4

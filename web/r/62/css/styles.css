@@ -5119,3 +5119,40 @@ body.db-lock { overflow: hidden; }
 .ctl-roles dd { margin: 0; color: var(--ink-2); }
 .ctl-locked { opacity: .45; cursor: not-allowed !important; }
 @media (max-width: 700px) { .ctl-team-add { grid-template-columns: 1fr; } .ctl-roles { grid-template-columns: 1fr; } .ctl-roles dd { margin-bottom: 6px; } }
+
+/* ---------- Avisa d'un error ---------- */
+.rpt-card { width: min(520px, 100%); display: grid; gap: 12px; text-align: left; }
+.rpt-card h3 { margin: 0; font-family: var(--display); font-size: 1.3rem; }
+.rpt-card .muted { margin: 0; }
+.rpt-f { display: grid; gap: 6px; font-weight: 700; font-size: .9rem; }
+.rpt-f small { font-weight: 500; color: var(--muted); }
+.rpt-f textarea, .rpt-f input { font: inherit; font-weight: 500; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); color: var(--ink); resize: vertical; }
+.rpt-ctx { margin: 0; font-size: .8rem; color: var(--muted); }
+.rpt-err { margin: 0; color: var(--ko); font-weight: 700; font-size: .88rem; }
+.rpt-err:empty { display: none; }
+.rpt-card .row { justify-content: flex-end; }
+.ctl-rpts { display: grid; gap: 12px; }
+.ctl-rpt { display: grid; gap: 8px; }
+.ctl-rpt.nou { border-color: var(--red); }
+.ctl-rpt header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctl-rpt header .ctl-tag { background: var(--paper-2); color: var(--ink); }
+.ctl-rpt header .ctl-tag.warn { background: var(--yellow); }
+.ctl-rpt header small { color: var(--muted); }
+.ctl-rpt-t { margin: 0; white-space: pre-wrap; font-size: 1rem; }
+.ctl-rpt-d { margin: 0; font-size: .82rem; }
+.ctl-rpt pre { white-space: pre-wrap; font-size: .78rem; background: var(--paper); padding: 8px; border-radius: 8px; }
+
+/* ---------- Debat: interrompre, compte enrere i explicació del plató ---------- */
+.db-cont-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.db-int { background: #ffcf3d; color: #17173d; border-color: #17173d; font-weight: 800; animation: dbIntPulse 1.2s ease-in-out infinite; }
+.db-int small { font-weight: 700; opacity: .7; }
+@keyframes dbIntPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 207, 61, .55); } 50% { box-shadow: 0 0 0 8px rgba(255, 207, 61, 0); } }
+.db-timer { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.db-timer i { display: block; height: 100%; width: 100%; background: #ffcf3d; transform-origin: left; animation: dbTimer var(--s) linear forwards; }
+@keyframes dbTimer { from { transform: scaleX(1); } 70% { background: #ffcf3d; } to { transform: scaleX(0); background: #ff4b2b; } }
+.db-ask-clock { display: inline-grid; place-items: center; min-width: 1.7em; height: 1.7em; margin-left: 6px; border-radius: 99px; background: rgba(255, 255, 255, .15); color: #fff; font-size: .8rem; vertical-align: middle; }
+.db-ask-clock.hot { background: #ff4b2b; }
+.db-tuto { display: grid; gap: 10px; color: #fff; }
+.db-tuto ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .86rem; line-height: 1.4; color: rgba(255, 255, 255, .88); }
+.db-tuto b { color: #ffcf3d; }
+@media (prefers-reduced-motion: reduce) { .db-int { animation: none; } }

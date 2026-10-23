@@ -142,6 +142,20 @@ const Online = {
     await pushProfile();
     renderAccountBtn();
   },
+  // Avisos d'error (report.js): els envia qualsevol persona; l'equip els llegeix al Centre de control
+  async reportSend(d) {
+    if (!ready) return false;
+    try { await F.addDoc(F.collection(db, "reports"), { ...d, uid: Online.user?.uid || null, status: "nou", t: F.serverTimestamp() }); return true; } catch (e) { console.warn(e); return false; }
+  },
+  async reportList(n = 150) {
+    try { return (await F.getDocs(F.query(F.collection(db, "reports"), F.orderBy("t", "desc"), F.limit(n)))).docs.map((d) => ({ id: d.id, ...d.data(), t: d.data().t?.toMillis?.() || 0 })); } catch (e) { console.warn(e); return null; }
+  },
+  async reportSet(id, status) {
+    try { await F.updateDoc(F.doc(db, "reports", id), { status }); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
+  },
+  async reportDel(id) {
+    try { await F.deleteDoc(F.doc(db, "reports", id)); return true; } catch (e) { console.warn(e); toast("No s'ha pogut esborrar (permisos?)"); return false; }
+  },
   // Equip del Centre de control (staff/{correu}: { role, t, by }). Només el propietari el pot canviar.
   async staffRole() {
     if (!ready || !Online.user?.email) return "";
@@ -328,7 +342,7 @@ const PITCH = [
   ["🪪", "El teu perfil", "Tria un nom d'usuari i una foto: és com et veuran als rànquings i als duels."],
 ];
 Online.pitchHtml = (title = "Crea el teu usuari en 10 segons", sub = "") => `<div class="pitch">
-  <p class="kicker">Gratis · sense contrasenyes</p>
+  <p class="kicker">Gratis · amb el teu compte de Google</p>
   <h3>${title}</h3>
   ${sub ? `<p class="pitch-sub">${sub}</p>` : ""}
   <ul class="pitch-list">${PITCH.map(([i, t, d]) => `<li><span aria-hidden="true">${i}</span><div><b>${t}</b><small>${d}</small></div></li>`).join("")}</ul>

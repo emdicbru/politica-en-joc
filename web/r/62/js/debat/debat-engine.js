@@ -51,14 +51,18 @@ function dbNewGame({ seed = Date.now() % 1e9, me, format, prep = { dades: 1, rep
     const p = dbParty(id);
     return { id, sig: p.sig, name: p.name, color: p.color, cand: p.cand?.name || p.sig, kind: DB_RIVAL_KIND[id] || "esq", seats: p.seats, imp: 50, time: F.secs, slot: i };
   });
+  // Els temes del debat: a l'atzar, però l'economia i l'habitatge hi surten gairebé sempre; en l'ordre habitual
+  const score = (t) => dbHash(`${seed}|tema|${t}`) / 4294967296 + (t === "economia" || t === "habitatge" ? 0.3 : 0) - (t === "territori" && format === "petits" ? 0.5 : 0);
+  const topics = [...DB_TOPICS].sort((a, b) => score(b) - score(a)).slice(0, F.topics || 2);
+  const blocks = ["obertura", ...DB_TOPICS.filter((t) => topics.includes(t)), "pactes", "tancament"];
   const st = {
-    v: 1, seed, rc: 0, format, me: { ...me }, prep: { ...prep }, strat,
-    rivals, blocks: [...F.blocks], bi: 0,
+    v: 2, seed, rc: 0, format, me: { ...me }, prep: { ...prep }, strat,
+    rivals, blocks, bi: 0,
     time: F.secs, total: F.secs,
     nerves: dbClamp(38 - prep.camera * 9 + (me.style === "combat" ? 6 : 0), 5, 80),
     replies: 1 + prep.repliques,
     seg: { base: 55, indecisos: 45, rivals: 30 },
-    curve: [], stats: { cut: 0, factOk: 0, factBad: 0, evasive: 0, attacks: 0, attacked: 0, replies: 0, blank: 0, camera: null },
+    curve: [], stats: { cut: 0, factOk: 0, factBad: 0, evasive: 0, attacks: 0, attacked: 0, replies: 0, blank: 0, camera: null, interrupts: 0, intOk: 0, intBad: 0, silence: 0, followups: 0, clashes: 0 },
     moments: [], social: [], last: null, done: false,
   };
   st.curve.push(dbImpression(st));
@@ -92,15 +96,25 @@ function dbMoment(st, kind, text, good) {
 }
 
 // ---------- Les teves cartes de resposta ----------
+const dbIsTopic = (block) => DB_TOPICS.includes(block);
+// El tema d'una resposta: el del bloc o, a la presentació i al minut d'or, el primer tema del debat
+const dbTema = (st, block) => (dbIsTopic(block) ? block : st.blocks.find(dbIsTopic) || "habitatge");
+function dbProp(st, block) {
+  const tema = dbTema(st, block);
+  return tema === "territori" ? DB_PROPOSALS.territori[st.me.terr] : (DB_PROPOSALS[tema] || DB_PROPOSALS.habitatge)[st.me.ideo];
+}
+// La pregunta de la moderadora (n'hi ha diverses per a cada bloc)
+function dbQuestion(st, block) {
+  const B = DB_BLOCKS[block];
+  return B.qs ? dbPick(st, `pregunta-${block}`, B.qs) : B.q;
+}
 function dbFill(st, quote, block) {
-  const ideo = st.me.ideo, terr = st.me.terr;
-  const tema = block === "obertura" || block === "tancament" ? "habitatge" : block;
-  const prop = tema === "territori" ? DB_PROPOSALS.territori[terr] : (DB_PROPOSALS[tema] || DB_PROPOSALS.habitatge)[ideo];
+  const tema = dbTema(st, block);
   return quote
     .replace("{story}", DB_STORIES[block] || DB_STORIES.obertura)
     .replace("{rival}", dbLeader(st).cand)
-    .replace("{tema}", tema === "economia" ? "els salaris" : tema === "territori" ? "el finançament" : "l'habitatge")
-    .replace("{proposal}", prop);
+    .replace("{tema}", DB_TOPIC_NAMES[tema] || "l'habitatge")
+    .replace("{proposal}", dbProp(st, block));
 }
 function dbCards(st) {
   const block = dbBlock(st);
@@ -111,7 +125,7 @@ function dbCards(st) {
     return DB_CLOSINGS.map((o) => ({ k: o.k, label: o.label, icon: "⏱", secs: 60, quote: dbFill(st, o.quote, block), closing: true }));
   }
   if (block === "pactes") return null; // pregunta trampa
-  const prop = block === "territori" ? DB_PROPOSALS.territori[st.me.terr] : DB_PROPOSALS[block][st.me.ideo];
+  const prop = dbProp(st, block);
   const leader = dbLeader(st);
   const all = {
     proposta: `La nostra proposta és clara: ${prop}. I ho farem el primer any de govern.`,
@@ -165,14 +179,28 @@ function dbRivalTurns(st) {
   // El favorit sempre hi és si l'has atacat
   if (st.last === "atac") { const L = dbLeader(st); if (!order.includes(L)) order[0] = L; }
   return order.map((r) => {
-    const line = dbPick(st, `linia-${r.id}-${block}`, DB_RIVAL_LINES[block][r.kind]);
+    const line = dbPick(st, `linia-${r.id}-${block}`, dbRivalLines(r, block));
     r.imp = dbClamp(r.imp + (dbRand(st, `imp-${r.id}`) - 0.45) * 6);
     r.time = Math.max(0, r.time - 45);
     // Probabilitat que t'ataqui: més si l'has atacat, si vas bé o si ets un partit gran
     const p = (st.last === "atac" ? 0.5 : 0.18) + (dbImpression(st) > 58 ? 0.15 : 0) + (st.me.size === "gran" ? 0.1 : 0);
     const attack = !["obertura", "tancament"].includes(block) && dbRand(st, `atac-${r.id}`) < p;
-    return { id: r.id, line, attack: attack ? dbPick(st, `atacl-${r.id}`, DB_ATTACKS[r.kind]) : null };
+    return { id: r.id, line, attack: attack ? dbAttackLine(st, r) : null };
   });
+}
+// Les frases d'un rival: les del seu partit si n'hi ha; si no, les del seu perfil
+function dbRivalLines(r, block) {
+  const own = DB_PARTY_LINES[r.id]?.[block];
+  return own && own.length ? own : (DB_RIVAL_LINES[block]?.[r.kind] || DB_RIVAL_LINES.economia[r.kind]);
+}
+// Un atac que encara no hagi fet servir ningú en aquest debat
+function dbAttackLine(st, r) {
+  const pool = [...(DB_PARTY_ATTACKS[r.id] || []), ...DB_ATTACKS[r.kind]];
+  st.usedAttacks = st.usedAttacks || [];
+  const left = pool.filter((a) => !st.usedAttacks.includes(a));
+  const a = dbPick(st, `atacl-${r.id}`, left.length ? left : pool);
+  st.usedAttacks.push(a);
+  return a;
 }
 // Com respons a un atac
 const DB_REPLY_OPTS = [
@@ -235,12 +263,15 @@ function dbEvent(st) {
       opts: r.a.map((a, i) => ({ k: String(i), label: a })) };
   }
   if (block === "obertura") return dbRand(st, "micro") < 0.35 ? dbMicro() : null;
-  const pool = block === "economia" ? ["verifica", "interrupcio"] : block === "habitatge" ? ["interrupcio", "personal"] : ["verifica", "personal"];
+  const pool = { economia: ["verifica", "interrupcio"], habitatge: ["interrupcio", "personal", "verifica"], sanitat: ["verifica", "interrupcio"], immigracio: ["interrupcio", "personal", "verifica"], clima: ["verifica", "personal"] }[block] || ["verifica", "personal"];
   const type = dbPick(st, `event-${block}`, pool);
   const R = dbPick(st, `qui-${block}`, st.rivals);
   if (type === "verifica") {
-    const left = DB_CLAIMS.map((c, i) => i).filter((i) => !(st.usedClaims || []).includes(i));
-    const ci = left[Math.floor(dbRand(st, "afirmacio") * left.length)];
+    // Primer, una dada del tema del bloc; si ja s'han fet servir totes, una de les regles electorals
+    const free = DB_CLAIMS.map((c, i) => i).filter((i) => !(st.usedClaims || []).includes(i));
+    const onTopic = free.filter((i) => DB_CLAIMS[i].topic === block);
+    const left = onTopic.length ? onTopic : free.filter((i) => !DB_CLAIMS[i].topic);
+    const ci = (left.length ? left : free)[Math.floor(dbRand(st, "afirmacio") * (left.length ? left : free).length)];
     (st.usedClaims = st.usedClaims || []).push(ci);
     const c = DB_CLAIMS[ci];
     const memOk = dbRand(st, "memoria") < 0.55 + st.prep.dades * 0.15;
@@ -260,7 +291,7 @@ function dbEvent(st) {
         { k: "empara", label: "Demana empara a la moderadora", d: "Que es respecti el teu torn." },
       ] };
   }
-  return { type: "personal", rival: R.id, title: "Atac personal", text: `${R.cand}: «${dbPick(st, "personal", DB_ATTACKS[R.kind])}»`,
+  return { type: "personal", rival: R.id, title: "Atac personal", text: `${R.cand}: «${dbAttackLine(st, R)}»`,
     opts: [
       { k: "humor", label: "Respon amb humor", d: "Si et surt bé, desactives l'atac. Si no…" },
       { k: "torna", label: "Torna-li l'atac", d: "Ull per ull." },
@@ -274,9 +305,125 @@ const dbMicro = () => ({ type: "micro", title: "Fallada tècnica", text: "Just q
     { k: "queixa", label: "Queixa't a la realització", d: "Que quedi clar que no és culpa teva." },
   ] });
 
+// ---------- La moderadora repregunta ----------
+// Si ataques o expliques una història sense concretar, és probable que et torni a preguntar
+function dbFollowUp(st, card) {
+  const block = dbBlock(st);
+  if (!dbIsTopic(block) || card.closing) return null;
+  const p = { atac: 0.6, emocio: 0.35, proposta: 0.06, dades: 0 }[card.k] || 0;
+  if (dbRand(st, `repregunta-${block}`) >= p) return null;
+  st.stats.followups++;
+  return { type: "repregunta", title: "La moderadora t'insisteix", text: dbPick(st, "repregunta", DB_FOLLOWUPS),
+    concrete: `Concretament: ${dbProp(st, block)}. Amb calendari i pressupost.`,
+    opts: [
+      { k: "concreta", label: "Concreta: proposta, xifres i calendari", d: "Gastes uns segons, però respons de veritat." },
+      { k: "insisteix", label: "Insisteix en el teu missatge", d: "No et mous del que volies dir." },
+      { k: "retreu", label: "Retreu-li que només t'ho pregunta a tu", d: "Arriscat: la moderadora no és el rival." },
+    ] };
+}
+
+// ---------- Topades entre rivals ----------
+// En els debats amb més d'un rival, de tant en tant dos rivals s'enganxen i has de decidir què fas
+function dbClash(st) {
+  const block = dbBlock(st);
+  if (st.rivals.length < 2 || !dbIsTopic(block) || st.stats.clashes >= 2) return null;
+  if (dbRand(st, `topada-${block}`) >= 0.5) return null;
+  const A = dbPick(st, `topada-a-${block}`, st.rivals);
+  const others = st.rivals.filter((r) => r !== A && r.kind !== A.kind);
+  const B = dbPick(st, `topada-b-${block}`, others.length ? others : st.rivals.filter((r) => r !== A));
+  st.stats.clashes++;
+  return { type: "clash", a: A.id, b: B.id, title: "Topada entre rivals",
+    lineA: dbPick(st, "topada-l", DB_CLASH[A.kind]).replace("{b}", B.cand), lineB: dbPick(st, "topada-r", DB_CLASH_REPLY[B.kind]),
+    text: `${A.cand} i ${B.cand} s'enganxen. Tothom et mira: hi dius la teva?`,
+    opts: [
+      { k: "pau", label: "Posa-hi seny i torna al tema", d: "«Mentre vostès es barallen, la gent espera solucions.»" },
+      { k: "aprofita", label: "Fica-t'hi i carrega contra el favorit", d: "Aprofites la baralla per atacar." },
+      { k: "marge", label: "Queda't al marge", d: "Que es desgastin ells." },
+    ] };
+}
+
+// ---------- Interrompre un rival ----------
+const dbCanInterrupt = (st) => st.stats.interrupts < 2;
+function dbInterrupt(st, rivalId, wasAttack) {
+  const R = st.rivals.find((r) => r.id === rivalId);
+  st.stats.interrupts++;
+  st.time = Math.max(0, st.time - 8);
+  const p = 0.4 + (st.me.style === "combat" ? 0.15 : st.me.style === "rigor" ? -0.05 : 0) + st.prep.repliques * 0.08 + (wasAttack ? 0.15 : 0) - (st.nerves > 60 ? 0.1 : 0);
+  const ok = dbRand(st, "interromp") < p;
+  const line = dbPick(st, "interromp-l", DB_INTERRUPTS);
+  let d;
+  if (ok) {
+    st.stats.intOk++;
+    d = dbApply(st, { base: 1.8, indecisos: wasAttack ? 1.6 : 0.2, rivals: -0.4 });
+    R.imp = dbClamp(R.imp - 4);
+    dbNerves(st, -4);
+    dbMoment(st, "viral", `Talla ${R.cand} en directe`, true);
+    return { d, ok, good: true, line, msg: wasAttack ? `Li tornes l'atac abans que acabi: ${R.cand} perd el fil.` : `Talles ${R.cand} i el desmuntes. Els teus ho celebren.` };
+  }
+  st.stats.intBad++;
+  d = dbApply(st, { base: 0.4, indecisos: -2.2, rivals: -1 });
+  R.imp = dbClamp(R.imp + 2);
+  dbNerves(st, 7);
+  dbMoment(st, "gaffe", `La moderadora et renya per interrompre ${R.cand}`, false);
+  return { d, ok, good: false, line, msg: `${DB_MOD.name}: «Respecti el torn, si us plau.» Als indecisos no els agrada que interrompis.` };
+}
+
 function dbResolve(st, ev, k) {
   const R = ev.rival ? st.rivals.find((r) => r.id === ev.rival) : null;
   let d, msg, good = true, exp = null;
+  // S'ha acabat el compte enrere sense triar res
+  if (k === "silenci") {
+    st.stats.silence++;
+    d = dbApply(st, { base: -0.6, indecisos: -1.8 });
+    dbNerves(st, 8);
+    dbMoment(st, "gaffe", "Es queda en silenci davant les càmeres", false);
+    return { d, msg: "Et quedes callat massa estona. Al plató, el silenci es fa etern.", good: false, exp: null };
+  }
+  if (ev.type === "repregunta") {
+    if (k === "concreta") {
+      const short = st.time < 20;
+      st.time = Math.max(0, st.time - 20);
+      d = dbApply(st, { base: 0.4, indecisos: 2.2, rivals: 0.4 }, short ? 0.5 : 1);
+      dbNerves(st, -3);
+      msg = short ? "Concretes, però vas tan just de temps que gairebé no s'entén." : "Respons de veritat. La moderadora assenteix i els indecisos prenen nota.";
+    } else if (k === "insisteix") {
+      st.stats.evasive++;
+      d = dbApply(st, { base: 0.6, indecisos: -1.8 });
+      good = false;
+      msg = "Tornes a esquivar la pregunta. Fa la impressió que no tens proposta.";
+    } else {
+      const ok = dbRand(st, "retreu") < (st.me.style === "combat" ? 0.45 : 0.3);
+      d = dbApply(st, ok ? { base: 2, indecisos: 0.4 } : { base: 0.4, indecisos: -2.6 });
+      good = ok;
+      dbNerves(st, ok ? -2 : 6);
+      msg = ok ? "La teva queixa té gràcia i el plató somriu. T'has escapat de la pregunta." : "Carregar contra la moderadora queda molt malament. Ningú no ho entén.";
+      if (!ok) dbMoment(st, "gaffe", "Es baralla amb la moderadora", false);
+    }
+    return { d, msg, good, exp };
+  }
+  if (ev.type === "clash") {
+    const A = st.rivals.find((r) => r.id === ev.a), B = st.rivals.find((r) => r.id === ev.b);
+    if (k === "pau") {
+      st.time = Math.max(0, st.time - 15);
+      d = dbApply(st, { base: 0.3, indecisos: 2.4, rivals: 0.6 });
+      A.imp = dbClamp(A.imp - 2); B.imp = dbClamp(B.imp - 2);
+      dbMoment(st, "viral", "«Mentre vostès es barallen, la gent espera solucions»", true);
+      msg = "Quedes com l'adult de la sala. És la frase que circularà per les xarxes.";
+    } else if (k === "aprofita") {
+      st.time = Math.max(0, st.time - 20);
+      const L = dbLeader(st);
+      d = dbApply(st, { base: 2, indecisos: -0.4, rivals: -0.6 }, st.strat === "atac" ? 1.2 : 1);
+      L.imp = dbClamp(L.imp - 3);
+      st.stats.attacks++;
+      msg = `Et fiques a la baralla i carregues contra ${L.cand}. Els teus s'animen; als indecisos, tant soroll els cansa.`;
+    } else {
+      d = dbApply(st, { indecisos: 0.4 });
+      A.imp = dbClamp(A.imp - 3); B.imp = dbClamp(B.imp - 3);
+      dbNerves(st, -2);
+      msg = "Deixes que es desgastin entre ells. No guanyes gaire, però tampoc no hi perds.";
+    }
+    return { d, msg, good, exp };
+  }
   if (ev.type === "verifica") {
     const c = DB_CLAIMS[ev.claim];
     exp = c.exp;
@@ -363,6 +510,10 @@ function dbLessons(st, res) {
   if (st.stats.factOk) L.push("Verificar dades en directe és arriscat, però si l'encertes és el moment que més es recorda.");
   if (st.stats.factBad) L.push("Corregir el rival sense estar-ne segur pot girar-se en contra: abans de dir «és fals», cal saber-ho.");
   if (st.stats.evasive) L.push("Les preguntes sobre pactes s'han de respondre: esquivar-les sembla que amaguis alguna cosa.");
+  if (st.stats.intBad) L.push("Interrompre és arriscat: si no tens raó o el moment no és bo, la moderadora et renya i els indecisos ho noten.");
+  else if (st.stats.intOk) L.push("Una interrupció a temps pot ser el moment de la nit, però no en facis un costum.");
+  if (st.stats.silence) L.push("En un debat, quedar-se callat és la pitjor resposta: millor una resposta curta que cap.");
+  if (st.stats.followups && st.stats.evasive) L.push("Quan la moderadora repregunta, és que no has respost: concretar és la manera de sortir-ne bé.");
   if (res.seg.indecisos > 60) L.push("Els debats es guanyen sobretot entre els indecisos: propostes concretes i to serè.");
   L.push("Els debats a la televisió segueixen el criteri de proporcionalitat de la Junta Electoral Central: hi participen els partits segons la representació que tenen.");
   L.push("L'ordre d'intervenció i els temps de cada candidat es pacten abans i sovint se sortegen.");

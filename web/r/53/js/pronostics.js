@@ -6,6 +6,8 @@
 // Els pots de cada pregunta (quants jugadors i fitxes hi ha a cada opció) es publiquen des de la Sala de control
 // després de les 20:00 del 29N.
 // Les fitxes que es guanyen es queden per a les properes eleccions (municipals del 2027).
+// A sobre de les 1.000 fitxes, cadascú hi pot afegir monedes de joc (botiga.js): es converteixen en fitxes (camp «extra»)
+// i ja no tornen al moneder.
 // Dades: Firestore pron/{uid}; les regles limiten les fitxes i tanquen els canvis a les 20:00 del 29N.
 
 const PRON_OPEN = Date.UTC(2026, 10, 22, 23); // 23N 00:00
@@ -13,6 +15,9 @@ const PRON_CLOSE = ESP_T.nit;                  // 29N 20:00
 const PRON_BASE = 1000;
 const PRON_STEP = 10;
 const PRON_MIN_Q = 5;
+const PRON_EXTRA_MAX = 2000;
+const PRON_EXTRA_STEP = 50;
+const pronBudget = (b) => PRON_BASE + (b?.extra || 0);
 const PRON_INV23 = ["psoe", "fa", "podemos", "erc", "junts", "bildu", "pnv", "bng", "cc"]; // investidura del 2023
 const pronRange = (party, cuts) => ({
   opts: [[`a`, `Menys de ${cuts[0]}`], [`b`, `De ${cuts[0]} a ${cuts[1] - 1}`], [`c`, `De ${cuts[1]} a ${cuts[2] - 1}`], [`d`, `${cuts[2]} o més`]],
@@ -65,10 +70,10 @@ function pronQ(m, b, win, pots) {
 }
 function pronBalance(b, r, pots = Esp.cfg.pronPots) {
   const staked = pronStaked(b);
-  if (!r) return { staked, won: null, total: PRON_BASE - staked + staked, partial: true };
-  let total = PRON_BASE - staked, partial = !pots;
+  if (!r) return { staked, won: null, total: pronBudget(b), partial: true };
+  let total = pronBudget(b) - staked, partial = !pots;
   PRON_M.forEach((m) => { total += pronQ(m, b?.[m.id], r.res[m.id], pots).got; });
-  return { staked, won: total - (PRON_BASE - staked), total: Math.round(total), partial };
+  return { staked, won: total - (pronBudget(b) - staked), total: Math.round(total), partial };
 }
 const pronFmt = (n) => `${fmt(Math.round(n))} fitxes`;
 function pronCountdown() {
@@ -88,6 +93,7 @@ async function renderPronostics(arg) {
     PronState.uid = O.user.uid;
     PronState.mine = await O.pronGet();
     PronState.draft = null;
+    if (PronState.mine && typeof Coins !== "undefined") Coins.setBet(PronState.mine.extra || 0);
     if (location.hash.slice(1).split("/")[0] !== "pronostics") return;
   }
   const night = ["nit", "despres"].includes(espFase());
@@ -102,9 +108,9 @@ async function renderPronostics(arg) {
   root.innerHTML = `${espPreviewBar()}
     <header class="pron-hero">
       <div><p class="esp-k">🎟️ Joc · eleccions del 29N</p><h1>Lliga de pronòstics</h1>
-        <p>Reparteix les teves <b>${fmt(PRON_BASE)} fitxes</b> entre almenys ${PRON_MIN_Q} preguntes. A cada pregunta, les fitxes dels qui fallen es reparteixen a parts iguals entre els qui encerten. Posa'n més on estiguis més segur!</p>
+        <p>Reparteix les teves <b>${fmt(PRON_BASE)} fitxes</b> (i, si vols, les monedes que hagis guanyat jugant) entre almenys ${PRON_MIN_Q} preguntes. A cada pregunta, les fitxes dels qui fallen es reparteixen a parts iguals entre els qui encerten. Posa'n més on estiguis més segur!</p>
         <p class="pron-status">${status}</p></div>
-      <div class="pron-wallet"><small>${st === "oberta" || st === "aviat" ? "Et queden per repartir" : !r ? "En joc" : r.final ? "Les teves fitxes" : bal.partial ? "Recuperaries (sense el pot)" : "Ara mateix tindries"}</small><b>${fmt(st === "oberta" || st === "aviat" ? PRON_BASE - pronStaked(PronState.draft || mine) : bal.total)}</b><span>fitxes</span></div>
+      <div class="pron-wallet"><small>${st === "oberta" || st === "aviat" ? "Et queden per repartir" : !r ? "En joc" : r.final ? "Les teves fitxes" : bal.partial ? "Recuperaries (sense el pot)" : "Ara mateix tindries"}</small><b>${fmt(st === "oberta" || st === "aviat" ? pronBudget(PronState.draft || mine) - pronStaked(PronState.draft || mine) : bal.total)}</b><span>fitxes</span></div>
     </header>
     <nav class="pron-tabs">${[["meus", "Els meus pronòstics"], ["lligues", "Les meves lligues"], ["general", "Rànquing general"]].map(([k, t]) => `<button type="button" class="${PronState.tab === k ? "on" : ""}" data-ptab="${k}">${t}</button>`).join("")}</nav>
     <div data-pbody></div>
@@ -124,10 +130,16 @@ async function renderPronostics(arg) {
 
 function pronMine(body, st, r) {
   const open = st === "oberta";
-  const D = (PronState.draft ||= JSON.parse(JSON.stringify(Object.fromEntries(PRON_M.map((m) => [m.id, PronState.mine?.[m.id] || null])))));
-  const left = PRON_BASE - pronStaked(D);
-  const dirty = JSON.stringify(PRON_M.map((m) => D[m.id] || null)) !== JSON.stringify(PRON_M.map((m) => PronState.mine?.[m.id] || null));
+  const D = (PronState.draft ||= JSON.parse(JSON.stringify({ ...Object.fromEntries(PRON_M.map((m) => [m.id, PronState.mine?.[m.id] || null])), extra: PronState.mine?.extra || 0 })));
+  const left = pronBudget(D) - pronStaked(D);
+  const dirty = JSON.stringify([...PRON_M.map((m) => D[m.id] || null), D.extra || 0]) !== JSON.stringify([...PRON_M.map((m) => PronState.mine?.[m.id] || null), PronState.mine?.extra || 0]);
+  const coins = typeof Coins !== "undefined" ? Coins.balance() + (PronState.mine?.extra || 0) : 0;
+  const maxExtra = Math.min(PRON_EXTRA_MAX, Math.floor(coins / PRON_EXTRA_STEP) * PRON_EXTRA_STEP);
   body.innerHTML = `${st === "aviat" ? `<div class="card pron-soon"><b>Els mercats s'obren el 23 de novembre.</b> Ja pots fer-te una idea dels pronòstics que hi haurà.</div>` : ""}
+    ${open && typeof Coins !== "undefined" ? `<section class="card pron-extra">
+      <div><b>🪙 Afegeix-hi monedes</b><p>${maxExtra || D.extra ? `${D.extra ? `Hi afegeixes ${fmt(D.extra)} monedes; en pots afegir fins a ${fmt(maxExtra)}.` : `Tens ${fmt(coins)} monedes de joc.`} Les que hi afegeixis es converteixen en fitxes d'aquesta Lliga: si encertes, les multiplicaràs, però no tornen al moneder.` : `Juga als minijocs per guanyar monedes i afegir-les aquí (en calen ${PRON_EXTRA_STEP}).`} <a href="#botiga">Què són?</a></p></div>
+      ${maxExtra || D.extra ? `<div class="pron-stake"><span>Hi afegeixes</span><button type="button" data-ex="-${PRON_EXTRA_STEP}" aria-label="Menys">−</button><input type="text" inputmode="numeric" data-exv value="${D.extra || 0}" aria-label="Monedes"><button type="button" data-ex="${PRON_EXTRA_STEP}" aria-label="Més">+</button></div>` : ""}
+    </section>` : !open && PronState.mine?.extra ? `<p class="muted">Hi vas afegir ${fmt(PronState.mine.extra)} monedes de joc.</p>` : ""}
     <div class="pron-list">${PRON_M.map((m) => {
       const b = D[m.id];
       const out = r?.res?.[m.id];
@@ -143,25 +155,34 @@ function pronMine(body, st, r) {
     ${open ? (() => {
       const n = pronCount(D), ok = left === 0 && n >= PRON_MIN_Q;
       const need = n < PRON_MIN_Q ? `Respon almenys ${PRON_MIN_Q} preguntes (en tens ${n})` : left > 0 ? `Reparteix-les totes: en queden ${fmt(left)}` : left < 0 ? `Et passes de ${fmt(-left)} fitxes` : dirty ? "Tot a punt: desa-ho" : "Desat. Pots canviar-ho fins a les 20:00 del 29N.";
-      return `<div class="pron-bar ${left < 0 ? "bad" : ok ? "ok" : ""}"><div><b>${n}/${PRON_M.length} preguntes · ${fmt(PRON_BASE - left)} de ${fmt(PRON_BASE)} fitxes</b><small>${need}</small></div><button class="btn primary" type="button" data-psave ${!dirty || !ok || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Desant…" : "Desa"}</button></div>`;
+      return `<div class="pron-bar ${left < 0 ? "bad" : ok ? "ok" : ""}"><div><b>${n}/${PRON_M.length} preguntes · ${fmt(pronBudget(D) - left)} de ${fmt(pronBudget(D))} fitxes</b><small>${need}</small></div><button class="btn primary" type="button" data-psave ${!dirty || !ok || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Desant…" : "Desa"}</button></div>`;
     })() : ""}`;
   if (!open) return;
   const redraw = () => pronMine(body, st, r);
   $$("[data-mo]", body).forEach((btn) => btn.addEventListener("click", () => {
     const m = btn.dataset.mo, o = btn.dataset.o;
     if (D[m]?.o === o) D[m] = null;
-    else D[m] = { o, a: D[m]?.a || Math.min(Math.max(PRON_STEP, Math.round((PRON_BASE - pronStaked(D)) / 2 / PRON_STEP) * PRON_STEP), Math.max(0, PRON_BASE - pronStaked(D))) || PRON_STEP };
+    else D[m] = { o, a: D[m]?.a || Math.min(Math.max(PRON_STEP, Math.round((pronBudget(D) - pronStaked(D)) / 2 / PRON_STEP) * PRON_STEP), Math.max(0, pronBudget(D) - pronStaked(D))) || PRON_STEP };
     Sfx.play("pick"); redraw(); pronWalletSync();
   }));
-  const setA = (m, v) => { if (!D[m]) return; const free = PRON_BASE - pronStaked(D) + D[m].a; D[m].a = Math.max(PRON_STEP, Math.min(free, Math.round(v / PRON_STEP) * PRON_STEP)); redraw(); pronWalletSync(); };
+  const setX = (v) => { D.extra = Math.max(0, Math.min(maxExtra, Math.round(v / PRON_EXTRA_STEP) * PRON_EXTRA_STEP)); Sfx.play("pick"); redraw(); pronWalletSync(); };
+  $$("[data-ex]", body).forEach((b) => b.addEventListener("click", () => setX((D.extra || 0) + Number(b.dataset.ex))));
+  $("[data-exv]", body)?.addEventListener("change", (e) => setX(Number(e.target.value.replace(/\D/g, "")) || 0));
+  const setA = (m, v) => { if (!D[m]) return; const free = pronBudget(D) - pronStaked(D) + D[m].a; D[m].a = Math.max(PRON_STEP, Math.min(free, Math.round(v / PRON_STEP) * PRON_STEP)); redraw(); pronWalletSync(); };
   $$("[data-st]", body).forEach((b) => b.addEventListener("click", () => setA(b.dataset.st, (D[b.dataset.st]?.a || 0) + Number(b.dataset.d))));
   $$("[data-sv]", body).forEach((i) => i.addEventListener("change", () => setA(i.dataset.sv, Number(i.value.replace(/\D/g, "")) || 0)));
   $("[data-psave]", body)?.addEventListener("click", async () => {
     const bets = {};
     PRON_M.forEach((m) => { if (D[m.id] && D[m.id].a > 0) bets[m.id] = { o: D[m.id].o, a: D[m.id].a }; });
+    if (D.extra > 0) bets.extra = D.extra;
     PronState.saving = true; redraw();
     const ok = await window.Online.pronSave(bets);
     PronState.saving = false;
+    if (ok) {
+      const prevExtra = PronState.mine?.extra || 0;
+      if (typeof Coins !== "undefined") Coins.setBet(D.extra || 0);
+      if ((D.extra || 0) > prevExtra) window.Stats?.add("aposta", D.extra - prevExtra);
+    }
     if (ok) { PronState.mine = { ...bets }; PronState.draft = null; Sfx.play("unlock"); toast("Pronòstics desats"); Progress.unlock("pron-fet"); }
     else PronState.draft = D;
     renderPronostics();
@@ -169,7 +190,7 @@ function pronMine(body, st, r) {
 }
 function pronWalletSync() {
   const w = $(".pron-wallet b");
-  if (w && PronState.draft) w.textContent = fmt(PRON_BASE - pronStaked(PronState.draft));
+  if (w && PronState.draft) w.textContent = fmt(pronBudget(PronState.draft) - pronStaked(PronState.draft));
 }
 
 async function pronLeagues(body, st, r) {
@@ -223,7 +244,7 @@ function pronNitCard(d) {
   const r = pronResults(d);
   const b = pronBalance(mine, r);
   return `<section class="card pron-nit"><h2 class="section-title sm">🎟️ Les teves fitxes</h2>
-    <p class="pron-nit-n"><b>${fmt(r ? b.total : PRON_BASE - b.staked)}</b> fitxes ${r ? (r.final ? "(final)" : "ara mateix") : ""}</p>
+    <p class="pron-nit-n"><b>${fmt(r ? b.total : pronBudget(mine) - b.staked)}</b> fitxes ${r ? (r.final ? "(final)" : "ara mateix") : ""}</p>
     <a class="btn" href="#pronostics/lligues">Mira les teves lligues</a></section>`;
 }
 

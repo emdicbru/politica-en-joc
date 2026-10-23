@@ -104,6 +104,44 @@ const Online = {
   async pronPayout(uid, data) {
     try { await F.updateDoc(F.doc(db, 'pron', uid), data); return true; } catch (e) { console.warn(e); return false; }
   },
+  // Radiografia d'ús (stats.js): suma comptadors anònims a stats/{dia}_{n}
+  async statsSend(id, data) {
+    if (!ready) return false;
+    const inc = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === "number" ? F.increment(v) : inc(v)]));
+    try { await F.setDoc(F.doc(db, "stats", id), inc(data), { merge: true }); return true; } catch (e) { console.warn(e); return false; }
+  },
+  async statsRange(from, to) {
+    if (!ready) return null;
+    try {
+      const q = F.query(F.collection(db, "stats"), F.where(F.documentId(), ">=", from), F.where(F.documentId(), "<=", to + "_~"));
+      return (await F.getDocs(q)).docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch (e) { console.warn(e); return null; }
+  },
+  async countOf(col) {
+    if (!ready) return null;
+    try { return (await F.getCountFromServer(F.collection(db, col))).data().count; } catch (e) { console.warn(e); return null; }
+  },
+  // Botiga: la foto del perfil i un avatar comprat
+  myPhoto: () => (Online.user ? me().photo : ""),
+  // Perfil: qui ets i on ets al rànquing d'experiència (2 consultes de recompte)
+  meInfo: () => (Online.user ? { ...me(), email: Online.user.email || "", synced: ready } : null),
+  async myRank() {
+    if (!ready || !Online.user) return null;
+    try {
+      const xp = Progress.data.xp || 0;
+      const [above, total] = await Promise.all([
+        F.getCountFromServer(F.query(F.collection(db, "users"), F.where("xp", ">", xp))),
+        F.getCountFromServer(F.collection(db, "users")),
+      ]);
+      return { pos: above.data().count + 1, total: total.data().count };
+    } catch (e) { console.warn(e); return null; }
+  },
+  async setPhoto(photo) {
+    if (!ready || !Online.user || !Online.profile) return;
+    Online.profile = { ...Online.profile, photo };
+    await pushProfile();
+    renderAccountBtn();
+  },
   async setConfig(id, data) {
     if (!ready || !Online.user) { toast("Cal entrar amb el compte"); return false; }
     try { await F.setDoc(F.doc(db, "config", id), data); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
@@ -113,13 +151,14 @@ window.Online = Online;
 
 // ---------- Utilitats ----------
 // Com et veuen els altres: el nom d'usuari i la foto del perfil (o, si encara no n'hi ha, les de Google)
-const me = () => ({ uid: Online.user.uid, name: Online.profile?.handle || Online.user.displayName || "Jugador", photo: Online.profile ? Online.profile.photo : (Online.user.photoURL || "") });
+const me = () => ({ uid: Online.user.uid, name: Online.profile?.handle || Online.user.displayName || "Jugador", photo: Online.profile ? Online.profile.photo : (Online.user.photoURL || ""), frame: typeof Coins !== "undefined" ? Coins.eq("fr") : null, title: typeof Coins !== "undefined" ? Coins.eq("ti") : null });
 const firstName = (n) => (n || "Rival").split(" ")[0];
 const fresh = () => ({ i: 0, score: 0, hits: 0, done: false, picks: [], res: [], msgs: [], emote: null });
 const genCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
+const avFr = (p) => (p?.frame && /^fr-[a-z]+$/.test(p.frame) ? ` fr-${p.frame.slice(3)}` : "");
 const avatar = (p, size = 40) => p?.photo
-  ? `<img class="avatar" src="${esc(p.photo)}" alt="" width="${size}" height="${size}" referrerpolicy="no-referrer">`
-  : `<span class="avatar ph" style="width:${size}px;height:${size}px">${esc((p?.name || "?")[0])}</span>`;
+  ? `<img class="avatar${avFr(p)}" src="${esc(p.photo)}" alt="" width="${size}" height="${size}" referrerpolicy="no-referrer">`
+  : `<span class="avatar ph${avFr(p)}" style="width:${size}px;height:${size}px">${esc((p?.name || "?")[0])}</span>`;
 const duelLink = (code) => `${location.origin}${location.pathname}#duel/${code}`;
 const currentView = () => location.hash.slice(1).split("/")[0] || "jocs";
 function refreshView() {
@@ -192,6 +231,8 @@ function openProfileEditor(first = false) {
       <div class="pf-photos">
         ${google ? `<button type="button" class="pf-ph" data-ph="google" aria-label="La foto del compte de Google"><img src="${esc(google)}" alt="" referrerpolicy="no-referrer"></button>` : ""}
         ${AVATAR_ART.map((_, k) => `<button type="button" class="pf-ph" data-ph="${k}" aria-label="Avatar ${k + 1}"><img src="${avatarPreset(k)}" alt=""></button>`).join("")}
+        ${typeof SHOP !== "undefined" ? SHOP.filter((x) => x.cat === "av" && Coins.owns(x.id)).map((x) => `<button type="button" class="pf-ph" data-ph="s:${x.id}" aria-label="${esc(x.name)}"><img src="${x.art}" alt=""></button>`).join("") : ""}
+        ${first ? "" : `<a class="pf-ph pf-shop" href="#botiga" title="Més avatars a la botiga"><span>🪙</span><small>Botiga</small></a>`}
         <label class="pf-ph pf-up" title="Puja una foto"><input type="file" accept="image/*" data-up hidden><span>＋</span><small>Puja-la</small></label>
       </div>
       <p class="pf-err" data-err role="alert"></p>
@@ -202,14 +243,16 @@ function openProfileEditor(first = false) {
   document.body.appendChild(el);
   profileModal = el;
   const prev = $(".pf-preview", el), err = $("[data-err]", el), input = $("[data-handle]", el);
+  const phUrl = (k) => (k === "google" ? google : k.startsWith("s:") ? shopAvatarUrl(k.slice(2)) : avatarPreset(Number(k)));
   const sync = () => {
     prev.src = photo || avatarPreset(0);
-    $$(".pf-ph[data-ph]", el).forEach((b) => b.classList.toggle("on", (b.dataset.ph === "google" ? google : avatarPreset(Number(b.dataset.ph))) === photo));
+    $$(".pf-ph[data-ph]", el).forEach((b) => b.classList.toggle("on", phUrl(b.dataset.ph) === photo));
     $(".pf-up", el).classList.toggle("on", !!photo && photo.startsWith("data:image/jpeg"));
   };
   sync();
   input.focus();
-  $$(".pf-ph[data-ph]", el).forEach((b) => b.addEventListener("click", () => { photo = b.dataset.ph === "google" ? google : avatarPreset(Number(b.dataset.ph)); Sfx.play("pick"); sync(); }));
+  $$(".pf-ph[data-ph]", el).forEach((b) => b.addEventListener("click", () => { photo = phUrl(b.dataset.ph); Sfx.play("pick"); sync(); }));
+  $(".pf-shop", el)?.addEventListener("click", () => closeProfileEditor());
   $("[data-up]", el).addEventListener("change", async (e) => {
     try { photo = await shrinkPhoto(e.target.files[0]); err.textContent = ""; sync(); }
     catch { err.textContent = "No s'ha pogut llegir la imatge. Prova'n una altra."; }
@@ -358,7 +401,18 @@ function mergeProgress(local, cloud) {
     ach: { ...(cloud.ach || {}), ...(local.ach || {}) },
     learn: maxMap(local.learn, cloud.learn),
     daily: { last, streak, scores: { ...(ld.scores || {}), ...(cd.scores || {}) } },
+    shop: mergeShop(local.shop, cloud.shop),
   };
+}
+
+// El que s'ha comprat es suma; el que es porta posat i les monedes de la Lliga, el més recent
+function mergeShop(a = {}, b = {}) {
+  a ||= {}; b ||= {};
+  const inv = { ...(b.inv || {}) };
+  for (const [k, v] of Object.entries(a.inv || {})) inv[k] = Math.min(inv[k] ?? Infinity, v);
+  const eqSrc = (a.eqT || 0) >= (b.eqT || 0) ? a : b;
+  const betSrc = (a.betT || 0) >= (b.betT || 0) ? a : b;
+  return { inv, eq: { ...(eqSrc.eq || {}) }, eqT: eqSrc.eqT || 0, bet: betSrc.bet || 0, betT: betSrc.betT || 0 };
 }
 
 let pushTimer = null;
@@ -381,6 +435,7 @@ async function pushProfile() {
   await safe(() => F.setDoc(F.doc(db, "users", Online.user.uid), {
     name: me().name, photo: me().photo, handle: Online.profile?.handle || null,
     xp: d.xp, level: Progress.levelIndex() + 1,
+    frame: me().frame || null, title: me().title || null, shop: d.shop || {},
     best: d.best, plays: d.plays, ach: d.ach, learn: d.learn || {}, daily: d.daily,
     updatedAt: F.serverTimestamp(),
   }), "No s'ha pogut desar el progrés al núvol");
@@ -407,7 +462,7 @@ function renderAccountBox() {
   if (u) {
     box.innerHTML = `<div class="card account-card in">
       ${avatar(me(), 56)}
-      <div class="ac-body"><b>${esc(me().name)}</b><p>${esc(u.email || "")}${u.email ? " · " : ""}<span class="synced">${ready ? "Progrés sincronitzat" : authLoading ? "Connectant…" : "Mode sense connexió"}</span></p></div>
+      <div class="ac-body"><b>${esc(me().name)}</b>${typeof shopTitle === "function" && shopTitle(me().title) ? `<span class="shop-ti sm">${esc(shopTitle(me().title))}</span>` : ""}<p>${esc(u.email || "")}${u.email ? " · " : ""}<span class="synced">${ready ? "Progrés sincronitzat" : authLoading ? "Connectant…" : "Mode sense connexió"}</span></p></div>
       <div class="ac-btns">${ready ? `<button class="btn" data-editprof>Edita el perfil</button>` : ""}<button class="btn ghost" data-signout>Tanca la sessió</button></div>
     </div>`;
     $("[data-signout]", box).addEventListener("click", signOutNow);
@@ -420,7 +475,6 @@ function renderAccountBox() {
       </div>`);
       $("[data-export]", box).addEventListener("click", exportMyData);
       $("[data-delete]", box).addEventListener("click", deleteMyAccount);
-      renderLeaderboard();
     }
     return;
   }
@@ -512,10 +566,9 @@ async function deleteMyAccount() {
   toast("El compte s'ha suprimit.");
 }
 
-async function renderLeaderboard() {
-  const box = $("#leaderboard-box");
+async function renderLeaderboard(box = $("#leaderboard-box"), inTab = false) {
   if (!box || !ready || !Online.user) return;
-  box.innerHTML = `<h2 class="section-title sm">Rànquing</h2><div class="lb"><p class="muted">Carregant…</p></div>`;
+  box.innerHTML = `${inTab ? `<p class="muted">Qui ha acumulat més experiència jugant a tots els jocs.</p>` : `<h2 class="section-title sm">Rànquing</h2>`}<div class="lb"><p class="muted">Carregant…</p></div>`;
   const snap = await safe(() => F.getDocs(F.query(F.collection(db, "users"), F.orderBy("xp", "desc"), F.limit(20))));
   if (!snap) return;
   const rows = snap.docs.map((d, i) => {
@@ -523,7 +576,7 @@ async function renderLeaderboard() {
     const lvl = LEVELS[Math.min(LEVELS.length - 1, (u.level || 1) - 1)].name;
     return `<div class="lb-row ${d.id === Online.user.uid ? "me" : ""}">
       <b class="lb-pos">${i + 1}</b>${avatar(u, 36)}
-      <span class="lb-name">${esc(u.name || "Jugador")}<small>${lvl}</small></span>
+      <span class="lb-name">${esc(u.name || "Jugador")}<small>${lvl}${typeof shopTitle === "function" && shopTitle(u.title) ? ` · ${esc(shopTitle(u.title))}` : ""}</small></span>
       <strong>${fmt(u.xp || 0)} XP</strong>
     </div>`;
   }).join("");
@@ -1374,10 +1427,12 @@ Online.renderRanking = (root, arg) => {
     <div class="rank-tabs">
       <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
       <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amics</button>
+      <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiència</button>
     </div>
     <div id="rank-body"><p class="muted">Carregant…</p></div>`;
   $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
   if (rankTab === "world") renderWorld($("#rank-body"), key);
+  else if (rankTab === "xp") renderLeaderboard($("#rank-body"), true);
   else renderLeagues($("#rank-body"), key);
 };
 

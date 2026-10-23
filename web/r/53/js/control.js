@@ -114,7 +114,7 @@ function renderControl(fromLive = false) {
   }
   const changed = ctlDraft ? ctlChanges() : [];
   const dot = (keys) => (changed.some((x) => keys.some((k) => x.startsWith(k))) ? `<i class="ctl-dot"></i>` : "");
-  const TABS = [["resum", "🏠 Resum", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
+  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
   const tab = sessionStorage.getItem("ctl-tab") || "resum";
   const panel = (k, inner) => (k === tab ? `<div class="ctl-panel">${inner}</div>` : "");
 
@@ -218,6 +218,8 @@ function renderControl(fromLive = false) {
         </div>
       </section>`)}
 
+    ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
+
     ${panel("notif", ctlNotifHtml())}
 
     ${panel("ajuda", `
@@ -239,6 +241,7 @@ function renderControl(fromLive = false) {
   </div>`;
 
   if (tab === "notif") ctlNotifBind(root);
+  if (tab === "usuaris") ctlStatsBind(root);
   $$("[data-tab]", root).forEach((t) => t.addEventListener("click", () => { sessionStorage.setItem("ctl-tab", t.dataset.tab); renderControl(); window.scrollTo({ top: 0 }); }));
   const redraw = () => renderControl();
   $$("[data-set]", root).forEach((b) => b.addEventListener("click", () => { D[b.dataset.set] = b.dataset.v; Sfx.play("pick"); redraw(); }));
@@ -334,10 +337,10 @@ async function ctlPushLoad() {
   if (ctlPush.loading) return;
   ctlPush.loading = true;
   const O = window.Online;
-  const [cfg, hist, all, diari, avisos] = await Promise.all([O.getConfig("push"), O.pushHistory(), O.pushCount(), O.pushCount("diari"), O.pushCount("avisos")]);
+  const [cfg, hist, all] = await Promise.all([O.getConfig("push"), O.pushHistory(), O.pushCount()]);
   ctlPush.cfg = cfg || { diariOn: true, diariHora: 9 };
   ctlPush.hist = hist;
-  ctlPush.counts = { all, diari, avisos };
+  ctlPush.counts = { all };
   ctlPush.loading = false;
   if (sessionStorage.getItem("ctl-tab") === "notif") renderControl(true);
 }

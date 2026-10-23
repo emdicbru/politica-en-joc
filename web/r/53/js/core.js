@@ -171,6 +171,7 @@ function renderLevel() {
   $("#level-name").textContent = cur.name;
   $("#level-xp").textContent = `${fmt(xp)} XP`;
   $("#level-chip").title = next ? `${cur.name} · ${fmt(next.xp - xp)} XP per a ${next.name}` : `${cur.name} · nivell màxim`;
+  if (typeof renderCoins === "function") renderCoins();
 }
 
 // ---------- Toasts i confeti ----------
@@ -193,7 +194,7 @@ function nextToast() {
   }, 2300);
 }
 
-function confetti(amount = 150) {
+function confetti(amount = 150, style = typeof shopConfetti === "function" ? shopConfetti() : null) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const cv = $("#confetti");
   const ctx = cv.getContext("2d");
@@ -201,7 +202,8 @@ function confetti(amount = 150) {
   cv.width = innerWidth * dpr;
   cv.height = innerHeight * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const colors = ["#ff4b2b", "#ffcf3d", "#3554ff", "#17173d", "#fffaf0"];
+  const colors = style?.colors || ["#ff4b2b", "#ffcf3d", "#3554ff", "#17173d", "#fffaf0"];
+  const shape = style?.shape || "";
   const parts = Array.from({ length: amount }, () => ({
     x: innerWidth / 2 + (Math.random() - .5) * 240,
     y: innerHeight * .35,
@@ -224,8 +226,18 @@ function confetti(amount = 150) {
       ctx.fillStyle = p.c;
       ctx.strokeStyle = "#17173d";
       ctx.lineWidth = 1.5;
-      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-      ctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      if (shape === "star") {
+        ctx.beginPath();
+        for (let k = 0; k < 10; k++) { const rr = k % 2 ? p.w * 0.45 : p.w; const a = (k * Math.PI) / 5; ctx.lineTo(Math.sin(a) * rr, -Math.cos(a) * rr); }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (shape === "ballot") {
+        ctx.fillRect(-p.w * 0.7, -p.h * 0.7, p.w * 1.4, p.h * 1.4);
+        ctx.strokeRect(-p.w * 0.7, -p.h * 0.7, p.w * 1.4, p.h * 1.4);
+        ctx.beginPath(); ctx.moveTo(-p.w * 0.4, -p.h * 0.3); ctx.lineTo(p.w * 0.4, -p.h * 0.3); ctx.moveTo(-p.w * 0.4, p.h * 0.1); ctx.lineTo(p.w * 0.2, p.h * 0.1); ctx.stroke();
+      } else {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
       ctx.restore();
     });
     if (++frame < 170) requestAnimationFrame(loop);
@@ -245,7 +257,7 @@ const DYNAMIC_GAMES = new Map();
 const gameById = (id) => GAMES.find((g) => g.id === id) || DYNAMIC_GAMES.get(id);
 
 // ---------- Navegació ----------
-const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics"];
+const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga"];
 let session = null; // partida en curs
 
 function route() {
@@ -256,7 +268,7 @@ function route() {
   if (v !== "joc" || session?.game.id !== arg) endSession();
 
   VIEWS.forEach((name) => { $(`#view-${name}`).hidden = name !== v; });
-  const navKey = v === "joc" ? (arg?.startsWith("duel-") ? "social" : arg === "simulador" || arg === "debat" ? "simulador" : arg === "noticies-quiz" ? "noticies" : "jocs") : v === "calendari" ? "apren" : v === "duel" || v === "ranking" ? "social" : v === "nit" ? "inici" : v === "control" ? "perfil" : v === "pronostics" ? "social" : v;
+  const navKey = v === "joc" ? (arg?.startsWith("duel-") ? "social" : arg === "simulador" || arg === "debat" ? "simulador" : arg === "noticies-quiz" ? "noticies" : "jocs") : v === "calendari" ? "apren" : v === "duel" || v === "ranking" ? "social" : v === "nit" ? "inici" : v === "control" || v === "botiga" ? "perfil" : v === "pronostics" ? "social" : v;
   $$("[data-nav]").forEach((a) => a.classList.toggle("active", a.dataset.nav === navKey));
   document.body.classList.toggle("playing", v === "joc");
 
@@ -270,13 +282,14 @@ function route() {
   if (v === "jocs") renderGames();
   if (v === "perfil") renderProfile();
   if (v === "apren") renderApren(arg);
-  if (v === "simulador") renderSimHome();
+  if (v === "simulador") renderSimHome(arg);
   if (v === "legal") renderLegal(arg);
   if (v === "duel") renderDuelView(arg);
   if (v === "ranking") renderRankingView(arg);
   if (v === "nit") renderNit(arg);
   if (v === "control") renderControl();
   if (v === "pronostics") renderPronostics(arg);
+  if (v === "botiga") renderBotiga();
   updateTabIndicator();
   window.scrollTo({ top: 0 });
 }
@@ -329,6 +342,7 @@ function showIntro(game) {
 
 function startGame(game) {
   endSession();
+  window.Stats?.add("g", 1, game.id.startsWith("duel-") ? "duel" : game.id);
   const s = { game, cleanup: [] };
   session = s;
   const body = $("#stage-body");
@@ -385,6 +399,7 @@ function startGame(game) {
 // result: { score, max?, ratio?, xp, unit?, verdict?, recap?: [{q, a, note}], noRecord?, record?,
 //           display? (text en lloc del número), extraHtml?, onShown?(body) }
 function showResult(game, result) {
+  const coins0 = typeof Coins !== "undefined" ? Coins.earned() : 0;
   // «record»: el joc ja ha desat el resultat pel seu compte (p. ex. un rècord per mode)
   const { isRecord, prevBest, levelUp } = result.record ? result.record : result.noRecord
     ? { isRecord: false, prevBest: Progress.data.best[game.id], levelUp: null }
@@ -396,6 +411,14 @@ function showResult(game, result) {
   window.Track?.("game_complete", { game: game.id.startsWith("duel-") ? "duel" : game.id, score: Math.round(result.score || 0) });
   const ratio = result.ratio ?? (result.max ? result.score / result.max : null);
   if (ratio === 1) Progress.unlock("perfecte");
+  // Els jocs que desen el resultat pel seu compte (repte diari, duels, simulador) ja han sumat l'XP abans d'arribar aquí
+  const coinsWon = typeof Coins !== "undefined" ? Math.max(0, Coins.earned() - coins0) + (result.noRecord || result.record ? Math.floor((result.xp || 0) / COIN_XP) : 0) : 0;
+  if (window.Stats) {
+    Stats.add("f", 1, game.id.startsWith("duel-") ? "duel" : game.id);
+    Stats.add("xp", result.xp || 0);
+    Stats.add("mon", coinsWon);
+    if (game.id === "diari") { Stats.add("diari"); Stats.add("diariPts", Math.round(result.hits ?? result.score ?? 0)); }
+  }
   const verdict = result.verdict ?? (
     ratio === null ? "" :
     ratio >= 1 ? "Ple absolut. Ningú et tosseix." :
@@ -421,6 +444,7 @@ function showResult(game, result) {
       <p class="result-verdict">${verdict}</p>
       <div class="result-badges">
         ${result.xp ? `<span class="rbadge xp">+${fmt(result.xp)} XP</span>` : ""}
+        ${coinsWon ? `<a class="rbadge coin" href="#botiga">+${fmt(coinsWon)} monedes</a>` : ""}
         ${result.display ? "" : isRecord ? `<span class="rbadge record">${prevBest === undefined ? "Primer rècord" : "Nou rècord!"}</span>` : prevBest !== undefined ? `<span class="rbadge">Rècord: ${fmt(Math.max(prevBest, result.score))}</span>` : ""}
         ${levelUp ? `<span class="rbadge level">Nou nivell: ${levelUp}</span>` : ""}
       </div>

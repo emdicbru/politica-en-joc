@@ -23,6 +23,7 @@ async function notifEnable(topics = NOTIF_ALL) {
     const id = await window.Online.pushSubscribe(topics);
     store.set(NOTIF_KEY, { ...store.get(NOTIF_KEY, {}), id, topics });
     Sfx.play("unlock");
+    window.Stats?.add("notif");
     toast("Notificacions activades 🔔");
   } catch (e) {
     console.warn(e);

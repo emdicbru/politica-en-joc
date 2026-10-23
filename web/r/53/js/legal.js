@@ -6,7 +6,7 @@ const LEGAL = {
   adreca: "", // opcional: adreça postal del titular
   correu: "brudomingosola@gmail.com",
   domini: "politicaenjoc.com",
-  actualitzat: "22 d'octubre de 2026",
+  actualitzat: "23 d'octubre de 2026",
 };
 
 const ANALYTICS_ON = !!(window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.measurementId);
@@ -74,6 +74,8 @@ const LEGAL_TEXT = {
     <p><b>a) Ús del lloc web sense compte.</b> Per jugar i consultar els continguts no cal registrar-se. En aquest cas no es recullen dades identificatives: el progrés del joc i les preferències es desen exclusivament al dispositiu de la persona usuària. El proveïdor d'allotjament tracta les dades tècniques necessàries per servir el lloc web, com ara l'adreça IP.</p>
     <p><b>b) Persones usuàries registrades amb un compte de Google.</b> Es tracten l'identificador d'usuari, el nom, l'adreça electrònica i la fotografia del compte de Google; el nom d'usuari i la foto de perfil que la persona usuària tria (una fotografia pròpia es redueix al dispositiu abans de desar-la), que són visibles per a la resta d'usuaris als rànquings i als duels; les dades de progrés en el joc (punts d'experiència, nivell, rècords i assoliments); els resultats del repte diari; la participació en duels, inclosos els missatges i les icones enviats, la pertinença a lligues i, si hi juga, els pronòstics i les fitxes de la Lliga de pronòstics.</p>
     <p><b>c) Notificacions.</b> Si una persona activa les notificacions, es desa l'adreça de subscripció que el navegador assigna al dispositiu per rebre-les (la proporciona el servei de notificacions del navegador: Google, Apple o Mozilla), els temes triats i el tipus de dispositiu. No s'associa al nom ni al compte. Es poden desactivar en qualsevol moment des de Perfil o des de la configuració del navegador, i aleshores l'identificador s'elimina.</p>
+    <p><b>d) Estadística d'ús anònima.</b> L'app compta de manera agregada i anònima l'ús que se'n fa (visites per dia i per hora, seccions visitades, partides jugades, tipus de dispositiu i web d'origen per categories). No es recullen dades identificatives ni s'associa a cap compte. Es pot desactivar des de la Política de galetes.</p>
+    <p><b>e) Monedes i botiga.</b> Si una persona amb compte compra articles de la botiga del joc, es desen al seu perfil els articles que té i els que porta posats; el marc i el títol són visibles als rànquings. Les monedes són una moneda fictícia del joc.</p>
     ${ANALYTICS_ON ? `<p><b>c) Dades d'analítica.</b> Únicament amb el consentiment previ de la persona usuària, es recullen dades d'ús agregades mitjançant Google Analytics: pàgines consultades, tipus de dispositiu i navegador, ubicació aproximada i durada de la visita.</p>` : ""}
     <p>No es tracten categories especials de dades ni es fan perfils amb finalitats publicitàries o decisions automatitzades.</p>
 
@@ -134,7 +136,8 @@ const LEGAL_TEXT = {
       <div class="lt-row"><code>r29n-sim-save</code><span>Pròpia · tècnica</span><span>Desar la partida en curs del simulador.</span><span>Fins que s'acaba la partida o s'elimina</span></div>
       <div class="lt-row"><code>r29n-onboard</code><span>Pròpia · preferències</span><span>Recordar que ja s'ha vist la presentació inicial de l'app.</span><span>Fins que s'elimini</span></div>
       <div class="lt-row"><code>r29n-esp</code><span>Pròpia · funcional</span><span>Guardar la darrera configuració de l'especial del 29N (fase i participació) per mostrar-la de seguida.</span><span>Fins que s'elimini</span></div>
-      <div class="lt-row"><code>r29n-push</code><span>Pròpia · preferències</span><span>Recordar si has activat les notificacions i quins temes vols rebre.</span><span>Fins que s'elimini</span></div>
+      <div class="lt-row"><code>r29n-push</code><span>Pròpia · preferències</span><span>Recordar si has activat les notificacions i si has dit «Ara no» a la proposta d'activar-les.</span><span>Fins que s'elimini</span></div>
+      <div class="lt-row"><code>r29n-stats</code><span>Pròpia · estadística anònima</span><span>Guardar el dia de la primera i de l'última visita d'aquest dispositiu i els comptadors d'ús pendents d'enviar (vegeu el punt 3). No conté cap identificador.</span><span>Fins que s'elimini</span></div>
       <div class="lt-row"><code>r29n-install</code><span>Pròpia · preferències</span><span>Recordar si ja has instal·lat l'app o si no vols que t'ho tornem a proposar.</span><span>Fins que s'elimini</span></div>
       <div class="lt-row"><code>pej-v1</code><span>Pròpia · funcional</span><span>Memòria cau del service worker: còpia dels fitxers de l'app perquè carregui ràpid i funcioni sense connexió. No conté dades personals.</span><span>Fins a la propera versió</span></div>
       <div class="lt-row"><code>r29n-avis</code><span>Pròpia · funcional</span><span>Recordar que ja has vist l'avís de la Lliga de pronòstics, perquè no torni a sortir.</span><span>Fins que s'elimini</span></div>
@@ -154,6 +157,7 @@ const LEGAL_TEXT = {
 
     <h2>3. Base jurídica</h2>
     <p>Les galetes tècniques i de preferències són necessàries per prestar el servei sol·licitat i estan exemptes del deure d'obtenir consentiment, d'acord amb l'article 22.2 de la LSSI-CE.${ANALYTICS_ON ? " Les galetes d'analítica només s'instal·len amb el consentiment previ de la persona usuària." : ""}</p>
+    <p><b>Estadística anònima pròpia.</b> Per saber quines parts de l'app s'utilitzen i millorar-les, cada visita suma 1 a uns comptadors agregats per dia (per exemple, «partides de l'Endevina l'any» o «visites des d'un mòbil Android»). No s'utilitza cap galeta ni identificador, no es desa cap adreça IP ni cap dada que permeti saber qui és ningú, i no hi intervé cap tercer: els comptadors es desen a la base de dades del mateix servei. Si no vols que les teves visites comptin, pots desactivar-ho: <button class="linklike" type="button" data-stats-toggle>${typeof Stats !== "undefined" && Stats.off() ? "Torna a comptar les meves visites" : "No comptis les meves visites"}</button>.</p>
 
     ${ANALYTICS_ON ? `<h2>4. Gestió del consentiment</h2>
     <p>En el primer accés es mostra un avís que permet acceptar, rebutjar o configurar les galetes d'analítica. Rebutjar-les no limita cap funcionalitat del lloc web. L'elecció es conserva durant dotze mesos i es pot modificar en qualsevol moment des de l'enllaç <button class="linklike" data-open-consent>Configuració de galetes</button>, disponible també al peu de pàgina.</p>` : ""}
@@ -173,6 +177,7 @@ const LEGAL_TEXT = {
 
     <h2>3. Registre i compte</h2>
     <p>Algunes funcionalitats, com el desament del progrés en línia, els rànquings, els duels i les lligues, requereixen iniciar sessió amb un compte de Google. Per crear un compte cal tenir almenys catorze anys. La persona usuària és responsable de l'ús que es faci del seu compte i el pot suprimir en qualsevol moment des de la secció Perfil.</p>
+    <p>Les monedes que es guanyen jugant i els articles de la botiga són igualment ficticis: no es poden comprar amb diners ni bescanviar, i les monedes que s'afegeixen a la Lliga de pronòstics es converteixen en fitxes.</p>
     <p>Les fitxes de la Lliga de pronòstics són una moneda fictícia del joc: no es poden comprar ni vendre, no tenen cap valor econòmic i no es poden bescanviar per diners, béns ni serveis. No es tracta de cap joc amb premi ni d'apostes amb contraprestació.</p>
 
     <h2>4. Normes de conducta</h2>

@@ -103,45 +103,102 @@ function renderSound() {
 $("#sound-btn").addEventListener("click", () => { Sfx.toggle(); renderSound(); Sfx.play("pick"); });
 
 // ---------- Perfil ----------
-function renderProfile() {
-  const d = Progress.data;
+// Capçalera amb la targeta del jugador i quatre pestanyes: Resum (el dia a dia), Assoliments, Rècords i Ajustos
+// (compte, app, privadesa i el que es toca poc). La pestanya oberta es recorda durant la sessió.
+const PF_TABS = [["resum", "Resum"], ["assoliments", "Assoliments"], ["records", "Rècords"], ["ajustos", "Ajustos"]];
+let pfTab = (() => { try { return sessionStorage.getItem("pf-tab") || "resum"; } catch { return "resum"; } })();
+let pfAchFilter = "tots";
+
+function pfHero(d) {
   const i = Progress.levelIndex();
   const cur = LEVELS[i], next = LEVELS[i + 1];
   const pct = next ? ((d.xp - cur.xp) / (next.xp - cur.xp)) * 100 : 100;
   const plays = Object.values(d.plays).reduce((a, b) => a + b, 0);
   const unlocked = ACHIEVEMENTS.filter((a) => d.ach[a.id]).length;
-
-  $("#profile").innerHTML = `
-    <div id="account-box"></div>
-    <div class="profile-top">
-      <div class="card level-card">
-        <div class="lc-badge">${i + 1}</div>
-        <div class="lc-body">
-          <small>Nivell actual</small>
-          <h3>${cur.name}</h3>
-          <div class="xpbar"><div style="width:${pct}%"></div></div>
-          <p class="muted">${next ? `${fmt(d.xp)} XP · en falten ${fmt(next.xp - d.xp)} per a <b>${next.name}</b>` : `${fmt(d.xp)} XP · nivell màxim`}</p>
-        </div>
-      </div>
-      <div class="stat-grid">
-        <div class="card stat"><strong>${fmt(plays)}</strong><small>partides</small></div>
-        <div class="card stat"><strong>${unlocked}/${ACHIEVEMENTS.length}</strong><small>assoliments</small></div>
-        <div class="card stat"><strong>${d.daily.streak}</strong><small>dies de ratxa</small></div>
+  const me = window.Online?.meInfo?.();
+  const guest = window.Online?.isGuest?.();
+  const frame = typeof Coins !== "undefined" ? Coins.eq("fr") : null;
+  const title = typeof shopTitle === "function" && typeof Coins !== "undefined" ? shopTitle(Coins.eq("ti")) : "";
+  const pic = me?.photo
+    ? `<img class="avatar pf-av${frame ? ` fr-${frame.slice(3)}` : ""}" src="${esc(me.photo)}" alt="" referrerpolicy="no-referrer">`
+    : `<span class="pf-av pf-lv${frame ? ` avatar fr-${frame.slice(3)}` : ""}">${i + 1}</span>`;
+  const coins = typeof Coins !== "undefined" ? Coins.balance() : 0;
+  return `<section class="card pf-hero">
+    <div class="pf-id">${pic}
+      <div class="pf-who">
+        <h2>${esc(me?.name || "Jugador convidat")}</h2>
+        ${title ? `<span class="shop-ti">${esc(title)}</span>` : ""}
+        <p class="pf-lvl"><b>Nivell ${i + 1} · ${cur.name}</b><span>${next ? `${fmt(d.xp)} XP · en falten ${fmt(next.xp - d.xp)} per a ${next.name}` : `${fmt(d.xp)} XP · nivell màxim`}</span></p>
+        <div class="xpbar"><div style="width:${pct}%"></div></div>
       </div>
     </div>
+    <div class="pf-stats">
+      <a href="#botiga"><b>${fmt(coins)}</b><small>🪙 monedes</small></a>
+      <div><b>${d.daily.streak}</b><small>🔥 dies de ratxa</small></div>
+      <div><b>${fmt(plays)}</b><small>🎮 partides</small></div>
+      <button type="button" data-pftab="assoliments"><b>${unlocked}/${ACHIEVEMENTS.length}</b><small>★ assoliments</small></button>
+    </div>
+    <div class="pf-actions">
+      ${me ? `<button class="btn" type="button" data-pfedit>Edita el perfil</button>` : guest ? `<button class="btn google-btn" type="button" data-signin-cta>${typeof googleIconSvg === "function" ? googleIconSvg() : ""} Crea l'usuari</button>` : ""}
+      <a class="btn primary" href="#botiga">🪙 Botiga</a>
+    </div>
+    ${guest ? `<p class="muted pf-guest">Sense usuari, el progrés només es desa en aquest dispositiu. Amb l'usuari el tens a tot arreu i pots jugar al rànquing, a les lligues i als duels.</p>` : ""}
+  </section>`;
+}
 
-    <h2 class="section-title sm">Carrera</h2>
-    <div class="ladder">${LEVELS.map((l, k) => `<div class="rung ${k < i ? "done" : k === i ? "cur" : ""}"><b>${k + 1}</b><span>${l.name}</span><small>${fmt(l.xp)} XP</small></div>`).join("")}</div>
+function pfResum(d) {
+  const today = typeof dailyResult === "function" ? dailyResult() : null;
+  const i = Progress.levelIndex(), next = LEVELS[i + 1];
+  const pending = ACHIEVEMENTS.filter((a) => !d.ach[a.id]).slice(0, 3);
+  const recent = ACHIEVEMENTS.filter((a) => d.ach[a.id]).sort((a, b) => (d.ach[b.id] || 0) - (d.ach[a.id] || 0)).slice(0, 3);
+  const top = GAMES.filter((g) => d.plays[g.id]).sort((a, b) => d.plays[b.id] - d.plays[a.id]).slice(0, 3);
+  return `
+    <section class="card pf-today ${today ? "done" : ""}">
+      <span class="pf-today-i" aria-hidden="true">${today ? "✅" : "🗳️"}</span>
+      <div><b>${today ? "Repte d'avui fet" : "Encara no has fet el repte d'avui"}</b>
+        <p>${today ? `${today.hits}/10 encerts · ${typeof fmtSecs === "function" ? fmtSecs(today.ms) : ""}. Demà n'hi haurà un de nou.` : d.daily.streak ? `Fes-lo per mantenir la ratxa de ${d.daily.streak} ${d.daily.streak === 1 ? "dia" : "dies"}.` : "10 proves contra el rellotge. Comença una ratxa!"}</p></div>
+      ${today ? `<a class="btn" href="#ranking">Rànquing</a>` : `<a class="btn primary" href="#joc/diari">Juga</a>`}
+    </section>
+    <div class="pf-grid">
+      <section class="card pf-box">
+        <h3>🎯 Pròxims assoliments</h3>
+        ${pending.length ? `<ul class="pf-list">${pending.map((a) => `<li><b>${a.name}</b><small>${a.desc}</small></li>`).join("")}</ul><button class="linklike" type="button" data-pftab="assoliments">Tots els assoliments →</button>` : `<p class="muted">Els tens tots. Ets una llegenda.</p>`}
+      </section>
+      <section class="card pf-box">
+        <h3>⭐ Darrers aconseguits</h3>
+        ${recent.length ? `<ul class="pf-list">${recent.map((a) => `<li class="on"><b>${a.name}</b><small>${a.desc}</small></li>`).join("")}</ul>` : `<p class="muted">Juga la primera partida i aconseguiràs el primer.</p>`}
+      </section>
+      <section class="card pf-box">
+        <h3>🎮 Els teus jocs</h3>
+        ${top.length ? `<ul class="pf-list">${top.map((g) => `<li><a href="#joc/${g.id}"><b>${g.title}</b></a><small>${fmt(d.plays[g.id])} ${d.plays[g.id] === 1 ? "partida" : "partides"}${d.best[g.id] !== undefined ? ` · rècord ${fmt(d.best[g.id])}` : ""}</small></li>`).join("")}</ul><button class="linklike" type="button" data-pftab="records">Tots els rècords →</button>` : `<p class="muted">Encara no has jugat cap partida. <a href="#jocs">Tria un joc</a></p>`}
+      </section>
+      <section class="card pf-box" id="pf-rank">
+        <h3>🏆 Rànquing</h3>
+        ${window.Online?.meInfo?.() ? `<p class="muted">Calculant la teva posició…</p>` : `<p class="muted">Crea l'usuari per entrar al rànquing d'experiència i competir cada dia al repte.</p>`}
+        <a class="linklike" href="#ranking">Obre el rànquing →</a>
+      </section>
+    </div>
+    ${next ? "" : ""}`;
+}
 
-    <h2 class="section-title sm">Assoliments</h2>
-    <div class="ach-grid">${ACHIEVEMENTS.map((a) => `
+function pfAssoliments(d) {
+  const got = ACHIEVEMENTS.filter((a) => d.ach[a.id]).length;
+  const list = ACHIEVEMENTS.filter((a) => (pfAchFilter === "fets" ? d.ach[a.id] : pfAchFilter === "pendents" ? !d.ach[a.id] : true));
+  const i = Progress.levelIndex();
+  return `
+    <div class="pf-filter">${[["tots", `Tots (${ACHIEVEMENTS.length})`], ["fets", `Aconseguits (${got})`], ["pendents", `Pendents (${ACHIEVEMENTS.length - got})`]].map(([k, t]) => `<button type="button" class="${pfAchFilter === k ? "on" : ""}" data-pfach="${k}">${t}</button>`).join("")}</div>
+    <p class="muted">Cada assoliment et dona 50 monedes.</p>
+    <div class="ach-grid">${list.map((a) => `
       <div class="ach ${d.ach[a.id] ? "on" : ""}">
         <span class="ach-ico">${d.ach[a.id] ? "★" : "?"}</span>
         <div><b>${a.name}</b><small>${a.desc}</small></div>
-      </div>`).join("")}</div>
+      </div>`).join("") || `<p class="muted">No n'hi ha cap.</p>`}</div>
+    <h2 class="section-title sm">Carrera</h2>
+    <div class="ladder">${LEVELS.map((l, k) => `<div class="rung ${k < i ? "done" : k === i ? "cur" : ""}"><b>${k + 1}</b><span>${l.name}</span><small>${fmt(l.xp)} XP</small></div>`).join("")}</div>`;
+}
 
-    <h2 class="section-title sm">Rècords</h2>
-    <div class="records">${GAMES.map((g) => `
+function pfRecords(d) {
+  const row = (g) => `
       <a class="record" href="#joc/${g.id}" style="--c:${g.color}">
         <span class="rc-dot"></span><span>${g.title}</span>
         <b>${d.best[g.id] !== undefined ? fmt(d.best[g.id]) : "—"}</b>
@@ -149,26 +206,90 @@ function renderProfile() {
       <a class="record sub" href="#joc/${g.id}" style="--c:${g.color}">
         <span class="rc-dot"></span><span>${r.label}</span>
         <b>${r.value !== undefined ? fmt(r.value) : "—"}</b>
-      </a>`).join("") : ""}`).join("")}</div>
+      </a>`).join("") : ""}`;
+  const played = (g) => d.plays[g.id] || d.best[g.id] !== undefined;
+  const cats = Object.entries(GAME_CATS).map(([k, c]) => [c.name, GAMES.filter((g) => g.cat === k && !g.hidden)]);
+  const other = GAMES.filter((g) => !GAME_CATS[g.cat] && !g.hidden);
+  if (other.length) cats.push(["Altres", other]);
+  return cats.filter(([, gs]) => gs.length).map(([name, gs]) => {
+    const yes = gs.filter(played), no = gs.filter((g) => !played(g));
+    return `<section class="pf-rec">
+      <h2 class="section-title sm">${name}</h2>
+      ${yes.length ? `<div class="records">${yes.map(row).join("")}</div>` : ""}
+      ${no.length ? `<details class="pf-unplayed"${yes.length ? "" : " open"}><summary>${no.length} ${no.length === 1 ? "joc" : "jocs"} encara sense jugar</summary><div class="records">${no.map(row).join("")}</div></details>` : ""}
+    </section>`;
+  }).join("");
+}
 
-    <div id="leaderboard-box"></div>
-    <div id="notif-card"></div>
-    <div id="install-card"></div>
+function pfAjustos() {
+  const statsOff = typeof Stats !== "undefined" && Stats.off();
+  const admin = typeof ctlIsAdmin === "function" && ctlIsAdmin();
+  return `
+    <section class="pf-set">
+      <h2 class="section-title sm">Compte</h2>
+      <div id="account-box"></div>
+    </section>
+    <section class="pf-set">
+      <h2 class="section-title sm">L'app</h2>
+      <div id="notif-card"></div>
+      <div id="install-card"></div>
+      <div class="card pf-row"><span aria-hidden="true">🔊</span><div><b>So</b><p>Efectes de so dels jocs.</p></div><button class="btn" type="button" data-pfsound>${Sfx.on ? "Silencia" : "Activa"}</button></div>
+    </section>
+    <section class="pf-set">
+      <h2 class="section-title sm">Privadesa</h2>
+      <div class="card pf-row"><span aria-hidden="true">📊</span><div><b>Estadística anònima</b><p>Les teves visites sumen a uns comptadors anònims que ens ajuden a millorar l'app. ${statsOff ? "Ara no es compten." : ""}</p></div><button class="btn" type="button" data-stats-toggle>${statsOff ? "Torna a comptar les meves visites" : "No comptis les meves visites"}</button></div>
+      <p class="muted">Més informació a la <a href="#legal/privacitat">política de privadesa</a> i a la <a href="#legal/cookies">de galetes</a>.</p>
+    </section>
+    ${typeof COFFEE_URL !== "undefined" && COFFEE_URL ? `<section class="pf-set">
+      <h2 class="section-title sm">Dona suport</h2>
+      <div class="card coffee-card"><span class="coffee-cup" aria-hidden="true">☕</span><div><b>T'agrada Política en Joc?</b><p>És gratuïta i sense anuncis. Si vols donar-hi un cop de mà, pots convidar-me a un cafè.</p></div>${coffeeLink("Convida'm a un cafè", "btn")}</div>
+    </section>` : ""}
+    ${admin ? `<section class="pf-set"><h2 class="section-title sm">Equip</h2><a class="card pf-row" href="#control"><span aria-hidden="true">🎛️</span><div><b>Centre de control</b><p>Usuaris, notificacions i l'especial del 29N.</p></div><span class="btn">Obre</span></a></section>` : ""}
+    <section class="pf-set pf-danger">
+      <h2 class="section-title sm">Zona perillosa</h2>
+      <div class="card pf-row"><span aria-hidden="true">🗑️</span><div><b>Esborra el progrés</b><p>Esborra l'XP, els rècords i els assoliments d'aquest dispositiu.${window.Online?.meInfo?.() ? " Amb usuari, el progrés desat al núvol es tornaria a recuperar." : ""}</p></div><button class="btn ghost danger" type="button" id="reset-progress">Esborra</button></div>
+    </section>`;
+}
 
-    ${typeof COFFEE_URL !== "undefined" && COFFEE_URL ? `<div class="card coffee-card"><span class="coffee-cup" aria-hidden="true">☕</span><div><b>T'agrada Política en Joc?</b><p>És gratuïta i sense anuncis. Si vols donar-hi un cop de mà, pots convidar-me a un cafè.</p></div>${coffeeLink("Convida'm a un cafè", "btn")}</div>` : ""}
+function renderProfile() {
+  const d = Progress.data;
+  if (!PF_TABS.some(([k]) => k === pfTab)) pfTab = "resum";
+  const body = pfTab === "assoliments" ? pfAssoliments(d) : pfTab === "records" ? pfRecords(d) : pfTab === "ajustos" ? pfAjustos() : pfResum(d);
+  $("#profile").innerHTML = `
+    ${pfHero(d)}
+    <nav class="pf-tabs" role="tablist">${PF_TABS.map(([k, t]) => `<button type="button" role="tab" aria-selected="${pfTab === k}" class="${pfTab === k ? "on" : ""}" data-pftab="${k}">${t}</button>`).join("")}</nav>
+    <div class="pf-panel">${body}</div>`;
 
-    <div class="row"><button class="btn ghost" id="reset-progress">Esborra el progrés</button></div>`;
-  window.Online?.renderAccountBox();
-  renderInstall();
-  if (typeof renderNotif === "function") renderNotif();
+  $$("[data-pftab]", $("#profile")).forEach((b) => b.addEventListener("click", () => {
+    pfTab = b.dataset.pftab;
+    try { sessionStorage.setItem("pf-tab", pfTab); } catch { /* sense emmagatzematge */ }
+    Sfx.play("pick");
+    renderProfile();
+    $(".pf-tabs")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }));
+  $("[data-pfedit]")?.addEventListener("click", () => window.Online?.editProfile?.());
+  $$("[data-pfach]").forEach((b) => b.addEventListener("click", () => { pfAchFilter = b.dataset.pfach; renderProfile(); }));
 
-  $("#reset-progress").addEventListener("click", () => {
-    if (confirm("Segur que vols esborrar tot el progrés, els rècords i els assoliments?")) {
-      Progress.reset();
-      renderProfile();
-      toast("Progrés esborrat");
-    }
-  });
+  if (pfTab === "ajustos") {
+    window.Online?.renderAccountBox();
+    renderInstall();
+    if (typeof renderNotif === "function") renderNotif();
+    $("[data-pfsound]")?.addEventListener("click", () => { Sfx.toggle(); renderSound(); Sfx.play("pick"); renderProfile(); });
+    $("#reset-progress").addEventListener("click", () => {
+      if (confirm("Segur que vols esborrar tot el progrés, els rècords i els assoliments?")) {
+        Progress.reset();
+        renderProfile();
+        toast("Progrés esborrat");
+      }
+    });
+  }
+  if (pfTab === "resum" && window.Online?.myRank && window.Online.meInfo?.()) {
+    window.Online.myRank().then((r) => {
+      const box = $("#pf-rank p");
+      if (!box) return;
+      box.innerHTML = r ? `Ets el número <b>${fmt(r.pos)}</b> de ${fmt(r.total)} en experiència.` : "No s'ha pogut calcular la teva posició.";
+    });
+  }
 }
 
 // ---------- Portada: Congrés de l'última legislatura ----------
@@ -764,7 +885,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
 window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; renderInstall(); });
-window.addEventListener("appinstalled", () => { installEvt = null; store.set(INSTALL_KEY, { done: 1 }); renderInstall(); toast("Ja tens Política en Joc instal·lada"); });
+window.addEventListener("appinstalled", () => { window.Stats?.add("inst"); installEvt = null; store.set(INSTALL_KEY, { done: 1 }); renderInstall(); toast("Ja tens Política en Joc instal·lada"); });
 async function doInstall() {
   if (installEvt) {
     installEvt.prompt();

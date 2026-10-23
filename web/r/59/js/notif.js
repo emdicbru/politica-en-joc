@@ -67,9 +67,11 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("[data-notif-off]")) return notifDisable();
 });
 
-// Finestra en obrir l'app instal·lada: fins que les activi (si diu «Ara no», torna a sortir l'endemà)
+// Finestra per activar-les a tothom que les pot rebre: l'app instal·lada i els navegadors amb notificacions (Chrome,
+// Edge, Firefox, Safari del Mac). A l'iPhone només es poden rebre amb l'app instal·lada (notifState: "ios-install").
+// Surt fins que les activi (si diu «Ara no», torna a sortir l'endemà), mai a mitja partida ni damunt d'una altra finestra.
 async function notifAsk() {
-  if (typeof isStandalone !== "function" || !isStandalone() || !notifSupported()) return;
+  if (!notifSupported() || document.querySelector(".notif-ask")) return;
   for (let i = 0; i < 40 && !window.Online?.pushReady?.(); i++) await new Promise((r) => setTimeout(r, 250));
   // Qui ja les tenia amb només un tema, passa a rebre-ho tot (sense tornar a demanar permís)
   const st = store.get(NOTIF_KEY, {});
@@ -81,7 +83,14 @@ async function notifAsk() {
   if (st.later === today) return;
   // No es posa damunt del carrusel de benvinguda ni d'una altra finestra
   for (let i = 0; i < 120 && document.querySelector(".onb"); i++) await new Promise((r) => setTimeout(r, 500));
-  if (document.querySelector(".onb") || location.hash.startsWith("#joc")) return;
+  if (document.querySelector(".onb")) return;
+  // A mitja partida no: surt quan en surti
+  const playing = () => location.hash.split("/")[0] === "#joc";
+  if (playing()) {
+    const again = () => { if (playing()) return; window.removeEventListener("hashchange", again); notifAsk(); };
+    window.addEventListener("hashchange", again);
+    return;
+  }
   const box = h(`<div class="onb notif-ask" role="dialog" aria-modal="true" aria-label="Activa les notificacions"><div class="card notif-ask-card">
     <span class="notif-ask-i" aria-hidden="true">🔔</span>
     <h3>Activa les notificacions</h3>

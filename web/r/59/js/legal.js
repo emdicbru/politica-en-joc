@@ -5,7 +5,7 @@ const LEGAL = {
   nif: "", // opcional mentre el lloc web no tingui activitat econòmica; si s'omple, es mostra
   adreca: "", // opcional: adreça postal del titular
   correu: "brudomingosola@gmail.com",
-  domini: "politicaenjoc.com",
+  domini: "politicaenjoc.cat",
   actualitzat: "23 d'octubre de 2026",
 };
 

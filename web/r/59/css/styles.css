@@ -5099,3 +5099,23 @@ body.db-lock { overflow: hidden; }
   .sh2-head p, .sh2-d, .sh2-b .simcard-k { display: none; }
   .sh2-b { gap: 6px; }
 }
+.nxs-ed { margin: 0; font-size: .8rem; font-weight: 700; opacity: .75; }
+.ctl-news { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.ctl-news li { display: grid; gap: 2px; }
+.ctl-news small { color: var(--muted); }
+
+/* ---------- Centre de control · Equip ---------- */
+.ctl-team-add { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.ctl-team-add label { display: grid; gap: 4px; font-size: .82rem; font-weight: 700; color: var(--ink-2); }
+.ctl-team-add input, .ctl-team-add select, .ctl-team select { font: inherit; padding: 9px 10px; border: 2px solid var(--ink); border-radius: 10px; background: var(--card); color: var(--ink); }
+.ctl-team { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ctl-team li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); flex-wrap: wrap; }
+.ctl-team li > div { flex: 1; min-width: 180px; display: grid; }
+.ctl-team li b { overflow-wrap: anywhere; }
+.ctl-team li small { color: var(--muted); }
+.ctl-team li.owner { background: color-mix(in srgb, var(--yellow) 35%, var(--card)); }
+.ctl-roles { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; }
+.ctl-roles dt { font-weight: 800; }
+.ctl-roles dd { margin: 0; color: var(--ink-2); }
+.ctl-locked { opacity: .45; cursor: not-allowed !important; }
+@media (max-width: 700px) { .ctl-team-add { grid-template-columns: 1fr; } .ctl-roles { grid-template-columns: 1fr; } .ctl-roles dd { margin-bottom: 6px; } }

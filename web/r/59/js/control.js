@@ -1,9 +1,38 @@
-// Sala de control de l'especial del 29N (#control). Només hi poden entrar els comptes d'ESP_ADMINS: les regles de
-// Firestore (config/{id}) només els deixen escriure a ells. Els canvis es preparen en un esborrany i es publiquen
-// d'un cop; arriben a tothom en directe. La previsualització és local (només aquesta pestanya).
+// Centre de control (#control). Hi entra el propietari i l'equip que ell hi afegeix, cadascú amb un grau de permís
+// (vegeu CTL_ROLES). Les regles de Firestore fan complir els mateixos graus: amagar un botó no és l'única protecció.
+// Els canvis de l'especial es preparen en un esborrany i es publiquen d'un cop; arriben a tothom en directe.
+// La previsualització és local (només aquesta pestanya).
 
-const ESP_ADMINS = ["brudomingosola@gmail.com"];
-const ctlIsAdmin = () => !!(window.Online?.user?.email && ESP_ADMINS.includes(window.Online.user.email.toLowerCase()));
+const CTL_OWNER = "brudomingosola@gmail.com";
+const CTL_ROLES = {
+  observador: { n: 1, name: "Observador", desc: "Ho pot veure tot (resum, usuaris, notícies i previsualització), però no pot canviar res." },
+  editor: { n: 2, name: "Editor", desc: "A més, envia notificacions, refà les històries de Notícies i porta l'especial del 29N (fases, nit electoral, porra i avisos)." },
+  admin: { n: 3, name: "Administrador", desc: "A més, liquida la Lliga de pronòstics, configura el repte diari automàtic i pot aturar els comptadors d'ús." },
+  propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
+};
+// Què cal per veure cada pestanya
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, prev: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, equip: 4 };
+let ctlRoleCache = { email: null, role: undefined, loading: false };
+function ctlRole() {
+  const email = window.Online?.user?.email?.toLowerCase();
+  if (!email) return null;
+  if (email === CTL_OWNER) return "propietari";
+  if (ctlRoleCache.email !== email) ctlRoleCache = { email, role: undefined, loading: false };
+  if (ctlRoleCache.role === undefined && !ctlRoleCache.loading && window.Online?.staffRole) {
+    ctlRoleCache.loading = true;
+    window.Online.staffRole().then((role) => {
+      ctlRoleCache = { email, role: role || "", loading: false };
+      const v = location.hash.slice(1).split("/")[0];
+      if (v === "control") renderControl(true);
+      if (v === "perfil" && role && typeof renderProfile === "function") renderProfile();
+    });
+  }
+  return ctlRoleCache.role;
+}
+const ctlLevel = () => CTL_ROLES[ctlRole()]?.n || 0;
+const ctlCan = (n) => ctlLevel() >= n;
+// Hi té accés (qualsevol grau): el fa servir el Perfil per ensenyar l'enllaç al Centre de control
+const ctlIsAdmin = () => ctlLevel() > 0;
 
 const CTL_FASES = [
   ["auto", "Automàtic", "Segons l'horari oficial"],
@@ -77,6 +106,10 @@ function renderControl(fromLive = false) {
     $("[data-ctl-login]", root).addEventListener("click", () => O?.accountClick?.());
     return;
   }
+  if (ctlRole() === undefined) {
+    root.innerHTML = `<div class="card ctl-gate"><span class="ctl-gate-i">🎛️</span><h1 class="page-title">Centre de control</h1><p>Comprovant els teus permisos…</p></div>`;
+    return;
+  }
   if (!ctlIsAdmin()) {
     root.innerHTML = `<div class="card ctl-gate"><span class="ctl-gate-i">🔒</span><h1 class="page-title">Accés restringit</h1><p>Aquesta pàgina és només per a l'equip de Política en Joc.</p><a class="btn" href="#inici">Torna a l'inici</a></div>`;
     return;
@@ -112,15 +145,20 @@ function renderControl(fromLive = false) {
     todo.push({ t: "Publica els pots de la Lliga de pronòstics.", tab: "jocs", done: !!Esp.cfg.pronPotsAt });
     todo.push({ t: "Amb l'escrutini al 100 %, liquida els pronòstics.", tab: "jocs", done: !!Esp.cfg.pronLiquidat });
   }
+  for (let i = todo.length - 1; i >= 0; i--) if (todo[i].tab && !ctlCan(CTL_TAB_ROLE[todo[i].tab] || 3)) todo.splice(i, 1);
   const changed = ctlDraft ? ctlChanges() : [];
   const dot = (keys) => (changed.some((x) => keys.some((k) => x.startsWith(k))) ? `<i class="ctl-dot"></i>` : "");
-  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
-  const tab = sessionStorage.getItem("ctl-tab") || "resum";
+  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
+  TABS.splice(1, 0, ...(ctlCan(4) ? [["equip", "👥 Equip", ""]] : []));
+  const allowed = TABS.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3));
+  TABS.length = 0; TABS.push(...allowed);
+  let tab = sessionStorage.getItem("ctl-tab") || "resum";
+  if (!TABS.some(([k]) => k === tab)) tab = "resum";
   const panel = (k, inner) => (k === tab ? `<div class="ctl-panel">${inner}</div>` : "");
 
   root.innerHTML = `<div class="ctl">
     <header class="ctl-head">
-      <div><p class="kicker">Política en Joc · ${esc(O.user.email)}</p><h1 class="page-title">Centre de control</h1></div>
+      <div><p class="kicker">Política en Joc · ${esc(O.user.email)} · <b>${CTL_ROLES[ctlRole()].name}</b></p><h1 class="page-title">Centre de control</h1></div>
       <span class="ctl-conn ${Esp.live ? "on" : ""}">${Esp.live ? "● Connectat en directe" : "● Sense connexió en directe"}</span>
     </header>
     ${pv ? `<div class="esp-preview">👁 Tens una previsualització activa en aquesta pestanya (${esc(pv.label)}). <button type="button" data-pv-off>Treu-la</button></div>` : ""}
@@ -220,6 +258,10 @@ function renderControl(fromLive = false) {
 
     ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
 
+    ${panel("noticies", tab === "noticies" ? ctlNewsHtml() : "")}
+
+    ${panel("equip", tab === "equip" ? ctlTeamHtml() : "")}
+
     ${panel("notif", ctlNotifHtml())}
 
     ${panel("ajuda", `
@@ -242,6 +284,9 @@ function renderControl(fromLive = false) {
 
   if (tab === "notif") ctlNotifBind(root);
   if (tab === "usuaris") ctlStatsBind(root);
+  if (tab === "noticies") ctlNewsBind(root);
+  if (tab === "equip") ctlTeamBind(root);
+  ctlLock(root);
   $$("[data-tab]", root).forEach((t) => t.addEventListener("click", () => { sessionStorage.setItem("ctl-tab", t.dataset.tab); renderControl(); window.scrollTo({ top: 0 }); }));
   const redraw = () => renderControl();
   $$("[data-set]", root).forEach((b) => b.addEventListener("click", () => { D[b.dataset.set] = b.dataset.v; Sfx.play("pick"); redraw(); }));
@@ -422,4 +467,116 @@ function ctlNotifBind(root) {
   $("[data-prefresh]", root)?.addEventListener("click", () => { P.cfg = null; renderControl(); });
   $("[data-ghsave]", root)?.addEventListener("click", () => { const v = $("[data-ghtoken]", root).value.trim(); if (!v) return; localStorage.setItem(CTL_GH_KEY, v); toast("Token desat"); renderControl(); });
   $("[data-ghoff]", root)?.addEventListener("click", () => { localStorage.removeItem(CTL_GH_KEY); renderControl(); });
+}
+
+// ---------- Notícies: l'edició de les històries («El dia en 1 minut») ----------
+function ctlNewsHtml() {
+  if (typeof nxEdition !== "function") return `<div class="card"><p class="muted">Les notícies no estan disponibles.</p></div>`;
+  const ed = nxEdition();
+  const ready = typeof newsData !== "undefined" && newsData;
+  const slides = ready ? nxStorySlides() : [];
+  const stories = slides.filter((s) => s.kind === "story");
+  const ago = (t) => { const h = (ed.at - t) / 36e5; return h < 1 ? `${Math.max(1, Math.round(h * 60))} min` : `${Math.round(h)} h`; };
+  return `
+    <p class="ctl-intro">Les històries de «El dia en 1 minut» es fan cada dia a les 6:30 amb els titulars d'aquell moment i no canvien fins l'endemà. Si passa alguna cosa important, en pots fer una edició nova ara.</p>
+    <section class="ctl-status">
+      <div class="ctl-st"><small>Edició actual</small><b>${nxEditionTime(ed.at)}</b><span class="ctl-tag ${ed.forced ? "warn" : ""}">${ed.forced ? "feta a mà" : "automàtica"}</span></div>
+      <div class="ctl-st"><small>Propera automàtica</small><b>${nxEditionTime(ed.next)}</b><span class="ctl-tag">${nxMadridDay(ed.next) === nxMadridDay(Date.now()) ? "avui" : "demà"}</span></div>
+      <div class="ctl-st"><small>Històries</small><b>${stories.length}</b><span class="ctl-tag">a l'edició</span></div>
+      <div class="ctl-st"><small>Titulars</small><b>${ready ? fmt(nxItems().length) : "—"}</b><span class="ctl-tag">${ready ? `actualitzats ${timeAgo(newsData.updated)}` : "carregant"}</span></div>
+    </section>
+    <section class="card">
+      <h2 class="section-title sm">🔄 Refés les històries</h2>
+      <p class="muted">Es tornen a fer amb els titulars d'ara mateix i tothom les veu a l'instant. Demà a les 6:30 es farà l'edició automàtica com sempre.</p>
+      <div class="row"><button class="btn primary" type="button" data-news-redo>Refés les històries ara</button></div>
+    </section>
+    <section class="card">
+      <h2 class="section-title sm">Què hi ha a l'edició de les ${nxEditionTime(ed.at)}</h2>
+      ${stories.length ? `<ol class="ctl-news">${stories.map((s) => `<li><b>${esc(s.items[0].t)}</b><small>${s.n} mitjans · el titular més recent era de fa ${ago(s.d)} · ${esc(nwTopic(s.topic).label)}</small></li>`).join("")}</ol>` : `<p class="muted">${ready ? "Amb els titulars d'aquell moment no hi havia notícies explicades per més d'un mitjà." : "Carregant els titulars…"}</p>`}
+      <p class="muted">Per veure-les com la gent: <a href="#noticies">obre Notícies</a> i toca «El dia en 1 minut».</p>
+    </section>`;
+}
+function ctlNewsBind(root) {
+  $("[data-news-redo]", root)?.addEventListener("click", async () => {
+    if (!confirm("Es tornaran a fer les històries amb els titulars d'ara mateix i tothom les veurà a l'instant. Continuar?")) return;
+    const next = { ...Esp.cfg, storiesAt: Date.now(), log: [{ t: Date.now(), what: "Històries refetes a mà" }, ...(Esp.cfg.log || [])].slice(0, 15) };
+    if (await window.Online.setConfig("especial", next)) { Esp.cfg = Object.assign({}, ESP_DEFAULT, next); toast("Històries refetes"); renderControl(true); }
+  });
+}
+
+// ---------- Permisos dins de cada pestanya ----------
+// El que demana més grau que el teu queda desactivat (les regles de Firestore tampoc ho deixarien fer)
+const CTL_LOCKS = [
+  ["[data-pots], [data-liquida], [data-pres]", 3],
+  ["[data-pdiari], [data-phora]", 3],
+  ["[data-custats]", 3],
+  ["[data-news-redo]", 2],
+];
+function ctlLock(root) {
+  CTL_LOCKS.forEach(([sel, n]) => {
+    if (ctlCan(n)) return;
+    $$(sel, root).forEach((el) => {
+      el.disabled = true;
+      el.title = `Cal ser ${Object.values(CTL_ROLES).find((r) => r.n === n).name.toLowerCase()}`;
+      el.classList.add("ctl-locked");
+    });
+  });
+}
+
+// ---------- Equip: qui pot entrar al Centre de control (només el propietari) ----------
+const ctlTeam = { list: null, loading: false };
+async function ctlTeamLoad() {
+  if (ctlTeam.loading) return;
+  ctlTeam.loading = true;
+  ctlTeam.list = await window.Online.staffList();
+  ctlTeam.loading = false;
+  if (sessionStorage.getItem("ctl-tab") === "equip") renderControl(true);
+}
+function ctlTeamHtml() {
+  if (!ctlTeam.list) { ctlTeamLoad(); return `<div class="card"><p class="muted">Carregant l'equip…</p></div>`; }
+  const roles = ["observador", "editor", "admin"];
+  const opts = (cur) => roles.map((k) => `<option value="${k}" ${k === cur ? "selected" : ""}>${CTL_ROLES[k].name}</option>`).join("");
+  const list = [...ctlTeam.list].sort((a, b) => (CTL_ROLES[b.role]?.n || 0) - (CTL_ROLES[a.role]?.n || 0) || a.email.localeCompare(b.email));
+  return `
+    <p class="ctl-intro">Qui pot entrar al Centre de control i què hi pot fer. Cal que la persona entri a l'app amb aquest compte de Google.</p>
+    <section class="card">
+      <h2 class="section-title sm">➕ Dona accés</h2>
+      <div class="ctl-team-add">
+        <label>Correu del compte de Google <input type="email" data-team-email placeholder="nom@gmail.com" autocomplete="off" spellcheck="false"></label>
+        <label>Grau <select data-team-role>${opts("observador")}</select></label>
+        <button class="btn primary" type="button" data-team-add>Dona accés</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="section-title sm">👥 L'equip</h2>
+      <ul class="ctl-team">
+        <li class="owner"><div><b>${esc(CTL_OWNER)}</b><small>Tu · Propietari</small></div></li>
+        ${list.map((p) => `<li><div><b>${esc(p.email)}</b><small>${p.t ? `Des de ${ctlDate(p.t)}` : ""}</small></div>
+          <select data-team-set="${esc(p.email)}" aria-label="Grau de ${esc(p.email)}">${opts(p.role)}</select>
+          <button class="btn ghost danger" type="button" data-team-del="${esc(p.email)}">Treu l'accés</button></li>`).join("")}
+      </ul>
+      ${list.length ? "" : `<p class="muted">Encara no hi has afegit ningú.</p>`}
+    </section>
+    <section class="card">
+      <h2 class="section-title sm">Què pot fer cada grau</h2>
+      <dl class="ctl-roles">${["observador", "editor", "admin", "propietari"].map((k) => `<dt>${CTL_ROLES[k].name}</dt><dd>${CTL_ROLES[k].desc}</dd>`).join("")}</dl>
+    </section>`;
+}
+function ctlTeamBind(root) {
+  const O = window.Online;
+  $("[data-team-add]", root)?.addEventListener("click", async () => {
+    const email = $("[data-team-email]", root).value.trim().toLowerCase();
+    const role = $("[data-team-role]", root).value;
+    if (!/^[^@\s/]+@[^@\s/]+\.[^@\s/]+$/.test(email)) return toast("Escriu un correu vàlid");
+    if (email === CTL_OWNER) return toast("Aquest compte ja és el propietari");
+    if (!confirm(`${email} podrà entrar al Centre de control com a ${CTL_ROLES[role].name.toLowerCase()}. Continuar?`)) return;
+    if (await O.staffSet(email, role)) { toast("Accés concedit"); ctlTeam.list = null; renderControl(true); }
+  });
+  $$("[data-team-set]", root).forEach((s) => s.addEventListener("change", async () => {
+    if (await O.staffSet(s.dataset.teamSet, s.value)) { toast(`Ara és ${CTL_ROLES[s.value].name.toLowerCase()}`); ctlTeam.list = null; renderControl(true); }
+  }));
+  $$("[data-team-del]", root).forEach((b) => b.addEventListener("click", async () => {
+    if (!confirm(`${b.dataset.teamDel} ja no podrà entrar al Centre de control. Continuar?`)) return;
+    if (await O.staffRemove(b.dataset.teamDel)) { toast("Accés retirat"); ctlTeam.list = null; renderControl(true); }
+  }));
 }

@@ -105,7 +105,7 @@ function nxClusters() {
     rest.sort((a, b) => items[b].d - items[a].d).forEach((i) => { if (!perOutlet.has(items[i].s)) perOutlet.set(items[i].s, i); });
     const chosen = [...perOutlet.values()];
     if (chosen.length < 2) return null;
-    const its = chosen.map((i) => items[i]);
+    const its = chosen.map((i) => items[i]).sort((a, b) => b.d - a.d);
     const tcount = {};
     its.forEach((x) => { tcount[x._t] = (tcount[x._t] || 0) + 1; });
     const topic = Object.keys(tcount).sort((a, b) => tcount[b] - tcount[a] || (a === "politica") - (b === "politica"))[0];
@@ -184,8 +184,24 @@ function nxWhy(items, topic) {
 const nxOthers = (c, max, open = false) => (c.n > 1 ? `<details class="nx-other" ${open ? "open" : ""}><summary>Com ho expliquen ${c.n - 1 === 1 ? "en un altre mitjà" : `en ${Math.min(max, c.n - 1)} mitjans més`}</summary><ul>${c.items.slice(1, max + 1).map((y) => `<li><a ${nxLink(y)}>${nwOutlet(y.s)}<span>${esc(y.t)}</span></a></li>`).join("")}</ul></details>` : "");
 const nxSolo = (x) => ({ items: [x], n: 1, topic: x._t, label: nwTopic(x._t).label, d: x.d, parties: x._p });
 
-// Les notícies del dia: les que expliquen més mitjans en les últimes 36 hores
-const nxTopStories = (n = 5) => nxClusters().filter((c) => c.d >= Date.now() - 36 * 3600e3 && c.n >= 2).slice(0, n);
+// Les notícies del dia. Cada mitjà que en parla suma un punt, però el punt perd la meitat del valor cada 6 hores que
+// passen des del seu titular: així guanya la notícia de què parlen molts mitjans ara, i no la més grossa d'ahir.
+// La de dalt de tot ha de ser del moment: algun mitjà n'ha d'haver parlat en les últimes 12 hores.
+const NX_HALF_LIFE = 6 * 3600e3, NX_LEAD_FRESH = 12 * 3600e3;
+const nxScore = (c, now = Date.now()) => c.items.reduce((t, x) => t + Math.pow(0.5, Math.max(0, now - x.d) / NX_HALF_LIFE), 0);
+function nxTopStories(n = 5, now = Date.now()) {
+  // Per a una edició passada només compten els titulars publicats fins aleshores
+  const past = now < Date.now() - 60e3;
+  const list = nxClusters().map((c) => {
+    if (!past) return c;
+    const items = c.items.filter((x) => x.d <= now);
+    return items.length >= 2 ? { ...c, items, n: items.length, d: Math.max(...items.map((x) => x.d)) } : null;
+  }).filter((c) => c && c.d >= now - 36 * 3600e3 && c.n >= 2)
+    .map((c) => [c, nxScore(c, now)]).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  const i = list.findIndex((c) => c.d >= now - NX_LEAD_FRESH);
+  if (i > 0) list.unshift(...list.splice(i, 1));
+  return list.slice(0, n);
+}
 
 // ---------- Pàgina ----------
 const NX_TABS = [["portada", "Portada"], ["peratu", "Per a tu"], ["temes", "Temes"], ["termometre", "Termòmetre"], ["cerca", "Cerca"]];
@@ -248,7 +264,7 @@ function nxMasthead(all) {
 function nxTabPortada(el) {
   const all = nxItems();
   const top = nxTopStories(5);
-  const lead = top[0] || nxSolo(all[0]);
+  const lead = top[0] && top[0].d >= Date.now() - NX_LEAD_FRESH ? top[0] : nxSolo(all[0]);
   const fresh = nxPrevVisit ? all.filter((x) => x.d > nxPrevVisit) : [];
   el.innerHTML = `
     ${fresh.length ? `<button type="button" class="nx-fresh" data-go="cerca" data-opts='{"onlyNew":true,"topic":null,"party":null,"outlet":null,"q":"","shown":20}'><span class="dot-live"></span><b>${fresh.length === 1 ? "1 titular nou" : `${fresh.length} titulars nous`}</b> des de la teva última visita <span aria-hidden="true">→</span></button>` : ""}
@@ -511,23 +527,50 @@ function renderRising() {
 }
 
 // ---------- El dia en 1 minut (històries) ----------
+// Les històries són una edició diària: es fan cada dia a les 6:30 (hora de Madrid) amb els titulars publicats fins
+// aleshores i no canvien fins a l'endemà. Des del Centre de control se'n pot fer una de nova a l'instant
+// (config/especial → storiesAt): tothom la veu en directe.
+const NX_EDITION = [6, 30];
+const nxPad = (n) => String(n).padStart(2, "0");
+const nxMadridDay = (t) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date(t));
+// Instant (ms) d'una hora de Madrid en un dia donat (AAAA-MM-DD), amb l'horari d'estiu o d'hivern que toqui
+function nxMadridMs(day, h, m) {
+  const guess = Date.parse(`${day}T${nxPad(h)}:${nxPad(m)}:00Z`);
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Madrid", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(guess)).map((x) => [x.type, x.value]));
+  const local = Date.parse(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:00Z`);
+  return guess - (local - guess);
+}
+function nxEdition(now = Date.now()) {
+  const today = nxMadridDay(now);
+  const dayShift = (d, k) => nxMadridDay(Date.parse(`${d}T12:00:00Z`) + k * 864e5);
+  let auto = nxMadridMs(today, ...NX_EDITION);
+  const next = auto > now ? auto : nxMadridMs(dayShift(today, 1), ...NX_EDITION);
+  if (auto > now) auto = nxMadridMs(dayShift(today, -1), ...NX_EDITION);
+  const forced = typeof Esp !== "undefined" ? Number(Esp.cfg?.storiesAt) || 0 : 0;
+  const isForced = forced > auto && forced <= now;
+  return { at: isForced ? forced : auto, forced: isForced, next };
+}
+const nxEditionTime = (t) => new Date(t).toLocaleTimeString("ca-ES", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit" });
 // Una història per a cada notícia important del dia, una pregunta per posar-se a prova i un resum de qui n'ha protagonitzat la conversa.
 const nxStoryKey = (s) => s.items?.[0]?.u || s.t?.k || "";
 function nxSeenStories() {
-  if (nxPrefs.seenDay !== todayKey()) { nxPrefs.seenDay = todayKey(); nxPrefs.seenS = []; }
+  const ed = String(nxEdition().at);
+  if (nxPrefs.seenDay !== ed) { nxPrefs.seenDay = ed; nxPrefs.seenS = []; }
   return nxPrefs.seenS || (nxPrefs.seenS = []);
 }
 function nxStorySlides() {
-  const all = nxItems();
-  const today = nxToday(all);
-  let stories = nxTopStories(5).map((c) => ({ kind: "story", ...c }));
+  const ed = nxEdition();
+  const all = nxItems().filter((x) => x.d <= ed.at);
+  const day = all.filter((x) => x.d >= ed.at - 24 * 3600e3);
+  const today = day.length >= 15 ? day : all.filter((x) => x.d >= ed.at - 48 * 3600e3);
+  let stories = nxTopStories(5, ed.at).map((c) => ({ kind: "story", ...c }));
   // Dies amb poques notícies compartides: es completa amb el titular més recent dels temes principals
   if (stories.length < 3) {
     const used = new Set(stories.flatMap((s) => s.items.map((x) => x.u)));
     NW_TOPICS.map((t) => today.filter((x) => x._t === t.k && !used.has(x.u))).filter((l) => l.length && l[0]._t !== "politica")
       .sort((a, b) => b.length - a.length).slice(0, 5 - stories.length).forEach((l) => stories.push({ kind: "story", ...nxSolo(l[0]) }));
   }
-  const slides = [{ kind: "cover", today, stories }];
+  const slides = [{ kind: "cover", today, stories, ed }];
   stories.forEach((s, i) => slides.push({ ...s, i: i + 1, total: stories.length }));
   const q = nxStoryQuestion(stories);
   if (q) slides.splice(Math.min(3, slides.length), 0, { kind: "quiz", q });
@@ -565,6 +608,7 @@ function nxSlideHtml(s) {
       <p class="nxs-k">${nxDate()} · falten ${left} ${left === 1 ? "dia" : "dies"} per al 29N</p>
       <h2>El dia<br>en 1 minut</h2>
       <p class="nxs-big">Les <b>${s.stories.length}</b> notícies que més mitjans expliquen avui</p>
+      <p class="nxs-ed">Edició de les ${nxEditionTime(s.ed.at)}</p>
       <ol class="nxs-index">${s.stories.map((x) => { const t = nwTopic(x.topic); return `<li style="--tc:${t.c}"><span>${nwIcon(t)}</span><b>${esc(x.label)}</b>${x.n > 1 ? `<small>${x.n} mitjans</small>` : ""}</li>`; }).join("")}</ol>
       <p class="nxs-hint"><span class="nxs-hint-touch">Toca a la dreta o llisca per avançar</span><span class="nxs-hint-keys">Fes servir les fletxes per avançar</span></p>
     </div>`;

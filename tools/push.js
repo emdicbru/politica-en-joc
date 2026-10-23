@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Envia les notificacions push de Política en Joc. L'executa GitHub Actions cada 5 minuts (.github/workflows/push.yml)
 // i també a l'instant si el Centre de control l'engega.
-//  - Repte diari: cada dia a l'hora triada al Centre de control (config/push), a qui ha triat «diari».
-//  - Avisos de la cua (pushes/ amb status "pending"), a qui ha triat el tema («avisos», «diari» o «tots»).
+//  - Repte diari: cada dia a l'hora triada al Centre de control (config/push), a tothom que té les notificacions.
+//  - Avisos de la cua (pushes/ amb status "pending"), també a tothom (ja no es trien temes).
 // Fa servir l'estàndard Web Push amb claus VAPID pròpies (secrets VAPID_PUBLIC i VAPID_PRIVATE) i llegeix les
 // subscripcions de Firestore amb la clau de servei (secret FIREBASE_SA). Les subscripcions caducades s'esborren.
 "use strict";
@@ -51,7 +51,7 @@ async function send(topic, msg) {
     await cfgRef.set({ diariLast: now.day }, { merge: true }); // primer es marca, perquè dues execucions no l'enviïn dos cops
     const n = dailyNumber(now.day);
     const msg = { title: `🗳️ Repte diari #${n}`, body: "Ja tens el repte d'avui: 10 proves contra el rellotge. Mantens la ratxa?", url: "./#joc/diari", tag: "diari" };
-    const r = await send("diari", msg);
+    const r = await send("tots", msg);
     await db.collection("pushes").add({ ...msg, topic: "diari", kind: "diari", status: "sent", created: Date.now(), ...r });
     console.log("Repte diari", now.day, r);
   }
@@ -61,7 +61,7 @@ async function send(topic, msg) {
     const m = d.data();
     await d.ref.update({ status: "sending" });
     try {
-      const r = await send(m.topic || "avisos", { ...m, tag: m.tag || "" });
+      const r = await send("tots", { ...m, tag: m.tag || "" });
       await d.ref.update({ status: "sent", sentAt: Date.now(), ...r });
       console.log("Avís", m.title, r);
     } catch (e) {

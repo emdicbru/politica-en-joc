@@ -210,7 +210,7 @@ async function dbStudio(G) {
   const stage = $(".db-stage", T);
   let plato = null;
   try {
-    const mod = await import(new URL("js/debat/debat-plato.js?v=37", window.PEJ_CDN || document.baseURI).href);
+    const mod = await import(new URL("js/debat/debat-plato.js?v=40", window.PEJ_CDN || document.baseURI).href);
     plato = await mod.createPlato(stage, { cands: order, title: "DEBAT 29N", net: `${net.toUpperCase()} · ${F.title.toUpperCase()}` });
   } catch (e) {
     console.warn("Plató 3D no disponible: " + (e && (e.stack || e.message || e)));
@@ -220,6 +220,7 @@ async function dbStudio(G) {
   const done = () => { plato?.dispose(); T.remove(); document.body.classList.remove("db-lock"); };
   ctx.onCleanup(done);
   G.T = T; G.plato = plato; G.cands = cands;
+  T.dbPlato = plato; // per a les proves visuals
   $("[data-exit]", T).addEventListener("click", () => {
     if (confirm("Vols sortir del debat? No es desarà.")) { done(); location.hash = "#simulador"; }
   });
@@ -267,15 +268,21 @@ const fmtDb = (v) => String(Math.round(v * 10) / 10).replace(".", ",");
 const dbClock = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
 // ---------- Control del debat ----------
+// Segons per decidir quan hi ha pressa (interrupcions, atacs, repreguntes): més si t'has preparat les rèpliques
+const dbDecideSecs = (st) => 9 + st.prep.repliques * 2;
+
 async function dbRun(G) {
   const { st, ctx, plato, T } = G;
   const panel = $("[data-panel]", T);
   const alive = () => { if (!ctx.alive() || !T.isConnected) throw "fi"; };
   const who = (id) => (id === "mod" ? { name: DB_MOD.name, sub: DB_MOD.role, color: "#ffcf3d" } : id === "jo" ? { name: st.me.name, sub: st.me.party, color: st.me.color } : (() => { const r = st.rivals.find((x) => x.id === id); return { name: r.cand, sub: r.name, color: r.color }; })());
-  // Algú parla: pla de càmera, rètol i text a màquina d'escriure
-  const say = async (id, text, { shot = id, cont = true } = {}) => {
+  const isRival = (id) => st.rivals.some((r) => r.id === id);
+  // Algú parla: pla de càmera, rètol i text a màquina d'escriure.
+  // interrupt: mentre parla un rival, hi ha el botó «Interromp» (torna "int" si el prems).
+  // cutaway: mentre parles tu, la càmera ensenya un moment la reacció d'un rival.
+  const say = async (id, text, { shot = id, cont = true, interrupt = false, cutaway = null } = {}) => {
     alive();
-    plato.shot(shot === "jo" || st.rivals.some((r) => r.id === shot) || ["mod", "wide", "two"].includes(shot) ? shot : "wide");
+    plato.shot(shot === "jo" || isRival(shot) || ["mod", "wide", "two"].includes(shot) ? shot : "wide");
     plato.speak(id);
     const w = who(id);
     const lower = $("[data-lower]", T);
@@ -284,24 +291,59 @@ async function dbRun(G) {
     $("[data-who]", T).innerHTML = `<i></i><b>${esc(w.name)}</b><small>${esc(w.sub)}</small>`;
     const sayEl = $("[data-say]", T);
     sayEl.textContent = "";
-    let skip = false;
-    if (cont) panel.innerHTML = `<button type="button" class="btn primary db-cont" data-cont>Continua ▸</button>`;
-    const btn = $("[data-cont]", panel);
-    btn?.addEventListener("click", () => { skip = true; }, { once: true });
+    let skip = false, cut = false, cutDone = false;
+    const canInt = interrupt && isRival(id) && dbCanInterrupt(st);
+    if (!cont) panel.innerHTML = ""; // mentre parles, sense les opcions que ja has triat
+    if (cont) panel.innerHTML = `<div class="db-cont-row">${canInt ? `<button type="button" class="btn db-int" data-int>✋ Interromp <small>(${2 - st.stats.interrupts})</small></button>` : ""}<button type="button" class="btn primary db-cont" data-cont>Continua ▸</button></div>`;
+    $("[data-cont]", panel)?.addEventListener("click", () => { skip = true; }, { once: true });
+    $("[data-int]", panel)?.addEventListener("click", () => { cut = true; skip = true; }, { once: true });
+    // Els rivals parlen una mica més a poc a poc quan els pots interrompre
+    const speed = canInt ? 30 : 18;
     for (let i = 0; i <= text.length; i += 2) {
       if (skip) break;
       sayEl.textContent = text.slice(0, i);
-      await dbWait(ctx, 18);
+      if (cutaway && !cutDone && i >= text.length * 0.45 && text.length > 60) {
+        cutDone = true;
+        plato.shot(cutaway); plato.react(cutaway, dbRand(st, "reaccio") < 0.5 ? "shake" : "nod");
+        ctx.after(1100, () => { if (T.isConnected) plato.shot(shot === "jo" ? "jo" : shot); });
+      }
+      await dbWait(ctx, speed);
       alive();
     }
+    if (cut) { sayEl.textContent = `${sayEl.textContent.trim()}…`; return "int"; }
     sayEl.textContent = text;
-    if (cont) await dbClick(ctx, panel, "[data-cont]", !skip);
+    if (cont) {
+      if (canInt) {
+        // Encara el pots tallar abans de continuar
+        const r = await new Promise((res) => {
+          const off = ctx.onKey((e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); off(); res("cont"); } });
+          $("[data-cont]", panel)?.addEventListener("click", () => { off(); res("cont"); }, { once: true });
+          $("[data-int]", panel)?.addEventListener("click", () => { off(); res("int"); }, { once: true });
+        });
+        if (r === "int") return "int";
+      } else await dbClick(ctx, panel, "[data-cont]", !skip);
+    }
+    return "ok";
   };
-  // Tria entre opcions al panell
-  const choose = (title, sub, opts) => new Promise((res) => {
-    panel.innerHTML = `<div class="db-ask"><p class="db-ask-t">${title}</p>${sub ? `<p class="db-ask-s">${sub}</p>` : ""}<div class="db-opts">${opts.map((o, i) => `<button type="button" class="db-opt ${o.cls || ""}" data-o="${i}" ${o.disabled ? "disabled" : ""}>${o.icon ? `<span class="db-opt-i">${o.icon}</span>` : ""}<span class="db-opt-b"><b>${esc(o.label)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ""}${o.quote ? `<q>${esc(o.quote)}</q>` : ""}</span>${o.secs ? `<span class="db-opt-s ${o.secs > st.time ? "over" : ""}">${o.secs} s</span>` : ""}</button>`).join("")}</div></div>`;
-    $$("[data-o]", panel).forEach((b) => b.addEventListener("click", () => { Sfx.play("pick"); res(Number(b.dataset.o)); }, { once: true }));
+  // Tria entre opcions al panell. secs: compte enrere; si s'acaba, torna -1 (et quedes callat)
+  const choose = (title, sub, opts, secs = 0) => new Promise((res) => {
+    let done = false;
+    const pick = (i) => { if (done) return; done = true; res(i); };
+    panel.innerHTML = `<div class="db-ask">${secs ? `<div class="db-timer" style="--s:${secs}s" aria-hidden="true"><i></i></div>` : ""}<p class="db-ask-t">${title}${secs ? ` <span class="db-ask-clock" data-clock>${secs}</span>` : ""}</p>${sub ? `<p class="db-ask-s">${sub}</p>` : ""}<div class="db-opts">${opts.map((o, i) => `<button type="button" class="db-opt ${o.cls || ""}" data-o="${i}" ${o.disabled ? "disabled" : ""}>${o.icon ? `<span class="db-opt-i">${o.icon}</span>` : ""}<span class="db-opt-b"><b>${esc(o.label)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ""}${o.quote ? `<q>${esc(o.quote)}</q>` : ""}</span>${o.secs ? `<span class="db-opt-s ${o.secs > st.time ? "over" : ""}">${o.secs} s</span>` : ""}</button>`).join("")}</div></div>`;
+    $$("[data-o]", panel).forEach((b) => b.addEventListener("click", () => { Sfx.play("pick"); pick(Number(b.dataset.o)); }, { once: true }));
     panel.scrollTop = 0;
+    if (secs) {
+      let left = secs;
+      const tick = () => {
+        if (done) return;
+        left--;
+        const c = $("[data-clock]", panel);
+        if (c) { c.textContent = left; c.classList.toggle("hot", left <= 3); }
+        if (left <= 0) { Sfx.play("ko"); return pick(-1); }
+        ctx.after(1000, tick);
+      };
+      ctx.after(1000, tick);
+    }
   });
   // Mostra l'efecte d'una decisió
   const feedback = async (r, extra = "") => {
@@ -312,11 +354,30 @@ async function dbRun(G) {
     if (r.good !== false && r.d && (r.d.indecisos >= 3 || r.d.base >= 4)) { plato.react("jo", "nod"); $(".db-flash", T).classList.remove("go"); void T.offsetWidth; $(".db-flash", T).classList.add("go"); }
     await dbClick(ctx, panel, "[data-cont]");
   };
+  // Interromps un rival
+  const interrupt = async (rivalId, wasAttack) => {
+    const rr = dbInterrupt(st, rivalId, wasAttack);
+    plato.react(rivalId, "shake");
+    await say("jo", rr.line, { shot: st.rivals.length === 1 ? "two" : "jo", cont: false });
+    await dbWait(ctx, 400);
+    if (!rr.ok) await say("mod", "Si us plau, respecti el torn de paraula.", { shot: "mod", cont: false });
+    await feedback(rr);
+  };
+  // Decisió amb compte enrere: si s'acaba, et quedes callat
+  const decide = async (title, sub, ev) => {
+    const j = await choose(title, sub, ev.opts.map((o) => ({ ...o, quote: null })), dbDecideSecs(st));
+    return j < 0 ? "silenci" : ev.opts[j].k;
+  };
 
   plato.screen("DEBAT 29N", `${DB_NET[st.format].toUpperCase()} · ${DB_FORMATS[st.format].title.toUpperCase()}`);
   plato.shot("wide");
   await dbWait(ctx, 900);
   await say("mod", `Bona nit i benvinguts al ${DB_FORMATS[st.format].title.toLowerCase()}. Avui ens acompanyen ${G.cands.map((c) => c.name).join(", ")}. Els temps estan pactats i jo els faré complir.`, { shot: "wide" });
+  // La primera vegada, com funciona el plató
+  if (!store.get(DB_PREFS_KEY, {})?.tuto) {
+    await dbTutorial(ctx, panel);
+    store.set(DB_PREFS_KEY, { ...store.get(DB_PREFS_KEY, {}), tuto: 1 });
+  }
 
   while (!st.done) {
     alive();
@@ -326,7 +387,7 @@ async function dbRun(G) {
     plato.screen(B.title.toUpperCase(), `BLOC ${st.bi + 1} DE ${st.blocks.length}`);
     plato.shot("wide");
     await dbWait(ctx, 600);
-    await say("mod", B.q, { shot: "mod" });
+    await say("mod", dbQuestion(st, block), { shot: "mod" });
 
     if (block === "pactes") {
       const ev = dbEvent(st);
@@ -345,9 +406,20 @@ async function dbRun(G) {
       if (card.closing) card.cameraHit = await dbCameraQTE(G, panel);
       const r = dbAnswer(st, card);
       if (card.cameraHit) ctx.achieve("debat-minut");
-      await say("jo", card.quote, { shot: "jo", cont: false });
+      const watcher = card.k === "atac" ? dbLeader(st).id : dbPick(st, "pla", st.rivals).id;
+      await say("jo", card.quote, { shot: "jo", cont: false, cutaway: card.closing ? null : watcher });
       await dbWait(ctx, 300);
       await feedback({ d: r.d, msg: r.cut ? `${DB_MOD.name}: «Se li ha acabat el temps, ho sento.»` : dbReactionMsg(r.d), good: !r.cut && r.d.indecisos >= 0 });
+      // La moderadora repregunta si no has concretat
+      const fu = dbFollowUp(st, card);
+      if (fu) {
+        await say("mod", fu.text, { shot: "mod" });
+        plato.shot("jo");
+        const k = await decide(fu.title, "Ràpid: la càmera t'enfoca.", fu);
+        const rr = dbResolve(st, fu, k);
+        if (k === "concreta") await say("jo", fu.concrete, { shot: "jo", cont: false });
+        await feedback(rr);
+      }
       // Obstacle
       const ev = dbEvent(st);
       if (ev) {
@@ -360,27 +432,41 @@ async function dbRun(G) {
           dbMute(T, true);
         }
         plato.shot("jo");
-        const j = await choose(ev.title, ev.type === "verifica" ? `${ev.hint}` : ev.type === "blanc" ? ev.q : ev.type === "micro" ? ev.text : "", ev.opts.map((o) => ({ ...o, quote: null })));
+        const sub = ev.type === "verifica" ? `${ev.hint}` : ev.type === "blanc" ? ev.q : ev.type === "micro" ? ev.text : "";
+        // Les interrupcions i els atacs personals demanen resposta ràpida
+        const k = ["interrupcio", "personal"].includes(ev.type) ? await decide(ev.title, sub, ev) : ev.opts[await choose(ev.title, sub, ev.opts.map((o) => ({ ...o, quote: null })))].k;
         dbMute(T, false);
-        const rr = dbResolve(st, ev, ev.opts[j].k);
-        if (ev.type === "verifica" && rr.good && ev.opts[j].k === "fals") { ctx.achieve("debat-verifica"); plato.react(ev.rival, "shake"); }
+        const rr = dbResolve(st, ev, k);
+        if (ev.type === "verifica" && rr.good && k === "fals") { ctx.achieve("debat-verifica"); plato.react(ev.rival, "shake"); }
         await feedback(rr, rr.exp ? `<p class="db-fb-exp"><b>${ev.type === "blanc" ? "La dada" : "Verificació"}:</b> ${esc(rr.exp)}</p>` : "");
+      }
+      // Dos rivals s'enganxen entre ells
+      const cl = dbClash(st);
+      if (cl) {
+        plato.react(cl.b, "shake");
+        await say(cl.a, cl.lineA, { shot: cl.a });
+        plato.react(cl.a, "shake");
+        await say(cl.b, cl.lineB, { shot: cl.b });
+        plato.shot("wide");
+        const k = await decide(cl.title, cl.text, cl);
+        if (k === "pau") { plato.shot("jo"); await say("jo", "Mentre vostès es barallen, la gent espera solucions. Tornem al que importa.", { shot: "jo", cont: false }); }
+        await feedback(dbResolve(st, cl, k));
       }
     }
 
-    // Torn dels rivals
+    // Torn dels rivals: mentre parlen, els pots interrompre
     const turns = dbRivalTurns(st);
     for (const t of turns) {
       alive();
-      await say(t.id, t.line);
+      if ((await say(t.id, t.line, { interrupt: true })) === "int") { await interrupt(t.id, false); continue; }
       if (t.attack) {
         plato.react("jo", "shake");
-        await say(t.id, t.attack, { shot: st.rivals.length === 1 ? "two" : t.id });
+        if ((await say(t.id, t.attack, { shot: st.rivals.length === 1 ? "two" : t.id, interrupt: true })) === "int") { await interrupt(t.id, true); continue; }
         plato.shot("jo");
         const opts = DB_REPLY_OPTS.map((o) => ({ ...o, disabled: o.token && st.replies <= 0, d: o.token && st.replies <= 0 ? "No et queden rèpliques." : o.d }));
-        const k = await choose(`T'ataca ${st.rivals.find((r) => r.id === t.id).cand}`, `Et queden ${st.replies} ${st.replies === 1 ? "rèplica" : "rèpliques"}.`, opts);
-        const rr = dbReply(st, t.id, opts[k].k);
-        await feedback({ ...rr, good: rr.ok });
+        const k = await choose(`T'ataca ${st.rivals.find((r) => r.id === t.id).cand}`, (st.replies === 1 ? "Et queda 1 rèplica." : st.replies ? `Et queden ${st.replies} rèpliques.` : "No et queden rèpliques."), opts, dbDecideSecs(st));
+        const rr = k < 0 ? dbResolve(st, {}, "silenci") : dbReply(st, t.id, opts[k].k);
+        await feedback({ ...rr, good: rr.ok ?? rr.good });
       }
     }
     dbMeters(G);
@@ -388,6 +474,24 @@ async function dbRun(G) {
   }
   await say("mod", "I fins aquí el debat. Gràcies als candidats i a vostès per seguir-nos. Ara, la decisió és seva.", { shot: "wide" });
   dbFinish(G);
+}
+
+// La primera vegada: com funciona el plató
+function dbTutorial(ctx, panel) {
+  panel.innerHTML = `<div class="db-tuto">
+    <p class="db-ask-t">Com funciona el plató</p>
+    <ul>
+      <li><b>Corba de reacció:</b> com et valora l'audiència, de 0 a 100.</li>
+      <li><b>Els teus · Indecisos · Dels rivals:</b> els tres grups de votants que et miren. Els indecisos són els que decideixen qui guanya.</li>
+      <li><b>El teu temps:</b> cada resposta en gasta. Si se t'acaba, la moderadora et talla.</li>
+      <li><b>Nervis:</b> si pugen massa, les bones respostes fan menys efecte i et pots quedar en blanc.</li>
+      <li><b>Rèpliques:</b> per respondre amb força quan t'ataquen.</li>
+      <li><b>✋ Interromp:</b> mentre parla un rival, el pots tallar (dues vegades per debat). Arriscat, però pot ser el moment de la nit.</li>
+      <li><b>Compte enrere:</b> algunes decisions s'han de prendre ràpid. Si no tries res, et quedes callat.</li>
+    </ul>
+    <button type="button" class="btn primary db-cont" data-cont>Entesos, comencem ▸</button>
+  </div>`;
+  return dbClick(ctx, panel, "[data-cont]");
 }
 
 const dbReactionMsg = (d) => (d.indecisos >= 4 ? "Molt bona resposta: la corba dels indecisos s'enfila." : d.indecisos >= 1.5 ? "Bona resposta. Els indecisos t'escolten." : d.base >= 3 ? "Els teus ho celebren, però els indecisos no s'immuten." : d.indecisos < 0 ? "Als indecisos no els agrada aquest to." : "Resposta correcta, sense gaire impacte.");

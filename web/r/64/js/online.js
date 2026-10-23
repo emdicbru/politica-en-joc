@@ -178,8 +178,9 @@ const Online = {
 window.Online = Online;
 
 // ---------- Utilitats ----------
-// Com et veuen els altres: el nom d'usuari i la foto del perfil (o, si encara no n'hi ha, les de Google)
-const me = () => ({ uid: Online.user.uid, name: Online.profile?.handle || Online.user.displayName || "Jugador", photo: Online.profile ? Online.profile.photo : (Online.user.photoURL || ""), frame: typeof Coins !== "undefined" ? Coins.eq("fr") : null, title: typeof Coins !== "undefined" ? Coins.eq("ti") : null });
+// Com et veuen els altres: el nom d'usuari i la foto del perfil (o, si encara no n'hi ha, la de Google).
+// El nom del compte de Google (nom i cognoms) no es publica mai: fins que no tria l'usuari, surt com a «Jugador».
+const me = () => ({ uid: Online.user.uid, name: Online.profile?.handle || "Jugador", photo: Online.profile ? Online.profile.photo : (Online.user.photoURL || ""), frame: typeof Coins !== "undefined" ? Coins.eq("fr") : null, title: typeof Coins !== "undefined" ? Coins.eq("ti") : null });
 const firstName = (n) => (n || "Rival").split(" ")[0];
 const fresh = () => ({ i: 0, score: 0, hits: 0, done: false, picks: [], res: [], msgs: [], emote: null });
 const genCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
@@ -236,10 +237,8 @@ function shrinkPhoto(file) {
   });
 }
 
-function suggestHandle() {
-  const base = handleKey((Online.user?.displayName || "votant").split(" ")[0]) || "votant";
-  return `${base.slice(0, 14)}${Math.floor(10 + Math.random() * 89)}`;
-}
+// Exemple neutre: no parteix mai del nom real de la persona
+const suggestHandle = () => `votant${Math.floor(100 + Math.random() * 900)}`;
 
 let profileModal = null;
 function openProfileEditor(first = false) {
@@ -252,8 +251,8 @@ function openProfileEditor(first = false) {
       <p class="kicker">${first ? "Ja gairebé hi ets" : "El teu perfil"}</p>
       <h3 id="pf-title">${first ? "Crea el teu usuari" : "Edita el perfil"}</h3>
       <div class="pf-top"><img class="pf-preview" alt="La teva foto de perfil" referrerpolicy="no-referrer"><div class="pf-name">
-        <label class="sim-field"><span>Nom d'usuari</span><input data-handle maxlength="20" autocomplete="off" spellcheck="false" value="${esc(cur.handle || suggestHandle())}"></label>
-        <small>De 3 a 20 caràcters: lletres, números, punt i guió baix. És públic: surt als rànquings i als duels.</small>
+        <label class="sim-field"><span>Nom d'usuari</span><input data-handle maxlength="20" autocomplete="off" spellcheck="false" value="${esc(cur.handle || "")}" placeholder="p. ex. ${suggestHandle()}"></label>
+        <small>De 3 a 20 caràcters: lletres, números, punt i guió baix. És l'únic nom que veuran els altres (rànquings, duels i lligues): el teu nom real no surt enlloc.</small>
       </div></div>
       <p class="pf-label">Foto de perfil</p>
       <div class="pf-photos">
@@ -299,6 +298,8 @@ function openProfileEditor(first = false) {
     if (ok === "taken") { err.textContent = "Aquest nom d'usuari ja és d'algú altre. Prova'n un altre."; return input.focus(); }
     if (!ok) { err.textContent = "No s'ha pogut desar. Comprova la connexió i torna-ho a provar."; return; }
     closeProfileEditor();
+    // El repte d'avui fet abans de tenir usuari es publica ara, ja amb el nom d'usuari
+    if (first) { const today = dailyResult(todayKey()); if (today) Online.submitDaily(todayKey(), today); }
     Sfx.play("win");
     toast(first ? `Benvingut/da, ${handle}!` : "Perfil desat");
     renderAccountBtn();
@@ -1368,7 +1369,8 @@ const LEAGUE_LEN = 5;
 let rankTab = "world";
 
 Online.submitDaily = async (key, { ms, hits, errors }) => {
-  if (!ready || !Online.user) return;
+  // Sense nom d'usuari no es publica res (es fa en desar-lo)
+  if (!ready || !Online.user || !Online.profile?.handle) return;
   const ref = F.doc(db, "dailies", key, "entries", Online.user.uid);
   const snap = await safe(() => F.getDoc(ref), "No s'ha pogut publicar el temps");
   if (!snap || snap.exists()) return;
@@ -1637,10 +1639,11 @@ if (ready) {
     if (user) {
       await syncDown();
       Progress.onSave = schedulePush;
-      if (!Online.profile) openProfileEditor(true);
-      // Si ha fet el repte d'avui sense sessió, el publiquem ara (només compta si encara no hi és)
+      // Si ha fet el repte d'avui sense sessió, el publiquem ara (només compta si encara no hi és).
+      // Sense usuari triat encara, es publica quan el desi.
       const today = dailyResult(todayKey());
-      if (today) Online.submitDaily(todayKey(), today);
+      if (!Online.profile) openProfileEditor(true);
+      else if (today) Online.submitDaily(todayKey(), today);
       const pending = sessionStorage.getItem("pendingDuel");
       if (pending) {
         sessionStorage.removeItem("pendingDuel");

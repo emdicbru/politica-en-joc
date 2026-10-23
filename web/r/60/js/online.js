@@ -142,6 +142,34 @@ const Online = {
     await pushProfile();
     renderAccountBtn();
   },
+  // Avisos d'error (report.js): els envia qualsevol persona; l'equip els llegeix al Centre de control
+  async reportSend(d) {
+    if (!ready) return false;
+    try { await F.addDoc(F.collection(db, "reports"), { ...d, uid: Online.user?.uid || null, status: "nou", t: F.serverTimestamp() }); return true; } catch (e) { console.warn(e); return false; }
+  },
+  async reportList(n = 150) {
+    try { return (await F.getDocs(F.query(F.collection(db, "reports"), F.orderBy("t", "desc"), F.limit(n)))).docs.map((d) => ({ id: d.id, ...d.data(), t: d.data().t?.toMillis?.() || 0 })); } catch (e) { console.warn(e); return null; }
+  },
+  async reportSet(id, status) {
+    try { await F.updateDoc(F.doc(db, "reports", id), { status }); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
+  },
+  async reportDel(id) {
+    try { await F.deleteDoc(F.doc(db, "reports", id)); return true; } catch (e) { console.warn(e); toast("No s'ha pogut esborrar (permisos?)"); return false; }
+  },
+  // Equip del Centre de control (staff/{correu}: { role, t, by }). Només el propietari el pot canviar.
+  async staffRole() {
+    if (!ready || !Online.user?.email) return "";
+    try { const s = await F.getDoc(F.doc(db, "staff", Online.user.email.toLowerCase())); return s.exists() ? s.data().role || "" : ""; } catch (e) { console.warn(e); return ""; }
+  },
+  async staffList() {
+    try { return (await F.getDocs(F.collection(db, "staff"))).docs.map((d) => ({ email: d.id, ...d.data() })); } catch (e) { console.warn(e); return null; }
+  },
+  async staffSet(email, role) {
+    try { await F.setDoc(F.doc(db, "staff", email.toLowerCase()), { role, t: Date.now(), by: Online.user?.email || "" }); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
+  },
+  async staffRemove(email) {
+    try { await F.deleteDoc(F.doc(db, "staff", email.toLowerCase())); return true; } catch (e) { console.warn(e); toast("No s'ha pogut treure (permisos?)"); return false; }
+  },
   async setConfig(id, data) {
     if (!ready || !Online.user) { toast("Cal entrar amb el compte"); return false; }
     try { await F.setDoc(F.doc(db, "config", id), data); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }

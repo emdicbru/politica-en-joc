@@ -234,6 +234,7 @@ function pfAjustos() {
       <div id="notif-card"></div>
       <div id="install-card"></div>
       <div class="card pf-row"><span aria-hidden="true">🔊</span><div><b>So</b><p>Efectes de so dels jocs.</p></div><button class="btn" type="button" data-pfsound>${Sfx.on ? "Silencia" : "Activa"}</button></div>
+      <div class="card pf-row"><span aria-hidden="true">🐞</span><div><b>Alguna cosa no funciona?</b><p>Explica'ns què ha passat i ho arreglarem.</p></div><button class="btn" type="button" data-report>Avisa d'un error</button></div>
     </section>
     <section class="pf-set">
       <h2 class="section-title sm">Privadesa</h2>

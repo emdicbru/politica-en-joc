@@ -77,6 +77,7 @@ const LEGAL_TEXT = {
     <p><b>d) Estadística d'ús anònima.</b> L'app compta de manera agregada i anònima l'ús que se'n fa (visites per dia i per hora, seccions visitades, partides jugades, tipus de dispositiu i web d'origen per categories). No es recullen dades identificatives ni s'associa a cap compte. Es pot desactivar des de la Política de galetes.</p>
     <p><b>e) Monedes i botiga.</b> Si una persona amb compte compra articles de la botiga del joc, es desen al seu perfil els articles que té i els que porta posats; el marc i el títol són visibles als rànquings. Les monedes són una moneda fictícia del joc.</p>
     <p><b>f) Avisos d'error.</b> Si una persona avisa d'un error, es desa el text que escriu, el correu electrònic si l'indica voluntàriament (per poder-li respondre), la secció de l'app on era, el tipus de dispositiu i navegador, la mida de la pantalla, la versió de l'app, l'últim error tècnic de la pàgina i, si té sessió iniciada, el seu identificador d'usuari. Només ho veu l'equip de l'app, s'utilitza exclusivament per corregir l'error i respondre-li, i s'esborra quan ja no és necessari i com a molt al cap de dotze mesos.</p>
+    <p><b>g) Contactes de premsa.</b> Per enviar les notes de premsa de Política en Joc, es tracten el nom, el mitjà, l'adreça electrònica professional i les etiquetes temàtiques de periodistes i mitjans de comunicació, obtingudes de fonts públiques professionals o facilitades per les mateixes persones. Només hi accedeix l'equip de l'app. Cada correu inclou un enllaç per deixar de rebre'n, i també es pot demanar per escrit.</p>
     ${ANALYTICS_ON ? `<p><b>c) Dades d'analítica.</b> Únicament amb el consentiment previ de la persona usuària, es recullen dades d'ús agregades mitjançant Google Analytics: pàgines consultades, tipus de dispositiu i navegador, ubicació aproximada i durada de la visita.</p>` : ""}
     <p>No es tracten categories especials de dades ni es fan perfils amb finalitats publicitàries o decisions automatitzades.</p>
 
@@ -84,6 +85,7 @@ const LEGAL_TEXT = {
     <div class="legal-table two">
       <div class="lt-row head"><b>Finalitat</b><b>Base jurídica</b></div>
       <div class="lt-row"><span>Gestió del compte i prestació del servei: desament del progrés, rànquings, duels i lligues.</span><span>Execució de les condicions d'ús acceptades per la persona usuària (art. 6.1.b RGPD).</span></div>
+      <div class="lt-row"><span>Enviament de notes de premsa a periodistes i mitjans de comunicació.</span><span>Interès legítim del responsable en la difusió del projecte entre professionals de la informació (art. 6.1.f RGPD), amb dret d'oposició en qualsevol moment.</span></div>
       <div class="lt-row"><span>Seguretat del servei i prevenció d'usos fraudulents.</span><span>Interès legítim del responsable (art. 6.1.f RGPD).</span></div>
       ${ANALYTICS_ON ? `<div class="lt-row"><span>Elaboració d'estadístiques d'ús.</span><span>Consentiment de la persona usuària (art. 6.1.a RGPD), revocable en qualsevol moment.</span></div>` : ""}
       <div class="lt-row"><span>Atenció de consultes i de sol·licituds d'exercici de drets.</span><span>Compliment d'obligacions legals (art. 6.1.c RGPD).</span></div>
@@ -93,6 +95,7 @@ const LEGAL_TEXT = {
     <ul>
       <li>GitHub, Inc., com a proveïdor de l'allotjament dels fitxers de l'app (codi, imatges, tipografies i dades públiques com els titulars o els resultats), en qualitat d'encarregat del tractament. Només rep les dades tècniques necessàries per servir-los, com l'adreça IP.</li>
       <li>Google Ireland Limited i Google LLC, com a proveïdors dels serveis Firebase (autenticació, base de dades i allotjament)${ANALYTICS_ON ? " i Google Analytics" : ""}, en qualitat d'encarregats del tractament.</li>
+      <li>Sendinblue SAS (Brevo), amb seu a França, com a proveïdor de l'enviament dels correus de les notes de premsa, en qualitat d'encarregat del tractament.</li>
       <li>GitHub, Inc., que allotja el fitxer públic de titulars de premsa. La seva consulta comporta la transmissió de l'adreça IP.</li>
       <li>Wikimedia Foundation, Inc., des d'on es carreguen les fotografies. La seva visualització comporta la transmissió de l'adreça IP.</li>
       <li>Els mitjans de comunicació El País i VilaWeb, els canals RSS dels quals es consulten directament des del navegador per mostrar titulars recents. Aquesta consulta comporta la transmissió de l'adreça IP.</li>
@@ -104,7 +107,7 @@ const LEGAL_TEXT = {
     <p>Alguns dels proveïdors esmentats poden tractar dades als Estats Units. Aquestes transferències s'emparen en el Marc de privadesa de dades UE-EUA o en les clàusules contractuals tipus aprovades per la Comissió Europea.</p>
 
     <h2>6. Termini de conservació</h2>
-    <p>Les dades es conserven mentre el compte estigui actiu. Quan se suprimeix el compte, s'eliminen el perfil, els resultats del repte diari, els duels, la pertinença a lligues i els pronòstics, sens perjudici de les còpies de seguretat dels proveïdors, que s'eliminen d'acord amb els seus cicles de rotació.${ANALYTICS_ON ? " Les dades d'analítica es conserven durant el període configurat a Google Analytics, que no supera els catorze mesos." : ""}</p>
+    <p>Les dades dels contactes de premsa es conserven mentre siguin útils per a la difusió del projecte i fins que la persona s'oposi a rebre més comunicacions; en aquest cas, se'n conserva només l'adreça marcada com a baixa per no tornar-li a escriure. Les dades es conserven mentre el compte estigui actiu. Quan se suprimeix el compte, s'eliminen el perfil, els resultats del repte diari, els duels, la pertinença a lligues i els pronòstics, sens perjudici de les còpies de seguretat dels proveïdors, que s'eliminen d'acord amb els seus cicles de rotació.${ANALYTICS_ON ? " Les dades d'analítica es conserven durant el període configurat a Google Analytics, que no supera els catorze mesos." : ""}</p>
 
     <h2>7. Drets de les persones interessades</h2>
     <p>La persona interessada pot exercir els drets d'accés, rectificació, supressió, oposició, limitació del tractament i portabilitat, així com retirar el consentiment prestat, per mitjà de:</p>
@@ -267,7 +270,7 @@ function legalFooter() {
     <p class="sf-line">Web no oficial. No té cap vincle amb partits, institucions ni mitjans de comunicació.</p>
     ${COFFEE_URL ? `<p class="sf-line sf-coffee">Gratuïta i sense anuncis. Si t'agrada, ${coffeeLink("convida'm a un cafè")}.</p>` : ""}
     <p class="sf-line"><button class="linklike" type="button" data-report>🐞 Avisa d'un error</button></p>
-    <p class="sf-line sf-author">Feta per <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a></p>
+    <p class="sf-line sf-author">Feta per <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a> · <a href="#premsa">Sala de premsa</a></p>
     <nav aria-label="Informació legal">${LEGAL_PAGES.map((p) => `<a href="#legal/${p.k}">${p.h}</a>`).join("")}${ANALYTICS_ON ? `<button class="linklike" data-open-consent>Configuració de galetes</button>` : ""}</nav>
   </footer>`;
 }

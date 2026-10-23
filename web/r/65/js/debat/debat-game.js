@@ -210,7 +210,7 @@ async function dbStudio(G) {
   const stage = $(".db-stage", T);
   let plato = null;
   try {
-    const mod = await import(new URL("js/debat/debat-plato.js?v=37", window.PEJ_CDN || document.baseURI).href);
+    const mod = await import(new URL("js/debat/debat-plato.js?v=40", window.PEJ_CDN || document.baseURI).href);
     plato = await mod.createPlato(stage, { cands: order, title: "DEBAT 29N", net: `${net.toUpperCase()} · ${F.title.toUpperCase()}` });
   } catch (e) {
     console.warn("Plató 3D no disponible: " + (e && (e.stack || e.message || e)));
@@ -220,6 +220,7 @@ async function dbStudio(G) {
   const done = () => { plato?.dispose(); T.remove(); document.body.classList.remove("db-lock"); };
   ctx.onCleanup(done);
   G.T = T; G.plato = plato; G.cands = cands;
+  T.dbPlato = plato; // per a les proves visuals
   $("[data-exit]", T).addEventListener("click", () => {
     if (confirm("Vols sortir del debat? No es desarà.")) { done(); location.hash = "#simulador"; }
   });

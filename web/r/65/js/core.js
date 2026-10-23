@@ -257,7 +257,7 @@ const DYNAMIC_GAMES = new Map();
 const gameById = (id) => GAMES.find((g) => g.id === id) || DYNAMIC_GAMES.get(id);
 
 // ---------- Navegació ----------
-const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga"];
+const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga", "premsa", "baixa"];
 let session = null; // partida en curs
 
 function route() {
@@ -290,6 +290,8 @@ function route() {
   if (v === "control") renderControl();
   if (v === "pronostics") renderPronostics(arg);
   if (v === "botiga") renderBotiga();
+  if (v === "premsa") renderPremsa(arg);
+  if (v === "baixa") renderBaixa(arg);
   updateTabIndicator();
   window.scrollTo({ top: 0 });
 }

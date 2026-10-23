@@ -7,11 +7,11 @@ const CTL_OWNER = "brudomingosola@gmail.com";
 const CTL_ROLES = {
   observador: { n: 1, name: "Observador", desc: "Ho pot veure tot (resum, usuaris, notícies i previsualització), però no pot canviar res." },
   editor: { n: 2, name: "Editor", desc: "A més, envia notificacions, refà les històries de Notícies i porta l'especial del 29N (fases, nit electoral, porra i avisos)." },
-  admin: { n: 3, name: "Administrador", desc: "A més, liquida la Lliga de pronòstics, configura el repte diari automàtic i pot aturar els comptadors d'ús." },
+  admin: { n: 3, name: "Administrador", desc: "A més, porta la premsa (contactes i notes de premsa), liquida la Lliga de pronòstics, configura el repte diari automàtic i pot aturar els comptadors d'ús." },
   propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
 };
 // Què cal per veure cada pestanya
-const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, errors: 1, prev: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, equip: 4 };
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, errors: 1, prev: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, equip: 4 };
 let ctlRoleCache = { email: null, role: undefined, loading: false };
 function ctlRole() {
   const email = window.Online?.user?.email?.toLowerCase();
@@ -148,7 +148,7 @@ function renderControl(fromLive = false) {
   for (let i = todo.length - 1; i >= 0; i--) if (todo[i].tab && !ctlCan(CTL_TAB_ROLE[todo[i].tab] || 3)) todo.splice(i, 1);
   const changed = ctlDraft ? ctlChanges() : [];
   const dot = (keys) => (changed.some((x) => keys.some((k) => x.startsWith(k))) ? `<i class="ctl-dot"></i>` : "");
-  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["errors", "🐞 Errors", ctlRpt.list && ctlRpt.list.some((r) => r.status === "nou") ? `<i class="ctl-dot"></i>` : ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
+  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["errors", "🐞 Errors", ctlRpt.list && ctlRpt.list.some((r) => r.status === "nou") ? `<i class="ctl-dot"></i>` : ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["premsa", "📣 Premsa", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
   TABS.splice(1, 0, ...(ctlCan(4) ? [["equip", "👥 Equip", ""]] : []));
   const allowed = TABS.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3));
   TABS.length = 0; TABS.push(...allowed);
@@ -266,6 +266,8 @@ function renderControl(fromLive = false) {
 
     ${panel("notif", ctlNotifHtml())}
 
+    ${panel("premsa", tab === "premsa" && typeof ctlPressHtml === "function" ? ctlPressHtml() : "")}
+
     ${panel("ajuda", `
       <p class="ctl-intro">Com funciona tot plegat, en poques línies.</p>
       <section class="card ctl-helpbox">
@@ -289,6 +291,7 @@ function renderControl(fromLive = false) {
   if (tab === "noticies") ctlNewsBind(root);
   if (tab === "equip") ctlTeamBind(root);
   if (tab === "errors") ctlRptBind(root);
+  if (tab === "premsa" && typeof ctlPressBind === "function") ctlPressBind(root);
   ctlLock(root);
   $$("[data-tab]", root).forEach((t) => t.addEventListener("click", () => { sessionStorage.setItem("ctl-tab", t.dataset.tab); renderControl(); window.scrollTo({ top: 0 }); }));
   const redraw = () => renderControl();
@@ -436,11 +439,11 @@ function ctlNotifHtml() {
       <div class="ctl-push-row"><input data-ghtoken type="password" placeholder="github_pat_…" autocomplete="off"><button class="btn" type="button" data-ghsave>Desa</button></div>`}
     </section>`;
 }
-async function ctlDispatch() {
+async function ctlDispatch(workflow = "push.yml") {
   const gh = localStorage.getItem(CTL_GH_KEY);
   if (!gh) return false;
   try {
-    const r = await fetch(`https://api.github.com/repos/${CTL_GH_REPO}/actions/workflows/push.yml/dispatches`, { method: "POST", headers: { Authorization: `Bearer ${gh}`, Accept: "application/vnd.github+json" }, body: JSON.stringify({ ref: "main" }) });
+    const r = await fetch(`https://api.github.com/repos/${CTL_GH_REPO}/actions/workflows/${workflow}/dispatches`, { method: "POST", headers: { Authorization: `Bearer ${gh}`, Accept: "application/vnd.github+json" }, body: JSON.stringify({ ref: "main" }) });
     return r.status === 204;
   } catch { return false; }
 }

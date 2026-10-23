@@ -5156,3 +5156,53 @@ body.db-lock { overflow: hidden; }
 .db-tuto ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .86rem; line-height: 1.4; color: rgba(255, 255, 255, .88); }
 .db-tuto b { color: #ffcf3d; }
 @media (prefers-reduced-motion: reduce) { .db-int { animation: none; } }
+
+/* ---------- Centre de control › Premsa ---------- */
+.ctl-press label { display: grid; gap: 4px; font-weight: 800; font-size: .85rem; margin: 8px 0; }
+.ctl-press textarea { resize: vertical; line-height: 1.5; }
+.ctl .ctl-check { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.ctl .ctl-check input { width: auto; }
+.ctl-press-photo { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: start; margin: 12px 0; padding: 12px; border: 2px dashed var(--ink); border-radius: 12px; }
+.ctl-press-photo > img { width: 100%; border-radius: 10px; border: 2px solid var(--ink); }
+.ctl-press-photo > span { display: grid; place-items: center; min-height: 100px; border-radius: 10px; background: var(--paper); }
+.ctl-press-photo .btn { cursor: pointer; }
+.ctl-mailprev { border-radius: 12px; overflow: hidden; border: 2px solid var(--ink); max-height: 720px; overflow-y: auto; }
+.ctl-mailprev img { max-width: 100%; height: auto; }
+.ctl-press-add { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: end; }
+.ctl-press-add label { display: grid; gap: 4px; font-size: .82rem; font-weight: 700; color: var(--ink-2); }
+.ctl-press-filter { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 12px; }
+.ctl-press-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ctl-press-list li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 220px) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); }
+.ctl-press-list li.off { opacity: .6; }
+.ctl-press-list code { font-size: .8rem; overflow-wrap: anywhere; }
+.ctl-press-list small { color: var(--muted); }
+.ctl-tag.ok { background: var(--ok-soft); color: var(--ink); }
+.ctl-tag.ko { background: var(--ko-soft); color: var(--ink); }
+.ctl-sends { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; font-size: .85rem; max-height: 260px; overflow-y: auto; }
+.ctl-sends li.ko { color: var(--ko); }
+.ctl-sends small { color: var(--muted); }
+@media (max-width: 760px) {
+  .ctl-press-add, .ctl-press-filter { grid-template-columns: 1fr; }
+  .ctl-press-list li { grid-template-columns: 1fr auto; }
+  .ctl-press-list li input { grid-column: 1 / -1; grid-row: 2; }
+  .ctl-press-photo { grid-template-columns: 1fr; }
+}
+
+/* ---------- Sala de premsa (#premsa) i baixa (#baixa) ---------- */
+.pr { max-width: 760px; margin: 0 auto; }
+.pr-list { display: grid; gap: 14px; }
+.pr-item { display: grid; grid-template-columns: 160px 1fr; gap: 14px; align-items: start; text-decoration: none; color: inherit; }
+.pr-item img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; border: 2px solid var(--ink); }
+.pr-item h2 { margin: 2px 0 6px; font-size: 1.1rem; }
+.pr-item p { margin: 0; color: var(--ink-2); }
+.pr-item small, .pr-note .pr-date { color: var(--muted); font-size: .82rem; font-weight: 700; }
+.pr-note h1 { font-family: var(--display); font-size: clamp(1.4rem, 4vw, 2rem); line-height: 1.2; margin: 6px 0 12px; }
+.pr-note .pr-lead { font-weight: 800; font-size: 1.08rem; color: var(--ink-2); }
+.pr-note figure { margin: 18px 0; }
+.pr-note figure img { width: 100%; border-radius: 12px; border: 2px solid var(--ink); }
+.pr-note figcaption { font-size: .85rem; color: var(--muted); margin-top: 6px; }
+.pr-note .pr-body p { line-height: 1.65; }
+.pr-note .pr-about { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--paper-2); font-size: .92rem; color: var(--ink-2); }
+.pr-kicker { color: var(--red); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; font-size: .78rem; margin: 0; }
+.pr-unsub { text-align: center; }
+@media (max-width: 560px) { .pr-item { grid-template-columns: 1fr; } }

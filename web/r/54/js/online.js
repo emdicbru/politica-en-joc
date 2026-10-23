@@ -123,6 +123,19 @@ const Online = {
   },
   // Botiga: la foto del perfil i un avatar comprat
   myPhoto: () => (Online.user ? me().photo : ""),
+  // Perfil: qui ets i on ets al rànquing d'experiència (2 consultes de recompte)
+  meInfo: () => (Online.user ? { ...me(), email: Online.user.email || "", synced: ready } : null),
+  async myRank() {
+    if (!ready || !Online.user) return null;
+    try {
+      const xp = Progress.data.xp || 0;
+      const [above, total] = await Promise.all([
+        F.getCountFromServer(F.query(F.collection(db, "users"), F.where("xp", ">", xp))),
+        F.getCountFromServer(F.collection(db, "users")),
+      ]);
+      return { pos: above.data().count + 1, total: total.data().count };
+    } catch (e) { console.warn(e); return null; }
+  },
   async setPhoto(photo) {
     if (!ready || !Online.user || !Online.profile) return;
     Online.profile = { ...Online.profile, photo };
@@ -462,7 +475,6 @@ function renderAccountBox() {
       </div>`);
       $("[data-export]", box).addEventListener("click", exportMyData);
       $("[data-delete]", box).addEventListener("click", deleteMyAccount);
-      renderLeaderboard();
     }
     return;
   }
@@ -554,10 +566,9 @@ async function deleteMyAccount() {
   toast("El compte s'ha suprimit.");
 }
 
-async function renderLeaderboard() {
-  const box = $("#leaderboard-box");
+async function renderLeaderboard(box = $("#leaderboard-box"), inTab = false) {
   if (!box || !ready || !Online.user) return;
-  box.innerHTML = `<h2 class="section-title sm">Rànquing</h2><div class="lb"><p class="muted">Carregant…</p></div>`;
+  box.innerHTML = `${inTab ? `<p class="muted">Qui ha acumulat més experiència jugant a tots els jocs.</p>` : `<h2 class="section-title sm">Rànquing</h2>`}<div class="lb"><p class="muted">Carregant…</p></div>`;
   const snap = await safe(() => F.getDocs(F.query(F.collection(db, "users"), F.orderBy("xp", "desc"), F.limit(20))));
   if (!snap) return;
   const rows = snap.docs.map((d, i) => {
@@ -1416,10 +1427,12 @@ Online.renderRanking = (root, arg) => {
     <div class="rank-tabs">
       <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
       <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amics</button>
+      <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiència</button>
     </div>
     <div id="rank-body"><p class="muted">Carregant…</p></div>`;
   $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
   if (rankTab === "world") renderWorld($("#rank-body"), key);
+  else if (rankTab === "xp") renderLeaderboard($("#rank-body"), true);
   else renderLeagues($("#rank-body"), key);
 };
 

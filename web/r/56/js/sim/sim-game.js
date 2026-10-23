@@ -388,61 +388,103 @@ function simDuoBind(root) {
   $("[data-sim-cont]", root)?.addEventListener("click", () => { SimOpts.resume = true; SimOpts.duel = null; Sfx.play("pick"); simLaunch(); });
   $("[data-sim-scroll]", root)?.addEventListener("click", () => $("#sim-config")?.scrollIntoView({ behavior: "smooth", block: "start" }));
 }
-function renderSimHome() {
+// La pestanya Simuladors: el primer que es veu són els dos simuladors, cadascun amb el seu botó per jugar.
+// A sota, les opcions del simulador electoral (mode i dificultat) i com funcionen, plegats.
+function renderSimHome(arg) {
   const root = $("#sim-home");
   if (!root) return;
   const save = SimSave.get();
   const best = (k) => Progress.data.best[`simulador-${k}`];
-  root.innerHTML = `<div class="sim-home">
-    <header class="simduo-head">
-      <p class="kicker">Viu les eleccions des de dins</p>
+  const recs = SIM_MODES.map((m) => best(m.k)).filter((x) => x !== undefined);
+  const elBest = recs.length ? Math.max(...recs) : undefined;
+  const dbBest = Progress.data.best.debat;
+  const rec = (b) => (b !== undefined ? `<span class="simcard-rec">Rècord: ${fmt(b)} punts</span>` : "");
+  const modeName = () => SIM_MODES.find((m) => m.k === SimOpts.mode)?.title || "";
+  const diffName = () => SIM_DIFF[SimOpts.diff]?.label || "";
+
+  root.innerHTML = `<div class="sim-home sh2">
+    <header class="sh2-head">
       <h1 class="page-title">Simuladors</h1>
-      <p>Dos simuladors amb les regles de veritat: guanya les eleccions amb el teu partit o defensa'l en un debat a la televisió.</p>
+      <p>Viu les eleccions des de dins, amb les regles de veritat.</p>
     </header>
-    ${simDuoHtml("page")}
-    <section class="simsec" id="sim-config">
-    <p class="simsec-k">Simulador electoral</p>
-    <h2 class="section-title sm">Tria com vols jugar</h2>
-    ${save ? `<p class="simsec-save">Tens una partida a mitges: ${esc(save.state.me.name)} · ${SIM_MODE_INFO[save.state.mode]?.label || ""} · ${simStageLabel(save.state)}.</p>` : ""}
-    <div class="sim-modecards" role="radiogroup" aria-label="Mode de joc">${SIM_MODES.map((m) => `
-      <button type="button" class="sim-modecard ${m.k === SimOpts.mode ? "on" : ""}" role="radio" aria-checked="${m.k === SimOpts.mode}" data-mode="${m.k}">
-        <span class="sim-mc-top"><b>${m.title}</b><em>${m.mins}</em></span>
-        <small>${m.text}</small>
-        <span class="sim-mc-rec">${best(m.k) !== undefined ? `Rècord: ${fmt(best(m.k))} punts` : "Sense rècord"}</span>
-      </button>`).join("")}</div>
-    <div class="sim-home-go">
-      <div class="sim-diffs" role="radiogroup" aria-label="Dificultat"><span>Dificultat</span>${Object.entries(SIM_DIFF).map(([k, d]) => `
-        <label><input type="radio" name="sim-diff" value="${k}" ${k === SimOpts.diff ? "checked" : ""}><span>${d.label}</span></label>`).join("")}</div>
-      <button class="btn primary lg" data-sim-go>Comença</button>
+    <div class="sh2-cards">
+      <article class="sh2-card sh2-el">
+        <div class="sh2-art" aria-hidden="true">${ART.simulador ? ART.simulador() : ""}</div>
+        <div class="sh2-b">
+          <p class="simcard-k">Simulador electoral</p>
+          <h2>Guanya les eleccions</h2>
+          <p class="sh2-d">Funda un partit i competeix amb els reals: campanya, nit electoral, pactes i govern.</p>
+          ${save ? `<button class="btn primary lg sh2-play" type="button" data-sim-cont>▶ Continua la partida</button>
+            <p class="sh2-meta">${simLogoSvg(save.state.me, 20)} ${esc(save.state.me.name)} · ${simStageLabel(save.state)} · <button class="linklike" type="button" data-sim-go>o comença'n una de nova</button></p>`
+            : `<button class="btn primary lg sh2-play" type="button" data-sim-go>▶ Juga ara</button>
+            <p class="sh2-meta"><span data-sim-sel>${modeName()} · ${diffName()}</span> · <button class="linklike" type="button" data-sim-opts>canvia-ho</button></p>`}
+          ${rec(elBest)}
+        </div>
+      </article>
+      <article class="sh2-card sh2-db">
+        <div class="sh2-art" aria-hidden="true"><span class="db-pod a"></span><span class="db-pod b"></span><span class="db-pod c"></span><span class="db-promo-led">DEBAT 29N</span></div>
+        <div class="sh2-b">
+          <p class="simcard-k">Simulador de debat</p>
+          <h2>Guanya el debat</h2>
+          <p class="sh2-d">Crea el teu candidat i plantes cara als altres en un plató de televisió en 3D.</p>
+          <a class="btn primary lg sh2-play" href="#joc/debat">🎬 Entra al plató</a>
+          <p class="sh2-meta">4 formats de debat · uns 10 minuts</p>
+          ${rec(dbBest)}
+        </div>
+      </article>
     </div>
-    <p class="sim-diffnote">Per jugar un duel de campanya contra un amic, ves a <a href="#duel">Social</a>.</p>
-    <h3 class="simsec-h3">Com funciona</h3>
-    <ol class="sim-howto">
-      <li><b>Funda el partit</b><span>Nom, color, logo, programa a partir de vuit dilemes, tres prioritats i un candidat.</span></li>
-      <li><b>Fes campanya</b><span>Mítings, xarxes, entrevistes, debats i imprevistos durant sis dies, amb enquestes del joc.</span></li>
-      <li><b>Nit electoral</b><span>L'escrutini real per circumscripcions i la Llei d'Hondt reparteixen els 350 escons.</span></li>
-      <li><b>Pactes i govern</b><span>Negocia la investidura i, al mode Legislatura, governa vuit trimestres.</span></li>
-    </ol>
+
+    <section class="sh2-opts" id="sim-config">
+      <h2 class="section-title sm">Opcions del simulador electoral</h2>
+      <div class="sim-modecards" role="radiogroup" aria-label="Mode de joc">${SIM_MODES.map((m) => `
+        <button type="button" class="sim-modecard ${m.k === SimOpts.mode ? "on" : ""}" role="radio" aria-checked="${m.k === SimOpts.mode}" data-mode="${m.k}">
+          <span class="sim-mc-top"><b>${m.title}</b><em>${m.mins}</em></span>
+          <small>${m.text}</small>
+          <span class="sim-mc-rec">${best(m.k) !== undefined ? `Rècord: ${fmt(best(m.k))} punts` : "Sense rècord"}</span>
+        </button>`).join("")}</div>
+      <div class="sh-go">
+        <div class="sim-diffs" role="radiogroup" aria-label="Dificultat"><span>Dificultat</span>${Object.entries(SIM_DIFF).map(([k, d]) => `
+          <label><input type="radio" name="sim-diff" value="${k}" ${k === SimOpts.diff ? "checked" : ""}><span>${d.label}</span></label>`).join("")}</div>
+        <button class="btn primary" type="button" data-sim-go>${save ? "Comença una partida nova" : "▶ Juga amb aquestes opcions"}</button>
+      </div>
+      <p class="sim-diffnote">També pots jugar un duel de campanya contra un amic, des de <a href="#duel">Social</a>.</p>
     </section>
-    <section class="simsec">
-      <p class="simsec-k">Simulador de debat</p>
-      <h2 class="section-title sm">Com funciona el debat</h2>
+
+    <details class="sh-how">
+      <summary>Com funciona el simulador electoral</summary>
+      <ol class="sim-howto">
+        <li><b>Funda el partit</b><span>Nom, color, logo, programa a partir de vuit dilemes, tres prioritats i un candidat.</span></li>
+        <li><b>Fes campanya</b><span>Mítings, xarxes, entrevistes, debats i imprevistos durant sis dies, amb enquestes del joc.</span></li>
+        <li><b>Nit electoral</b><span>L'escrutini per circumscripcions i la Llei d'Hondt reparteixen els 350 escons.</span></li>
+        <li><b>Pactes i govern</b><span>Negocia la investidura i, al mode Legislatura, governa vuit trimestres.</span></li>
+      </ol>
+    </details>
+    <details class="sh-how">
+      <summary>Com funciona el simulador de debat</summary>
       <ol class="sim-howto">
         <li><b>Crea el candidat</b><span>Nom, partit, aspecte, ideologia, mida del partit i estil davant la càmera.</span></li>
         <li><b>Tria el debat</b><span>Cara a cara, a quatre, a set o dels partits petits: les invitacions depenen de la mida del teu partit.</span></li>
         <li><b>Prepara't</b><span>Reparteix tres hores d'assaig entre dades, rèpliques i càmera, i tria l'estratègia.</span></li>
         <li><b>Al plató</b><span>Respon, replica, detecta dades falses i aprofita el minut d'or. Al final, enquesta flash.</span></li>
       </ol>
-      <div class="simsec-go"><a class="btn primary lg" href="#joc/debat">Entra al plató 🎬</a></div>
-    </section>
+    </details>
     <p class="sim-fiction">${SIM_DISCLAIMER}</p>
   </div>`;
-  simDuoBind(root);
+
+  const sel = () => { const s = $("[data-sim-sel]", root); if (s) s.textContent = `${modeName()} · ${diffName()}`; };
+  $("[data-sim-cont]", root)?.addEventListener("click", () => { SimOpts.resume = true; SimOpts.duel = null; Sfx.play("pick"); simLaunch(); });
+  $("[data-sim-opts]", root)?.addEventListener("click", () => $("#sim-config")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   $$("[data-mode]", root).forEach((b) => b.addEventListener("click", () => {
     SimOpts.mode = b.dataset.mode; Sfx.play("pick");
     $$("[data-mode]", root).forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });
+    sel();
   }));
-  $("[data-sim-go]", root).addEventListener("click", () => { SimOpts.resume = false; SimOpts.duel = null; Sfx.play("pick"); simLaunch(); });
+  $$("input[name=sim-diff]", root).forEach((i) => i.addEventListener("change", () => setTimeout(sel)));
+  $$("[data-sim-go]", root).forEach((b) => b.addEventListener("click", () => {
+    if (save && !confirm("Començar una partida nova esborrarà la que tens a mitges. Continuar?")) return;
+    SimOpts.resume = false; SimOpts.duel = null; Sfx.play("pick"); simLaunch();
+  }));
+  if (arg === "opcions") setTimeout(() => $("#sim-config")?.scrollIntoView({ block: "start" }), 50);
 }
 function simDuelIntro(G) {
   const D = SimOpts.duel;

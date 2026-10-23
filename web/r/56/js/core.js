@@ -282,7 +282,7 @@ function route() {
   if (v === "jocs") renderGames();
   if (v === "perfil") renderProfile();
   if (v === "apren") renderApren(arg);
-  if (v === "simulador") renderSimHome();
+  if (v === "simulador") renderSimHome(arg);
   if (v === "legal") renderLegal(arg);
   if (v === "duel") renderDuelView(arg);
   if (v === "ranking") renderRankingView(arg);

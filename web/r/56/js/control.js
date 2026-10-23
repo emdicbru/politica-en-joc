@@ -114,7 +114,7 @@ function renderControl(fromLive = false) {
   }
   const changed = ctlDraft ? ctlChanges() : [];
   const dot = (keys) => (changed.some((x) => keys.some((k) => x.startsWith(k))) ? `<i class="ctl-dot"></i>` : "");
-  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
+  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
   const tab = sessionStorage.getItem("ctl-tab") || "resum";
   const panel = (k, inner) => (k === tab ? `<div class="ctl-panel">${inner}</div>` : "");
 
@@ -220,6 +220,8 @@ function renderControl(fromLive = false) {
 
     ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
 
+    ${panel("noticies", tab === "noticies" ? ctlNewsHtml() : "")}
+
     ${panel("notif", ctlNotifHtml())}
 
     ${panel("ajuda", `
@@ -242,6 +244,7 @@ function renderControl(fromLive = false) {
 
   if (tab === "notif") ctlNotifBind(root);
   if (tab === "usuaris") ctlStatsBind(root);
+  if (tab === "noticies") ctlNewsBind(root);
   $$("[data-tab]", root).forEach((t) => t.addEventListener("click", () => { sessionStorage.setItem("ctl-tab", t.dataset.tab); renderControl(); window.scrollTo({ top: 0 }); }));
   const redraw = () => renderControl();
   $$("[data-set]", root).forEach((b) => b.addEventListener("click", () => { D[b.dataset.set] = b.dataset.v; Sfx.play("pick"); redraw(); }));
@@ -422,4 +425,39 @@ function ctlNotifBind(root) {
   $("[data-prefresh]", root)?.addEventListener("click", () => { P.cfg = null; renderControl(); });
   $("[data-ghsave]", root)?.addEventListener("click", () => { const v = $("[data-ghtoken]", root).value.trim(); if (!v) return; localStorage.setItem(CTL_GH_KEY, v); toast("Token desat"); renderControl(); });
   $("[data-ghoff]", root)?.addEventListener("click", () => { localStorage.removeItem(CTL_GH_KEY); renderControl(); });
+}
+
+// ---------- Notícies: l'edició de les històries («El dia en 1 minut») ----------
+function ctlNewsHtml() {
+  if (typeof nxEdition !== "function") return `<div class="card"><p class="muted">Les notícies no estan disponibles.</p></div>`;
+  const ed = nxEdition();
+  const ready = typeof newsData !== "undefined" && newsData;
+  const slides = ready ? nxStorySlides() : [];
+  const stories = slides.filter((s) => s.kind === "story");
+  const ago = (t) => { const h = (ed.at - t) / 36e5; return h < 1 ? `${Math.max(1, Math.round(h * 60))} min` : `${Math.round(h)} h`; };
+  return `
+    <p class="ctl-intro">Les històries de «El dia en 1 minut» es fan cada dia a les 6:30 amb els titulars d'aquell moment i no canvien fins l'endemà. Si passa alguna cosa important, en pots fer una edició nova ara.</p>
+    <section class="ctl-status">
+      <div class="ctl-st"><small>Edició actual</small><b>${nxEditionTime(ed.at)}</b><span class="ctl-tag ${ed.forced ? "warn" : ""}">${ed.forced ? "feta a mà" : "automàtica"}</span></div>
+      <div class="ctl-st"><small>Propera automàtica</small><b>${nxEditionTime(ed.next)}</b><span class="ctl-tag">${nxMadridDay(ed.next) === nxMadridDay(Date.now()) ? "avui" : "demà"}</span></div>
+      <div class="ctl-st"><small>Històries</small><b>${stories.length}</b><span class="ctl-tag">a l'edició</span></div>
+      <div class="ctl-st"><small>Titulars</small><b>${ready ? fmt(nxItems().length) : "—"}</b><span class="ctl-tag">${ready ? `actualitzats ${timeAgo(newsData.updated)}` : "carregant"}</span></div>
+    </section>
+    <section class="card">
+      <h2 class="section-title sm">🔄 Refés les històries</h2>
+      <p class="muted">Es tornen a fer amb els titulars d'ara mateix i tothom les veu a l'instant. Demà a les 6:30 es farà l'edició automàtica com sempre.</p>
+      <div class="row"><button class="btn primary" type="button" data-news-redo>Refés les històries ara</button></div>
+    </section>
+    <section class="card">
+      <h2 class="section-title sm">Què hi ha a l'edició de les ${nxEditionTime(ed.at)}</h2>
+      ${stories.length ? `<ol class="ctl-news">${stories.map((s) => `<li><b>${esc(s.items[0].t)}</b><small>${s.n} mitjans · el titular més recent era de fa ${ago(s.d)} · ${esc(nwTopic(s.topic).label)}</small></li>`).join("")}</ol>` : `<p class="muted">${ready ? "Amb els titulars d'aquell moment no hi havia notícies explicades per més d'un mitjà." : "Carregant els titulars…"}</p>`}
+      <p class="muted">Per veure-les com la gent: <a href="#noticies">obre Notícies</a> i toca «El dia en 1 minut».</p>
+    </section>`;
+}
+function ctlNewsBind(root) {
+  $("[data-news-redo]", root)?.addEventListener("click", async () => {
+    if (!confirm("Es tornaran a fer les històries amb els titulars d'ara mateix i tothom les veurà a l'instant. Continuar?")) return;
+    const next = { ...Esp.cfg, storiesAt: Date.now(), log: [{ t: Date.now(), what: "Històries refetes a mà" }, ...(Esp.cfg.log || [])].slice(0, 15) };
+    if (await window.Online.setConfig("especial", next)) { Esp.cfg = Object.assign({}, ESP_DEFAULT, next); toast("Històries refetes"); renderControl(true); }
+  });
 }

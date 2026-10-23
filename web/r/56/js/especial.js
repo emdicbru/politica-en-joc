@@ -82,7 +82,9 @@ async function espLoadConfig() {
     if (!c) return;
     const key = () => JSON.stringify([espFase(), espResultsMode(), espPorraState(), Esp.cfg.missatge, Esp.cfg.participacio, Esp.cfg.simInici]);
     const before = key();
+    const storiesBefore = Esp.cfg.storiesAt;
     Esp.cfg = Object.assign({}, ESP_DEFAULT, c);
+    if (storiesBefore !== Esp.cfg.storiesAt && location.hash.startsWith("#noticies") && typeof renderNews === "function") renderNews();
     store.set(ESP_KEY, Esp.cfg);
     if (before !== key()) { Esp.data = null; Esp.prev = null; Esp.feed = []; espRefresh(true); }
     if (espView() === "control") window.renderControl?.(true);

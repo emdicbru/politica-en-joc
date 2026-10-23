@@ -5013,3 +5013,93 @@ body.db-lock { overflow: hidden; }
   .pf-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
   .pf-tabs button { padding: 8px 2px; font-size: .74rem; }
 }
+
+/* ---------- Pestanya Simuladors: selector + panell ---------- */
+.sh { gap: 16px; }
+.sh .simduo-head { margin-bottom: 0; }
+.sh-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sh-tab { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 16px; border: var(--bw) solid var(--ink); border-radius: var(--radius); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; box-shadow: var(--hard-sm); transition: transform .12s var(--ease), box-shadow .12s var(--ease), background .12s; }
+.sh-tab:hover { transform: translate(-1px, -1px); }
+.sh-tab b { display: block; font-family: var(--display); font-size: 1rem; letter-spacing: -.02em; }
+.sh-tab small { display: block; color: var(--ink-2); font-size: .84rem; margin-top: 2px; }
+.sh-ico { font-size: 1.8rem; flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; border: 2px solid var(--ink); background: var(--paper); }
+.sh-tab.sh-electoral.on { background: var(--blue); color: var(--card); box-shadow: 5px 5px 0 var(--ink); }
+.sh-tab.sh-debat.on { background: #2a1a6e; color: var(--card); box-shadow: 5px 5px 0 var(--ink); }
+.sh-tab.on small { color: rgba(255, 250, 240, .8); }
+.sh-tab.on .sh-ico { background: var(--card); }
+.sh-panel { display: grid; gap: 18px; animation: viewIn .3s var(--ease); }
+.sh-intro { grid-template-rows: none; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+.sh-intro .simcard-art { height: auto; min-height: 210px; border-bottom: 0; border-right: var(--bw) solid var(--ink); }
+.sh-intro h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(1.35rem, 2.8vw, 1.8rem); letter-spacing: -.035em; line-height: 1.08; }
+.sh-save { display: flex; align-items: center; gap: 14px; background: color-mix(in srgb, var(--yellow) 35%, var(--card)); }
+.sh-save > div { flex: 1; min-width: 0; }
+.sh-save p { margin: 2px 0 0; color: var(--ink-2); font-size: .9rem; }
+.sh-step { display: grid; gap: 10px; }
+.sh-step h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 1.05rem; letter-spacing: -.02em; }
+.sh-step h3 i { font-style: normal; width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--yellow); font-size: .8rem; }
+.sh-go { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--card); }
+.sh .sim-diffnote { margin: 0; }
+.sh .sim-modecards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sh-how { border: 2px dashed var(--ink); border-radius: var(--radius); padding: 12px 16px; background: var(--card); }
+.sh-how summary { cursor: pointer; font-weight: 800; }
+.sh-how .sim-howto { margin-top: 12px; }
+@media (max-width: 760px) {
+  .sh-tabs { gap: 8px; }
+  .sh-tab { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+  .sh-tab b { font-size: .86rem; }
+  .sh-tab small { font-size: .74rem; }
+  .sh-ico { width: 40px; height: 40px; font-size: 1.4rem; }
+  .sh-intro { grid-template-columns: 1fr; }
+  .sh-intro .simcard-art { min-height: 140px; height: 140px; border-right: 0; border-bottom: var(--bw) solid var(--ink); }
+  .sh .sim-modecards { grid-template-columns: 1fr; }
+  .sh-go .btn { width: 100%; }
+  .sh-save { flex-wrap: wrap; }
+  .sh-save .btn { width: 100%; }
+  .sim-howto { grid-template-columns: 1fr; }
+}
+
+/* ---------- Simuladors v2: els botons per jugar, primer de tot ---------- */
+.sh2 { gap: 18px; }
+.sh2-head { display: grid; gap: 4px; }
+.sh2-head p { margin: 0; color: var(--ink-2); }
+.sh2-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.sh2-card { display: grid; grid-template-rows: auto 1fr; border: var(--bw) solid var(--ink); border-radius: var(--radius); box-shadow: var(--hard); overflow: hidden; background: var(--card); }
+.sh2-art { position: relative; height: 120px; display: grid; place-items: center; border-bottom: var(--bw) solid var(--ink); overflow: hidden; }
+.sh2-el .sh2-art { background: var(--dots) 0 0 / 10px 10px, var(--blue); }
+.sh2-el .sh2-art svg { height: 110px; width: auto; max-width: 90%; }
+.sh2-db .sh2-art { background: radial-gradient(80% 90% at 50% 0%, #4b2aa8, #0b0c26 75%); }
+.sh2-db .db-pod { bottom: 12px; width: 20%; height: 44px; }
+.sh2-db .db-pod.a { left: 12%; } .sh2-db .db-pod.b { left: 40%; } .sh2-db .db-pod.c { left: 68%; }
+.sh2-db .db-promo-led { top: 12px; left: 18%; right: 18%; color: var(--card); font-size: .74rem; }
+.sh2-db .simcard-k { color: #7b3fe4; }
+.sh2-b { padding: 16px 18px 18px; display: grid; gap: 8px; align-content: start; }
+.sh2-b h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(1.25rem, 2.6vw, 1.6rem); letter-spacing: -.035em; line-height: 1.08; }
+.sh2-d { margin: 0; color: var(--ink-2); }
+.sh2-play { width: 100%; justify-content: center; margin-top: 4px; font-size: 1.1rem; }
+.sh2-meta { margin: 0; font-size: .84rem; color: var(--ink-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sh2-meta .linklike { font-size: .84rem; }
+.sh2-opts { display: grid; gap: 12px; padding-top: 6px; scroll-margin-top: 90px; }
+.sh2-opts .section-title.sm { margin: 0; }
+.sh2 .sim-modecards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sh2 .sim-diffnote { margin: 0; }
+@media (max-width: 760px) {
+  .sh2-cards { grid-template-columns: 1fr; gap: 14px; }
+  .sh2-card { grid-template-rows: none; grid-template-columns: 92px 1fr; }
+  .sh2-art { height: auto; border-bottom: 0; border-right: var(--bw) solid var(--ink); }
+  .sh2-el .sh2-art svg { height: 70px; }
+  .sh2-db .sh2-art .db-promo-led { display: none; }
+  .sh2-db .db-pod { height: 30px; width: 22%; } .sh2-db .db-pod.a { left: 6%; } .sh2-db .db-pod.b { left: 39%; } .sh2-db .db-pod.c { left: 72%; }
+  .sh2-b { padding: 12px 14px 14px; gap: 6px; }
+  .sh2-d { font-size: .88rem; }
+  .sh2-play { font-size: 1rem; }
+  .sh2 .sim-modecards { grid-template-columns: 1fr; }
+  .sh2 .sh-go .btn { width: 100%; }
+}
+@media (max-width: 760px) and (max-height: 760px) {
+  .sh2-head p, .sh2-d, .sh2-b .simcard-k { display: none; }
+  .sh2-b { gap: 6px; }
+}
+.nxs-ed { margin: 0; font-size: .8rem; font-weight: 700; opacity: .75; }
+.ctl-news { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.ctl-news li { display: grid; gap: 2px; }
+.ctl-news small { color: var(--muted); }

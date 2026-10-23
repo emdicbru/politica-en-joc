@@ -342,7 +342,7 @@ const PITCH = [
   ["🪪", "El teu perfil", "Tria un nom d'usuari i una foto: és com et veuran als rànquings i als duels."],
 ];
 Online.pitchHtml = (title = "Crea el teu usuari en 10 segons", sub = "") => `<div class="pitch">
-  <p class="kicker">Gratis · sense contrasenyes</p>
+  <p class="kicker">Gratis · amb el teu compte de Google</p>
   <h3>${title}</h3>
   ${sub ? `<p class="pitch-sub">${sub}</p>` : ""}
   <ul class="pitch-list">${PITCH.map(([i, t, d]) => `<li><span aria-hidden="true">${i}</span><div><b>${t}</b><small>${d}</small></div></li>`).join("")}</ul>

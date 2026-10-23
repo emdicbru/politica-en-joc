@@ -7,9 +7,10 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { Reflector } from "three/addons/objects/Reflector.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { createPerson, prepareGent } from "./debat-gent.js?v=37";
+import { createPerson, prepareGent } from "./debat-gent.js?v=39";
 
 function canvasTex(w, h, draw) {
   const c = document.createElement("canvas");
@@ -39,8 +40,9 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   const pr = Math.min(window.devicePixelRatio || 1, Q >= 1 ? 1.5 : 1);
   renderer.setPixelRatio(pr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  // Neutral (Khronos PBR): respecta millor els tons de pell i els colors dels partits que l'ACES
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 0.92;
   renderer.shadowMap.enabled = Q >= 1;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.domElement.className = "db-canvas";
@@ -58,8 +60,8 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   const anim = []; // funcions que s'executen cada fotograma
 
   // ---------- Llums d'estudi ----------
-  scene.add(new THREE.HemisphereLight(0x8fa0ff, 0x150c26, 0.32));
-  const key = new THREE.DirectionalLight(0xfff0e2, 2.4);
+  scene.add(new THREE.HemisphereLight(0x8fa0ff, 0x150c26, 0.26));
+  const key = new THREE.DirectionalLight(0xffeedd, 1.7);
   key.position.set(3.5, 7.5, 10);
   key.target.position.set(0, 1.2, -1.5);
   key.castShadow = Q >= 1;
@@ -75,9 +77,13 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   const rimB = new THREE.SpotLight(0xff4f86, 70, 22, 0.55, 0.6, 1.4);
   rimB.position.set(6, 6.5, -7); rimB.target.position.set(1, 1.4, -2);
   scene.add(rimA, rimA.target, rimB, rimB.target);
-  const spot = new THREE.SpotLight(0xfff6ea, 0, 14, 0.32, 0.55, 1.2);
+  // Il·luminació de qui parla, com en un plató de veritat: una llum de cara suau (des del costat de la càmera)
+  // i una llum de contorn per darrere que el retalla del fons
+  const spot = new THREE.SpotLight(0xffe9d6, 0, 9, 0.42, 1, 1.4);
   spot.position.set(0, 7, 2);
-  scene.add(spot, spot.target);
+  const rimSpot = new THREE.SpotLight(0xcfdcff, 0, 9, 0.38, 0.85, 1.3);
+  rimSpot.position.set(0, 6, -6);
+  scene.add(spot, spot.target, rimSpot, rimSpot.target);
 
   // ---------- Terra brillant ----------
   const floorTex = canvasTex(2048, 2048, (g, w, h) => {
@@ -107,19 +113,11 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   // ---------- Pantalla LED corbada (es veu per dins: textura girada) ----------
   const LEDW = Q >= 2 ? 4096 : 2048, LEDH = LEDW / 4;
   let ledTitle = title, ledSub = net;
+  // Només el text (fons transparent): el fons animat el dibuixa la targeta gràfica (ledMat)
   const drawLed = (g, w, h) => {
-    const grd = g.createLinearGradient(0, 0, w, h);
-    grd.addColorStop(0, "#0d1360"); grd.addColorStop(0.45, "#28157a"); grd.addColorStop(0.75, "#4a1260"); grd.addColorStop(1, "#6e0f3c");
-    g.fillStyle = grd; g.fillRect(0, 0, w, h);
-    // Píxels de pantalla LED
-    const step = w / 256;
-    g.fillStyle = "rgba(0,0,0,.22)";
-    for (let x = 0; x < w; x += step) g.fillRect(x, 0, step * 0.18, h);
-    for (let y = 0; y < h; y += step) g.fillRect(0, y, w, step * 0.18);
-    // Línies decoratives
-    g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = w / 900;
-    for (let i = 0; i < 9; i++) { g.beginPath(); g.moveTo(0, h * (0.1 + i * 0.1)); g.bezierCurveTo(w * 0.3, h * (0.05 + i * 0.1), w * 0.7, h * (0.2 + i * 0.09), w, h * (0.12 + i * 0.1)); g.stroke(); }
+    g.clearRect(0, 0, w, h);
     g.textAlign = "center"; g.textBaseline = "middle";
+    g.shadowColor = "rgba(0,0,0,.55)"; g.shadowBlur = h * 0.04;
     g.fillStyle = "#ffffff";
     g.font = `900 ${Math.round(h * 0.19)}px Unbounded, 'Arial Black', sans-serif`;
     g.fillText(ledTitle, w / 2, h * 0.43);
@@ -127,14 +125,52 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
     g.font = `800 ${Math.round(h * 0.075)}px 'DM Sans', Arial, sans-serif`;
     g.fillText(ledSub, w / 2, h * 0.64);
     const tw = g.measureText(ledSub).width;
+    g.shadowBlur = 0;
     g.fillStyle = "#ff3b3b"; g.beginPath(); g.arc(w / 2 - tw / 2 - h * 0.05, h * 0.64, h * 0.018, 0, Math.PI * 2); g.fill();
   };
   const ledTex = canvasTex(LEDW, LEDH, drawLed);
-  ledTex.wrapS = THREE.RepeatWrapping; ledTex.repeat.x = -1;
   const LR = 9.6, LCZ = 2;
-  const led = new THREE.Mesh(new THREE.CylinderGeometry(LR, LR, 4.4, 160, 1, true, Math.PI - 1.05, 2.1), new THREE.MeshBasicMaterial({ map: ledTex, side: THREE.BackSide, toneMapped: false, color: new THREE.Color(0xffffff).multiplyScalar(0.95) }));
+  // Pantalla LED animada: onades de color, una cinta de llum, la quadrícula de píxels i el títol a sobre.
+  // Als plans curts s'enfosqueix i el títol s'esvaeix, perquè el fons no competeixi amb la cara.
+  const ledMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: {
+      uTime: { value: 0 }, uText: { value: ledTex }, uTextAmt: { value: 1 }, uBright: { value: 1 }, uGridAmt: { value: 1 },
+      uC1: { value: new THREE.Color(0x0a1150) }, uC2: { value: new THREE.Color(0x3a1a9a) }, uC3: { value: new THREE.Color(0x8a1450) }, uGrid: { value: new THREE.Vector2(640, 160) },
+    },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+    fragmentShader: `
+      uniform float uTime, uTextAmt, uBright, uGridAmt; uniform sampler2D uText; uniform vec3 uC1, uC2, uC3; uniform vec2 uGrid; varying vec2 vUv;
+      void main(){
+        vec2 uv = vec2(1.0 - vUv.x, vUv.y);
+        float t = uTime;
+        float w = sin(uv.x * 5.0 + t * 0.35) * 0.5 + sin(uv.x * 11.0 - t * 0.6 + uv.y * 3.0) * 0.3 + sin((uv.x + uv.y) * 7.0 + t * 0.22) * 0.2;
+        vec3 col = mix(uC1, uC2, smoothstep(-0.7, 0.7, w));
+        col = mix(col, uC3, smoothstep(0.35, 1.0, sin(uv.x * 2.6 - t * 0.18 + uv.y * 1.5)) * 0.85);
+        // Cintes de llum que travessen la pantalla
+        float r1 = exp(-pow((uv.y - 0.5 - 0.2 * sin(uv.x * 7.0 + t * 0.5)) * 38.0, 2.0));
+        float r2 = exp(-pow((uv.y - 0.32 - 0.12 * sin(uv.x * 11.0 - t * 0.4)) * 60.0, 2.0));
+        col += r1 * vec3(1.0, 0.78, 0.35) * 0.9 + r2 * vec3(0.45, 0.6, 1.0) * 0.6;
+        // Quadrícula de píxels LED
+        vec2 g = fract(uv * uGrid);
+        float px = smoothstep(0.0, 0.18, g.x) * smoothstep(1.0, 0.82, g.x) * smoothstep(0.0, 0.18, g.y) * smoothstep(1.0, 0.82, g.y);
+        col *= mix(1.0, 0.42 + 0.58 * px, uGridAmt);
+        vec4 tx = texture2D(uText, uv);
+        col = mix(col, tx.rgb * 1.6, tx.a * uTextAmt);
+        gl_FragColor = vec4(col * uBright, 1.0);
+      }`,
+  });
+  const led = new THREE.Mesh(new THREE.CylinderGeometry(LR, LR, 4.4, 160, 1, true, Math.PI - 1.05, 2.1), ledMat);
   led.position.set(0, 2.85, LCZ);
   scene.add(led);
+  const ledTarget = { text: 1, bright: 1, grid: 1 };
+  anim.push((t, dt) => {
+    const k = 1 - Math.exp(-dt * 4);
+    ledMat.uniforms.uTime.value = t;
+    ledMat.uniforms.uTextAmt.value += (ledTarget.text - ledMat.uniforms.uTextAmt.value) * k;
+    ledMat.uniforms.uBright.value += (ledTarget.bright - ledMat.uniforms.uBright.value) * k;
+    ledMat.uniforms.uGridAmt.value += (ledTarget.grid - ledMat.uniforms.uGridAmt.value) * k;
+  });
   // Escombrada de llum que recorre la pantalla
   const sweepTex = canvasTex(512, 64, (g, w, h) => { const grd = g.createLinearGradient(0, 0, w, 0); grd.addColorStop(0, "rgba(255,255,255,0)"); grd.addColorStop(0.5, "rgba(255,255,255,.22)"); grd.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = grd; g.fillRect(0, 0, w, h); });
   sweepTex.wrapS = THREE.RepeatWrapping; sweepTex.repeat.x = 0.6;
@@ -165,6 +201,31 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
     vertexShader: "varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vY = uv.y; vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
     fragmentShader: "uniform vec3 color; uniform float strength; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float edge = pow(abs(dot(vN, vV)), 1.6); float a = strength * vY * edge; gl_FragColor = vec4(color * a, a); }",
   });
+
+  // ---------- Punts de llum de l'estudi ----------
+  // Llums petites i molt brillants a la graella del sostre i a les vores de la pantalla: als plans curts queden
+  // desenfocades darrere de la persona i fan les rodones de llum («bokeh») típiques de les retransmissions.
+  {
+    const pts = [];
+    for (let x = -6.8; x <= 6.8; x += 0.85) { pts.push([x, 5.72, -3.05, 0]); pts.push([x, 5.72, 5.35, 1]); }
+    for (let k = -1; k <= 1; k += 0.07) {
+      const a = Math.PI + k * 1.03;
+      pts.push([Math.sin(a) * (LR - 0.12), 0.75, LCZ + Math.cos(a) * (LR - 0.12), 2]);
+      pts.push([Math.sin(a) * (LR - 0.12), 4.95, LCZ + Math.cos(a) * (LR - 0.12), 2]);
+    }
+    const tones = [new THREE.Color(0xfff1d8).multiplyScalar(6), new THREE.Color(0xc8d4ff).multiplyScalar(5), new THREE.Color(0xffd27a).multiplyScalar(3.2)];
+    const lamp = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ toneMapped: false }), pts.length);
+    const m = new THREE.Matrix4();
+    pts.forEach(([x, y, z, k], i) => { m.makeTranslation(x, y, z); lamp.setMatrixAt(i, m); lamp.setColorAt(i, tones[k]); });
+    scene.add(lamp);
+    // Parpelleig suau de les llums de la pantalla
+    const base = pts.map(([, , , k]) => tones[k].clone());
+    const c = new THREE.Color();
+    anim.push((t) => {
+      for (let i = 0; i < pts.length; i++) if (pts[i][3] === 2) { lamp.setColorAt(i, c.copy(base[i]).multiplyScalar(0.55 + 0.45 * Math.sin(t * 2 + i * 0.7))); }
+      lamp.instanceColor.needsUpdate = true;
+    });
+  }
 
   // ---------- Persones: es carreguen abans de muntar el plató ----------
   const SUITS = [0x1c2038, 0x26262e, 0x232a4a, 0x2f2a33];
@@ -343,16 +404,41 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   const composer = new EffectComposer(renderer);
   composer.setPixelRatio(pr);
   composer.addPass(new RenderPass(scene, camera));
-  const bokeh = Q >= 2 ? new BokehPass(scene, camera, { focus: 3, aperture: 0.0016, maxblur: 0.006 }) : null;
+  // Desenfocament als plans curts (també als mòbils bons), brillantor de les llums i acabat de televisió
+  const bokeh = Q >= 1 ? new BokehPass(scene, camera, { focus: 3, aperture: Q >= 2 ? 0.0032 : 0.0026, maxblur: Q >= 2 ? 0.012 : 0.009 }) : null;
   if (bokeh) { bokeh.enabled = false; composer.addPass(bokeh); }
-  const bloom = Q >= 1 ? new UnrealBloomPass(new THREE.Vector2(256, 256), 0.5, 0.5, 0.93) : null;
+  const bloom = Q >= 1 ? new UnrealBloomPass(new THREE.Vector2(256, 256), 0.5, 0.5, 0.94) : null;
   if (bloom) composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  // Acabat de càmera de televisió (sobre la imatge final): una mica més de contrast, ombres fredes i llums
+  // càlides, vinyeta, una lleugera aberració de color a les vores i gra fi en moviment
+  const grade = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uVig: { value: 0.32 }, uGrain: { value: Q >= 1 ? 0.035 : 0.02 }, uCA: { value: Q >= 1 ? 0.005 : 0 }, uSat: { value: 1.08 }, uContrast: { value: 0.22 } },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+    fragmentShader: `
+      uniform sampler2D tDiffuse; uniform float uTime, uVig, uGrain, uCA, uSat, uContrast; uniform vec2 uRes; varying vec2 vUv;
+      void main(){
+        vec2 c = vUv - 0.5;
+        float ca = uCA * dot(c, c) * 4.0;
+        vec3 col = vec3(texture2D(tDiffuse, vUv + c * ca).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - c * ca).b);
+        col = mix(col, col * col * (3.0 - 2.0 * col), uContrast);
+        float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+        col = mix(vec3(l), col, uSat);
+        col += vec3(-0.012, 0.0, 0.022) * (1.0 - l) * (1.0 - l) + vec3(0.022, 0.01, -0.014) * l * l;
+        float v = smoothstep(0.92, 0.28, length(c * vec2(1.0, 0.86)));
+        col *= mix(1.0 - uVig, 1.0, v);
+        float n = fract(sin(dot(floor(vUv * uRes) + fract(uTime * 7.0) * 113.0, vec2(12.9898, 78.233))) * 43758.5453);
+        col += (n - 0.5) * uGrain;
+        gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+      }`,
+  });
+  composer.addPass(grade);
 
   // ---------- Plans de càmera ----------
   const look = new THREE.Vector3(), shotPos = new THREE.Vector3(), shotLook = new THREE.Vector3();
-  let fromPos = new THREE.Vector3(), fromLook = new THREE.Vector3(), t0 = 0, dur = 0, shotFov = 30, close = null;
+  let fromPos = new THREE.Vector3(), fromLook = new THREE.Vector3(), t0 = 0, dur = 0, shotFov = 30, close = null, shotKind = "wide";
   const portrait = () => camera.aspect < 0.9;
+  const UP = new THREE.Vector3(0, 1, 0);
   function frameOf(id) {
     const p = people.get(id);
     const head = p.person.headWorld(new THREE.Vector3());
@@ -361,26 +447,42 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
     const dist = portrait() ? 1.55 : 1.95;
     return { pos: head.clone().addScaledVector(fwd, dist).addScaledVector(right, 0.32).add(new THREE.Vector3(0, 0.02, 0)), look: head.clone().add(new THREE.Vector3(0, -0.09, 0)), fov: portrait() ? 34 : 24, focus: head };
   }
+  // Pla per sobre l'espatlla de la moderadora (el clàssic dels debats): en primer terme, desenfocada, ella
+  function otsOf(id) {
+    const sp = people.get(id).person.headWorld(new THREE.Vector3());
+    const mh = modHead();
+    const dir = sp.clone().sub(mh).setY(0).normalize();
+    const side = new THREE.Vector3().crossVectors(dir, UP).normalize();
+    const s = sp.x >= 0 ? -1 : 1; // per l'espatlla que deixa veure millor la cara
+    return { pos: mh.clone().addScaledVector(dir, -0.55).addScaledVector(side, 0.24 * s).add(new THREE.Vector3(0, 0.1, 0)), look: sp.clone().add(new THREE.Vector3(0, -0.08, 0)), fov: portrait() ? 24 : 17, focus: sp };
+  }
   function shot(name, { cut = true } = {}) {
-    let pos, lk, fov, focus = null;
+    let pos, lk, fov, focus = null, kind = "close";
     if (name === "wide") {
       pos = portrait() ? new THREE.Vector3(0, 5.4, 14.5) : new THREE.Vector3(0, 3.4, 13.5);
       lk = portrait() ? new THREE.Vector3(0, 0.9, -1.8) : new THREE.Vector3(0, 1.25, -1);
-      fov = portrait() ? 50 : 32;
+      fov = portrait() ? 50 : 32; kind = "wide";
     } else if (name === "mod") {
       const h = modHead();
-      pos = h.clone().add(new THREE.Vector3(0.4, 0.05, -1.9)); lk = h.clone().add(new THREE.Vector3(0, -0.07, 0)); fov = portrait() ? 34 : 26; focus = h;
+      pos = h.clone().add(new THREE.Vector3(0.4, 0.05, -1.9)); lk = h.clone().add(new THREE.Vector3(0, -0.07, 0)); fov = portrait() ? 34 : 26; focus = h; kind = "mod";
     } else if (name === "two") {
-      pos = new THREE.Vector3(0, 2, 7.6); lk = new THREE.Vector3(0, 1.35, -1.6); fov = portrait() ? 46 : 30;
+      pos = new THREE.Vector3(0, 2, 7.6); lk = new THREE.Vector3(0, 1.35, -1.6); fov = portrait() ? 46 : 30; kind = "two";
     } else if (people.has(name)) {
-      const f = frameOf(name); pos = f.pos; lk = f.look; fov = f.fov; focus = f.focus;
+      // De tant en tant, el pla es fa per sobre l'espatlla de la moderadora
+      const o = Math.random() < (people.get(name).me ? 0.15 : 0.3) ? otsOf(name) : null;
+      const f = o || frameOf(name); pos = f.pos; lk = f.look; fov = f.fov; focus = f.focus; kind = o ? "ots" : "close";
     } else return;
     fromPos = cut ? pos.clone() : camera.position.clone();
     fromLook = cut ? lk.clone() : look.clone();
-    shotPos.copy(pos); shotLook.copy(lk); shotFov = fov; close = focus;
+    shotPos.copy(pos); shotLook.copy(lk); shotFov = fov; close = focus; shotKind = kind;
     t0 = performance.now(); dur = cut ? 0 : 900;
     if (cut) { camera.position.copy(pos); look.copy(lk); camera.fov = fov; camera.updateProjectionMatrix(); host.classList.remove("db-cut"); void host.offsetWidth; host.classList.add("db-cut"); }
     if (bokeh) bokeh.enabled = !!focus;
+    // Als plans curts, la pantalla del fons s'enfosqueix i el títol s'esvaeix
+    ledTarget.text = kind === "wide" || kind === "two" ? 1 : 0;
+    ledTarget.bright = kind === "wide" || kind === "two" ? 1 : kind === "mod" ? 0.62 : 0.55;
+    ledTarget.grid = kind === "wide" || kind === "two" ? 1 : 0.2;
+    if (cut) { ledMat.uniforms.uTextAmt.value = ledTarget.text; ledMat.uniforms.uBright.value = ledTarget.bright; ledMat.uniforms.uGridAmt.value = ledTarget.grid; }
     const near = camProps.reduce((b, c) => (c.g.position.distanceTo(pos) < b.g.position.distanceTo(pos) ? c : b), camProps[0]);
     camProps.forEach((c) => c.tally.material.color.setHex(c === near ? 0xff2020 : 0x401010));
   }
@@ -388,14 +490,23 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   // ---------- Qui parla i cap on miren ----------
   let speaker = null;
   const tmp = new THREE.Vector3();
+  // Llum de cara (des del costat de la càmera, suau) i llum de contorn (per darrere) per a qui parla
+  function lightSpeaker(head, fwd, right, k = 1) {
+    spot.position.copy(head).addScaledVector(fwd, 2.3).addScaledVector(right, 1.1).add(new THREE.Vector3(0, 1.5, 0));
+    spot.target.position.copy(head).add(new THREE.Vector3(0, -0.1, 0));
+    spot.intensity = 8 * k;
+    rimSpot.position.copy(head).addScaledVector(fwd, -2.1).addScaledVector(right, -0.7).add(new THREE.Vector3(0, 2.3, 0));
+    rimSpot.target.position.copy(head);
+    rimSpot.intensity = 14 * k;
+  }
   function speak(id) {
     speaker = id;
     people.forEach((p, pid) => { p.person.setTalk(pid === id); p.mic.material.color.setHex(pid === id ? 0x30ff60 : 0xff3030).multiplyScalar(1.4); });
     modP.setTalk(id === "mod");
     const p = id && id !== "mod" ? people.get(id) : null;
-    if (p) { const h = p.person.headWorld(tmp); spot.position.set(h.x, 6.5, h.z + 2.2); spot.target.position.set(h.x, h.y - 0.25, h.z); spot.intensity = 22; }
-    else if (id === "mod") { const h = modHead(); spot.position.set(h.x, 6.5, h.z - 2); spot.target.position.copy(h); spot.intensity = 16; }
-    else spot.intensity = 0;
+    if (p) lightSpeaker(p.person.headWorld(tmp).clone(), new THREE.Vector3(0, 0, 1).applyQuaternion(p.group.quaternion), new THREE.Vector3(1, 0, 0).applyQuaternion(p.group.quaternion));
+    else if (id === "mod") lightSpeaker(modHead().clone(), new THREE.Vector3(0, 0, 1).applyQuaternion(modG.quaternion), new THREE.Vector3(1, 0, 0).applyQuaternion(modG.quaternion), 0.42);
+    else { spot.intensity = 0; rimSpot.intensity = 0; }
   }
   const react = (id, kind) => { const p = people.get(id); p?.person.react(kind, clock.elapsedTime); };
   function screen(t, sub) { ledTitle = t; ledSub = sub; ledTex.userData.redraw(drawLed); }
@@ -403,20 +514,29 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
   // ---------- Bucle ----------
   let raf = 0, alive = true, frames = 0, slow = 0;
   const ease = (k) => 1 - Math.pow(1 - k, 3);
+  const camPos = new THREE.Vector3(), camDir = new THREE.Vector3();
   function loop(now) {
     if (!alive) return;
     raf = requestAnimationFrame(loop);
     const dt = Math.min(0.05, clock.getDelta());
     const t = clock.elapsedTime;
-    if (dur) {
-      const k = Math.min(1, (now - t0) / dur);
-      camera.position.lerpVectors(fromPos, shotPos, ease(k));
-      look.lerpVectors(fromLook, shotLook, ease(k));
-      camera.fov += (shotFov - camera.fov) * 0.1; camera.updateProjectionMatrix();
+    // Posició base del pla (amb transició si n'hi ha) i moviment de càmera de plató:
+    // als plans curts, un apropament lent; als generals, una deriva lateral suau
+    const k = dur ? Math.min(1, (now - t0) / dur) : 1;
+    camPos.lerpVectors(fromPos, shotPos, ease(k));
+    look.lerpVectors(fromLook, shotLook, ease(k));
+    camera.fov += (shotFov - camera.fov) * (dur ? 0.1 : 1); camera.updateProjectionMatrix();
+    const el = (now - t0) / 1000;
+    if (shotKind === "wide" || shotKind === "two") {
+      const ang = Math.sin(el * 0.09) * 0.045;
+      camPos.sub(look).applyAxisAngle(UP, ang).add(look);
+      camPos.y += Math.sin(el * 0.13) * 0.06;
+    } else {
+      camPos.addScaledVector(camDir.copy(look).sub(camPos).normalize(), Math.min(0.26, el * 0.022));
     }
-    // Lleuger moviment de càmera, com una càmera de plató
-    camera.position.x += Math.sin(t * 0.33) * 0.0009;
-    camera.position.y += Math.sin(t * 0.47) * 0.0005;
+    camera.position.copy(camPos);
+    camera.position.x += Math.sin(t * 0.33) * 0.004;
+    camera.position.y += Math.sin(t * 0.47) * 0.003;
     camera.lookAt(look);
     // Mirades: qui escolta mira qui parla; qui parla mira la càmera; la moderadora segueix el debat
     const spk = speaker && speaker !== "mod" ? people.get(speaker) : null;
@@ -429,8 +549,9 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
     });
     modP.setGaze(spkHead && speaker !== "mod" ? spkHead : camera.position);
     modP.update(t, dt);
-    anim.forEach((f) => f(t));
+    anim.forEach((f) => f(t, dt));
     if (bokeh && close) bokeh.uniforms.focus.value = camera.position.distanceTo(close);
+    grade.uniforms.uTime.value = t;
     composer.render(dt);
     // Si va lent, es rebaixa la qualitat
     frames++;
@@ -440,6 +561,7 @@ export async function createPlato(host, { cands, title = "DEBAT 29N", net = "Tel
     const w = host.clientWidth || 640, h = host.clientHeight || 360;
     renderer.setSize(w, h, false);
     composer.setSize(w, h);
+    grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }

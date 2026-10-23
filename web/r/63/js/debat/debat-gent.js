@@ -190,9 +190,10 @@ export function createPerson(o = {}) {
 
   // Materials
   const tint = skinTint(skinHex, SKIN_REF[id.skinKey]);
-  const skinMat = (map) => quality >= 2
-    ? new THREE.MeshPhysicalMaterial({ map, color: tint, roughness: 0.52, sheen: 0.3, sheenRoughness: 0.55, sheenColor: new THREE.Color(0xffb4a2), clearcoat: 0.05, clearcoatRoughness: 0.55 })
-    : new THREE.MeshStandardMaterial({ map, color: tint, roughness: 0.55 });
+  // Pell: brillantor especular baixa i un vellut càlid (sheen) als contorns, que imita la llum que travessa la pell
+  const skinMat = (map) => quality >= 1
+    ? new THREE.MeshPhysicalMaterial({ map, color: tint, roughness: 0.6, specularIntensity: 0.4, sheen: 0.35, sheenRoughness: 0.8, sheenColor: new THREE.Color(0xffc2b0), clearcoat: 0.04, clearcoatRoughness: 0.6 })
+    : new THREE.MeshStandardMaterial({ map, color: tint, roughness: 0.62 });
   const headMat = skinMat(TEX.get(`pell-${id.skinKey}-cap.webp`));
   const scalp = { uCuir: { value: new THREE.Color(hair).multiplyScalar(0.55) }, uCuirAmt: { value: id.L.hair ? 0.88 : 0 } };
   headMat.onBeforeCompile = (sh) => {
@@ -204,7 +205,7 @@ export function createPerson(o = {}) {
       .replace("#include <common>", "#include <common>\nvarying float vCuir;\nuniform vec3 uCuir;\nuniform float uCuirAmt;")
       .replace("#include <map_fragment>", "#include <map_fragment>\ndiffuseColor.rgb = mix( diffuseColor.rgb, uCuir, vCuir * uCuirAmt );");
   };
-  headMat.customProgramCacheKey = () => "gent-cap" + quality;
+  headMat.customProgramCacheKey = () => "gent-cap2-" + quality;
   const bodyMat = skinMat(TEX.get(`pell-${id.skinKey}.webp`));
 
   // Cos: cap, boca i tors (pell compartida amb el vestit que li correspon)
@@ -325,11 +326,15 @@ export function createPerson(o = {}) {
       hp.nor[i * 3] = x / l; hp.nor[i * 3 + 1] = y / l; hp.nor[i * 3 + 2] = z / l;
     }
     const geo = partGeometry(hp.pos, hp.nor, hp.rv, hp.uv, hp.tri, { shift: headJ });
-    const solid = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map, color: hc, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55 }));
+    // Cabell amb un reflex suau (sheen) que li dona volum
+    const hairMat = (extra) => quality >= 1
+      ? new THREE.MeshPhysicalMaterial({ map, color: hc, side: THREE.DoubleSide, roughness: 0.55, specularIntensity: 0.5, sheen: 0.25, sheenRoughness: 0.6, sheenColor: hc.clone().lerp(new THREE.Color(0xffffff), 0.12), ...extra })
+      : new THREE.MeshStandardMaterial({ map, color: hc, side: THREE.DoubleSide, roughness: 0.55, ...extra });
+    const solid = new THREE.Mesh(geo, hairMat({ alphaTest: 0.5 }));
     solid.castShadow = true; solid.frustumCulled = false;
     B.head.add(solid);
     if (quality >= 1) {
-      const soft = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map, color: hc, transparent: true, depthWrite: false, side: THREE.DoubleSide, roughness: 0.55 }));
+      const soft = new THREE.Mesh(geo, hairMat({ transparent: true, depthWrite: false }));
       soft.renderOrder = 1; soft.frustumCulled = false;
       B.head.add(soft);
     }

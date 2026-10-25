@@ -243,7 +243,7 @@ function pfAjustos() {
     </section>
     ${typeof COFFEE_URL !== "undefined" && COFFEE_URL ? `<section class="pf-set">
       <h2 class="section-title sm">Dona suport</h2>
-      <div class="card coffee-card"><span class="coffee-cup" aria-hidden="true">☕</span><div><b>T'agrada Política en Joc?</b><p>És gratuïta i sense anuncis. Si vols donar-hi un cop de mà, pots convidar-me a un cafè.</p></div>${coffeeLink("Convida'm a un cafè", "btn")}</div>
+      <div class="card coffee-card"><span class="coffee-cup" aria-hidden="true">☕</span><div><b>T'agrada Política en Joc?</b><p>És gratuïta. Si vols donar-hi un cop de mà, pots convidar-me a un cafè.</p></div>${coffeeLink("Convida'm a un cafè", "btn")}</div>
     </section>` : ""}
     ${admin ? `<section class="pf-set"><h2 class="section-title sm">Equip</h2><a class="card pf-row" href="#control"><span aria-hidden="true">🎛️</span><div><b>Centre de control</b><p>Usuaris, notificacions i l'especial del 29N.</p></div><span class="btn">Obre</span></a></section>` : ""}
     <section class="pf-set pf-danger">
@@ -618,19 +618,24 @@ function renderCompare() {
         <div><dt>Vots el 2023</dt><dd>${p.votes != null ? `<span class="big">${String(p.votes).replace(".", ",")} %</span>` : `<span class="muted">No es va presentar sol</span>`}</dd></div>
         <div><dt>Ideari</dt><dd class="chips">${p.ideas.map((x) => `<span>${x}</span>`).join("")}</dd></div>
         <div><dt>Model territorial</dt><dd>${p.territory || `<span class="muted">Sense posició destacada</span>`}</dd></div>
+        ${PARTY_EXTRA[p.id] ? `<div><dt>Propostes estrella</dt><dd><ul class="stars">${PARTY_EXTRA[p.id].stars.map((x) => `<li>${x}</li>`).join("")}</ul></dd></div>` : ""}
         <div><dt>Investidura de Sánchez (2023)</dt><dd>${voteBadge(p.inv)}</dd></div>
         <div><dt>Llei d'amnistia (2024)</dt><dd>${voteBadge(p.amn)}</dd></div>
-        <div><dt>Grup europeu</dt><dd>${p.euro}</dd></div>
-        <div><dt>Fundació</dt><dd>${p.founded}</dd></div>
         ${p.note ? `<div><dt>A tenir en compte</dt><dd class="muted">${p.note}</dd></div>` : ""}
-        ${PARTY_EXTRA[p.id] ? `
-        <div><dt>Història</dt><dd>${PARTY_EXTRA[p.id].hist}</dd></div>
-        <div><dt>On governa</dt><dd>${PARTY_EXTRA[p.id].gov}</dd></div>
-        <div><dt>On és més fort</dt><dd>${PARTY_EXTRA[p.id].strong}</dd></div>
-        <div><dt>Propostes estrella</dt><dd><ul class="stars">${PARTY_EXTRA[p.id].stars.map((x) => `<li>${x}</li>`).join("")}</ul></dd></div>
-        <div><dt>Aliances</dt><dd>${PARTY_EXTRA[p.id].allies}</dd></div>
-        <div><dt>Competeix amb</dt><dd>${PARTY_EXTRA[p.id].vs}</dd></div>` : ""}
       </dl>
+      <details class="cmp-more">
+        <summary>Més dades del partit</summary>
+        <dl class="cmp-rows">
+          ${PARTY_EXTRA[p.id] ? `
+          <div><dt>Història</dt><dd>${PARTY_EXTRA[p.id].hist}</dd></div>
+          <div><dt>On governa</dt><dd>${PARTY_EXTRA[p.id].gov}</dd></div>
+          <div><dt>On és més fort</dt><dd>${PARTY_EXTRA[p.id].strong}</dd></div>
+          <div><dt>Aliances</dt><dd>${PARTY_EXTRA[p.id].allies}</dd></div>
+          <div><dt>Competeix amb</dt><dd>${PARTY_EXTRA[p.id].vs}</dd></div>` : ""}
+          <div><dt>Grup europeu</dt><dd>${p.euro}</dd></div>
+          <div><dt>Fundació</dt><dd>${p.founded}</dd></div>
+        </dl>
+      </details>
       <div class="cmp-news" data-party="${p.id}" style="--pc:${p.color}"></div>
     </article>`;
   $("#cmp").innerHTML = col(A, "A") + `<span class="cmp-vs">VS</span>` + col(B, "B");
@@ -713,9 +718,17 @@ function renderCandidates() {
     </article>`).join("");
   $$(".cand-cmp").forEach((b) => b.addEventListener("click", () => {
     pickParty(b.dataset.id);
+    cmpShowTab("fitxes");
     $("#party-map").scrollIntoView({ behavior: "smooth", block: "start" });
   }));
 }
+
+// Pestanyes del comparador: fitxes, cara a cara, tema a tema i caps de llista
+function cmpShowTab(k) {
+  $$("[data-cmptab]").forEach((b) => { const on = b.dataset.cmptab === k; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+  $$("[data-cmppanel]").forEach((p) => { p.hidden = p.dataset.cmppanel !== k; });
+}
+$$("[data-cmptab]").forEach((b) => b.addEventListener("click", () => { Sfx.play("pick"); cmpShowTab(b.dataset.cmptab); }));
 
 function renderParties() {
   renderPartyMap();

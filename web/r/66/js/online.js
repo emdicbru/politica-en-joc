@@ -156,6 +156,41 @@ const Online = {
   async reportDel(id) {
     try { await F.deleteDoc(F.doc(db, "reports", id)); return true; } catch (e) { console.warn(e); toast("No s'ha pogut esborrar (permisos?)"); return false; }
   },
+  // Premsa (Centre de control, administradors): contactes (press_contacts/{correu}), notes (press_notes), fotos
+  // (press_media/{nota}) i configuració (press_cfg/main). Els correus els envia GitHub Actions (tools/premsa.js).
+  async pressList(col) {
+    try { return (await F.getDocs(F.collection(db, col))).docs.map((d) => ({ id: d.id, ...d.data() })); } catch (e) { console.warn(e); return null; }
+  },
+  async pressGet(col, id) {
+    try { const s = await F.getDoc(F.doc(db, col, id)); return s.exists() ? { id: s.id, ...s.data() } : null; } catch (e) { console.warn(e); return null; }
+  },
+  async pressSet(col, id, data) {
+    try {
+      if (id) { await F.setDoc(F.doc(db, col, id), data, { merge: true }); return id; }
+      return (await F.addDoc(F.collection(db, col), data)).id;
+    } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return null; }
+  },
+  async pressDel(col, id) {
+    try { await F.deleteDoc(F.doc(db, col, id)); return true; } catch (e) { console.warn(e); toast("No s'ha pogut esborrar (permisos?)"); return false; }
+  },
+  async pressImport(list) {
+    try {
+      for (let i = 0; i < list.length; i += 400) {
+        const b = F.writeBatch(db);
+        list.slice(i, i + 400).forEach(({ id, ...data }) => b.set(F.doc(db, "press_contacts", id), data, { merge: true }));
+        await b.commit();
+      }
+      return true;
+    } catch (e) { console.warn(e); toast("No s'ha pogut importar (permisos?)"); return false; }
+  },
+  async pressSends(id) {
+    try { return (await F.getDocs(F.collection(db, "press_notes", id, "sends"))).docs.map((d) => ({ id: d.id, ...d.data() })); } catch (e) { console.warn(e); return null; }
+  },
+  // Baixa de la llista de premsa: qualsevol persona amb l'enllaç del correu (sense sessió)
+  async pressUnsub(tok) {
+    if (!ready) return false;
+    try { await F.setDoc(F.doc(db, "press_unsub", tok), { t: F.serverTimestamp() }); return true; } catch (e) { console.warn(e); return false; }
+  },
   // Equip del Centre de control (staff/{correu}: { role, t, by }). Només el propietari el pot canviar.
   async staffRole() {
     if (!ready || !Online.user?.email) return "";
@@ -178,8 +213,9 @@ const Online = {
 window.Online = Online;
 
 // ---------- Utilitats ----------
-// Com et veuen els altres: el nom d'usuari i la foto del perfil (o, si encara no n'hi ha, les de Google)
-const me = () => ({ uid: Online.user.uid, name: Online.profile?.handle || Online.user.displayName || "Jugador", photo: Online.profile ? Online.profile.photo : (Online.user.photoURL || ""), frame: typeof Coins !== "undefined" ? Coins.eq("fr") : null, title: typeof Coins !== "undefined" ? Coins.eq("ti") : null });
+// Com et veuen els altres: el nom d'usuari i la foto del perfil (o, si encara no n'hi ha, la de Google).
+// El nom del compte de Google (nom i cognoms) no es publica mai: fins que no tria l'usuari, surt com a «Jugador».
+const me = () => ({ uid: Online.user.uid, name: Online.profile?.handle || "Jugador", photo: Online.profile ? Online.profile.photo : (Online.user.photoURL || ""), frame: typeof Coins !== "undefined" ? Coins.eq("fr") : null, title: typeof Coins !== "undefined" ? Coins.eq("ti") : null });
 const firstName = (n) => (n || "Rival").split(" ")[0];
 const fresh = () => ({ i: 0, score: 0, hits: 0, done: false, picks: [], res: [], msgs: [], emote: null });
 const genCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
@@ -236,10 +272,8 @@ function shrinkPhoto(file) {
   });
 }
 
-function suggestHandle() {
-  const base = handleKey((Online.user?.displayName || "votant").split(" ")[0]) || "votant";
-  return `${base.slice(0, 14)}${Math.floor(10 + Math.random() * 89)}`;
-}
+// Exemple neutre: no parteix mai del nom real de la persona
+const suggestHandle = () => `votant${Math.floor(100 + Math.random() * 900)}`;
 
 let profileModal = null;
 function openProfileEditor(first = false) {
@@ -252,8 +286,8 @@ function openProfileEditor(first = false) {
       <p class="kicker">${first ? "Ja gairebé hi ets" : "El teu perfil"}</p>
       <h3 id="pf-title">${first ? "Crea el teu usuari" : "Edita el perfil"}</h3>
       <div class="pf-top"><img class="pf-preview" alt="La teva foto de perfil" referrerpolicy="no-referrer"><div class="pf-name">
-        <label class="sim-field"><span>Nom d'usuari</span><input data-handle maxlength="20" autocomplete="off" spellcheck="false" value="${esc(cur.handle || suggestHandle())}"></label>
-        <small>De 3 a 20 caràcters: lletres, números, punt i guió baix. És públic: surt als rànquings i als duels.</small>
+        <label class="sim-field"><span>Nom d'usuari</span><input data-handle maxlength="20" autocomplete="off" spellcheck="false" value="${esc(cur.handle || "")}" placeholder="p. ex. ${suggestHandle()}"></label>
+        <small>De 3 a 20 caràcters: lletres, números, punt i guió baix. És l'únic nom que veuran els altres (rànquings, duels i lligues): el teu nom real no surt enlloc.</small>
       </div></div>
       <p class="pf-label">Foto de perfil</p>
       <div class="pf-photos">
@@ -299,6 +333,8 @@ function openProfileEditor(first = false) {
     if (ok === "taken") { err.textContent = "Aquest nom d'usuari ja és d'algú altre. Prova'n un altre."; return input.focus(); }
     if (!ok) { err.textContent = "No s'ha pogut desar. Comprova la connexió i torna-ho a provar."; return; }
     closeProfileEditor();
+    // El repte d'avui fet abans de tenir usuari es publica ara, ja amb el nom d'usuari
+    if (first) { const today = dailyResult(todayKey()); if (today) Online.submitDaily(todayKey(), today); }
     Sfx.play("win");
     toast(first ? `Benvingut/da, ${handle}!` : "Perfil desat");
     renderAccountBtn();
@@ -1367,12 +1403,19 @@ function startDuelGame(code, data) {
 const LEAGUE_LEN = 5;
 let rankTab = "world";
 
-Online.submitDaily = async (key, { ms, hits, errors }) => {
-  if (!ready || !Online.user) return;
+// Al rànquing del dia hi va el millor temps de les 3 primeres partides (n = número de partida): el primer es crea i,
+// si una partida posterior el millora, s'actualitza (les regles només deixen baixar el temps i fins a la 3a partida).
+Online.submitDaily = async (key, { ms, hits, errors, n = 1 }) => {
+  // Sense nom d'usuari no es publica res (es fa en desar-lo)
+  if (!ready || !Online.user || !Online.profile?.handle || n > 3) return;
   const ref = F.doc(db, "dailies", key, "entries", Online.user.uid);
   const snap = await safe(() => F.getDoc(ref), "No s'ha pogut publicar el temps");
-  if (!snap || snap.exists()) return;
-  await safe(() => F.setDoc(ref, { ...me(), ms: Math.max(3000, Math.round(ms)), hits, errors, createdAt: F.serverTimestamp() }), "No s'ha pogut publicar el temps");
+  if (!snap) return;
+  ms = Math.max(3000, Math.round(ms));
+  if (!snap.exists()) return safe(() => F.setDoc(ref, { ...me(), ms, hits, errors, n, createdAt: F.serverTimestamp() }), "No s'ha pogut publicar el temps");
+  const cur = snap.data();
+  if (ms >= cur.ms || n <= (cur.n || 1)) return;
+  await safe(() => F.updateDoc(ref, { ms, hits, errors, n, t: F.serverTimestamp() }), "No s'ha pogut publicar el temps");
 };
 
 async function worldTop(key, n = 50) {
@@ -1637,10 +1680,11 @@ if (ready) {
     if (user) {
       await syncDown();
       Progress.onSave = schedulePush;
-      if (!Online.profile) openProfileEditor(true);
-      // Si ha fet el repte d'avui sense sessió, el publiquem ara (només compta si encara no hi és)
+      // Si ha fet el repte d'avui sense sessió, el publiquem ara (només compta si encara no hi és).
+      // Sense usuari triat encara, es publica quan el desi.
       const today = dailyResult(todayKey());
-      if (today) Online.submitDaily(todayKey(), today);
+      if (!Online.profile) openProfileEditor(true);
+      else if (today) Online.submitDaily(todayKey(), today);
       const pending = sessionStorage.getItem("pendingDuel");
       if (pending) {
         sessionStorage.removeItem("pendingDuel");

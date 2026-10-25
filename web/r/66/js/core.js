@@ -257,7 +257,7 @@ const DYNAMIC_GAMES = new Map();
 const gameById = (id) => GAMES.find((g) => g.id === id) || DYNAMIC_GAMES.get(id);
 
 // ---------- Navegació ----------
-const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga"];
+const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga", "premsa", "baixa"];
 let session = null; // partida en curs
 
 function route() {
@@ -290,6 +290,8 @@ function route() {
   if (v === "control") renderControl();
   if (v === "pronostics") renderPronostics(arg);
   if (v === "botiga") renderBotiga();
+  if (v === "premsa") renderPremsa(arg);
+  if (v === "baixa") renderBaixa(arg);
   updateTabIndicator();
   window.scrollTo({ top: 0 });
 }
@@ -336,6 +338,13 @@ function showIntro(game) {
     </div>`);
   body.appendChild(el);
   const startBtn = $("[data-start]", el);
+  // Un joc pot condicionar si es pot començar (p. ex. el repte diari, amb el límit de partides del dia)
+  const gate = game.gate?.();
+  if (gate) {
+    startBtn.replaceWith(h(gate.html));
+    gate.bind(el, () => startGame(game));
+    return;
+  }
   startBtn.focus();
   startBtn.addEventListener("click", () => { Sfx.play("pick"); startGame(game); });
 }
@@ -471,7 +480,7 @@ function showResult(game, result) {
   }
   result.onShown?.(body);
 
-  $("[data-again]", body)?.addEventListener("click", () => startGame(game));
+  $("[data-again]", body)?.addEventListener("click", () => (game.gate?.() ? showIntro(game) : startGame(game)));
   const great = levelUp || (ratio !== null ? ratio >= .75 : isRecord && prevBest !== undefined);
   Sfx.play(great || (ratio !== null && ratio >= .5) ? "win" : "lose");
   if (great) confetti();

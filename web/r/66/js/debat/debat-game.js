@@ -210,7 +210,7 @@ async function dbStudio(G) {
   const stage = $(".db-stage", T);
   let plato = null;
   try {
-    const mod = await import(new URL("js/debat/debat-plato.js?v=39", window.PEJ_CDN || document.baseURI).href);
+    const mod = await import(new URL("js/debat/debat-plato.js?v=40", window.PEJ_CDN || document.baseURI).href);
     plato = await mod.createPlato(stage, { cands: order, title: "DEBAT 29N", net: `${net.toUpperCase()} · ${F.title.toUpperCase()}` });
   } catch (e) {
     console.warn("Plató 3D no disponible: " + (e && (e.stack || e.message || e)));

@@ -134,8 +134,52 @@ function identity(o, D) {
   det["cap-ample"] *= 0.4; det["cap-llarg"] *= 0.4; det["cap-gras"] *= 0.6;
   if (g === "f") { det.mandibula = -Math.abs(det.mandibula) * 0.6; det.papada = Math.min(0, det.papada); det["llavi-inf"] = Math.abs(det["llavi-inf"]); }
   if (age > 55) det.bosses = Math.abs(det.bosses) + 0.3;
-  return { g, L, age, axes, det, skinKey, eye: EYES[Math.floor(r() * EYES.length)], shirt: r() < 0.65 ? 0xd9d9d4 : 0xc6d2e2, r };
+  return { g, L, age, axes, det, skinKey, eye: EYES[Math.floor(r() * EYES.length)], shirt: r() < 0.65 ? 0xc9c9c4 : 0xb4c0d2, r };
 }
+// Mans en repòs: la malla de MakeHuman té els dits estirats i l'esquelet no en té ossos, així que es dobleguen
+// a la mateixa malla. Per a cada mà es busca el pla del palmell (la direcció on la mà és més prima) i els vèrtexs
+// que passen dels artells giren cap al palmell, més com més lluny són (un gest relaxat, no un puny).
+function relaxHands(P, h, A, joint) {
+  const os = A[h.os], pes = A[h.pes], nv = os.length / 4;
+  for (const s of [".L", ".R"]) {
+    const bi = h.bones.indexOf("hand" + s);
+    if (bi < 0) continue;
+    const wr = joint("hand" + s), dir = wr.clone().sub(joint("forearm" + s)).normalize();
+    const vs = [];
+    for (let i = 0; i < nv; i++) {
+      let w = 0;
+      for (let k = 0; k < 4; k++) if (os[i * 4 + k] === bi) w += pes[i * 4 + k] / 255;
+      if (w > 0.05) vs.push([i, w]);
+    }
+    if (vs.length < 20) continue;
+    // Normal del palmell: l'eix de variància mínima dels vèrtexs de la mà (matriu de covariància, iteració de potència)
+    const m = new THREE.Vector3();
+    vs.forEach(([i]) => m.add(new THREE.Vector3().fromArray(P, i * 3)));
+    m.divideScalar(vs.length);
+    const c = [0, 0, 0, 0, 0, 0, 0, 0, 0], d = new THREE.Vector3();
+    vs.forEach(([i]) => { d.fromArray(P, i * 3).sub(m); const a = [d.x, d.y, d.z]; for (let r = 0; r < 3; r++) for (let q = 0; q < 3; q++) c[r * 3 + q] += a[r] * a[q]; });
+    const tr = c[0] + c[4] + c[8];
+    const inv = (v) => new THREE.Vector3((tr - c[0]) * v.x - c[1] * v.y - c[2] * v.z, -c[3] * v.x + (tr - c[4]) * v.y - c[5] * v.z, -c[6] * v.x - c[7] * v.y + (tr - c[8]) * v.z);
+    let n = new THREE.Vector3(0.3, -1, 0.2).normalize();
+    for (let it = 0; it < 40; it++) n = inv(n).normalize();
+    n.addScaledVector(dir, -n.dot(dir)).normalize();
+    // El palmell mira cap avall i cap endavant del cos en la postura de repòs
+    if (n.y > 0) n.negate();
+    const axis = new THREE.Vector3().crossVectors(dir, n).normalize();
+    const hand = vs.map(([i]) => new THREE.Vector3().fromArray(P, i * 3).sub(wr).dot(dir));
+    const len = Math.max(...hand), k0 = len * 0.52; // artells, una mica més enllà de la meitat de la mà
+    const piv = new THREE.Vector3(), p = new THREE.Vector3(), q = new THREE.Quaternion();
+    vs.forEach(([i, w], j) => {
+      const along = hand[j] - k0;
+      if (along <= 0) return;
+      const ang = Math.min(1.15, (along / (len - k0)) * 1.15) * Math.min(1, w * 1.2);
+      piv.copy(wr).addScaledVector(dir, k0);
+      p.fromArray(P, i * 3).sub(piv).applyQuaternion(q.setFromAxisAngle(axis, ang)).add(piv);
+      p.toArray(P, i * 3);
+    });
+  }
+}
+
 // Prepara (carrega) tot el que necessiten aquestes persones
 export async function prepareGent(list) {
   const D = await loadPack();
@@ -169,6 +213,7 @@ export function createPerson(o = {}) {
   const gy = P[h.ground * 3 + 1];
   for (let i = 1; i < P.length; i += 3) P[i] -= gy;
   const joint = (name) => new THREE.Vector3().fromArray(P, (h.virt0 + h.virt.indexOf(name)) * 3);
+  relaxHands(P, h, A, joint);
 
   const root = new THREE.Group();
   const body = new THREE.Group();
@@ -192,7 +237,7 @@ export function createPerson(o = {}) {
   const tint = skinTint(skinHex, SKIN_REF[id.skinKey]);
   // Pell: brillantor especular baixa i un vellut càlid (sheen) als contorns, que imita la llum que travessa la pell
   const skinMat = (map) => quality >= 1
-    ? new THREE.MeshPhysicalMaterial({ map, color: tint, roughness: 0.6, specularIntensity: 0.4, sheen: 0.35, sheenRoughness: 0.8, sheenColor: new THREE.Color(0xffc2b0), clearcoat: 0.04, clearcoatRoughness: 0.6 })
+    ? new THREE.MeshPhysicalMaterial({ map, color: tint, roughness: 0.6, specularIntensity: 0.4, sheen: 0.22, sheenRoughness: 0.8, sheenColor: new THREE.Color(0xffc2b0), clearcoat: 0.04, clearcoatRoughness: 0.6 })
     : new THREE.MeshStandardMaterial({ map, color: tint, roughness: 0.62 });
   const headMat = skinMat(TEX.get(`pell-${id.skinKey}-cap.webp`));
   const scalp = { uCuir: { value: new THREE.Color(hair).multiplyScalar(0.55) }, uCuirAmt: { value: id.L.hair ? 0.88 : 0 } };
@@ -273,7 +318,7 @@ export function createPerson(o = {}) {
   }
 
   // Ulls (cada un gira sobre el seu centre), parpelles i pestanyes
-  const eyeMat = new THREE.MeshPhysicalMaterial({ map: TEX.get(`ull-${id.eye}.webp`), color: 0xd8d4d0, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.04 });
+  const eyeMat = new THREE.MeshPhysicalMaterial({ map: TEX.get(`ull-${id.eye}.webp`), color: 0xbab2aa, roughness: 0.4, clearcoat: 0.8, clearcoatRoughness: 0.08, envMapIntensity: 0.5 });
   const corneaMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0, depthWrite: false });
   const eyes = [];
   {
@@ -298,8 +343,8 @@ export function createPerson(o = {}) {
   headAttach("pestanyes", lashMat, { order: 2 });
   const browMat = new THREE.MeshStandardMaterial({ map: TEX.get(`${id.L.brow}.webp`), color: hairC.clone().multiplyScalar(id.L.hair ? 0.75 : 0.55), transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2 });
   headAttach(id.L.brow, browMat, { order: 2 });
-  headAttach("dents", new THREE.MeshStandardMaterial({ map: TEX.get("dents.webp"), roughness: 0.35 }));
-  headAttach("llengua", new THREE.MeshStandardMaterial({ map: TEX.get("llengua.webp"), roughness: 0.5 }));
+  headAttach("dents", new THREE.MeshStandardMaterial({ map: TEX.get("dents.webp"), color: 0xa49c92, roughness: 0.45, envMapIntensity: 0.4 }));
+  headAttach("llengua", new THREE.MeshStandardMaterial({ map: TEX.get("llengua.webp"), color: 0x9a8a88, roughness: 0.5 }));
 
   // Cabell: una passada opaca (amb profunditat) i una de transparent per a les puntes
   if (id.L.hair) {
@@ -330,7 +375,7 @@ export function createPerson(o = {}) {
     const hairMat = (extra) => quality >= 1
       ? new THREE.MeshPhysicalMaterial({ map, color: hc, side: THREE.DoubleSide, roughness: 0.55, specularIntensity: 0.5, sheen: 0.25, sheenRoughness: 0.6, sheenColor: hc.clone().lerp(new THREE.Color(0xffffff), 0.12), ...extra })
       : new THREE.MeshStandardMaterial({ map, color: hc, side: THREE.DoubleSide, roughness: 0.55, ...extra });
-    const solid = new THREE.Mesh(geo, hairMat({ alphaTest: 0.5 }));
+    const solid = new THREE.Mesh(geo, hairMat(quality >= 1 ? { alphaTest: 0.5, alphaToCoverage: true } : { alphaTest: 0.5 }));
     solid.castShadow = true; solid.frustumCulled = false;
     B.head.add(solid);
     if (quality >= 1) {
@@ -355,7 +400,7 @@ export function createPerson(o = {}) {
       for (const k in dict) inf[dict[k]] = M[k] || 0;
     }
   }
-  const hands = { y: (o.hands?.y ?? 1.12), z: (o.hands?.z ?? 0.27), x: (o.hands?.x ?? 0.2) };
+  const hands = { y: (o.hands?.y ?? 1.12), z: (o.hands?.z ?? 0.27), x: (o.hands?.x ?? 0.2) }, gAmp = o.gesture ?? 1;
   const st = { blinkAt: 1 + id.r() * 3, blinkT: -9, talk: false, talkAmt: 0, gaze: new THREE.Vector3(0, 1.6, 6), react: null, phase: id.r() * 10, gesture: 0 };
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), v4 = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
   const tL = new THREE.Vector3(), tR = new THREE.Vector3();
@@ -435,7 +480,7 @@ export function createPerson(o = {}) {
     // Boca: síl·labes (obrir, arrodonir, estirar) quan parla; mig somriure en repòs
     const ta = st.talkAmt;
     const syl = Math.max(0, Math.sin(s * 10.5) * 0.55 + Math.sin(s * 6.9 + 1) * 0.35 + 0.15);
-    setM("boca", ta * syl * 0.55 + laugh * 0.3 + surprise * 0.25);
+    setM("boca", ta * syl * 0.38 + laugh * 0.25 + surprise * 0.25);
     setM("llavisO", ta * Math.max(0, Math.sin(s * 3.1)) * 0.35);
     setM("llavisE", ta * Math.max(0, Math.sin(s * 3.1 + 2)) * 0.3);
     setM("somriure", 0.18 * (1 - ta) + 0.08 * ta + laugh * 0.8);
@@ -445,8 +490,8 @@ export function createPerson(o = {}) {
     applyMorphs();
     // Mans al faristol; la dreta gesticula quan parla
     st.gesture += ((st.talk ? 1 : 0) - st.gesture) * (1 - Math.exp(-dt * 2.5));
-    const gst = st.gesture * (0.55 + 0.45 * Math.sin(s * 1.9));
-    const beat = st.gesture * Math.max(0, Math.sin(s * 5.3)) * 0.02;
+    const gst = gAmp * st.gesture * (0.55 + 0.45 * Math.sin(s * 1.9));
+    const beat = gAmp * st.gesture * Math.max(0, Math.sin(s * 5.3)) * 0.02;
     arm(".L", tL.set(hands.x, hands.y + st.gesture * 0.02 * Math.max(0, Math.sin(s * 1.1 + 1)), hands.z), poleL);
     arm(".R", tR.set(-hands.x + gst * 0.05, hands.y + gst * 0.1 + beat, hands.z + gst * 0.05), poleR);
   }

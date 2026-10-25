@@ -1145,21 +1145,7 @@ function simFinishGame(G) {
       <a href="#apren/nou-govern">Del recompte al nou Govern</a>
       <a href="#apren/congres">El Congrés per dins</a>
     </div>
-    </section>
-    <section class="simsec">
-      <p class="simsec-k">Simulador de debat</p>
-      <h2 class="section-title sm">Com funciona el debat</h2>
-      <ol class="sim-howto">
-        <li><b>Crea el candidat</b><span>Nom, partit, aspecte, ideologia, mida del partit i estil davant la càmera.</span></li>
-        <li><b>Tria el debat</b><span>Cara a cara, a quatre, a set o dels partits petits: les invitacions depenen de la mida del teu partit.</span></li>
-        <li><b>Prepara't</b><span>Reparteix tres hores d'assaig entre dades, rèpliques i càmera, i tria l'estratègia.</span></li>
-        <li><b>Al plató</b><span>Respon, replica, detecta dades falses i aprofita el minut d'or. Al final, enquesta flash.</span></li>
-      </ol>
-      <div class="simsec-go"><a class="btn primary lg" href="#joc/debat">Entra al plató 🎬</a></div>
-    </section>
-    <p class="sim-fiction">${SIM_DISCLAIMER}</p>
   </div>`;
-  simDuoBind(root);
 
   const shareInfo = {
     seats: s.res2 ? s.res2.seats.jo : seats,

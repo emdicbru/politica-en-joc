@@ -92,12 +92,14 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid in resource.data.players;
     }
 
-    // Repte diari: un sol temps per persona i dia (el primer intent), que no es pot modificar.
+    // Repte diari: un temps per persona i dia. Compta el millor de les 3 primeres partides (cadascuna amb proves noves):
+    // es crea amb la primera que s'acaba i només es pot actualitzar per baixar el temps, amb un número de partida més alt i fins a la 3a.
     match /dailies/{day}/entries/{uid} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == uid
         && day.matches('^20[0-9]{2}-[01][0-9]-[0-3][0-9]$') && dayNear(day)
-        && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'frame', 'title', 'ms', 'hits', 'errors', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'frame', 'title', 'ms', 'hits', 'errors', 'n', 'createdAt'])
+        && (!('n' in request.resource.data) || (request.resource.data.n is int && request.resource.data.n >= 1 && request.resource.data.n <= 3))
         && request.resource.data.uid == uid
         && request.resource.data.ms is int && request.resource.data.ms >= 3000 && request.resource.data.ms <= 3600000
         && request.resource.data.hits is int && request.resource.data.hits >= 0 && request.resource.data.hits <= 10
@@ -107,7 +109,13 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(uid))
         && get(/databases/$(database)/documents/users/$(uid)).data.get('name', '') == request.resource.data.name
         && (request.resource.data.get('photo', null) == null || (request.resource.data.photo is string && request.resource.data.photo.size() < 60000));
-      allow update: if false;
+      allow update: if request.auth != null && request.auth.uid == uid && dayNear(day)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ms', 'hits', 'errors', 'n', 't'])
+        && request.resource.data.ms is int && request.resource.data.ms >= 3000 && request.resource.data.ms < resource.data.ms
+        && request.resource.data.hits is int && request.resource.data.hits >= 0 && request.resource.data.hits <= 10
+        && request.resource.data.errors is int && request.resource.data.errors >= 0 && request.resource.data.errors <= 50
+        && request.resource.data.n is int && request.resource.data.n > resource.data.get('n', 1) && request.resource.data.n <= 3
+        && request.resource.data.t == request.time;
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -190,10 +198,11 @@ service cloud.firestore {
       allow read: if isStaff();
       allow create, update: if id.matches('^20[0-9]{2}-[01][0-9]-[0-3][0-9]_[0-9]$')
         && request.resource.data.keys().hasOnly(['ses', 'dev', 'nous', 'torna', 'r1', 'r7', 'r30', 'acc', 'notifDev', 'notif', 'inst',
-             'xp', 'mon', 'monGast', 'aposta', 'diari', 'diariPts', 'h', 'v', 'g', 'f', 'src', 'disp', 'mode', 'lv', 'b'])
+             'xp', 'mon', 'monGast', 'aposta', 'diari', 'diariPts', 'h', 'v', 'g', 'f', 'src', 'disp', 'mode', 'lv', 'b', 'ad'])
         && statMap(request.resource.data, 'h', 24) && statMap(request.resource.data, 'v', 30) && statMap(request.resource.data, 'g', 80)
         && statMap(request.resource.data, 'f', 80) && statMap(request.resource.data, 'src', 20) && statMap(request.resource.data, 'disp', 5)
         && statMap(request.resource.data, 'mode', 3) && statMap(request.resource.data, 'lv', 10) && statMap(request.resource.data, 'b', 60)
+        && statMap(request.resource.data, 'ad', 16)
         && sInc('ses', 100) && sInc('dev', 3) && sInc('nous', 3) && sInc('torna', 3) && sInc('r1', 3) && sInc('r7', 3) && sInc('r30', 3)
         && sInc('acc', 3) && sInc('notifDev', 3) && sInc('notif', 10) && sInc('inst', 5) && sInc('diari', 5) && sInc('diariPts', 60)
         && sInc('xp', 60000) && sInc('mon', 40000) && sInc('monGast', 20000) && sInc('aposta', 2000);
@@ -247,7 +256,7 @@ service cloud.firestore {
     // diari automàtic (config/push), només els administradors.
     match /config/{id} {
       allow read: if true;
-      allow write: if (id == 'push' && isAdmin()) || (id != 'push' && isEditor());
+      allow write: if (id in ['push', 'anuncis'] && isAdmin()) || (!(id in ['push', 'anuncis']) && isEditor());
     }
 
     // Lligues d'amics: qualsevol amb el codi s'hi pot afegir (només a si mateix).

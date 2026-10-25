@@ -78,3 +78,16 @@ Quan estigui fet, el Centre de control › Premsa marcarà «Servei d'enviament:
 - Abans d'enviar una nota a tothom, envia't sempre una prova.
 - Cada correu porta un enllaç de baixa; qui el fa servir ja no rep res més.
 - Les notes enviades surten a la Sala de premsa pública: https://politicaenjoc.cat/#premsa
+
+## Anuncis: un vídeo per jugar la 3a partida del repte diari
+
+El repte diari es pot jugar 3 vegades al dia, cada partida amb proves noves; al rànquing compta el millor temps.
+Amb el límit actiu (Centre de control › **Anuncis**), les 2 primeres són lliures i la 3a cal guanyar-la mirant un
+vídeo d'un anunciant (Google AdSense, «H5 Games Ads»). El codi de Google només es carrega si algú prem «Mira el vídeo».
+
+1. Crea el compte a https://adsense.google.com amb el web `politicaenjoc.cat`.
+2. Escriu l'identificador (`ca-pub-…`) al Centre de control › Anuncis i deixa «Anuncis de prova».
+3. `ads.txt`: demana a Claude que publiqui https://politicaenjoc.cat/ads.txt amb la línia que surt a la pestanya.
+4. A AdSense: demana els anuncis per a jocs web (H5 Games Ads), crea el missatge de consentiment RGPD
+   (*Privadesa i missatges*) i bloqueja les categories sensibles **Política**, Religió, Jocs d'atzar i Contingut sexual.
+5. Quan AdSense aprovi la web: «Anuncis reals» i activa «2 partides + 3a amb vídeo».

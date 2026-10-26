@@ -2,7 +2,8 @@
 // nit electoral i resultat final. La negociació, la investidura i la legislatura són a sim-gov.js.
 // El motor (sim-engine.js) fa tots els càlculs; aquí només es dibuixen les pantalles i s'encadenen les fases.
 
-const SIM_SAVE_KEY = "r29n-sim-save";
+// Cada idioma té la seva partida: els textos de la partida (diari, propostes…) es desen en l'idioma en què es juga
+const SIM_SAVE_KEY = PEJ_LANG === "es" ? "r29n-sim-save-es" : "r29n-sim-save";
 const SIM_PREFS_KEY = "r29n-sim-prefs";
 
 // Partida desada al dispositiu: només una, amb versió d'esquema. Si l'esquema ha canviat, es descarta amb un avís.
@@ -12,7 +13,7 @@ const SimSave = {
     if (!s) return null;
     if (s.v !== SIM_VERSION || !s.state?.me) {
       this.clear();
-      toast("La partida desada era d'una versió anterior del simulador i s'ha descartat");
+      toast("La partida guardada era de una versión anterior del simulador y se ha descartado");
       return null;
     }
     return s;
@@ -25,9 +26,9 @@ const SimPrefs = { get: () => store.get(SIM_PREFS_KEY, {}), set(k, v) { store.se
 // Opcions triades a la portada del joc
 const SimOpts = { mode: "express", diff: "normal", resume: false, duel: null };
 const SIM_MODES = [
-  { k: "express", title: "Campanya exprés", text: "Funda un partit, fes sis dies de campanya i viu la nit electoral.", mins: "10 min" },
-  { k: "govern", title: "Del vot al govern", text: "Campanya, nit electoral, negociació de pactes i investidura.", mins: "25 min" },
-  { k: "legislatura", title: "Legislatura", text: "Tot l'anterior i quatre anys de govern o d'oposició, fins a les eleccions següents.", mins: "40 min" },
+  { k: "express", title: "Campaña exprés", text: "Funda un partido, haz seis días de campaña y vive la noche electoral.", mins: "10 min" },
+  { k: "govern", title: "Del voto al gobierno", text: "Campaña, noche electoral, negociación de pactos e investidura.", mins: "25 min" },
+  { k: "legislatura", title: "Legislatura", text: "Todo lo anterior y cuatro años de gobierno o de oposición, hasta las elecciones siguientes.", mins: "40 min" },
 ];
 document.addEventListener("change", (e) => {
   if (e.target.name === "sim-mode") SimOpts.mode = e.target.value;
@@ -47,7 +48,7 @@ const SIM_REAL = new Set(["frente amplio", "fa", "se acabo la fiesta", "bloque n
 const SIM_BAD = ["puta", "puto", "merda", "cabron", "cabro", "fill de", "nazi", "polla", "cony", "cono", "subnormal", "maricon", "marica", "negrata", "mierda", "gilipolles", "gilipollas", "idiota"];
 const simNorm = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 const simBadWord = (s) => { const n = ` ${simNorm(s)} `; return SIM_BAD.some((w) => n.includes(` ${w} `) || n.includes(` ${w}`)); };
-const SIM_MOTTOS = ["Ara toca", "Fem-ho possible", "La gent primer", "Endavant, junts", "Un país que funcioni", "Sense por", "Amb els peus a terra", "El futur és avui"];
+const SIM_MOTTOS = ["Ahora toca", "Hagámoslo posible", "La gente primero", "Adelante, juntos", "Un país que funcione", "Sin miedo", "Con los pies en el suelo", "El futuro es hoy"];
 
 // =========================================================
 // Registre del joc
@@ -58,15 +59,15 @@ registerGame({
   hidden: true, // té la seva pròpia secció (#simulador) a la barra de navegació
   autostart: true,
   backHref: "#simulador",
-  backLabel: "Torna als simuladors",
-  tagline: "Funda un partit, fes campanya, negocia pactes i governa.",
-  kicker: "Del carrer a la Moncloa",
+  backLabel: "Vuelve a los simuladores",
+  tagline: "Funda un partido, haz campaña, negocia pactos y gobierna.",
+  kicker: "De la calle a la Moncloa",
   title: "Simulador del 29N",
   level: 3,
-  meta: "De 10 a 40 minuts",
+  meta: "De 10 a 40 minutos",
   icon: icon(`<path d="M3 11l14-6v14L3 13z"/><path d="M17 8a4 4 0 010 8"/><path d="M6 13l1.5 6h3L9 14"/>`),
-  desc: "Funda el teu partit i competeix amb els partits reals. Fes campanya a les 52 circumscripcions, viu la nit electoral, negocia una majoria, supera la investidura i governa quatre anys. Les regles són les reals: Llei d'Hondt, llindar del 3 %, majoria de 176.",
-  rules: ["Partits reals", "Regles reals", "4 modes", "Es desa sol"],
+  desc: "Funda tu partido y compite con los partidos reales. Haz campaña en las 52 circunscripciones, vive la noche electoral, negocia una mayoría, supera la investidura y gobierna cuatro años. Las reglas son las reales: ley D'Hondt, umbral del 3 %, mayoría de 176.",
+  rules: ["Partidos reales", "Reglas reales", "4 modos", "Se guarda solo"],
   recordRows() {
     return SIM_MODES.map((m) => ({ label: m.title, value: Progress.data.best[`simulador-${m.k}`] }));
   },
@@ -88,10 +89,10 @@ const simShortMode = (s) => ["express", "duel"].includes(s.mode);
 function simStageLabel(s) {
   const st = s.stage || "";
   if (st.startsWith("leg")) return `legislatura, trimestre ${Math.min(8, (s.leg?.q || 0) + 1)} de 8`;
-  if (st.startsWith("gov") || st === "report") return "negociació d'investidura";
-  if (st === "night") return "nit electoral";
-  if (st === "reflection") return "jornada de reflexió";
-  return `${s.round === 2 ? "segona campanya, " : ""}dia ${Math.min(s.day, s.days)} de ${s.days}`;
+  if (st.startsWith("gov") || st === "report") return "negociación de investidura";
+  if (st === "night") return "noche electoral";
+  if (st === "reflection") return "jornada de reflexión";
+  return `${s.round === 2 ? "segunda campaña, " : ""}día ${Math.min(s.day, s.days)} de ${s.days}`;
 }
 
 // Cada pantalla es pot reprendre a partir de l'estat desat
@@ -121,8 +122,8 @@ function simCreate(G) {
     return (caps.length >= 2 ? caps : n.replace(/\s+/g, "").slice(0, 3)).toUpperCase().slice(0, 6);
   };
   P.sig = autoSig(P.name);
-  const STEPS = ["Identitat", "Programa", "Prioritats", "Lideratge", "Llista"];
-  ctx.hud([["pas", "Pas", `1/${STEPS.length}`]]);
+  const STEPS = ["Identidad", "Programa", "Prioridades", "Liderazgo", "Lista"];
+  ctx.hud([["pas", "Paso", `1/${STEPS.length}`]]);
   const shell = (k, inner) => `<div class="sim-wrap">
     <ol class="sim-steps">${STEPS.map((s, i) => `<li class="${i < k ? "done" : i === k ? "on" : ""}"><i>${i + 1}</i><span>${s}</span></li>`).join("")}</ol>
     ${inner}</div>`;
@@ -133,12 +134,12 @@ function simCreate(G) {
     ctx.setHud("pas", `1/${STEPS.length}`);
     const el = simMount(G, shell(0, `<div class="card sim-card sim-create">
       <div class="sim-create-main">
-        <p class="sim-kick">Pas 1 · Identitat</p>
-        <h3 class="sim-h">Funda el teu partit</h3>
-        <label class="sim-field"><span>Nom del partit</span><input data-name maxlength="28" autocomplete="off" value="${esc(P.name)}"></label>
+        <p class="sim-kick">Paso 1 · Identidad</p>
+        <h3 class="sim-h">Funda tu partido</h3>
+        <label class="sim-field"><span>Nombre del partido</span><input data-name maxlength="28" autocomplete="off" value="${esc(P.name)}"></label>
         <div class="sim-names">${SIM_PARTY_NAMES.slice(0, 12).map((n) => `<button type="button" class="sim-chipbtn" data-pick="${esc(n)}">${esc(n)}</button>`).join("")}</div>
         <div class="sim-field-row">
-          <label class="sim-field sim-field-s"><span>Sigles</span><input data-sig maxlength="6" autocomplete="off" value="${esc(P.sig)}"></label>
+          <label class="sim-field sim-field-s"><span>Siglas</span><input data-sig maxlength="6" autocomplete="off" value="${esc(P.sig)}"></label>
           <label class="sim-field"><span>Lema</span><input data-motto maxlength="40" autocomplete="off" value="${esc(P.motto)}"></label>
         </div>
         <div class="sim-field"><span>Color</span><div class="sim-swatches">${SIM_COLORS.map((c) => `<button type="button" class="sim-sw ${c === P.color ? "on" : ""}" style="--pc:${c}" data-c="${c}" aria-label="Color ${c}" aria-pressed="${c === P.color}"></button>`).join("")}</div></div>
@@ -146,11 +147,11 @@ function simCreate(G) {
         <p class="sim-err" data-err role="alert"></p>
       </div>
       <div class="sim-create-prev"><div class="sim-poster" data-poster></div></div>
-      <div class="sim-actions-row"><button class="btn primary lg" data-next>Següent: el programa</button></div>
+      <div class="sim-actions-row"><button class="btn primary lg" data-next>Siguiente: el programa</button></div>
     </div>`));
     const nameI = $("[data-name]", el), sigI = $("[data-sig]", el), mottoI = $("[data-motto]", el), err = $("[data-err]", el);
     const poster = () => {
-      $("[data-poster]", el).innerHTML = `${simLogoSvg(P, 92)}<b>${esc(P.name || "…")}</b><i>${esc(P.motto ? `«${P.motto}»` : "")}</i><small>${esc(P.sig)} · Eleccions generals · 29N</small>`;
+      $("[data-poster]", el).innerHTML = `${simLogoSvg(P, 92)}<b>${esc(P.name || "…")}</b><i>${esc(P.motto ? `«${P.motto}»` : "")}</i><small>${esc(P.sig)} · Elecciones generales · 29N</small>`;
       $("[data-poster]", el).style.setProperty("--pc", P.color);
     };
     poster();
@@ -169,10 +170,10 @@ function simCreate(G) {
     }));
     $("[data-next]", el).addEventListener("click", () => {
       P.name = P.name.trim().replace(/\s+/g, " "); P.sig = P.sig.trim(); P.motto = P.motto.trim().replace(/\s+/g, " ");
-      if (P.name.length < 3) { err.textContent = "El nom ha de tenir com a mínim tres lletres."; return nameI.focus(); }
-      if (P.sig.length < 2) { err.textContent = "Les sigles han de tenir de 2 a 6 lletres."; return sigI.focus(); }
-      if (SIM_REAL.has(simNorm(P.name)) || SIM_REAL.has(simNorm(P.sig))) { err.textContent = "Tria un nom inventat: al simulador només hi ha partits ficticis."; return nameI.focus(); }
-      if (simBadWord(P.name) || simBadWord(P.sig) || simBadWord(P.motto)) { err.textContent = "Tria un nom i un lema sense paraules ofensives."; return nameI.focus(); }
+      if (P.name.length < 3) { err.textContent = "El nombre debe tener como mínimo tres letras."; return nameI.focus(); }
+      if (P.sig.length < 2) { err.textContent = "Las siglas deben tener de 2 a 6 letras."; return sigI.focus(); }
+      if (SIM_REAL.has(simNorm(P.name)) || SIM_REAL.has(simNorm(P.sig))) { err.textContent = "Elige un nombre inventado: en el simulador solo hay partidos ficticios."; return nameI.focus(); }
+      if (simBadWord(P.name) || simBadWord(P.sig) || simBadWord(P.motto)) { err.textContent = "Elige un nombre y un lema sin palabras ofensivas."; return nameI.focus(); }
       Sfx.play("pick");
       step2(0);
     });
@@ -185,11 +186,11 @@ function simCreate(G) {
     const d = SIM_DILEMMAS[k];
     const el = simMount(G, shell(1, `<div class="card sim-card sim-dil">
       <div class="sim-dil-main">
-        <p class="sim-kick">Pas 2 · Programa · dilema ${k + 1} de ${SIM_DILEMMAS.length}</p>
+        <p class="sim-kick">Paso 2 · Programa · dilema ${k + 1} de ${SIM_DILEMMAS.length}</p>
         <h3 class="sim-h">${d.q}</h3>
-        <p class="sim-sub">Què defensarà el teu partit?</p>
+        <p class="sim-sub">¿Qué defenderá tu partido?</p>
         <div class="sim-dil-opts">${d.a.map((a, i) => `<button class="sim-opt" data-o="${i}"><i>${"AB"[i]}</i>${a.t}</button>`).join("")}</div>
-        <button class="btn ghost sim-dil-skip" data-o="-1">Cap de les dues: posició intermèdia</button>
+        <button class="btn ghost sim-dil-skip" data-o="-1">Ninguna de las dos: posición intermedia</button>
       </div>
       <div class="sim-dil-side">${simCompass({ ...P })}${simTerBar({ ...P })}</div>
     </div>`));
@@ -205,16 +206,16 @@ function simCreate(G) {
     const near = [...SIM_RIVALS].sort((a, b) => simDist(a, P) - simDist(b, P))[0];
     const el = simMount(G, shell(1, `<div class="card sim-card sim-dil">
       <div class="sim-dil-main">
-        <p class="sim-kick">Pas 2 · Programa</p>
-        <h3 class="sim-h">Aquest és el teu espai</h3>
+        <p class="sim-kick">Paso 2 · Programa</p>
+        <h3 class="sim-h">Este es tu espacio</h3>
         <div class="sim-ideo">
-          <div><small>Economia</small><b>${simAxis.eco(P.eco)}</b></div>
-          <div><small>Model territorial</small><b>${simAxis.ter(P.ter)}</b></div>
-          <div><small>Valors</small><b>${simAxis.val(P.val)}</b></div>
+          <div><small>Economía</small><b>${simAxis.eco(P.eco)}</b></div>
+          <div><small>Modelo territorial</small><b>${simAxis.ter(P.ter)}</b></div>
+          <div><small>Valores</small><b>${simAxis.val(P.val)}</b></div>
         </div>
-        <p class="sim-sub">El partit més proper és <b style="color:${near.color}">${near.name}</b>. ${simDist(near, P) < 2 ? "Competireu pels mateixos votants: caldrà diferenciar-se." : "Teniu prou distància per no trepitjar-vos gaire."}</p>
-        <p class="sim-note">Són els mateixos tres eixos que fa servir el <a href="#apren/partits">comparador de partits</a> de l'Aprèn.</p>
-        <div class="sim-actions-row"><button class="btn ghost" data-redo>Torna a fer el programa</button><button class="btn primary lg" data-next>Següent: prioritats</button></div>
+        <p class="sim-sub">El partido más cercano es <b style="color:${near.color}">${near.name}</b>. ${simDist(near, P) < 2 ? "Competiréis por los mismos votantes: habrá que diferenciarse." : "Tenéis suficiente distancia para no pisaros demasiado."}</p>
+        <p class="sim-note">Son los mismos tres ejes que usa el <a href="#apren/partits">comparador de partidos</a> de Aprende.</p>
+        <div class="sim-actions-row"><button class="btn ghost" data-redo>Vuelve a hacer el programa</button><button class="btn primary lg" data-next>Siguiente: prioridades</button></div>
       </div>
       <div class="sim-dil-side">${simCompass({ ...P })}${simTerBar({ ...P })}</div>
     </div>`));
@@ -225,11 +226,11 @@ function simCreate(G) {
   function step3() {
     ctx.setHud("pas", `3/${STEPS.length}`);
     const el = simMount(G, shell(2, `<div class="card sim-card">
-      <p class="sim-kick">Pas 3 · Prioritats</p>
-      <h3 class="sim-h">Tria tres temes estrella</h3>
-      <p class="sim-sub">Seran el centre del teu programa. Cada tipus de votant dona importància a temes diferents: el jovent mira l'habitatge, la gent gran les pensions…</p>
+      <p class="sim-kick">Paso 3 · Prioridades</p>
+      <h3 class="sim-h">Elige tres temas estrella</h3>
+      <p class="sim-sub">Serán el centro de tu programa. Cada tipo de votante da importancia a temas diferentes: los jóvenes miran la vivienda, las personas mayores las pensiones…</p>
       <div class="sim-themes">${SIM_THEMES.map((t, i) => `<button class="sim-theme ${P.prio.includes(i) ? "on" : ""}" data-t="${i}" aria-pressed="${P.prio.includes(i)}">${t.label}</button>`).join("")}</div>
-      <div class="sim-actions-row"><span class="sim-count" data-count></span><button class="btn primary lg" data-next>Següent: lideratge</button></div>
+      <div class="sim-actions-row"><span class="sim-count" data-count></span><button class="btn primary lg" data-next>Siguiente: liderazgo</button></div>
     </div>`));
     const sync = () => {
       $$(".sim-theme", el).forEach((b) => { const on = P.prio.includes(Number(b.dataset.t)); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
@@ -250,21 +251,21 @@ function simCreate(G) {
   function step4() {
     ctx.setHud("pas", `4/${STEPS.length}`);
     const ATTRS = [
-      { k: "car", t: "Carisma", d: "Pesa als debats i en la imatge del líder." },
-      { k: "sol", t: "Solvència", d: "Fa que les entrevistes surtin bé més sovint." },
-      { k: "prox", t: "Proximitat", d: "Fa més efectius els mítings a les circumscripcions." },
+      { k: "car", t: "Carisma", d: "Pesa en los debates y en la imagen del líder." },
+      { k: "sol", t: "Solvencia", d: "Hace que las entrevistas salgan bien más a menudo." },
+      { k: "prox", t: "Proximidad", d: "Hace más efectivos los mítines en las circunscripciones." },
     ];
     const el = simMount(G, shell(3, `<div class="card sim-card">
-      <p class="sim-kick">Pas 4 · Lideratge</p>
-      <h3 class="sim-h">Com és el teu candidat?</h3>
-      <label class="sim-field"><span>Nom del candidat o la candidata (opcional)</span><input data-leader maxlength="32" autocomplete="off" placeholder="Un nom inventat" value="${esc(P.leader || "")}"></label>
+      <p class="sim-kick">Paso 4 · Liderazgo</p>
+      <h3 class="sim-h">¿Cómo es tu candidato?</h3>
+      <label class="sim-field"><span>Nombre del candidato o la candidata (opcional)</span><input data-leader maxlength="32" autocomplete="off" placeholder="Un nombre inventado" value="${esc(P.leader || "")}"></label>
       <p class="sim-err" data-lerr role="alert"></p>
-      <p class="sim-sub">Reparteix 9 punts. Ningú no ho fa tot bé: cal triar.</p>
+      <p class="sim-sub">Reparte 9 puntos. Nadie lo hace todo bien: hay que elegir.</p>
       <div class="sim-attrs">${ATTRS.map((a) => `<div class="sim-attr" data-a="${a.k}">
         <div><b>${a.t}</b><small>${a.d}</small></div>
-        <div class="sim-attr-ctl"><button class="sim-pm" data-d="-1" aria-label="Menys ${a.t}">−</button><span class="sim-pips" aria-live="polite"></span><button class="sim-pm" data-d="1" aria-label="Més ${a.t}">+</button></div>
+        <div class="sim-attr-ctl"><button class="sim-pm" data-d="-1" aria-label="Menos ${a.t}">−</button><span class="sim-pips" aria-live="polite"></span><button class="sim-pm" data-d="1" aria-label="Más ${a.t}">+</button></div>
       </div>`).join("")}</div>
-      <div class="sim-actions-row"><span class="sim-count" data-left></span><button class="btn primary lg" data-next>Següent: resum</button></div>
+      <div class="sim-actions-row"><span class="sim-count" data-left></span><button class="btn primary lg" data-next>Siguiente: resumen</button></div>
     </div>`));
     const sync = () => {
       const left = 9 - P.attrs.car - P.attrs.sol - P.attrs.prox;
@@ -274,7 +275,7 @@ function simCreate(G) {
         $("[data-d='-1']", row).disabled = v <= 1;
         $("[data-d='1']", row).disabled = v >= 5 || left <= 0;
       });
-      $("[data-left]", el).textContent = left ? `Et queden ${left} ${left === 1 ? "punt" : "punts"}` : "Tots els punts repartits";
+      $("[data-left]", el).textContent = left ? `Te quedan ${left} ${left === 1 ? "punto" : "puntos"}` : "Todos los puntos repartidos";
       $("[data-next]", el).disabled = left !== 0;
     };
     sync();
@@ -286,7 +287,7 @@ function simCreate(G) {
     $("[data-next]", el).addEventListener("click", () => {
       P.leader = $("[data-leader]", el).value.trim().replace(/s+/g, " ");
       const realNames = PARTIES.flatMap((p) => [p.cand?.name, p.leader?.name]).filter(Boolean).map(simNorm);
-      if (P.leader && (realNames.includes(simNorm(P.leader)) || simBadWord(P.leader))) { $("[data-lerr]", el).textContent = "El teu candidat ha de tenir un nom inventat."; return; }
+      if (P.leader && (realNames.includes(simNorm(P.leader)) || simBadWord(P.leader))) { $("[data-lerr]", el).textContent = "Tu candidato debe tener un nombre inventado."; return; }
       Sfx.play("pick"); step5();
     });
   }
@@ -307,23 +308,23 @@ function simSummary(G, state, head, back) {
   const el = simMount(G, `${head.replace(/<\/div>$/, "")}<div class="card sim-card sim-summary">
       <div class="sim-poster big" style="--pc:${P.color}">${simLogoSvg(P, 96)}<b>${esc(P.name)}</b><i>${esc(P.motto ? `«${P.motto}»` : "")}</i><small>${simAxis.eco(P.eco)} · ${simAxis.ter(P.ter)} · ${simAxis.val(P.val)}</small></div>
       <div class="sim-sum-body">
-        <p class="sim-kick">${state.mode === "duel" ? "Duel de campanya" : "Pas 5 · La llista és a punt"}</p>
-        <h3 class="sim-h">Objectiu: ${state.goal} escons</h3>
-        <p class="sim-sub">És el que la direcció del partit creu que pots treure si et fas conèixer arreu. Ara gairebé ningú no us coneix: només un ${Math.round(D.aw * 100)} % de l'electorat sap qui sou.</p>
+        <p class="sim-kick">${state.mode === "duel" ? "Duelo de campaña" : "Paso 5 · La lista está lista"}</p>
+        <h3 class="sim-h">Objetivo: ${state.goal} escaños</h3>
+        <p class="sim-sub">Es lo que la dirección del partido cree que puedes sacar si te das a conocer en todas partes. Ahora casi nadie os conoce: solo un ${Math.round(D.aw * 100)} % del electorado sabe quiénes sois.</p>
         <ul class="sim-sum-list">
-          <li><b>Mode</b><span>${SIM_MODE_INFO[state.mode].label} · uns ${SIM_MODE_INFO[state.mode].mins} minuts</span></li>
-          <li><b>Temes estrella</b><span>${P.prio.map((i) => SIM_THEMES[i].label).join(" · ")}</span></li>
-          <li><b>Candidat</b><span>${P.leader ? `${esc(P.leader)} · ` : ""}Carisma ${P.attrs.car} · Solvència ${P.attrs.sol} · Proximitat ${P.attrs.prox}</span></li>
-          <li><b>Rivals</b><span>${SIM_RIVALS.length} partits reals amb els seus candidats</span></li>
-          <li><b>Pressupost</b><span>${D.money} unitats + 6 per dia d'aportacions</span></li>
-          <li><b>Dificultat</b><span>${D.label}</span></li>
+          <li><b>Modo</b><span>${SIM_MODE_INFO[state.mode].label} · unos ${SIM_MODE_INFO[state.mode].mins} minutos</span></li>
+          <li><b>Temas estrella</b><span>${P.prio.map((i) => SIM_THEMES[i].label).join(" · ")}</span></li>
+          <li><b>Candidato</b><span>${P.leader ? `${esc(P.leader)} · ` : ""}Carisma ${P.attrs.car} · Solvencia ${P.attrs.sol} · Proximidad ${P.attrs.prox}</span></li>
+          <li><b>Rivales</b><span>${SIM_RIVALS.length} partidos reales con sus candidatos</span></li>
+          <li><b>Presupuesto</b><span>${D.money} unidades + 6 por día de aportaciones</span></li>
+          <li><b>Dificultad</b><span>${D.label}</span></li>
         </ul>
-        <div class="sim-actions-row">${back ? `<button class="btn ghost" data-back>Canvia el partit</button>` : ""}<button class="btn primary lg" data-go>Comença la campanya</button></div>
+        <div class="sim-actions-row">${back ? `<button class="btn ghost" data-back>Cambia el partido</button>` : ""}<button class="btn primary lg" data-go>Empieza la campaña</button></div>
       </div>
     </div></div>`);
   $("[data-back]", el)?.addEventListener("click", back);
   $("[data-go]", el).addEventListener("click", () => {
-    if (SimSave.peek() && !confirm("Tens una partida a mitges. Si en comences una de nova, es perdrà. Vols continuar?")) return;
+    if (SimSave.peek() && !confirm("Tienes una partida a medias. Si empiezas una nueva, se perderá. ¿Quieres continuar?")) return;
     const first = simPoll(state);
     state.polls.push({ ...first, day: 0 });
     state.stage = "campaign";
@@ -355,31 +356,31 @@ function simDuoHtml(where) {
   const recs = SIM_MODES.map((m) => Progress.data.best[`simulador-${m.k}`]).filter((x) => x !== undefined);
   const elBest = recs.length ? Math.max(...recs) : undefined;
   const dbBest = Progress.data.best.debat;
-  const rec = (b) => `<span class="simcard-rec">${b !== undefined ? `Rècord: ${fmt(b)} punts` : "Sense rècord"}</span>`;
+  const rec = (b) => `<span class="simcard-rec">${b !== undefined ? `Récord: ${fmt(b)} puntos` : "Sin récord"}</span>`;
   const elGo = where === "home"
-    ? `${save ? `<button class="btn primary" type="button" data-sim-cont>Continua la partida</button>` : ""}<a class="btn ${save ? "" : "primary"}" href="#simulador">${save ? "Altres modes" : "Juga"}</a>`
-    : `${save ? `<button class="btn primary" type="button" data-sim-cont>Continua la partida</button>` : ""}<button class="btn ${save ? "" : "primary"}" type="button" data-sim-scroll>Tria el mode ↓</button>`;
+    ? `${save ? `<button class="btn primary" type="button" data-sim-cont>Continúa la partida</button>` : ""}<a class="btn ${save ? "" : "primary"}" href="#simulador">${save ? "Otros modos" : "Juega"}</a>`
+    : `${save ? `<button class="btn primary" type="button" data-sim-cont>Continúa la partida</button>` : ""}<button class="btn ${save ? "" : "primary"}" type="button" data-sim-scroll>Elige el modo ↓</button>`;
   return `<div class="simduo">
     <article class="simcard simcard-el">
       <div class="simcard-art" aria-hidden="true">${ART.simulador ? ART.simulador() : ""}</div>
       <div class="simcard-b">
         <p class="simcard-k">Simulador electoral</p>
-        <h3>Del carrer a la Moncloa</h3>
-        <p>Funda el teu partit i competeix amb els partits reals: campanya a les 52 circumscripcions, nit electoral, pactes i govern.</p>
-        <ul class="simcard-facts"><li>Llei d'Hondt real</li><li>4 modes</li><li>15–40 min</li></ul>
-        ${save ? `<p class="simcard-save">${simLogoSvg(save.state.me, 24)}<span>Partida a mitges amb <b>${esc(save.state.me.name)}</b></span></p>` : rec(elBest)}
+        <h3>De la calle a la Moncloa</h3>
+        <p>Funda tu partido y compite con los partidos reales: campaña en las 52 circunscripciones, noche electoral, pactos y gobierno.</p>
+        <ul class="simcard-facts"><li>Ley D'Hondt real</li><li>4 modos</li><li>15–40 min</li></ul>
+        ${save ? `<p class="simcard-save">${simLogoSvg(save.state.me, 24)}<span>Partida a medias con <b>${esc(save.state.me.name)}</b></span></p>` : rec(elBest)}
         <div class="simcard-go">${elGo}</div>
       </div>
     </article>
     <article class="simcard simcard-db">
-      <div class="simcard-art" aria-hidden="true"><span class="db-pod a"></span><span class="db-pod b"></span><span class="db-pod c"></span><span class="db-promo-led">DEBAT 29N</span></div>
+      <div class="simcard-art" aria-hidden="true"><span class="db-pod a"></span><span class="db-pod b"></span><span class="db-pod c"></span><span class="db-promo-led">DEBATE 29N</span></div>
       <div class="simcard-b">
-        <p class="simcard-k">Simulador de debat</p>
-        <h3>Plantes cara als candidats</h3>
-        <p>Crea el teu candidat i debat en un plató de televisió en 3D: interrupcions, dades falses, preguntes trampa i el minut d'or.</p>
-        <ul class="simcard-facts"><li>Plató en 3D</li><li>4 formats</li><li>10 min</li></ul>
+        <p class="simcard-k">Simulador de debate</p>
+        <h3>Planta cara a los candidatos</h3>
+        <p>Crea tu candidato y debate en un plató de televisión en 3D: interrupciones, datos falsos, preguntas trampa y el minuto de oro.</p>
+        <ul class="simcard-facts"><li>Plató en 3D</li><li>4 formatos</li><li>10 min</li></ul>
         ${rec(dbBest)}
-        <div class="simcard-go"><a class="btn primary" href="#joc/debat">Entra al plató 🎬</a></div>
+        <div class="simcard-go"><a class="btn primary" href="#joc/debat">Entra en el plató 🎬</a></div>
       </div>
     </article>
   </div>`;
@@ -398,74 +399,74 @@ function renderSimHome(arg) {
   const recs = SIM_MODES.map((m) => best(m.k)).filter((x) => x !== undefined);
   const elBest = recs.length ? Math.max(...recs) : undefined;
   const dbBest = Progress.data.best.debat;
-  const rec = (b) => (b !== undefined ? `<span class="simcard-rec">Rècord: ${fmt(b)} punts</span>` : "");
+  const rec = (b) => (b !== undefined ? `<span class="simcard-rec">Récord: ${fmt(b)} puntos</span>` : "");
   const modeName = () => SIM_MODES.find((m) => m.k === SimOpts.mode)?.title || "";
   const diffName = () => SIM_DIFF[SimOpts.diff]?.label || "";
 
   root.innerHTML = `<div class="sim-home sh2">
     <header class="sh2-head">
-      <h1 class="page-title">Simuladors</h1>
-      <p>Viu les eleccions des de dins, amb les regles de veritat.</p>
+      <h1 class="page-title">Simuladores</h1>
+      <p>Vive las elecciones desde dentro, con las reglas de verdad.</p>
     </header>
     <div class="sh2-cards">
       <article class="sh2-card sh2-el">
         <div class="sh2-art" aria-hidden="true">${ART.simulador ? ART.simulador() : ""}</div>
         <div class="sh2-b">
           <p class="simcard-k">Simulador electoral</p>
-          <h2>Guanya les eleccions</h2>
-          <p class="sh2-d">Funda un partit i competeix amb els reals: campanya, nit electoral, pactes i govern.</p>
-          ${save ? `<button class="btn primary lg sh2-play" type="button" data-sim-cont>▶ Continua la partida</button>
-            <p class="sh2-meta">${simLogoSvg(save.state.me, 20)} ${esc(save.state.me.name)} · ${simStageLabel(save.state)} · <button class="linklike" type="button" data-sim-go>o comença'n una de nova</button></p>`
-            : `<button class="btn primary lg sh2-play" type="button" data-sim-go>▶ Juga ara</button>
-            <p class="sh2-meta"><span data-sim-sel>${modeName()} · ${diffName()}</span> · <button class="linklike" type="button" data-sim-opts>canvia-ho</button></p>`}
+          <h2>Gana las elecciones</h2>
+          <p class="sh2-d">Funda un partido y compite con los reales: campaña, noche electoral, pactos y gobierno.</p>
+          ${save ? `<button class="btn primary lg sh2-play" type="button" data-sim-cont>▶ Continúa la partida</button>
+            <p class="sh2-meta">${simLogoSvg(save.state.me, 20)} ${esc(save.state.me.name)} · ${simStageLabel(save.state)} · <button class="linklike" type="button" data-sim-go>o empieza una nueva</button></p>`
+            : `<button class="btn primary lg sh2-play" type="button" data-sim-go>▶ Juega ahora</button>
+            <p class="sh2-meta"><span data-sim-sel>${modeName()} · ${diffName()}</span> · <button class="linklike" type="button" data-sim-opts>cámbialo</button></p>`}
           ${rec(elBest)}
         </div>
       </article>
       <article class="sh2-card sh2-db">
-        <div class="sh2-art" aria-hidden="true"><span class="db-pod a"></span><span class="db-pod b"></span><span class="db-pod c"></span><span class="db-promo-led">DEBAT 29N</span></div>
+        <div class="sh2-art" aria-hidden="true"><span class="db-pod a"></span><span class="db-pod b"></span><span class="db-pod c"></span><span class="db-promo-led">DEBATE 29N</span></div>
         <div class="sh2-b">
-          <p class="simcard-k">Simulador de debat</p>
-          <h2>Guanya el debat</h2>
-          <p class="sh2-d">Crea el teu candidat i plantes cara als altres en un plató de televisió en 3D.</p>
-          <a class="btn primary lg sh2-play" href="#joc/debat">🎬 Entra al plató</a>
-          <p class="sh2-meta">4 formats de debat · uns 10 minuts</p>
+          <p class="simcard-k">Simulador de debate</p>
+          <h2>Gana el debate</h2>
+          <p class="sh2-d">Crea tu candidato y planta cara a los demás en un plató de televisión en 3D.</p>
+          <a class="btn primary lg sh2-play" href="#joc/debat">🎬 Entra en el plató</a>
+          <p class="sh2-meta">4 formatos de debate · unos 10 minutos</p>
           ${rec(dbBest)}
         </div>
       </article>
     </div>
 
     <section class="sh2-opts" id="sim-config">
-      <h2 class="section-title sm">Opcions del simulador electoral</h2>
-      <div class="sim-modecards" role="radiogroup" aria-label="Mode de joc">${SIM_MODES.map((m) => `
+      <h2 class="section-title sm">Opciones del simulador electoral</h2>
+      <div class="sim-modecards" role="radiogroup" aria-label="Modo de juego">${SIM_MODES.map((m) => `
         <button type="button" class="sim-modecard ${m.k === SimOpts.mode ? "on" : ""}" role="radio" aria-checked="${m.k === SimOpts.mode}" data-mode="${m.k}">
           <span class="sim-mc-top"><b>${m.title}</b><em>${m.mins}</em></span>
           <small>${m.text}</small>
-          <span class="sim-mc-rec">${best(m.k) !== undefined ? `Rècord: ${fmt(best(m.k))} punts` : "Sense rècord"}</span>
+          <span class="sim-mc-rec">${best(m.k) !== undefined ? `Récord: ${fmt(best(m.k))} puntos` : "Sin récord"}</span>
         </button>`).join("")}</div>
       <div class="sh-go">
-        <div class="sim-diffs" role="radiogroup" aria-label="Dificultat"><span>Dificultat</span>${Object.entries(SIM_DIFF).map(([k, d]) => `
+        <div class="sim-diffs" role="radiogroup" aria-label="Dificultad"><span>Dificultad</span>${Object.entries(SIM_DIFF).map(([k, d]) => `
           <label><input type="radio" name="sim-diff" value="${k}" ${k === SimOpts.diff ? "checked" : ""}><span>${d.label}</span></label>`).join("")}</div>
-        <button class="btn primary" type="button" data-sim-go>${save ? "Comença una partida nova" : "▶ Juga amb aquestes opcions"}</button>
+        <button class="btn primary" type="button" data-sim-go>${save ? "Empieza una partida nueva" : "▶ Juega con estas opciones"}</button>
       </div>
-      <p class="sim-diffnote">També pots jugar un duel de campanya contra un amic, des de <a href="#duel">Social</a>.</p>
+      <p class="sim-diffnote">También puedes jugar un duelo de campaña contra un amigo, desde <a href="#duel">Social</a>.</p>
     </section>
 
     <details class="sh-how">
-      <summary>Com funciona el simulador electoral</summary>
+      <summary>Cómo funciona el simulador electoral</summary>
       <ol class="sim-howto">
-        <li><b>Funda el partit</b><span>Nom, color, logo, programa a partir de vuit dilemes, tres prioritats i un candidat.</span></li>
-        <li><b>Fes campanya</b><span>Mítings, xarxes, entrevistes, debats i imprevistos durant sis dies, amb enquestes del joc.</span></li>
-        <li><b>Nit electoral</b><span>L'escrutini per circumscripcions i la Llei d'Hondt reparteixen els 350 escons.</span></li>
-        <li><b>Pactes i govern</b><span>Negocia la investidura i, al mode Legislatura, governa vuit trimestres.</span></li>
+        <li><b>Funda el partido</b><span>Nombre, color, logo, programa a partir de ocho dilemas, tres prioridades y un candidato.</span></li>
+        <li><b>Haz campaña</b><span>Mítines, redes, entrevistas, debates e imprevistos durante seis días, con encuestas del juego.</span></li>
+        <li><b>Noche electoral</b><span>El escrutinio por circunscripciones y la ley D'Hondt reparten los 350 escaños.</span></li>
+        <li><b>Pactos y gobierno</b><span>Negocia la investidura y, en el modo Legislatura, gobierna ocho trimestres.</span></li>
       </ol>
     </details>
     <details class="sh-how">
-      <summary>Com funciona el simulador de debat</summary>
+      <summary>Cómo funciona el simulador de debate</summary>
       <ol class="sim-howto">
-        <li><b>Crea el candidat</b><span>Nom, partit, aspecte, ideologia, mida del partit i estil davant la càmera.</span></li>
-        <li><b>Tria el debat</b><span>Cara a cara, a quatre, a set o dels partits petits: les invitacions depenen de la mida del teu partit.</span></li>
-        <li><b>Prepara't</b><span>Reparteix tres hores d'assaig entre dades, rèpliques i càmera, i tria l'estratègia.</span></li>
-        <li><b>Al plató</b><span>Respon, replica, detecta dades falses i aprofita el minut d'or. Al final, enquesta flash.</span></li>
+        <li><b>Crea el candidato</b><span>Nombre, partido, aspecto, ideología, tamaño del partido y estilo ante la cámara.</span></li>
+        <li><b>Elige el debate</b><span>Cara a cara, a cuatro, a siete o de los partidos pequeños: las invitaciones dependen del tamaño de tu partido.</span></li>
+        <li><b>Prepárate</b><span>Reparte tres horas de ensayo entre datos, réplicas y cámara, y elige la estrategia.</span></li>
+        <li><b>En el plató</b><span>Responde, replica, detecta datos falsos y aprovecha el minuto de oro. Al final, encuesta flash.</span></li>
       </ol>
     </details>
     <p class="sim-fiction">${SIM_DISCLAIMER}</p>
@@ -481,7 +482,7 @@ function renderSimHome(arg) {
   }));
   $$("input[name=sim-diff]", root).forEach((i) => i.addEventListener("change", () => setTimeout(sel)));
   $$("[data-sim-go]", root).forEach((b) => b.addEventListener("click", () => {
-    if (save && !confirm("Començar una partida nova esborrarà la que tens a mitges. Continuar?")) return;
+    if (save && !confirm("Empezar una partida nueva borrará la que tienes a medias. ¿Continuar?")) return;
     SimOpts.resume = false; SimOpts.duel = null; Sfx.play("pick"); simLaunch();
   }));
   if (arg === "opcions") setTimeout(() => $("#sim-config")?.scrollIntoView({ block: "start" }), 50);
@@ -495,7 +496,7 @@ function simDuelIntro(G) {
   const state = simNewGame({ seed: D.seed, mode: "duel", diff: "normal", party });
   state.duel = D.code;
   G.ctx.hud([]);
-  simSummary(G, state, `<div class="sim-wrap"><div class="sim-banner">Duel de campanya${D.rival ? ` contra ${esc(D.rival)}` : ""}: teniu el mateix partit i el mateix país. Guanya qui tregui més escons.</div></div>`, null);
+  simSummary(G, state, `<div class="sim-wrap"><div class="sim-banner">Duelo de campaña${D.rival ? ` contra ${esc(D.rival)}` : ""}: tenéis el mismo partido y el mismo país. Gana quien saque más escaños.</div></div>`, null);
 }
 
 // =========================================================
@@ -503,7 +504,7 @@ function simDuelIntro(G) {
 // =========================================================
 function simHud(G, bump = "") {
   const s = G.state;
-  if (!$("[data-hud='dia']")) G.ctx.hud([["dia", "Dia", ""], ["diners", "Diners", ""], ["cred", "Credibilitat", ""]]);
+  if (!$("[data-hud='dia']")) G.ctx.hud([["dia", "Día", ""], ["diners", "Dinero", ""], ["cred", "Credibilidad", ""]]);
   G.ctx.setHud("dia", `${Math.min(s.day, s.days)}/${s.days}`, { bump: bump === "dia" });
   G.ctx.setHud("diners", fmt(s.money), { bump: bump === "diners", warn: s.money < 8 });
   G.ctx.setHud("cred", fmt(s.cred), { bump: bump === "cred", warn: s.cred < 40 });
@@ -516,32 +517,32 @@ function simCampaign(G) {
   const el = simMount(G, `<div class="sim-wrap sim-camp">
     <div class="sim-daybar">
       ${simLogoSvg(s.me, 40)}
-      <div class="sim-day"><small>${s.round === 2 ? "Campanya de les eleccions següents" : `Objectiu: ${s.goal} escons`}</small><b>Dia ${s.day} <span>de ${s.days}</span></b></div>
+      <div class="sim-day"><small>${s.round === 2 ? "Campaña de las elecciones siguientes" : `Objetivo: ${s.goal} escaños`}</small><b>Día ${s.day} <span>de ${s.days}</span></b></div>
       <div class="sim-slots" data-slots></div>
       <button class="btn primary" data-endday></button>
     </div>
     <div class="sim-meters" data-meters></div>
     <div class="sim-grid">
       <section class="card sim-mapcard">
-        <div class="sim-cardhead sim-maphead"><div><h4>Mapa de campanya</h4><small data-maphelp></small></div>
-          ${simPollsHidden() ? "" : `<div class="sim-seg" role="tablist" aria-label="Què mostra el mapa"><button role="tab" data-map="aw">Notorietat</button><button role="tab" data-map="poll">Enquesta</button></div>`}</div>
+        <div class="sim-cardhead sim-maphead"><div><h4>Mapa de campaña</h4><small data-maphelp></small></div>
+          ${simPollsHidden() ? "" : `<div class="sim-seg" role="tablist" aria-label="Qué muestra el mapa"><button role="tab" data-map="aw">Notoriedad</button><button role="tab" data-map="poll">Encuesta</button></div>`}</div>
         <div class="sim-mapbox" data-mapbox>${simSpainMap()}</div>
-        <label class="sim-provselect"><span>O tria-la de la llista</span><select data-provsel><option value="">Circumscripció…</option>${[...SIM_PROVS].sort((a, b) => a.name.localeCompare(b.name, "ca")).map((p) => `<option value="${p.i}">${esc(p.name)} · ${p.seats}</option>`).join("")}</select></label>
+        <label class="sim-provselect"><span>O elígela de la lista</span><select data-provsel><option value="">Circunscripción…</option>${[...SIM_PROVS].sort((a, b) => a.name.localeCompare(b.name, "es")).map((p) => `<option value="${p.i}">${esc(p.name)} · ${p.seats}</option>`).join("")}</select></label>
         <div class="sim-legend" data-legend></div>
       </section>
       <div class="sim-side">
         <section class="card sim-agenda" data-agenda></section>
         <section class="card sim-prov" data-prov aria-live="polite"></section>
         <section class="card sim-acts">
-          <h4>Accions a tot l'Estat</h4>
+          <h4>Acciones en todo el Estado</h4>
           <div class="sim-act-list" data-acts></div>
           <div class="sim-themepick" data-themes hidden></div>
         </section>
       </div>
     </div>
     <div class="sim-grid2">
-      <section class="card sim-pollcard"><div class="sim-cardhead"><h4>Darrera enquesta del joc</h4><small data-polldate></small></div><div data-poll></div></section>
-      <section class="card sim-feed"><div class="sim-cardhead"><h4>Diari de campanya</h4></div><ol data-feed></ol></section>
+      <section class="card sim-pollcard"><div class="sim-cardhead"><h4>Última encuesta del juego</h4><small data-polldate></small></div><div data-poll></div></section>
+      <section class="card sim-feed"><div class="sim-cardhead"><h4>Diario de campaña</h4></div><ol data-feed></ol></section>
     </div>
   </div>`);
 
@@ -557,7 +558,7 @@ function simCampaign(G) {
     const left = 3 - s.slot;
     if (left > 0 && !armed && s.money >= 3) {
       armed = true;
-      endBtn.textContent = `Segur? ${left === 1 ? "Queda 1 franja" : `Queden ${left} franges`}`;
+      endBtn.textContent = `¿Seguro? ${left === 1 ? "Queda 1 franja" : `Quedan ${left} franjas`}`;
       endBtn.classList.add("armed");
       armTimer = G.ctx.after(3500, () => { armed = false; refresh(); });
       return;
@@ -579,21 +580,21 @@ function simCampaign(G) {
   }
 
   function refresh(fresh = false) {
-    $("[data-slots]", el).innerHTML = `<small>Franges d'avui</small><span aria-label="${3 - s.slot} franges lliures">${["Matí", "Tarda", "Vespre"].map((n, k) => `<i class="${k < s.slot ? "used" : ""}" title="${n}"></i>`).join("")}</span>`;
+    $("[data-slots]", el).innerHTML = `<small>Franjas de hoy</small><span aria-label="${3 - s.slot} franjas libres">${["Mañana", "Tarde", "Noche"].map((n, k) => `<i class="${k < s.slot ? "used" : ""}" title="${n}"></i>`).join("")}</span>`;
     const meter = (label, val, max, txt, warn) => `<div class="sim-meter ${warn ? "warn" : ""}"><small>${label}</small><b>${txt}</b><span><i style="width:${Math.max(0, Math.min(100, (val / max) * 100))}%"></i></span></div>`;
     $("[data-meters]", el).innerHTML =
-      meter("Diners", s.money, 130, fmt(s.money), s.money < 8) +
-      meter("Credibilitat", s.cred, 100, fmt(s.cred), s.cred < 40) +
-      meter("Militància", s.moral, 100, fmt(s.moral), s.moral < 40) +
-      meter("Notorietat", s.awG, 1, `${Math.round(s.awG * 100)} %`, false);
+      meter("Dinero", s.money, 130, fmt(s.money), s.money < 8) +
+      meter("Credibilidad", s.cred, 100, fmt(s.cred), s.cred < 40) +
+      meter("Militancia", s.moral, 100, fmt(s.moral), s.moral < 40) +
+      meter("Notoriedad", s.awG, 1, `${Math.round(s.awG * 100)} %`, false);
 
     const poll = s.polls[s.polls.length - 1];
     const est = poll.provs;
     $$("[data-map]", el).forEach((b) => { b.classList.toggle("on", b.dataset.map === G.map); b.setAttribute("aria-selected", b.dataset.map === G.map); });
-    $("[data-maphelp]", el).textContent = G.map === "aw" ? "Com més intens és el color, més gent us coneix. Toca una circumscripció." : `Partit que va primer segons l'enquesta del ${poll.day === 0 ? "començament" : `dia ${poll.day}`}. A sobre, la teva posició.`;
+    $("[data-maphelp]", el).textContent = G.map === "aw" ? "Cuanto más intenso es el color, más gente os conoce. Toca una circunscripción." : `Partido que va primero según la encuesta del ${poll.day === 0 ? "inicio" : `día ${poll.day}`}. Encima, tu posición.`;
     $("[data-legend]", el).innerHTML = G.map === "aw"
-      ? `<span>Poc coneguts</span><i class="grad" style="--pc:${s.me.color}"></i><span>Molt coneguts</span><em>★ candidat local · ● míting · ◆ coalició</em>`
-      : [s.me, ...s.rivals].map((p) => `<span class="sim-lg">${simLogo(p)}</span>`).join("") + `<em>El número de dalt: la teva posició</em>`;
+      ? `<span>Poco conocidos</span><i class="grad" style="--pc:${s.me.color}"></i><span>Muy conocidos</span><em>★ candidato local · ● mitin · ◆ coalición</em>`
+      : [s.me, ...s.rivals].map((p) => `<span class="sim-lg">${simLogo(p)}</span>`).join("") + `<em>El número de arriba: tu posición</em>`;
     const rallies = {};
     s.log.forEach((l) => { if (l.type === "miting") rallies[l.arg] = (rallies[l.arg] || 0) + 1; });
     const coal = s.used.coal || [];
@@ -601,7 +602,7 @@ function simCampaign(G) {
     simPaintMap(map, (i) => {
       const p = SIM_PROVS[i], e = est?.[i];
       const aware = Math.round(simAware(s, i) * 100);
-      const label = `${p.name}, ${p.seats} escons. Us coneix el ${aware} %${e?.rank ? `. Hi vas ${ord(e.rank)} segons l'enquesta` : ""}.`;
+      const label = `${p.name}, ${p.seats} escaños. Os conoce el ${aware} %${e?.rank ? `. Vas ${ord(e.rank)} según la encuesta` : ""}.`;
       if (G.map === "aw") {
         const k = Math.round(simAware(s, i) * 88);
         return { fill: `color-mix(in srgb, ${s.me.color} ${k}%, var(--card))`, ink: k > 52 ? simInk(s.me.color) : "var(--ink)", sel: G.sel === i, label,
@@ -614,10 +615,10 @@ function simCampaign(G) {
 
     // Agenda d'avui: propostes de mitjans, d'entitats i de rivals
     const offers = s.offers || [];
-    $("[data-agenda]", el).innerHTML = `<div class="sim-cardhead"><h4>Agenda d'avui</h4><small>Propostes que t'han arribat. Acceptar-ne una gasta una franja.</small></div>
-      ${offers.length ? `<ul class="sim-offers">${offers.map((o) => simOfferRow(s, o)).join("")}</ul>` : `<p class="sim-note">Avui no t'ha arribat cap proposta.</p>`}`;
+    $("[data-agenda]", el).innerHTML = `<div class="sim-cardhead"><h4>Agenda de hoy</h4><small>Propuestas que te han llegado. Aceptar una gasta una franja.</small></div>
+      ${offers.length ? `<ul class="sim-offers">${offers.map((o) => simOfferRow(s, o)).join("")}</ul>` : `<p class="sim-note">Hoy no te ha llegado ninguna propuesta.</p>`}`;
     $$("[data-acc]", el).forEach((b) => b.addEventListener("click", () => {
-      if (s.slot >= 3) { toast("Avui ja no et queden franges"); Sfx.play("ko"); return; }
+      if (s.slot >= 3) { toast("Hoy ya no te quedan franjas"); Sfx.play("ko"); return; }
       Sfx.play("pick");
       s.stage = "media"; s.media = { id: b.dataset.acc };
       simSave(G); simMediaScreen(G);
@@ -629,7 +630,7 @@ function simCampaign(G) {
 
     const pv = $("[data-prov]", el);
     if (G.sel === null) {
-      pv.innerHTML = `<p class="sim-kick">Circumscripció</p><p class="sim-sub">Tria una circumscripció al mapa per fer-hi un míting, fitxar-hi un candidat local o pactar-hi una coalició. Recorda: a les províncies petites es reparteixen pocs escons i costa més entrar-hi.</p>`;
+      pv.innerHTML = `<p class="sim-kick">Circunscripción</p><p class="sim-sub">Elige una circunscripción en el mapa para hacer un mitin, fichar a un candidato local o pactar una coalición. Recuerda: en las provincias pequeñas se reparten pocos escaños y cuesta más entrar.</p>`;
     } else {
       const p = SIM_PROVS[G.sel];
       const w = simSegmentWeights(p);
@@ -637,16 +638,16 @@ function simCampaign(G) {
       const tag = (v, lo, mid, hi) => (v < 0.35 ? lo : v < 0.65 ? mid : hi);
       const e = est?.[G.sel];
       const errM = simCanAct(s, "miting", G.sel), errC = simCanAct(s, "candidat", G.sel), errK = simCanAct(s, "coalicio", G.sel);
-      const pill = !e ? "" : e.won ? `<span class="sim-pill ok">Segons l'enquesta, hi treus ${e.won} ${e.won === 1 ? "escó" : "escons"}${e.need === 0 ? " (l'últim, per pocs vots)" : ""}</span>`
-        : `<span class="sim-pill">Hi vas ${e.rank}${e.rank === 1 ? "r" : e.rank === 2 ? "n" : e.rank === 3 ? "r" : "è"}${e.need !== null ? ` · et falten ${simNum(e.need)} punts per a un escó` : ""}</span>`;
-      pv.innerHTML = `<div class="sim-prov-head"><div><p class="sim-kick">${esc(p.ccaa)}</p><h4>${esc(p.name)}</h4></div><div class="sim-prov-seats"><b>${p.seats}</b><small>${p.seats === 1 ? "escó" : "escons"}</small></div></div>
+      const pill = !e ? "" : e.won ? `<span class="sim-pill ok">Según la encuesta, sacas ${e.won} ${e.won === 1 ? "escaño" : "escaños"}${e.need === 0 ? " (el último, por pocos votos)" : ""}</span>`
+        : `<span class="sim-pill">Vas ${e.rank}${e.rank === 1 ? "r" : e.rank === 2 ? "n" : e.rank === 3 ? "r" : "è"}${e.need !== null ? ` · te faltan ${simNum(e.need)} puntos para un escaño` : ""}</span>`;
+      pv.innerHTML = `<div class="sim-prov-head"><div><p class="sim-kick">${esc(p.ccaa)}</p><h4>${esc(p.name)}</h4></div><div class="sim-prov-seats"><b>${p.seats}</b><small>${p.seats === 1 ? "escaño" : "escaños"}</small></div></div>
         ${pill}
-        <div class="sim-prov-tags"><span>${tag(p.urb, "Rural", "Mixta", "Urbana")}</span><span>Identitat pròpia ${tag(p.ter, "baixa", "mitjana", "alta")}</span><span>${tag(p.age, "Població jove", "Edat mitjana", "Població envellida")}</span></div>
-        <p class="sim-prov-aw">Us coneix el <b>${Math.round(simAware(s, G.sel) * 100)} %</b> de l'electorat · ${fmt(p.pop * SIM_K.census)} electors · ${fmt((p.pop * SIM_K.census) / p.seats)} per escó</p>
-        <p class="sim-prov-seg"><small>Hi predominen</small>${top.map(({ g, v }) => `<span>${g.label} <b>${Math.round(v * 100)} %</b></span>`).join("")}</p>
+        <div class="sim-prov-tags"><span>${tag(p.urb, "Rural", "Mixta", "Urbana")}</span><span>Identidad propia ${tag(p.ter, "baixa", "mitjana", "alta")}</span><span>${tag(p.age, "Población joven", "Edad media", "Población envejecida")}</span></div>
+        <p class="sim-prov-aw">Os conoce el <b>${Math.round(simAware(s, G.sel) * 100)} %</b> del electorado · ${fmt(p.pop * SIM_K.census)} electores · ${fmt((p.pop * SIM_K.census) / p.seats)} por escaño</p>
+        <p class="sim-prov-seg"><small>Predominan</small>${top.map(({ g, v }) => `<span>${g.label} <b>${Math.round(v * 100)} %</b></span>`).join("")}</p>
         <div class="sim-prov-btns">
           ${simActBtn("miting", errM)}
-          ${simActBtn("candidat", errC, s.used.cand.includes(G.sel) ? "Ja en tens un en aquesta circumscripció." : null)}
+          ${simActBtn("candidat", errC, s.used.cand.includes(G.sel) ? "Ya tienes uno en esta circunscripción." : null)}
           ${simActBtn("coalicio", errK)}
         </div>`;
       $$("[data-a]", pv).forEach((b) => b.addEventListener("click", () => act(b.dataset.a, G.sel)));
@@ -663,14 +664,14 @@ function simCampaign(G) {
       if (a === "tema") {
         box.hidden = box.dataset.for === "tema" ? !box.hidden : false;
         box.dataset.for = "tema";
-        box.innerHTML = `<small>Quin tema vols reforçar?</small>${SIM_THEMES.map((t, i) => `<button class="sim-theme ${s.me.prio.includes(i) ? "prio" : ""}" data-t="${i}">${t.label}<i style="width:${(s.me.iss[i] / 1.3) * 100}%"></i></button>`).join("")}`;
+        box.innerHTML = `<small>¿Qué tema quieres reforzar?</small>${SIM_THEMES.map((t, i) => `<button class="sim-theme ${s.me.prio.includes(i) ? "prio" : ""}" data-t="${i}">${t.label}<i style="width:${(s.me.iss[i] / 1.3) * 100}%"></i></button>`).join("")}`;
         $$("[data-t]", box).forEach((x) => x.addEventListener("click", () => { box.hidden = true; act("tema", Number(x.dataset.t)); }));
         return;
       }
       if (a === "matisar") {
         box.hidden = box.dataset.for === "matisar" ? !box.hidden : false;
         box.dataset.for = "matisar";
-        box.innerHTML = `<small>Quina posició vols acostar al centre? Costa 5 punts de credibilitat.</small>${Object.entries(SIM_AXES).map(([ax, l]) => `<button class="sim-theme" data-ax="${ax}" ${simCanAct(s, "matisar", ax) ? "disabled" : ""}>${l.charAt(0).toUpperCase() + l.slice(1)} <small>${simAxis[ax](s.me[ax])}</small></button>`).join("")}`;
+        box.innerHTML = `<small>¿Qué posición quieres acercar al centro? Cuesta 5 puntos de credibilidad.</small>${Object.entries(SIM_AXES).map(([ax, l]) => `<button class="sim-theme" data-ax="${ax}" ${simCanAct(s, "matisar", ax) ? "disabled" : ""}>${l.charAt(0).toUpperCase() + l.slice(1)} <small>${simAxis[ax](s.me[ax])}</small></button>`).join("")}`;
         $$("[data-ax]", box).forEach((x) => x.addEventListener("click", () => { box.hidden = true; act("matisar", x.dataset.ax); }));
         return;
       }
@@ -679,17 +680,17 @@ function simCampaign(G) {
     }));
 
     const polls = s.polls, last = polls[polls.length - 1], prev = polls[polls.length - 2];
-    $("[data-polldate]", el).textContent = last.day === 0 ? "Abans de començar" : `Dia ${last.day}`;
+    $("[data-polldate]", el).textContent = last.day === 0 ? "Antes de empezar" : `Día ${last.day}`;
     $("[data-poll]", el).innerHTML = simPollBars(s, last, prev);
 
     const feed = s.log.slice(-7).reverse();
     $("[data-feed]", el).innerHTML = feed.length
-      ? feed.map((l, k) => `<li class="${l.good === false ? "bad" : ""} ${fresh && k === 0 ? "fresh" : ""}"><small>Dia ${l.day}</small>${esc(l.msg)}</li>`).join("")
-      : `<li class="empty">Encara no has fet cap acció. Tens 3 franges cada dia: matí, tarda i vespre.</li>`;
+      ? feed.map((l, k) => `<li class="${l.good === false ? "bad" : ""} ${fresh && k === 0 ? "fresh" : ""}"><small>Día ${l.day}</small>${esc(l.msg)}</li>`).join("")
+      : `<li class="empty">Todavía no has hecho ninguna acción. Tienes 3 franjas cada día: mañana, tarde y noche.</li>`;
 
     if (!armed) {
       endBtn.classList.remove("armed");
-      endBtn.textContent = s.day === s.days ? "Tanca la campanya" : "Acaba el dia";
+      endBtn.textContent = s.day === s.days ? "Cierra la campaña" : "Termina el día";
     }
     endBtn.classList.toggle("pulse", s.slot >= 3);
   }
@@ -699,25 +700,25 @@ function simCampaign(G) {
 
 function simActBtn(k, err, desc = null) {
   const a = SIM_ACTIONS[k];
-  return `<button class="sim-act" data-a="${k}" ${err ? `disabled title="${esc(err)}"` : ""}><b>${a.label}</b><small>${desc || (err && err !== "No et queden prou diners." ? err : a.desc)}</small><em aria-label="Cost: ${a.cost}">${a.cost}</em></button>`;
+  return `<button class="sim-act" data-a="${k}" ${err ? `disabled title="${esc(err)}"` : ""}><b>${a.label}</b><small>${desc || (err && err !== "No te queda suficiente dinero." ? err : a.desc)}</small><em aria-label="Coste: ${a.cost}">${a.cost}</em></button>`;
 }
 
 // Tutorial de tres passos, la primera vegada
 function simTutorial(G) {
   const steps = [
-    { t: "El mapa", d: "Cada província és una circumscripció, amb el nombre d'escons que reparteix. Toca'n una per fer-hi campanya. A les petites, entrar costa molts vots." },
-    { t: "La teva agenda", d: "Cada dia tens tres franges (matí, tarda i vespre) i uns diners limitats. A l'agenda t'arriben entrevistes, fòrums i reptes de debat: tu decideixes si els acceptes." },
-    { t: "L'enquesta i el final del dia", d: "Cada tres dies arriba una enquesta del joc, i en pots encarregar més. Quan acabis les accions, prem «Acaba el dia» i veuràs què fan els rivals." },
+    { t: "El mapa", d: "Cada provincia es una circunscripción, con el número de escaños que reparte. Toca una para hacer campaña. En las pequeñas, entrar cuesta muchos votos." },
+    { t: "Tu agenda", d: "Cada día tienes tres franjas (mañana, tarde y noche) y un dinero limitado. A la agenda te llegan entrevistas, foros y retos de debate: tú decides si los aceptas." },
+    { t: "La encuesta y el final del día", d: "Cada tres días llega una encuesta del juego, y puedes encargar más. Cuando acabes las acciones, pulsa «Termina el día» y verás qué hacen los rivales." },
   ];
   let k = 0;
-  const box = h(`<div class="sim-tuto" role="dialog" aria-modal="true" aria-label="Com es juga"><div class="sim-tuto-card card"><p class="sim-kick" data-n></p><h3 class="sim-h" data-t></h3><p data-d></p>
-    <div class="sim-actions-row"><button class="btn ghost" data-skip>Salta</button><button class="btn primary" data-next>Següent</button></div></div></div>`);
+  const box = h(`<div class="sim-tuto" role="dialog" aria-modal="true" aria-label="Cómo se juega"><div class="sim-tuto-card card"><p class="sim-kick" data-n></p><h3 class="sim-h" data-t></h3><p data-d></p>
+    <div class="sim-actions-row"><button class="btn ghost" data-skip>Saltar</button><button class="btn primary" data-next>Siguiente</button></div></div></div>`);
   document.body.appendChild(box);
   const draw = () => {
-    $("[data-n]", box).textContent = `Com es juga · ${k + 1} de ${steps.length}`;
+    $("[data-n]", box).textContent = `Cómo se juega · ${k + 1} de ${steps.length}`;
     $("[data-t]", box).textContent = steps[k].t;
     $("[data-d]", box).textContent = steps[k].d;
-    $("[data-next]", box).textContent = k === steps.length - 1 ? "Som-hi" : "Següent";
+    $("[data-next]", box).textContent = k === steps.length - 1 ? "Vamos" : "Siguiente";
   };
   const close = () => { box.remove(); SimPrefs.set("tuto", true); };
   draw();
@@ -757,17 +758,17 @@ function simDaySummary(G, dayDone, out) {
   const offersTomorrow = s.phase === "campaign" ? (s.offers || []).length : 0;
   const el = simMount(G, `<div class="sim-wrap">
     <div class="card sim-card sim-sumday">
-      <p class="sim-kick">Final del dia ${dayDone}</p>
-      <h3 class="sim-h">${s.phase === "reflection" ? "S'ha acabat la campanya" : "Què han fet els rivals"}</h3>
-      ${plays.length ? `<h4 class="sim-h4">Les jugades del dia</h4><ul class="sim-plays">${plays.map((m) => `<li class="${m.kind}"><span class="sim-play-ico" aria-hidden="true">${m.kind === "attack" ? "↯" : m.icon}</span>${simLogo(simById(s, m.id))}<span>${esc(m.msg)}${m.why ? `<small>${esc(m.why)}</small>` : ""}</span></li>`).join("")}</ul>` : ""}
+      <p class="sim-kick">Final del día ${dayDone}</p>
+      <h3 class="sim-h">${s.phase === "reflection" ? "Se ha acabado la campaña" : "Qué han hecho los rivales"}</h3>
+      ${plays.length ? `<h4 class="sim-h4">Las jugadas del día</h4><ul class="sim-plays">${plays.map((m) => `<li class="${m.kind}"><span class="sim-play-ico" aria-hidden="true">${m.kind === "attack" ? "↯" : m.icon}</span>${simLogo(simById(s, m.id))}<span>${esc(m.msg)}${m.why ? `<small>${esc(m.why)}</small>` : ""}</span></li>`).join("")}</ul>` : ""}
       <div class="sim-sum-map">
         <div class="sim-mapbox mini">${simSpainMap("mini")}</div>
-        <div><h4 class="sim-h4">On han fet campanya</h4><ul class="sim-moves">${camp.map((m) => `<li>${simLogo(simById(s, m.id))}<span>${esc(m.msg.replace(/^.*? fa campanya a /, ""))}<small>${esc([...new Set(m.why)].join(" · "))}</small></span></li>`).join("")}</ul></div>
+        <div><h4 class="sim-h4">Dónde han hecho campaña</h4><ul class="sim-moves">${camp.map((m) => `<li>${simLogo(simById(s, m.id))}<span>${esc(m.msg.replace(/^.*? fa campanya a /, ""))}<small>${esc([...new Set(m.why)].join(" · "))}</small></span></li>`).join("")}</ul></div>
       </div>
-      ${poll ? `<div class="sim-newpoll"><h4>Nova enquesta del joc</h4>${simPollBars(s, poll, prev)}</div>` : ""}
-      ${offersTomorrow ? `<p class="sim-banner">Demà a l'agenda: ${offersTomorrow === 1 ? "1 proposta" : `${offersTomorrow} propostes`}${(s.offers || []).some((o) => o.type === "cara") ? ", entre elles un repte a cara a cara" : ""}.</p>` : ""}
-      <p class="sim-note">Els rivals segueixen regles fixes: cadascun té un estil de campanya, el que competeix pels teus votants respon on fas mítings i, si les enquestes us situen a prop, et reptarà a un debat. La militància aporta 6 unitats de diners cada dia.</p>
-      <div class="sim-actions-row"><button class="btn primary lg" data-go>${s.phase === "reflection" ? "Arriba la jornada de reflexió" : `Comença el dia ${s.day}`}</button></div>
+      ${poll ? `<div class="sim-newpoll"><h4>Nueva encuesta del juego</h4>${simPollBars(s, poll, prev)}</div>` : ""}
+      ${offersTomorrow ? `<p class="sim-banner">Mañana en la agenda: ${offersTomorrow === 1 ? "1 propuesta" : `${offersTomorrow} propuestas`}${(s.offers || []).some((o) => o.type === "cara") ? ", entre ellas un reto a cara a cara" : ""}.</p>` : ""}
+      <p class="sim-note">Los rivales siguen reglas fijas: cada uno tiene un estilo de campaña, el que compite por tus votantes responde donde haces mítines y, si las encuestas os sitúan cerca, te retará a un debate. La militancia aporta 6 unidades de dinero cada día.</p>
+      <div class="sim-actions-row"><button class="btn primary lg" data-go>${s.phase === "reflection" ? "Llega la jornada de reflexión" : `Empieza el día ${s.day}`}</button></div>
     </div></div>`);
   // Cada circumscripció amb el color del rival que hi ha fet campanya (si n'hi ha més d'un, el primer)
   simPaintMap($(".sim-map", el), (i) => { const ids = where[i]; if (!ids) return {}; const p = simById(s, ids[0]); return { fill: p.color, ink: simInk(p.color), mark: ids.length > 1 ? `+${ids.length - 1}` : "" }; });
@@ -785,7 +786,7 @@ function simEventScreen(G) {
   const el = simMount(G, `<div class="sim-wrap">
     <div class="card sim-card sim-event">
       <div class="sim-event-stamp" aria-hidden="true">!</div>
-      <p class="sim-kick">Imprevist · dia ${s.day}</p>
+      <p class="sim-kick">Imprevisto · día ${s.day}</p>
       <h3 class="sim-h">${ev.title}</h3>
       <p class="sim-lead">${typeof ev.text === "function" ? ev.text(s) : ev.text}</p>
       <div class="sim-dil-opts" data-opts>${ev.opts.map((o, i) => `<button class="sim-opt" data-o="${i}"><i>${"ABC"[i]}</i>${o.t}</button>`).join("")}</div>
@@ -799,7 +800,7 @@ function simEventScreen(G) {
     Sfx.play("ok");
     simHud(G, "cred");
     $$("[data-o]", el).forEach((x) => { x.disabled = true; x.classList.toggle("picked", x === b); });
-    $("[data-out]", el).innerHTML = `<div class="sim-outcome"><p>${esc(msg)}</p><button class="btn primary lg" data-go>Continua la campanya</button></div>`;
+    $("[data-out]", el).innerHTML = `<div class="sim-outcome"><p>${esc(msg)}</p><button class="btn primary lg" data-go>Sigue la campaña</button></div>`;
     $("[data-go]", el).focus();
     $("[data-go]", el).addEventListener("click", () => simCampaign(G));
   }));
@@ -829,11 +830,11 @@ function simDebateScreen(G) {
     const order = shuffle([0, 1, 2], rng);
     const el = simMount(G, `<div class="sim-wrap">
       <div class="card sim-card sim-debate">
-        <div class="sim-deb-top"><span class="sim-onair">En directe</span><p class="sim-kick">${final ? "Debat final" : "Debat a set"} · pregunta ${k + 1} de ${qs.length}</p></div>
+        <div class="sim-deb-top"><span class="sim-onair">En directo</span><p class="sim-kick">${final ? "Debate final" : "Debate a siete"} · pregunta ${k + 1} de ${qs.length}</p></div>
         <div class="sim-deb-stage">${[s.me, ...s.rivals.filter((r) => !r.ccaa).slice(0, 4)].map((p) => `<span class="sim-podium ${p.id === "jo" ? "me" : ""}" style="--pc:${p.color};color:${simInk(p.color)}">${esc(p.sig)}</span>`).join("")}</div>
         <blockquote class="sim-q">${q.q}</blockquote>
         <div class="sim-dil-opts">${order.map((i, j) => `<button class="sim-opt" data-o="${i}"><i>${"ABC"[j]}</i>${q.a[i].t}</button>`).join("")}</div>
-        <p class="sim-note">Pesa la coherència amb el teu programa, però també arribar a l'electorat del mig. El carisma del candidat hi ajuda.</p>
+        <p class="sim-note">Pesa la coherencia con tu programa, pero también llegar al electorado del centro. El carisma del candidato ayuda.</p>
       </div></div>`);
     $$("[data-o]", el).forEach((b) => b.addEventListener("click", () => {
       answers.push({ ...q.a[Number(b.dataset.o)].p });
@@ -844,18 +845,18 @@ function simDebateScreen(G) {
 }
 
 function simDebateResult(G, res, then) {
-  const verdict = res.delta > 0.025 ? ["Has guanyat el debat", "Els analistes et donen com a guanyador."] : res.delta > -0.02 ? ["Debat sense sorpreses", "Ni guanyes ni perds gaire."] : ["El debat se t'ha fet llarg", "Les respostes no han convençut."];
+  const verdict = res.delta > 0.025 ? ["Has ganado el debate", "Los analistas te dan como ganador."] : res.delta > -0.02 ? ["Debate sin sorpresas", "Ni ganas ni pierdes mucho."] : ["El debate se te ha hecho largo", "Las respuestas no han convencido."];
   const el = simMount(G, `<div class="sim-wrap">
     <div class="card sim-card sim-debres">
-      <p class="sim-kick">Després del debat</p>
+      <p class="sim-kick">Después del debate</p>
       <h3 class="sim-h">${verdict[0]}</h3>
       <p class="sim-lead">${verdict[1]}</p>
       <div class="sim-scores">
-        <div><small>Coherència amb el programa</small><b>${Math.round(res.coh * 100)} %</b><span><i style="width:${res.coh * 100}%"></i></span></div>
-        <div><small>Atractiu per a l'electorat</small><b>${Math.round(res.appeal * 100)} %</b><span><i style="width:${res.appeal * 100}%"></i></span></div>
+        <div><small>Coherencia con el programa</small><b>${Math.round(res.coh * 100)} %</b><span><i style="width:${res.coh * 100}%"></i></span></div>
+        <div><small>Atractivo para el electorado</small><b>${Math.round(res.appeal * 100)} %</b><span><i style="width:${res.appeal * 100}%"></i></span></div>
       </div>
-      ${simExplain("Les respostes coherents amb el teu programa mantenen la credibilitat; les més moderades atrauen votants del mig. Tothom qui ha vist el debat ara us coneix una mica més.", null)}
-      <div class="sim-actions-row"><button class="btn primary lg" data-go>Continua</button></div>
+      ${simExplain("Las respuestas coherentes con tu programa mantienen la credibilidad; las más moderadas atraen a votantes del centro. Todos los que han visto el debate ahora os conocen un poco más.", null)}
+      <div class="sim-actions-row"><button class="btn primary lg" data-go>Continúa</button></div>
     </div></div>`);
   Sfx.play(res.delta > 0.025 ? "win" : res.delta > -0.02 ? "ok" : "ko");
   $("[data-go]", el).addEventListener("click", then);
@@ -872,18 +873,18 @@ function simReflection(G) {
   const last = s.polls[s.polls.length - 1], prev = s.polls[s.polls.length - 2];
   const el = simMount(G, `<div class="sim-wrap">
     <div class="card sim-card sim-reflect">
-      <p class="sim-kick">Dissabte · Jornada de reflexió</p>
-      <h3 class="sim-h">Avui no es pot fer campanya</h3>
-      <p class="sim-lead">La llei electoral prohibeix demanar el vot el dia abans de les eleccions. També prohibeix difondre enquestes els cinc dies previs a la votació (article 69.7 de la LOREG): la que veus aquí és del joc i és ficció.</p>
+      <p class="sim-kick">Sábado · Jornada de reflexión</p>
+      <h3 class="sim-h">Hoy no se puede hacer campaña</h3>
+      <p class="sim-lead">La ley electoral prohíbe pedir el voto el día antes de las elecciones. También prohíbe difundir encuestas los cinco días previos a la votación (artículo 69.7 de la LOREG): la que ves aquí es del juego y es ficción.</p>
       <div class="sim-stats">
-        <div><b>${count("miting")}</b><small>mítings</small></div>
-        <div><b>${visited.size}</b><small>circumscripcions visitades</small></div>
-        <div><b>${count("xarxes")}</b><small>campanyes a les xarxes</small></div>
-        <div><b>${count("entrevista")}</b><small>entrevistes</small></div>
-        <div><b>${Math.round(s.awG * 100)} %</b><small>us coneix a tot l'Estat</small></div>
+        <div><b>${count("miting")}</b><small>mítines</small></div>
+        <div><b>${visited.size}</b><small>circunscripciones visitadas</small></div>
+        <div><b>${count("xarxes")}</b><small>campañas en las redes</small></div>
+        <div><b>${count("entrevista")}</b><small>entrevistas</small></div>
+        <div><b>${Math.round(s.awG * 100)} %</b><small>os conoce en todo el Estado</small></div>
       </div>
-      <div class="sim-newpoll"><h4>L'última enquesta del joc</h4>${simPollBars(s, last, prev)}</div>
-      <div class="sim-actions-row"><button class="btn primary lg" data-go>Obre els col·legis electorals</button></div>
+      <div class="sim-newpoll"><h4>La última encuesta del juego</h4>${simPollBars(s, last, prev)}</div>
+      <div class="sim-actions-row"><button class="btn primary lg" data-go>Abren los colegios electorales</button></div>
     </div></div>`);
   $("[data-go]", el).addEventListener("click", () => { s.stage = "night"; simSave(G); Sfx.play("pick"); simNight(G); });
 }
@@ -905,20 +906,20 @@ function simNight(G) {
 
   const el = simMount(G, `<div class="sim-wrap sim-night">
     <div class="sim-night-head">
-      <div><p class="sim-kick">Diumenge · 20.00 h</p><h3 class="sim-h">${s.round === 2 ? "Nit electoral, quatre anys després" : "Nit electoral"}</h3></div>
-      <div class="sim-esc"><small>Escrutat</small><b data-pct>0 %</b><span><i data-bar></i></span></div>
+      <div><p class="sim-kick">Domingo · 20.00 h</p><h3 class="sim-h">${s.round === 2 ? "Noche electoral, cuatro años después" : "Noche electoral"}</h3></div>
+      <div class="sim-esc"><small>Escrutado</small><b data-pct>0 %</b><span><i data-bar></i></span></div>
     </div>
     <div class="sim-grid">
       <section class="card sim-hemicard">
-        <div class="hemi-wrap">${hemicycleSVG(finalHemi)}<div class="hemi-center"><strong data-me>0</strong><small>escons de ${esc(s.me.sig)}</small></div></div>
+        <div class="hemi-wrap">${hemicycleSVG(finalHemi)}<div class="hemi-center"><strong data-me>0</strong><small>escaños de ${esc(s.me.sig)}</small></div></div>
         <div class="sim-tally" data-tally></div>
       </section>
       <div class="sim-side">
-        <section class="card sim-mapcard"><div class="sim-cardhead"><h4>Guanyador a cada circumscripció</h4><small>El recompte avança de les circumscripcions petites a les grans.</small></div><div class="sim-mapbox night" data-tiles>${simSpainMap("night")}</div></section>
+        <section class="card sim-mapcard"><div class="sim-cardhead"><h4>Ganador en cada circunscripción</h4><small>El recuento avanza de las circunscripciones pequeñas a las grandes.</small></div><div class="sim-mapbox night" data-tiles>${simSpainMap("night")}</div></section>
         <section class="card sim-ticker"><ol data-ticker aria-live="polite"></ol></section>
       </div>
     </div>
-    <div class="sim-endbar"><button class="btn ghost" data-skip>Salta al resultat</button></div>
+    <div class="sim-endbar"><button class="btn ghost" data-skip>Salta al resultado</button></div>
   </div>`);
   const circles = {};
   $$(".hemicycle circle", el).forEach((c) => { (circles[c.dataset.p] = circles[c.dataset.p] || []).push(c); c.setAttribute("fill", SIM_GREY); });
@@ -944,12 +945,12 @@ function simNight(G) {
     t.style.setProperty("--f", simById(s, win).color);
     t.style.setProperty("--t", simInk(simById(s, win).color));
     t.classList.add("in");
-    t.setAttribute("aria-label", `${p.name}: guanya ${simById(s, win).name}`);
+    t.setAttribute("aria-label", `${p.name}: gana ${simById(s, win).name}`);
     const mine = p.won.jo;
     if (mine || counted % 4 === 0 || p.seats >= 10) {
       const li = document.createElement("li");
       li.className = mine ? "me" : "";
-      li.innerHTML = mine ? `<b>${esc(p.name)}</b>: ${esc(s.me.sig)} hi treu ${mine === 1 ? "1 escó" : `${mine} escons`}`
+      li.innerHTML = mine ? `<b>${esc(p.name)}</b>: ${esc(s.me.sig)} saca ${mine === 1 ? "1 escaño" : `${mine} escaños`}`
         : `<b>${esc(p.name)}</b>: ${Object.keys(p.won).filter((id) => p.won[id]).map((id) => `${esc(simById(s, id).sig)} ${p.won[id]}`).join(" · ")}`;
       ticker.prepend(li);
       while (ticker.children.length > 6) ticker.lastChild.remove();
@@ -968,8 +969,8 @@ function simNight(G) {
     timer();
     const btn = $("[data-skip]", el);
     const est = firstPoll?.est.jo;
-    btn.insertAdjacentHTML("beforebegin", `<p class="sim-night-sum">${esc(s.me.sig)}: <b>${r.totals.jo.seats} ${r.totals.jo.seats === 1 ? "escó" : "escons"}</b> i el ${simPct(r.totals.jo.share)} % dels vots${est !== undefined && s.round !== 2 && !simPollsHidden() ? ` (la primera enquesta et donava un ${simNum(est)} %)` : ""}.</p>`);
-    btn.textContent = simShortMode(s) || s.round === 2 ? "Veure el resultat" : "Veure l'informe electoral";
+    btn.insertAdjacentHTML("beforebegin", `<p class="sim-night-sum">${esc(s.me.sig)}: <b>${r.totals.jo.seats} ${r.totals.jo.seats === 1 ? "escaño" : "escaños"}</b> y el ${simPct(r.totals.jo.share)} % de los votos${est !== undefined && s.round !== 2 && !simPollsHidden() ? ` (la primera encuesta te daba un ${simNum(est)} %)` : ""}.</p>`);
+    btn.textContent = simShortMode(s) || s.round === 2 ? "Ver el resultado" : "Ver el informe electoral";
     btn.classList.replace("ghost", "primary");
     btn.classList.add("pulse");
     btn.onclick = () => simAfterNight(G, r);
@@ -1052,29 +1053,29 @@ function simElectionReport(s, r, compact = false) {
   const perSeat = (id) => (r.totals[id].seats ? r.totals[id].votes / r.totals[id].seats : null);
   return `<div class="sim-report">
     <div class="sim-rep-head" style="--pc:${s.me.color}">${simLogoSvg(s.me, 64)}
-      <div><b>${esc(s.me.name)}</b><span>${fmt(me.votes)} vots · ${simPct(me.share)} % · ${seats} ${seats === 1 ? "escó" : "escons"}</span></div>
-      <em class="${ok ? "ok" : "ko"}">${ok ? "Objectiu complert" : "Objectiu no assolit"} · ${s.goal}</em>
+      <div><b>${esc(s.me.name)}</b><span>${fmt(me.votes)} votos · ${simPct(me.share)} % · ${seats} ${seats === 1 ? "escaño" : "escaños"}</span></div>
+      <em class="${ok ? "ok" : "ko"}">${ok ? "Objetivo cumplido" : "Objetivo no alcanzado"} · ${s.goal}</em>
     </div>
-    ${simHemi(s, Object.fromEntries(parties.map((p) => [p.id, r.totals[p.id].seats])), `<strong>176</strong><small>majoria absoluta</small>`)}
+    ${simHemi(s, Object.fromEntries(parties.map((p) => [p.id, r.totals[p.id].seats])), `<strong>176</strong><small>mayoría absoluta</small>`)}
     <div class="sim-restable">${rows.map((p) => `<div class="sim-rrow ${p.id === "jo" ? "me" : ""}">${simLogo(p)}<span class="n">${esc(p.name)}</span><span class="v">${fmt(r.totals[p.id].votes)}</span><span class="pc">${simPct(r.totals[p.id].share)} %</span><span class="bar"><i style="width:${(r.totals[p.id].seats / maxSeats) * 100}%;--pc:${p.color}"></i></span><b>${r.totals[p.id].seats}</b></div>`).join("")}</div>
-    <p class="sim-note">Participació: ${simPct(r.turnout)} % · ${fmt(r.cast)} votants de ${fmt(r.electors)} electors.</p>
+    <p class="sim-note">Participación: ${simPct(r.turnout)} % · ${fmt(r.cast)} votantes de ${fmt(r.electors)} electores.</p>
     ${compact ? "" : `
-    <h4>On has guanyat i on has perdut</h4>
+    <h4>Dónde has ganado y dónde has perdido</h4>
     ${cc.gain.length || cc.hold.length ? `<ul class="sim-close">
-      ${cc.gain.map((x) => { const p = r.provs[x.i]; return `<li><b>${esc(p.name)}</b> · T'han faltat <b>${fmt(x.n)}</b> vots per ${p.won.jo ? "un altre escó" : "el primer escó"}${p.elig.includes("jo") ? "" : " (primer calia superar el 3 % dels vots vàlids)"}.</li>`; }).join("")}
-      ${cc.hold.map((x) => { const p = r.provs[x.i]; return `<li class="hold"><b>${esc(p.name)}</b> · Has salvat l'últim escó per només <b>${fmt(x.n)}</b> vots.</li>`; }).join("")}
+      ${cc.gain.map((x) => { const p = r.provs[x.i]; return `<li><b>${esc(p.name)}</b> · Te han faltado <b>${fmt(x.n)}</b> votos para ${p.won.jo ? "otro escaño" : "el primer escaño"}${p.elig.includes("jo") ? "" : " (primero había que superar el 3 % de los votos válidos)"}.</li>`; }).join("")}
+      ${cc.hold.map((x) => { const p = r.provs[x.i]; return `<li class="hold"><b>${esc(p.name)}</b> · Has salvado el último escaño por solo <b>${fmt(x.n)}</b> votos.</li>`; }).join("")}
     </ul>` : ""}
-    ${firstTable ? `<p class="sim-sub">Així s'han repartit els ${firstTable.seats} escons de ${esc(firstTable.name)} amb la [[Llei d'Hondt]]: es divideixen els vots de cada candidatura per 1, 2, 3… i els escons van als quocients més alts.</p>${tableFor(firstTable)}` : ""}
-    <h4>El preu de cada escó</h4>
+    ${firstTable ? `<p class="sim-sub">Así se han repartido los ${firstTable.seats} escaños de ${esc(firstTable.name)} con la [[ley D'Hondt]]: se dividen los votos de cada candidatura entre 1, 2, 3… y los escaños van a los cocientes más altos.</p>${tableFor(firstTable)}` : ""}
+    <h4>El precio de cada escaño</h4>
     <div class="sim-stats">
-      ${rows.filter((p) => r.totals[p.id].seats).slice(0, 4).map((p) => `<div class="${p.id === "jo" ? "me" : ""}"><b>${fmt(perSeat(p.id))}</b><small>vots per escó de ${esc(p.sig)}</small></div>`).join("")}
-      ${!seats ? `<div class="me"><b>—</b><small>${esc(s.me.sig)} no ha tret cap escó</small></div>` : ""}
+      ${rows.filter((p) => r.totals[p.id].seats).slice(0, 4).map((p) => `<div class="${p.id === "jo" ? "me" : ""}"><b>${fmt(perSeat(p.id))}</b><small>votos por escaño de ${esc(p.sig)}</small></div>`).join("")}
+      ${!seats ? `<div class="me"><b>—</b><small>${esc(s.me.sig)} no ha sacado ningún escaño</small></div>` : ""}
     </div>
-    <h4>Vots perduts</h4>
+    <h4>Votos perdidos</h4>
     <div class="sim-stats">
-      <div><b>${simPct(lost / r.valid, 0)} %</b><small>dels vots vàlids han anat a partits sense escó a la seva circumscripció</small></div>
-      <div class="me"><b>${simPct(lostMine / Math.max(1, me.votes), 0)} %</b><small>dels teus vots no han triat cap diputat</small></div>
-      <div><b>${provsWon}</b><small>circumscripcions amb escó de ${esc(s.me.sig)}</small></div>
+      <div><b>${simPct(lost / r.valid, 0)} %</b><small>de los votos válidos han ido a partidos sin escaño en su circunscripción</small></div>
+      <div class="me"><b>${simPct(lostMine / Math.max(1, me.votes), 0)} %</b><small>de tus votos no han elegido a ningún diputado</small></div>
+      <div><b>${provsWon}</b><small>circunscripciones con escaño de ${esc(s.me.sig)}</small></div>
     </div>`}
   </div>`;
 }
@@ -1086,12 +1087,12 @@ function simElectionReportScreen(G) {
   const el = simMount(G, `<div class="sim-wrap">
     <div class="card sim-card">
       <p class="sim-kick">Informe electoral</p>
-      <h3 class="sim-h">${s.res.seats.jo} ${s.res.seats.jo === 1 ? "escó" : "escons"} per a ${esc(s.me.name)}</h3>
+      <h3 class="sim-h">${s.res.seats.jo} ${s.res.seats.jo === 1 ? "escaño" : "escaños"} para ${esc(s.me.name)}</h3>
       ${rich(simElectionReport(s, r))}
-      <h4 class="sim-h4">Lliçons d'aquesta nit</h4>
-      <ul class="sim-lessons">${(s.lessons || []).map((l) => `<li>${rich(l.t)} <a href="#apren/${l.link}">Aprèn-ne més</a></li>`).join("")}</ul>
-      ${simExplain(Object.values(s.res.seats).some((n) => n >= SIM_MAJ) ? "Un partit té majoria absoluta: la investidura serà un tràmit." : "Ningú no té els 176 escons de la [[majoria absoluta]]. El Rei obrirà una ronda de consultes amb tots els partits i proposarà un candidat a la [[investidura]].", "nou-govern")}
-      <div class="sim-actions-row"><button class="btn primary lg" data-go>Comença la ronda de consultes</button></div>
+      <h4 class="sim-h4">Lo que deja esta noche</h4>
+      <ul class="sim-lessons">${(s.lessons || []).map((l) => `<li>${rich(l.t)} <a href="#apren/${l.link}">Aprende más</a></li>`).join("")}</ul>
+      ${simExplain(Object.values(s.res.seats).some((n) => n >= SIM_MAJ) ? "Un partido tiene mayoría absoluta: la investidura será un trámite." : "Nadie tiene los 176 escaños de la [[mayoría absoluta]]. El Rey abrirá una ronda de consultas con todos los partidos y propondrá un candidato a la [[investidura]].", "nou-govern")}
+      <div class="sim-actions-row"><button class="btn primary lg" data-go>Empieza la ronda de consultas</button></div>
     </div></div>`);
   $("[data-go]", el).addEventListener("click", () => {
     s.stage = "gov-consult";
@@ -1128,49 +1129,35 @@ function simFinishGame(G) {
   const govLine = simGovLine(s);
   const lessons = [...(s.lessons || simLessons(s, r)), ...(s.r2?.lessons || [])].slice(0, 5);
   const verdict = s.mode === "legislatura" && L ? simLegVerdict(s) : gov?.outcome ? SIM_OUTCOME_VERDICT[gov.outcome] : seats >= s.goal
-    ? seats >= s.goal * 1.3 ? "Resultat històric: superes de llarg l'objectiu de la direcció." : "Objectiu complert. A la seu del partit es fa festa."
-    : seats > 0 ? `T'han faltat ${s.goal - seats} ${s.goal - seats === 1 ? "escó" : "escons"} per arribar a l'objectiu.` : "Sense representació aquesta vegada. Prova de concentrar esforços allà on tens més opcions.";
+    ? seats >= s.goal * 1.3 ? "Resultado histórico: superas de largo el objetivo de la dirección." : "Objetivo cumplido. En la sede del partido hay fiesta."
+    : seats > 0 ? `Te han faltado ${s.goal - seats} ${s.goal - seats === 1 ? "escaño" : "escaños"} para llegar al objetivo.` : "Sin representación esta vez. Prueba a concentrar esfuerzos donde tienes más opciones.";
 
   const extraHtml = `<div class="sim-final">
-    ${s.duel ? `<div class="sim-banner ok">Resultat enviat al duel: ${seats} ${seats === 1 ? "escó" : "escons"}. <a href="#duel/${esc(s.duel)}">Torna al duel</a></div>` : ""}
-    <div class="sim-scorebox"><h4>Com s'ha calculat</h4><ul>${sc.parts.map((p) => `<li><span>${esc(p.label)}</span><b>${p.pts >= 0 ? "+" : ""}${fmt(p.pts)}</b></li>`).join("")}${sc.mult !== 1 ? `<li><span>Dificultat ${SIM_DIFF[s.diff].label.toLowerCase()}</span><b>×${simNum(sc.mult)}</b></li>` : ""}</ul></div>
+    ${s.duel ? `<div class="sim-banner ok">Resultado enviado al duelo: ${seats} ${seats === 1 ? "escaño" : "escaños"}. <a href="#duel/${esc(s.duel)}">Vuelve al duelo</a></div>` : ""}
+    <div class="sim-scorebox"><h4>Cómo se ha calculado</h4><ul>${sc.parts.map((p) => `<li><span>${esc(p.label)}</span><b>${p.pts >= 0 ? "+" : ""}${fmt(p.pts)}</b></li>`).join("")}${sc.mult !== 1 ? `<li><span>Dificultad ${SIM_DIFF[s.diff].label.toLowerCase()}</span><b>×${simNum(sc.mult)}</b></li>` : ""}</ul></div>
     ${govLine ? `<div class="sim-govline">${govLine}</div>` : ""}
-    ${s.res2 ? `<div class="sim-reelect"><h4>Les eleccions de quatre anys després</h4>${simHemi(s, s.res2.seats, `<strong>${s.res2.seats.jo}</strong><small>escons de ${esc(s.me.sig)} (abans ${seats})</small>`)}</div>` : rich(simElectionReport(s, r, !simShortMode(s)))}
-    <h4 class="sim-h4">Informe de la partida: què has après</h4>
-    <ul class="sim-lessons">${lessons.map((l) => `<li>${rich(l.t)} <a href="#apren/${l.link}">Aprèn-ne més</a></li>`).join("")}</ul>
-    <div class="sim-quiz"><h4>Ho sabries explicar?</h4><ol>${SIM_QUIZ.map((q) => `<li><details><summary>${q.q}</summary><p>${rich(q.a)}</p></details></li>`).join("")}</ol></div>
-    <div class="sim-sharebox"><button class="btn primary" data-share>Comparteix el resultat</button><small>Es genera una imatge al teu dispositiu. No s'envia res a cap servidor.</small></div>
+    ${s.res2 ? `<div class="sim-reelect"><h4>Las elecciones de cuatro años después</h4>${simHemi(s, s.res2.seats, `<strong>${s.res2.seats.jo}</strong><small>escaños de ${esc(s.me.sig)} (antes ${seats})</small>`)}</div>` : rich(simElectionReport(s, r, !simShortMode(s)))}
+    <h4 class="sim-h4">Informe de la partida: qué has aprendido</h4>
+    <ul class="sim-lessons">${lessons.map((l) => `<li>${rich(l.t)} <a href="#apren/${l.link}">Aprende más</a></li>`).join("")}</ul>
+    <div class="sim-quiz"><h4>¿Sabrías explicarlo?</h4><ol>${SIM_QUIZ.map((q) => `<li><details><summary>${q.q}</summary><p>${rich(q.a)}</p></details></li>`).join("")}</ol></div>
+    <div class="sim-sharebox"><button class="btn primary" data-share>Comparte el resultado</button><small>Se genera una imagen en tu dispositivo. No se envía nada a ningún servidor.</small></div>
     <div class="sim-learn">
-      <a href="#apren/vots-escons">Com es passa de vots a escons</a>
-      <a href="#apren/nou-govern">Del recompte al nou Govern</a>
-      <a href="#apren/congres">El Congrés per dins</a>
+      <a href="#apren/vots-escons">Cómo se pasa de votos a escaños</a>
+      <a href="#apren/nou-govern">Del recuento al nuevo Gobierno</a>
+      <a href="#apren/congres">El Congreso por dentro</a>
     </div>
-    </section>
-    <section class="simsec">
-      <p class="simsec-k">Simulador de debat</p>
-      <h2 class="section-title sm">Com funciona el debat</h2>
-      <ol class="sim-howto">
-        <li><b>Crea el candidat</b><span>Nom, partit, aspecte, ideologia, mida del partit i estil davant la càmera.</span></li>
-        <li><b>Tria el debat</b><span>Cara a cara, a quatre, a set o dels partits petits: les invitacions depenen de la mida del teu partit.</span></li>
-        <li><b>Prepara't</b><span>Reparteix tres hores d'assaig entre dades, rèpliques i càmera, i tria l'estratègia.</span></li>
-        <li><b>Al plató</b><span>Respon, replica, detecta dades falses i aprofita el minut d'or. Al final, enquesta flash.</span></li>
-      </ol>
-      <div class="simsec-go"><a class="btn primary lg" href="#joc/debat">Entra al plató 🎬</a></div>
-    </section>
-    <p class="sim-fiction">${SIM_DISCLAIMER}</p>
   </div>`;
-  simDuoBind(root);
 
   const shareInfo = {
     seats: s.res2 ? s.res2.seats.jo : seats,
     seatMap: s.res2 ? s.res2.seats : s.res.seats,
-    sub: `${fmt(pts)} punts · ${SIM_MODE_INFO[s.mode].label}`,
+    sub: `${fmt(pts)} puntos · ${SIM_MODE_INFO[s.mode].label}`,
     line: simGovShort(s),
-    line2: `Objectiu de la direcció: ${s.goal} escons`,
+    line2: `Objetivo de la dirección: ${s.goal} escaños`,
   };
   ctx.finish({
     score: pts, xp, verdict, extraHtml,
-    unit: `punts · ${SIM_MODE_INFO[s.mode].label.toLowerCase()}`,
+    unit: `puntos · ${SIM_MODE_INFO[s.mode].label.toLowerCase()}`,
     ratio: seats >= s.goal ? 0.8 : seats > 0 ? 0.5 : 0.1,
     record: { isRecord: isRec && pts > 0, prevBest: prevMode, levelUp: rec.levelUp },
     onShown(body) {
@@ -1180,37 +1167,37 @@ function simFinishGame(G) {
 }
 
 const SIM_OUTCOME_VERDICT = {
-  pm: "Investidura superada: ets president del Govern.",
-  coal: "Entres al Govern de coalició amb ministeris propis.",
-  leg: "Un acord de legislatura: governa un altre partit, però amb les teves mesures.",
-  inv: "Has fet possible la investidura a canvi d'algunes mesures.",
-  opp: "Et toca l'oposició. Des d'allà també es fa política.",
-  rep: "Ningú no ha estat investit en dos mesos: es repeteixen les eleccions.",
+  pm: "Investidura superada: eres presidente del Gobierno.",
+  coal: "Entras en el Gobierno de coalición con ministerios propios.",
+  leg: "Un acuerdo de legislatura: gobierna otro partido, pero con tus medidas.",
+  inv: "Has hecho posible la investidura a cambio de algunas medidas.",
+  opp: "Te toca la oposición. Desde allí también se hace política.",
+  rep: "Nadie ha sido investido en dos meses: se repiten las elecciones.",
 };
 
 // Preguntes de comprensió: es poden respondre amb l'informe de qualsevol partida
 const SIM_QUIZ = [
-  { q: "Què és el vot útil?", a: "Votar un partit amb opcions d'escó a la teva circumscripció en lloc del preferit, perquè a les províncies petites només entren els primers. Al joc, els partits sense opcions perden votants en la segona passada del model." },
-  { q: "Per a què serveix el llindar del 3 %?", a: "Una candidatura necessita el 3 % dels vots vàlids (blancs inclosos) de la circumscripció per entrar al repartiment d'escons. Només es nota a les circumscripcions grans: a les petites cal molt més per treure escó." },
-  { q: "Per què el preu d'un escó no és igual per a tothom?", a: "La [[Llei d'Hondt]] i les circumscripcions petites afavoreixen els partits més votats a cada província: els grans necessiten menys vots per escó que els petits repartits per tot l'Estat." },
-  { q: "Per què sovint cal pactar?", a: "Per ser investit president cal la [[majoria absoluta]] (176 sís) a la primera votació, o més sís que nos a la segona. Si cap partit té prou escons, cal sumar suports, i cada partit té les seves línies vermelles." },
-  { q: "Com funciona la investidura?", a: "El Rei proposa un candidat després de consultar els partits. Si no obté 176 sís, 48 hores després es vota de nou i n'hi ha prou amb més sís que nos. Si en dos mesos ningú no és investit, es repeteixen les eleccions." },
+  { q: "¿Qué es el voto útil?", a: "Votar a un partido con opciones de escaño en tu circunscripción en lugar del preferido, porque en las provincias pequeñas solo entran los primeros. En el juego, los partidos sin opciones pierden votantes en la segunda pasada del modelo." },
+  { q: "¿Para qué sirve el umbral del 3 %?", a: "Una candidatura necesita el 3 % de los votos válidos (blancos incluidos) de la circunscripción para entrar en el reparto de escaños. Solo se nota en las circunscripciones grandes: en las pequeñas hace falta mucho más para sacar escaño." },
+  { q: "¿Por qué el precio de un escaño no es igual para todos?", a: "La [[ley D'Hondt]] y las circunscripciones pequeñas favorecen a los partidos más votados en cada provincia: los grandes necesitan menos votos por escaño que los pequeños repartidos por todo el Estado." },
+  { q: "¿Por qué a menudo hay que pactar?", a: "Para ser investido presidente hace falta la [[mayoría absoluta]] (176 síes) en la primera votación, o más síes que noes en la segunda. Si ningún partido tiene suficientes escaños, hay que sumar apoyos, y cada partido tiene sus líneas rojas." },
+  { q: "¿Cómo funciona la investidura?", a: "El Rey propone un candidato después de consultar a los partidos. Si no obtiene 176 síes, 48 horas después se vota de nuevo y basta con más síes que noes. Si en dos meses nadie es investido, se repiten las elecciones." },
 ];
 
 // Assoliments propis del simulador
 ACHIEVEMENTS.push(
-  { id: "sim-escons", name: "Primer escó", desc: "Treu almenys un diputat al Simulador del 29N." },
-  { id: "sim-objectiu", name: "Missió complerta", desc: "Arriba a l'objectiu de la direcció al simulador." },
-  { id: "sim-grup", name: "Grup propi", desc: "Treu 15 diputats o més al simulador: prou per tenir grup parlamentari." },
-  { id: "sim-dificil", name: "Contra pronòstic", desc: "Arriba a l'objectiu del simulador en dificultat difícil." },
-  { id: "sim-majoria", name: "Majoria absoluta", desc: "Treu 176 escons o més al simulador." },
-  { id: "sim-votutil", name: "Vot útil", desc: "Guanya una circumscripció amb menys del 30 % dels vots." },
-  { id: "sim-hondt", name: "Hondt a favor", desc: "Emporta't l'últim escó que es reparteix en una circumscripció." },
-  { id: "sim-arreu", name: "Arreu del mapa", desc: "Treu escó a 26 circumscripcions o més." },
-  { id: "sim-president", name: "Del carrer a la Moncloa", desc: "Supera una investidura com a candidat al simulador." },
-  { id: "sim-minoria", name: "Govern en minoria", desc: "Sigues investit a la segona votació, sense majoria absoluta." },
-  { id: "sim-mocio", name: "Moció superada", desc: "Supera una moció de censura o guanya una qüestió de confiança." },
-  { id: "sim-legislatura", name: "Legislatura completa", desc: "Governa els vuit trimestres d'una legislatura." },
+  { id: "sim-escons", name: "Primer escaño", desc: "Saca al menos un diputado en el Simulador del 29N." },
+  { id: "sim-objectiu", name: "Misión cumplida", desc: "Llega al objetivo de la dirección en el simulador." },
+  { id: "sim-grup", name: "Grupo propio", desc: "Saca 15 diputados o más en el simulador: suficiente para tener grupo parlamentario." },
+  { id: "sim-dificil", name: "Contra pronóstico", desc: "Llega al objetivo del simulador en dificultad difícil." },
+  { id: "sim-majoria", name: "Mayoría absoluta", desc: "Saca 176 escaños o más en el simulador." },
+  { id: "sim-votutil", name: "Voto útil", desc: "Gana una circunscripción con menos del 30 % de los votos." },
+  { id: "sim-hondt", name: "Hondt a favor", desc: "Llévate el último escaño que se reparte en una circunscripción." },
+  { id: "sim-arreu", name: "Por todo el mapa", desc: "Saca escaño en 26 circunscripciones o más." },
+  { id: "sim-president", name: "De la calle a la Moncloa", desc: "Supera una investidura como candidato en el simulador." },
+  { id: "sim-minoria", name: "Gobierno en minoría", desc: "Sé investido en la segunda votación, sin mayoría absoluta." },
+  { id: "sim-mocio", name: "Moción superada", desc: "Supera una moción de censura o gana una cuestión de confianza." },
+  { id: "sim-legislatura", name: "Legislatura completa", desc: "Gobierna los ocho trimestres de una legislatura." },
 );
 
 // =========================================================
@@ -1220,15 +1207,15 @@ const SIM_MEDIA_ICON = { entrevista: "🎙", forum: "🏛", cara: "⚔" };
 function simOfferInfo(s, o) {
   if (o.type === "entrevista") {
     const m = SIM_OUTLETS.find((x) => x.k === o.outlet);
-    const where = m.reach === "estatal" ? "Audiència a tot l'Estat" : m.reach === "ccaa" ? `Audiència a ${SIM_PROVS[o.prov].ccaa}` : `Audiència a ${SIM_PROVS[o.prov].name}`;
-    return { title: `${m.name} et vol entrevistar`, sub: `${where} · tema principal: ${SIM_THEMES[o.th].label.toLowerCase()}`, tag: o.tone === "dura" ? "Entrevista dura" : "Entrevista amable", hard: o.tone === "dura" };
+    const where = m.reach === "estatal" ? "Audiencia en todo el Estado" : m.reach === "ccaa" ? `Audiencia en ${SIM_PROVS[o.prov].ccaa}` : `Audiencia en ${SIM_PROVS[o.prov].name}`;
+    return { title: `${m.name} te quiere entrevistar`, sub: `${where} · tema principal: ${SIM_THEMES[o.th].label.toLowerCase()}`, tag: o.tone === "dura" ? "Entrevista dura" : "Entrevista amable", hard: o.tone === "dura" };
   }
   if (o.type === "forum") {
     const f = SIM_FORUMS.find((x) => x.k === o.forum);
-    return { title: `${f.name} et convida a parlar`, sub: `Públic: ${SIM_SEGMENTS.find((g) => g.k === f.seg).label.toLowerCase()}`, tag: "Fòrum" };
+    return { title: `${f.name} te invita a hablar`, sub: `Público: ${SIM_SEGMENTS.find((g) => g.k === f.seg).label.toLowerCase()}`, tag: "Foro" };
   }
   const R = simById(s, o.rival);
-  return { title: `${R.cand || "El candidat"} (${R.sig}) et repta a un cara a cara`, sub: "Televisió en directe. Si el declines, et retrauran que defuges el debat.", tag: "Repte", hard: true };
+  return { title: `${R.cand || "El candidato"} (${R.sig}) te reta a un cara a cara`, sub: "Televisión en directo. Si lo declinas, te reprocharán que rehúyes el debate.", tag: "Reto", hard: true };
 }
 function simOfferRow(s, o) {
   const i = simOfferInfo(s, o);
@@ -1236,7 +1223,7 @@ function simOfferRow(s, o) {
   return `<li class="sim-offer ${done ? "done" : ""}" data-type="${o.type}">
     <span class="sim-offer-ico" aria-hidden="true">${SIM_MEDIA_ICON[o.type]}</span>
     <div><em class="${i.hard ? "hard" : ""}">${i.tag}</em><b>${esc(i.title)}</b><small>${esc(i.sub)}</small></div>
-    ${done ? `<span class="sim-offer-st">${o.status === "feta" ? "Fet" : "Declinat"}</span>` : `<div class="sim-offer-btns"><button class="btn primary" data-acc="${o.id}">Accepta</button><button class="btn ghost" data-dec="${o.id}">Declina</button></div>`}
+    ${done ? `<span class="sim-offer-st">${o.status === "feta" ? "Hecho" : "Declinado"}</span>` : `<div class="sim-offer-btns"><button class="btn primary" data-acc="${o.id}">Acepta</button><button class="btn ghost" data-dec="${o.id}">Declina</button></div>`}
   </li>`;
 }
 
@@ -1259,10 +1246,10 @@ function simMediaScreen(G) {
     const q = qs[k];
     const el = simMount(G, `<div class="sim-wrap">
       <div class="card sim-card sim-media ${o.type}">
-        <div class="sim-media-top"><span class="sim-onair">${o.type === "cara" ? "En directe" : "Gravant"}</span><p class="sim-kick">${esc(info.tag)} · pregunta ${k + 1} de ${qs.length}</p></div>
+        <div class="sim-media-top"><span class="sim-onair">${o.type === "cara" ? "En directo" : "Grabando"}</span><p class="sim-kick">${esc(info.tag)} · pregunta ${k + 1} de ${qs.length}</p></div>
         <div class="sim-media-set">${o.type === "cara"
           ? `<span class="sim-podium me" style="--pc:${s.me.color};color:${simInk(s.me.color)}">${esc(s.me.sig)}</span><span class="sim-media-vs">VS</span><span class="sim-podium" style="--pc:${R.color};color:${simInk(R.color)}">${esc(R.sig)}</span>`
-          : `<span class="sim-mic" aria-hidden="true">🎙</span><div><b>${esc(SIM_OUTLETS.find((x) => x.k === o.outlet).short)}</b><small>${o.tone === "dura" ? "Una periodista coneguda per les preguntes incòmodes" : "Una conversa tranquil·la"}</small></div>`}</div>
+          : `<span class="sim-mic" aria-hidden="true">🎙</span><div><b>${esc(SIM_OUTLETS.find((x) => x.k === o.outlet).short)}</b><small>${o.tone === "dura" ? "Una periodista conocida por las preguntas incómodas" : "Una conversación tranquila"}</small></div>`}</div>
         <blockquote class="sim-q">${o.type === "cara" ? "Moderadora: " : ""}${q.q}</blockquote>
         <div class="sim-dil-opts">${order(k).map((j, n) => `<button class="sim-opt" data-o="${j}"><i>${"ABC"[n]}</i>${q.a[j].t}</button>`).join("")}</div>
         <div data-react></div>
@@ -1275,9 +1262,9 @@ function simMediaScreen(G) {
       Sfx.play(a.ev ? "ko" : qual >= 0.6 ? "ok" : "tick");
       const pool = a.ev ? SIM_REACTIONS.ev : qual >= 0.62 ? SIM_REACTIONS.good : SIM_REACTIONS.mid;
       const line = o.type === "cara"
-        ? (qual >= 0.62 ? `Resposta sòlida: el candidat de ${R.sig} no troba per on atacar-te.` : `El candidat de ${R.sig} aprofita la resposta per contraatacar.`)
+        ? (qual >= 0.62 ? `Respuesta sólida: el candidato de ${R.sig} no encuentra por dónde atacarte.` : `El candidato de ${R.sig} aprovecha la respuesta para contraatacar.`)
         : pool[(k + picks.length) % pool.length];
-      $("[data-react]", el).innerHTML = `<div class="sim-react ${a.ev || qual < 0.5 ? "ko" : qual >= 0.62 ? "ok" : ""}"><p>${esc(line)}</p><button class="btn primary" data-next>${k + 1 < qs.length ? "Pregunta següent" : "Final"}</button></div>`;
+      $("[data-react]", el).innerHTML = `<div class="sim-react ${a.ev || qual < 0.5 ? "ko" : qual >= 0.62 ? "ok" : ""}"><p>${esc(line)}</p><button class="btn primary" data-next>${k + 1 < qs.length ? "Siguiente pregunta" : "Final"}</button></div>`;
       $("[data-next]", el).focus();
       $("[data-next]", el).addEventListener("click", () => ask(k + 1));
     }));
@@ -1290,15 +1277,15 @@ function simMediaScreen(G) {
     const good = o.type === "cara" ? res.won : res.good;
     Sfx.play(good ? "win" : "lose");
     const why = o.type === "cara"
-      ? `Les respostes coherents amb el teu programa i que arriben a l'electorat del mig sumen; el carisma del candidat també hi pesa. ${res.won ? "Guanyar un cara a cara et dona visibilitat i resta suport al rival." : "Perdre'l et resta una mica de suport, però tothom qui l'ha vist ara et coneix més."}`
-      : `Una entrevista surt bé quan les respostes són clares i coherents amb el programa. ${res.evasive ? `Has esquivat ${res.evasive === 1 ? "una pregunta" : `${res.evasive} preguntes`}: ${o.tone === "dura" ? "en una entrevista dura, esquivar costa credibilitat." : "la periodista ho ha deixat passar, però no suma."} ` : ""}La solvència del candidat també hi ajuda.`;
+      ? `Las respuestas coherentes con tu programa y que llegan al electorado del centro suman; el carisma del candidato también pesa. ${res.won ? "Ganar un cara a cara te da visibilidad y resta apoyo al rival." : "Perderlo te resta un poco de apoyo, pero todos los que lo han visto ahora te conocen más."}`
+      : `Una entrevista sale bien cuando las respuestas son claras y coherentes con el programa. ${res.evasive ? `Has esquivado ${res.evasive === 1 ? "una pregunta" : `${res.evasive} preguntas`}: ${o.tone === "dura" ? "en una entrevista dura, esquivar cuesta credibilidad." : "la periodista lo ha dejado pasar, pero no suma."} ` : ""}La solvencia del candidato también ayuda.`;
     const el = simMount(G, `<div class="sim-wrap"><div class="card sim-card sim-media-res">
-      <p class="sim-kick">${esc(info.tag)} · resultat</p>
-      <h3 class="sim-h">${good ? (o.type === "cara" ? "Has guanyat el cara a cara" : "L'entrevista ha sortit bé") : (o.type === "cara" ? "El rival se n'ha sortit millor" : "L'entrevista no ha anat gaire bé")}</h3>
+      <p class="sim-kick">${esc(info.tag)} · resultado</p>
+      <h3 class="sim-h">${good ? (o.type === "cara" ? "Has ganado el cara a cara" : "La entrevista ha salido bien") : (o.type === "cara" ? "El rival ha salido mejor parado" : "La entrevista no ha ido muy bien")}</h3>
       <p class="sim-lead">${esc(res.msg)}</p>
-      <div class="sim-scores"><div><small>Qualitat de les respostes</small><b>${Math.round((o.type === "cara" ? res.mine : res.quality) * 100)} %</b><span><i style="width:${Math.min(100, (o.type === "cara" ? res.mine : res.quality) * 100)}%"></i></span></div></div>
+      <div class="sim-scores"><div><small>Calidad de las respuestas</small><b>${Math.round((o.type === "cara" ? res.mine : res.quality) * 100)} %</b><span><i style="width:${Math.min(100, (o.type === "cara" ? res.mine : res.quality) * 100)}%"></i></span></div></div>
       ${simExplain(why)}
-      <div class="sim-actions-row"><button class="btn primary lg" data-go>Torna a la campanya</button></div>
+      <div class="sim-actions-row"><button class="btn primary lg" data-go>Vuelve a la campaña</button></div>
     </div></div>`);
     $("[data-go]", el).addEventListener("click", () => simCampaign(G));
   }
@@ -1310,15 +1297,15 @@ function simForumScreen(G, o, back) {
   const seg = SIM_SEGMENTS.find((g) => g.k === f.seg);
   const view = Math.max(-1, Math.min(1, 1 - Math.abs(f.pos.p - s.me[f.pos.ax]) / 3));
   const el = simMount(G, `<div class="sim-wrap"><div class="card sim-card sim-media forum">
-    <p class="sim-kick">Fòrum · ${esc(seg.label.toLowerCase())}</p>
+    <p class="sim-kick">Foro · ${esc(seg.label.toLowerCase())}</p>
     <h3 class="sim-h">${esc(f.name)}</h3>
-    <p class="sim-lead">Tens deu minuts per parlar. ${view > 0.3 ? "És un públic que t'és afí." : view < -0.3 ? "És un públic que no comparteix gaire les teves idees." : "És un públic que pot anar cap a qualsevol banda."}</p>
+    <p class="sim-lead">Tienes diez minutos para hablar. ${view > 0.3 ? "Es un público afín." : view < -0.3 ? "Es un público que no comparte mucho tus ideas." : "Es un público que puede ir hacia cualquier lado."}</p>
     <div class="sim-dil-opts">
-      <button class="sim-opt" data-k="0"><i>A</i><span><b>Un discurs a mida</b><small>Dius el que aquest públic vol sentir. Molt aplaudiment${view < 0 ? ", però és el contrari del teu programa" : ""}.</small></span></button>
-      <button class="sim-opt" data-k="1"><i>B</i><span><b>Defensar el teu programa</b><small>Encara que no agradi a tothom. Guanyes credibilitat.</small></span></button>
-      <button class="sim-opt" data-k="2"><i>C</i><span><b>Un discurs general</b><small>Sense riscos, però sense gaire impacte.</small></span></button>
+      <button class="sim-opt" data-k="0"><i>A</i><span><b>Un discurso a medida</b><small>Dices lo que este público quiere oír. Muchos aplausos${view < 0 ? ", pero es lo contrario de tu programa" : ""}.</small></span></button>
+      <button class="sim-opt" data-k="1"><i>B</i><span><b>Defender tu programa</b><small>Aunque no guste a todo el mundo. Ganas credibilidad.</small></span></button>
+      <button class="sim-opt" data-k="2"><i>C</i><span><b>Un discurso general</b><small>Sin riesgos, pero sin mucho impacto.</small></span></button>
     </div>
-    <div class="sim-actions-row"><button class="btn ghost" data-back>Torna sense anar-hi</button></div>
+    <div class="sim-actions-row"><button class="btn ghost" data-back>Vuelve sin ir</button></div>
   </div></div>`);
   $("[data-back]", el).addEventListener("click", back);
   $$("[data-k]", el).forEach((b) => b.addEventListener("click", () => {
@@ -1327,11 +1314,11 @@ function simForumScreen(G, o, back) {
     simHud(G, "cred");
     Sfx.play(res.segD > 0 && res.cred >= 0 ? "ok" : "ko");
     const r = simMount(G, `<div class="sim-wrap"><div class="card sim-card sim-media-res">
-      <p class="sim-kick">Fòrum · resultat</p>
-      <h3 class="sim-h">${res.segD > 0.1 ? "Molt bona acollida" : res.segD > 0 ? "Bona acollida" : "Una acollida freda"}</h3>
+      <p class="sim-kick">Foro · resultado</p>
+      <h3 class="sim-h">${res.segD > 0.1 ? "Muy buena acogida" : res.segD > 0 ? "Buena acogida" : "Una acogida fría"}</h3>
       <p class="sim-lead">${esc(res.msg)}</p>
-      ${simExplain(`Cada tipus de votant dona importància a coses diferents. Aquest fòrum parla sobretot al grup «${res.label}»: el que hi diguis canvia com et veuen aquests votants a totes les circumscripcions. Dir a cada públic el contrari del teu programa et fa guanyar aplaudiments, però et costa credibilitat.`)}
-      <div class="sim-actions-row"><button class="btn primary lg" data-go>Torna a la campanya</button></div>
+      ${simExplain(`Cada tipo de votante da importancia a cosas diferentes. Este foro habla sobre todo al grupo «${res.label}»: lo que digas cambia cómo te ven estos votantes en todas las circunscripciones. Decir a cada público lo contrario de tu programa te hace ganar aplausos, pero te cuesta credibilidad.`)}
+      <div class="sim-actions-row"><button class="btn primary lg" data-go>Vuelve a la campaña</button></div>
     </div></div>`);
     $("[data-go]", r).addEventListener("click", () => simCampaign(G));
   }));

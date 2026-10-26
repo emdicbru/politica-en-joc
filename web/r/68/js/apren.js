@@ -388,129 +388,30 @@ function awardLearnXp(xp) {
 }
 
 // ---------- Encaminament dins de l'Aprèn ----------
+// #apren: la portada · #apren/<capítol>: el capítol pas a pas · #apren/<capítol>/tot: el capítol sencer d'un cop
+// #apren/essencials, /repas, /pla i /examen · les eines (#apren/partits…)
+const AP_PAGES = { essencials: () => renderEssencials(), repas: () => renderRepas(), pla: () => renderPla(), examen: () => renderExam() };
 function renderApren(arg) {
+  document.body.classList.remove("lesson");
   const ch = AP_CHAPTERS.find((c) => c.slug === arg);
   const tool = AP_TOOL_PAGES.includes(arg) ? arg : null;
   $$("#view-apren > .ap-page").forEach((p) => { p.hidden = true; });
   closeTerm();
-  if (arg === "examen") {
+  if (AP_PAGES[arg]) {
     $("#ap-chapter").hidden = false;
-    renderExam();
+    AP_PAGES[arg]();
   } else if (ch) {
     $("#ap-chapter").hidden = false;
-    renderChapter(ch);
+    if (location.hash.split("/")[2] === "tot") renderChapter(ch);
+    else renderLesson(ch);
   } else if (tool) {
     $(`#ap-tool-${tool}`).hidden = false;
     if (tool === "diccionari") renderDictionary();
   } else {
     $("#ap-hub").hidden = false;
-    renderAprenHub();
+    renderAprenRoute();
   }
   updateReadBar();
-}
-
-// ---------- Portada de l'Aprèn ----------
-function renderAprenHub() {
-  const done = AP_CHAPTERS.filter(chapterDone).length;
-  const passed = AP_CHAPTERS.filter(chapterPassed).length;
-  const next = AP_CHAPTERS.find((c) => !chapterPassed(c));
-  const R = 34, C = 2 * Math.PI * R;
-  const word = GLOSSARY[hashString(todayKey()) % GLOSSARY.length];
-  $("#ap-hub").innerHTML = `
-    <header class="ap-hero">
-      <div class="ap-hero-copy">
-        <p class="kicker">Guia del 29N</p>
-        <h1 class="page-title">Aprèn</h1>
-        <p class="lede">Tot el que cal saber per votar amb criteri, en ${AP_BLOCKS.length} blocs i ${AP_CHAPTERS.length} capítols curts, amb exemples per tocar i un petit test al final de cadascun. Pots seguir-los per ordre o anar directament al que et preocupa.</p>
-        <p class="ap-count"><span class="dot-live"></span> Falten <b id="cd-d">--</b> dies <b id="cd-h">--</b> h <b id="cd-m">--</b> min <b id="cd-s">--</b> s<span class="ap-count-tail"> per obrir les urnes</span></p>
-      </div>
-      <aside class="ap-prog card">
-        <div class="ap-ring-wrap">
-          <svg class="ap-ring" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="${R}" class="bg"/><circle cx="40" cy="40" r="${R}" class="fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - passed / AP_CHAPTERS.length)}"/></svg>
-          <div class="ap-prog-n"><b>${passed}</b><span>/${AP_CHAPTERS.length}</span></div>
-        </div>
-        <div class="ap-prog-txt">
-          <b>${passed === AP_CHAPTERS.length ? "Guia completada!" : passed ? "Vas per bon camí" : "Comença la guia"}</b>
-          <span>${passed === AP_CHAPTERS.length ? "Ja ets un votant informat. Pots repassar qualsevol capítol." : `${passed} capítols superats${done > passed ? ` · ${done - passed} per repetir` : ""}`}</span>
-          ${next ? `<a class="btn primary" href="#apren/${next.slug}">${passed || done ? "Continua" : "Comença"}: ${next.n}. ${esc(next.title)} →</a>` : ""}
-        </div>
-      </aside>
-    </header>
-
-    <div class="ap-search">
-      <label class="dict-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" placeholder="Cerca a tota la guia: vot per correu, Hondt, investidura…" aria-label="Cerca a l'Aprèn" autocomplete="off"></label>
-      <div class="ap-search-res" aria-live="polite"></div>
-    </div>
-
-    <nav class="ap-index" aria-label="Blocs de la guia">${AP_BLOCKS.map((b) => {
-      const ok = b.chapters.filter(chapterPassed).length;
-      return `<button type="button" class="ap-idx" data-block="${b.k}" style="--tone:${b.tone}">
-        <span class="ap-idx-n">${b.n}</span>
-        <span class="ap-idx-ico">${apIcon(b.icon)}</span>
-        <b>${esc(b.title)}</b>
-        <small>${esc(b.q)}</small>
-        <span class="ap-idx-meta">${b.chapters.length} capítols · ${b.chapters.reduce((t, c) => t + c.mins, 0)} min</span>
-        <span class="ap-idx-bar" aria-label="${ok} de ${b.chapters.length} superats"><i style="width:${(ok / b.chapters.length) * 100}%"></i></span>
-      </button>`;
-    }).join("")}</nav>
-
-    ${AP_BLOCKS.map((b) => {
-      const ok = b.chapters.filter(chapterPassed).length;
-      const faq = AP_FAQ.filter(([, , slug]) => b.chapters.some((c) => c.slug === slug));
-      const tools = b.tools.map((k) => AP_TOOLS.find((t) => t.slug === k)).filter(Boolean);
-      return `<section class="ap-block" id="ap-block-${b.k}" style="--tone:${b.tone}">
-      <header class="ap-block-head">
-        <span class="ap-block-n">${b.n}</span>
-        <div><p class="kicker">Bloc ${b.n} · ${esc(b.q)}</p><h2>${esc(b.title)}</h2><p>${esc(b.sub)}</p></div>
-        <span class="ap-block-prog">${ok === b.chapters.length ? "✓ Bloc superat" : `${ok}/${b.chapters.length} superats`}</span>
-      </header>
-      <div class="ap-chapters" style="--cols:${b.chapters.length}">${b.chapters.map((c) => {
-        const score = learnData()[c.slug];
-        const status = score === undefined ? `<span class="ap-st new">${c.mins} min</span>` : score >= 2 ? `<span class="ap-st ok">✓ ${score}/3</span>` : `<span class="ap-st retry">${score}/3 · repeteix</span>`;
-        return `<a class="ap-ch ${score !== undefined && score >= 2 ? "is-done" : ""}" href="#apren/${c.slug}" style="--tone:${c.tone};--i:${c.n}">
-          <span class="ap-ch-art">${c.art}</span>
-          <span class="ap-ch-n">${String(c.n).padStart(2, "0")}</span>
-          <span class="ap-ch-body"><b>${esc(c.title)}</b><small>${esc(c.short)}</small></span>
-          ${status}
-        </a>`;
-      }).join("")}</div>
-      <div class="ap-block-extra ${faq.length ? "" : "solo"}">
-        ${faq.length ? `<div class="ap-block-faq"><h3>Respostes ràpides</h3><div class="ap-faq">${faq.map(([q, a, slug], fi) => `<details class="ap-faq-item" ${fi >= 4 ? "hidden" : ""}><summary>${esc(q)}</summary><p>${rich(a)}</p><a href="#apren/${slug}">Llegeix-ne més a «${esc(AP_CHAPTERS.find((c) => c.slug === slug).title)}»</a></details>`).join("")}</div>${faq.length > 4 ? `<button type="button" class="linklike ap-faq-more" data-faqmore>Més preguntes (${faq.length - 4})</button>` : ""}</div>` : ""}
-        <div class="ap-block-tools"><h3>${tools.length === 1 ? "Eina per practicar" : "Eines per practicar"}</h3><div class="ap-tools">${tools.map((t) => `
-          <a class="ap-tool" href="${t.href || `#apren/${t.slug}`}" style="--tone:${t.tone}">
-            <span class="ap-tool-ico">${apIcon(t.icon)}</span>
-            <span><b>${esc(t.title)}</b><small>${esc(t.text)}</small></span>
-            <span class="ap-go" aria-hidden="true">→</span>
-          </a>`).join("")}</div></div>
-      </div>
-    </section>`;
-    }).join("")}
-
-    <section class="ap-block ap-review" style="--tone:var(--ink)">
-      <header class="ap-block-head">
-        <span class="ap-block-n">✓</span>
-        <div><p class="kicker">Per acabar</p><h2>Repassa i posa't a prova</h2><p>L'examen barreja preguntes de tota la guia. El diccionari t'ho explica tot en una frase.</p></div>
-      </header>
-      <div class="ap-review-grid">
-        <a class="ap-exam" href="#apren/examen">
-          <span class="ap-exam-ico" aria-hidden="true">A+</span>
-          <span><span class="kicker">Examen final</span><b>10 preguntes de tota la guia</b><small>${learnData()._exam !== undefined ? `El teu millor resultat: ${learnData()._exam}/10` : `Preguntes barrejades dels ${AP_CHAPTERS.length} capítols. Amb 8 encerts, aprovat amb nota.`}</small></span>
-          <span class="ap-go" aria-hidden="true">→</span>
-        </a>
-        <a class="ap-word" href="#apren/diccionari">
-          <span class="kicker">Paraula del dia · Diccionari</span>
-          <b>${esc(apTermName(word.w))}</b>
-          <span>${esc(word.d)}</span>
-          <small>${GLOSSARY.length} conceptes més al diccionari →</small>
-        </a>
-      </div>
-    </section>`;
-  tickCountdownOnce();
-  mountAprenSearch($(".ap-search", $("#ap-hub")));
-  $$("[data-faqmore]", $("#ap-hub")).forEach((b) => b.addEventListener("click", () => { $$(".ap-faq-item[hidden]", b.parentElement).forEach((d) => { d.hidden = false; }); b.remove(); }));
-  $$("[data-block]", $("#ap-hub")).forEach((b) => b.addEventListener("click", () => {
-    $(`#ap-block-${b.dataset.block}`).scrollIntoView({ behavior: "smooth", block: "start" });
-  }));
 }
 
 // El compte enrere global només actualitza si hi ha els elements; aquí l'omplim de seguida
@@ -531,11 +432,11 @@ function renderChapter(ch) {
   const root = $("#ap-chapter");
   root.style.setProperty("--tone", ch.tone);
   root.innerHTML = `
-    <nav class="ap-crumb"><a href="#apren">← Aprèn</a><span>Capítol ${ch.n} de ${AP_CHAPTERS.length}</span></nav>
+    <nav class="ap-crumb"><a href="#apren">← Aprèn</a><span>Capítol ${ch.n} de ${AP_CHAPTERS.length} · <a href="#apren/${ch.slug}">Llegeix-lo pas a pas</a></span></nav>
     <header class="ap-ch-head">
       <div class="ap-ch-headart">${ch.art}</div>
       <div>
-        <p class="kicker">Bloc ${ch.block.n} · ${esc(ch.block.title)} · Capítol ${ch.n} · ${ch.mins} min</p>
+        <p class="kicker">Part ${ch.block.n} · ${esc(ch.block.title)} · Capítol ${ch.n} · ${ch.mins} min</p>
         <h1 class="ap-title">${esc(ch.title)}</h1>
         <p class="ap-lead">${rich(ch.lead)}</p>
       </div>
@@ -1095,6 +996,7 @@ const AP_TOOL_LEAD = {
   simulador: "Reparteix els escons d'una província amb la Llei d'Hondt: tria quants n'hi ha, escriu els vots de cada candidatura i mira el resultat.",
   actualitat: "Els titulars de política dels principals mitjans. Cada enllaç t'hi porta a la seva web.",
   diccionari: "Tots els conceptes de la guia, explicats amb paraules senzilles.",
+  calendari: "Totes les dates del procés electoral, del decret de convocatòria (Reial decret 806/2026, BOE del 6 d'octubre) a la constitució de les noves Corts.",
 };
 $$(".ap-tool-head[data-tool]").forEach((el) => {
   const t = AP_TOOLS.find((x) => x.slug === el.dataset.tool);
@@ -1162,7 +1064,7 @@ const AP_EXAM_N = 10;
 function renderExam() {
   const root = $("#ap-chapter");
   root.style.setProperty("--tone", "#3554ff");
-  const pool = AP_CHAPTERS.flatMap((c) => c.quiz.map((q) => ({ ...q, ch: c })));
+  const pool = AP_CHAPTERS.flatMap((c) => c.quiz.map((q, qi) => ({ ...q, ch: c, qi })));
   const qs = shuffle(pool).slice(0, AP_EXAM_N).map((q) => ({ ...q, order: shuffle(q.opts.map((_, k) => k)) }));
   const best = learnData()._exam;
   let i = 0, hits = 0;
@@ -1187,6 +1089,7 @@ function renderExam() {
   const answer = (k) => {
     const q = qs[i], ok = k === 0;
     if (ok) hits++; else misses.push(q);
+    aprMissSet(`${q.ch.slug}#${q.qi}`, !ok);
     Sfx.play(ok ? "ok" : "ko");
     $$(".choice", box).forEach((b) => {
       b.disabled = true;

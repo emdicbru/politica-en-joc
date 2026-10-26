@@ -6,6 +6,7 @@
 //  2. Firebase Hosting: tota la web, com sempre (si GitHub fallés, l'app hi torna sola), però amb un index.html que
 //     carrega els fitxers des de GitHub Pages. Així l'adreça, la sessió, l'app instal·lada i les notificacions no canvien
 //     i Firebase només serveix la pàgina inicial, que és petita.
+//  3. La versió en castellà (/es/ i r/<versió>/es/), que es genera aquí mateix amb tools/tradueix.js.
 //
 // Ús:   node tools/publica.js [--src <carpeta>] [--firebase <ordre firebase>] [--nomes-github] [--nomes-firebase]
 // La versió és la ?v=N de l'index.html. L'accés a GitHub és el del git d'aquest ordinador (git credential).
@@ -22,13 +23,26 @@ const REPO = "emdicbru/politica-en-joc", BRANCH = "main";
 const SITE = "https://emdicbru.github.io/politica-en-joc/";
 const KEEP = 3;
 const RELEASE_DIRS = ["js", "css", "fonts", "assets", "img"];
-const HOST_SKIP = [/^tools\//, /(^|\/)\./, /node_modules/, /README\.md$/, /^firebase(\.[a-z]+)?\.json$/, /^firestore\.rules$/, /^CONFIGURACIO\.md$/, /\.bat$/];
+const HOST_SKIP = [/^tools\//, /^i18n\//, /(^|\/)\./, /node_modules/, /README\.md$/, /^firebase(\.[a-z]+)?\.json$/, /^firestore\.rules$/, /^CONFIGURACIO\.md$/, /\.bat$/];
 
 const html = fs.readFileSync(path.join(SRC, "index.html"), "utf8");
 const V = Number((html.match(/\?v=(\d+)"/) || [])[1]);
 if (!V) throw new Error("No trobo la versió (?v=N) a index.html");
 const CDN = `${SITE}r/${V}/`;
 const log = (...a) => console.log(new Date().toLocaleTimeString(), ...a);
+
+// Versió en castellà (/es/): la genera tools/tradueix.js a partir del diccionari i18n/es.json. Hi ha index.html,
+// manifest.webmanifest i js/ traduïts; la resta (css, imatges, 3D, dades, service worker) és la de la versió catalana.
+const ES_DIR = path.join(os.tmpdir(), `pej-es-${V}`);
+const ES_CDN = `${CDN}es/`;
+let esHtml = null;
+function buildEs() {
+  if (path.resolve(SRC) !== path.resolve(ROOT)) throw new Error("La versió en castellà es genera des de la carpeta de l'app (sense --src)");
+  const tr = require("./tradueix.js"), dict = tr.loadDict(), missing = new Set();
+  const n = tr.build(ES_DIR, dict, (k) => { if (!(k in dict)) missing.add(k); });
+  esHtml = fs.readFileSync(path.join(ES_DIR, "index.html"), "utf8");
+  log(`Castellà: ${n} fitxers traduïts${missing.size ? ` · AVÍS: ${missing.size} textos sense traduir surten en català (node tools/tradueix.js extreu)` : ""}`);
+}
 
 function walk(dir, rel = "", out = []) {
   for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
@@ -42,10 +56,11 @@ function walk(dir, rel = "", out = []) {
 // ---------- index.html per a Firebase: els fitxers vénen de GitHub Pages ----------
 // Si algun no carrega (GitHub caigut o bloquejat), la sessió salta a local.html, que és l'index.html de sempre amb els
 // fitxers servits per Firebase.
-function cdnIndex(src) {
+// Per a /es/: cdn = ES_CDN i dir = ES_DIR (els js traduïts); css, tipografies i mòduls de vendor són els comuns.
+function cdnIndex(src, { cdn = CDN, dir = SRC } = {}) {
   const loader = `<script>
     // Fitxers de l'app des de GitHub Pages (tools/publica.js). Si no carreguen, es passa a local.html (fitxers de Firebase).
-    window.PEJ_CDN = ${JSON.stringify(CDN)};
+    window.PEJ_CDN = ${JSON.stringify(cdn)};
     window.PEJ_DATA = ${JSON.stringify(SITE + "data/")};
     window.pejFail = function () {
       try { if (sessionStorage.getItem("pej-local")) return; sessionStorage.setItem("pej-local", "1"); } catch (e) { /* sense emmagatzematge */ }
@@ -54,20 +69,21 @@ function cdnIndex(src) {
   </script>`;
   // Integritat (SRI): el navegador només executa el fitxer si és exactament el que s'ha publicat. Si algú canviés un
   // fitxer a GitHub, no s'executaria i la sessió passaria als fitxers de Firebase.
-  const sri = (f) => `sha384-${crypto.createHash("sha384").update(fs.readFileSync(path.join(SRC, f.split("?")[0]))).digest("base64")}`;
-  const at = (f) => ` integrity="${sri(f)}" crossorigin="anonymous" onerror="pejFail()"`;
+  const sri = (f, d = SRC) => `sha384-${crypto.createHash("sha384").update(fs.readFileSync(path.join(d, f.split("?")[0]))).digest("base64")}`;
+  const at = (f, d) => ` integrity="${sri(f, d)}" crossorigin="anonymous" onerror="pejFail()"`;
   let out = src, n = 0;
   // Import map del 3D, amb la integritat de tots els mòduls (els navegadors que no ho entenen ho ignoren)
   out = out.replace(/<script type="importmap">([\s\S]*?)<\/script>/, (m, body) => {
     n++;
-    const map = JSON.parse(body.replace(/"\.\/js\//g, `"${CDN}js/`));
+    const map = JSON.parse(body.replace(/"\.{1,2}\/js\//g, `"${CDN}js/`));
     map.integrity = {};
-    walk(SRC).filter((r) => /^js\/(vendor|debat)\/.*\.js$/.test(r)).forEach((r) => { map.integrity[CDN + r] = sri(r); });
+    walk(SRC).filter((r) => /^js\/vendor\/.*\.js$/.test(r)).forEach((r) => { map.integrity[CDN + r] = sri(r); });
+    walk(dir).filter((r) => /^js\/debat\/.*\.js$/.test(r)).forEach((r) => { map.integrity[cdn + r] = sri(r, dir); });
     return `<script type="importmap">${JSON.stringify(map)}</script>`;
   });
-  out = out.replace(/<link rel="stylesheet" href="(css\/[^"]+)">/g, (m, h) => { n++; return `<link rel="stylesheet" href="${CDN}${h}"${at(h)}>`; });
-  out = out.replace(/<link rel="preload" href="(fonts\/[^"]+)"([^>]*)>/g, (m, h, rest) => { n++; return `<link rel="preload" href="${CDN}${h}"${rest.replace(/\s*crossorigin(="[^"]*")?/, "")} crossorigin="anonymous">`; });
-  out = out.replace(/<script( type="module")? src="(js\/[^"]+)"><\/script>/g, (m, mod, f) => { n++; return `<script${mod || ""} src="${CDN}${f}"${at(f)}></script>`; });
+  out = out.replace(/<link rel="stylesheet" href="(?:\.\.\/)?(css\/[^"]+)">/g, (m, h) => { n++; return `<link rel="stylesheet" href="${CDN}${h}"${at(h)}>`; });
+  out = out.replace(/<link rel="preload" href="(?:\.\.\/)?(fonts\/[^"]+)"([^>]*)>/g, (m, h, rest) => { n++; return `<link rel="preload" href="${CDN}${h}"${rest.replace(/\s*crossorigin(="[^"]*")?/, "")} crossorigin="anonymous">`; });
+  out = out.replace(/<script( type="module")? src="(js\/[^"]+)"><\/script>/g, (m, mod, f) => { n++; return `<script${mod || ""} src="${cdn}${f}"${at(f, dir)}></script>`; });
   if (n < 10) throw new Error(`Només he trobat ${n} fitxers a index.html: alguna cosa ha canviat`);
   // El carregador va just abans de l'import map (el primer fitxer)
   const first = out.indexOf('<script type="importmap">');
@@ -96,7 +112,12 @@ async function gh(p, opt = {}) {
 const blobSha = (buf) => crypto.createHash("sha1").update(`blob ${buf.length}\0`).update(buf).digest("hex");
 
 async function publishGithub() {
-  const files = walk(SRC).filter((r) => RELEASE_DIRS.includes(r.split("/")[0]));
+  // [ruta dins de la versió, fitxer]: l'app i, a es/, els js traduïts
+  const list = [
+    ...walk(SRC).filter((r) => RELEASE_DIRS.includes(r.split("/")[0])).map((r) => [r, path.join(SRC, r)]),
+    ...walk(ES_DIR).filter((r) => r.startsWith("js/")).map((r) => [`es/${r}`, path.join(ES_DIR, r)]),
+  ];
+  const files = list.map(([r]) => r);
   log(`GitHub Pages: versió ${V}, ${files.length} fitxers`);
   for (let attempt = 1; ; attempt++) {
     const ref = await gh(`/git/ref/heads/${BRANCH}`);
@@ -106,8 +127,8 @@ async function publishGithub() {
     const known = new Set(tree.tree.filter((t) => t.type === "blob").map((t) => t.sha));
     const entries = [];
     let up = 0;
-    for (const r of files) {
-      const buf = fs.readFileSync(path.join(SRC, r));
+    for (const [r, abs] of list) {
+      const buf = fs.readFileSync(abs);
       let sha = blobSha(buf);
       if (!known.has(sha)) {
         sha = (await gh("/git/blobs", { method: "POST", body: JSON.stringify({ content: buf.toString("base64"), encoding: "base64" }) })).sha;
@@ -136,7 +157,7 @@ async function publishGithub() {
   }
 }
 async function waitPages() {
-  const probe = ["js/core.js", "css/styles.css"].map((f) => [f, fs.readFileSync(path.join(SRC, f))]);
+  const probe = [["js/core.js", path.join(SRC, "js/core.js")], ["css/styles.css", path.join(SRC, "css/styles.css")], ["es/js/core.js", path.join(ES_DIR, "js/core.js")]].map(([f, abs]) => [f, fs.readFileSync(abs)]);
   for (let i = 0; i < 60; i++) {
     const ok = await Promise.all(probe.map(async ([f, buf]) => {
       try { const r = await fetch(`${CDN}${f}?espera=${Date.now()}`, { cache: "no-store" }); return r.ok && Buffer.compare(Buffer.from(await r.arrayBuffer()), buf) === 0; } catch { return false; }
@@ -156,9 +177,15 @@ function publishFirebase() {
   const { html: idx, n } = cdnIndex(html);
   fs.writeFileSync(path.join(out, "index.html"), idx);
   fs.writeFileSync(path.join(out, "local.html"), html); // còpia de rescat amb els fitxers de Firebase
+  // /es/: els js traduïts, el manifest i les dues pàgines (amb fitxers de GitHub Pages i de rescat)
+  for (const r of walk(ES_DIR)) { if (r === "index.html") continue; fs.mkdirSync(path.dirname(path.join(out, "es", r)), { recursive: true }); fs.copyFileSync(path.join(ES_DIR, r), path.join(out, "es", r)); }
+  const { html: esIdx } = cdnIndex(esHtml, { cdn: ES_CDN, dir: ES_DIR });
+  fs.writeFileSync(path.join(out, "es", "index.html"), esIdx);
+  fs.writeFileSync(path.join(out, "es", "local.html"), esHtml);
   const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, "firebase.json"), "utf8"));
   cfg.hosting.public = ".";
-  cfg.hosting.headers = [...(cfg.hosting.headers || []), ...securityHeaders([idx, html])];
+  const mf = (cfg.hosting.headers || []).find((x) => x.source === "/manifest.webmanifest");
+  cfg.hosting.headers = [...(cfg.hosting.headers || []), ...(mf ? [{ ...mf, source: "/es/manifest.webmanifest" }] : []), ...securityHeaders([idx, html, esIdx, esHtml])];
   delete cfg.firestore;
   fs.writeFileSync(path.join(out, "firebase.json"), JSON.stringify(cfg, null, 2));
   log(`Firebase: index.html amb ${n} fitxers des de GitHub Pages; publicant…`);
@@ -199,12 +226,13 @@ function securityHeaders(pages) {
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
     { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
   ];
-  return [{ source: "/", headers: page }, { source: "**/*.html", headers: page }, { source: "**", headers: all }];
+  return [{ source: "/", headers: page }, { source: "/es", headers: page }, { source: "/es/", headers: page }, { source: "**/*.html", headers: page }, { source: "**", headers: all }];
 }
 
 module.exports = { cdnIndex, securityHeaders };
 if (require.main === module) {
   (async () => {
+    buildEs();
     if (!flag("nomes-firebase")) { await publishGithub(); await waitPages(); }
     if (!flag("nomes-github")) publishFirebase();
     log(`Publicada la versió ${V}.`);

@@ -32,6 +32,16 @@ Si GitHub Pages fallés, l'app salta sola a `local.html`, que és la mateixa pà
 
 Si has tocat les regles de Firestore: `npx firebase-tools deploy --only firestore:rules --project politica-en-joc`.
 
+## Versió en castellà (/es/)
+L'app s'escriu només en català. `tools/publica.js` en genera sola la versió en castellà a `politicaenjoc.cat/es/` amb el diccionari `i18n/es.json` (`"text en català": "texto en castellano"`). Les dues versions comparteixen el progrés, l'usuari i les dades; cada una té la seva pàgina, el seu manifest (s'instal·len per separat) i la seva partida desada del simulador.
+
+- **Quan canvies o afegeixes textos:** `node tools/tradueix.js extreu` deixa a `i18n/es-pendents.json` els que encara no són al diccionari. Afegeix-los a `i18n/es.json` i publica. Si en queda algun sense traduir, `publica.js` ho avisa i aquell text surt en català a /es/.
+- **Regles del diccionari:** `{}` és una interpolació (n'hi ha d'haver les mateixes que a l'original). Una traducció igual que l'original vol dir «no es tradueix» (noms propis, claus). Una paraula sola en minúscules que fa de clau interna (`"clau": true` a pendents) només es tradueix si la traducció comença amb `!`.
+- **Glossari:** els enllaços `[[terme]]` de l'Aprèn han d'apuntar a un terme que existeixi traduït (per exemple, `[[mayoría absoluta]]`).
+- **Per provar-la:** `node tools/tradueix.js construeix <carpeta>` hi escriu la versió en castellà (`index.html`, `manifest.webmanifest` i `js/`), que va dins d'`es/` al costat de l'app.
+- **Què no es tradueix:** el Centre de control, el correu de premsa, els titulars dels mitjans i el quiz de l'actualitat de `data/quiz.json` (en castellà només hi surten les preguntes automàtiques). Les notificacions push es continuen enviant en català.
+- **Idioma:** el selector és al peu de pàgina i a Perfil › Ajustos, i la tria es desa a `r29n-lang`. Sense tria, un navegador que prefereix el castellà al català entra a /es/.
+
 ## Provar-ho en local
 ```bash
 npx serve .

@@ -717,9 +717,15 @@ function simSetupRound2(s) {
   if (L.gov.pm !== "jo") s.glob[L.gov.pm] += (L.ind.eco + L.ind.ben - 100) / 200;
   if (s.res.seats.jo > 0) s.awG = Math.max(s.awG, 0.7);
   s.used.events = [];
+  s.used.atac = [];
+  s.energy = SIM_ENERGY.max;
+  s.loc = SIM_PROVS.findIndex((p) => p.code === "M");
+  s.route = [s.loc];
+  s.mob = SIM_PROVS.map(() => 0);
+  Object.keys(s.mom).forEach((id) => { s.mom[id] = 0; });
+  s.lastMoves = [];
   simDayOffers(s);
-  const poll = simPoll(s);
-  s.polls.push({ ...poll, day: 0 });
+  simKickoff(s);
   s.stage = "campaign";
 }
 

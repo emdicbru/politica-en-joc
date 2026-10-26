@@ -486,7 +486,8 @@ function simApplyEvent(state, ev, k) {
   state.cred = Math.max(0, Math.min(100, state.cred));
   state.moral = Math.max(0, Math.min(100, state.moral));
   state.money = Math.max(0, state.money);
-  state.log.push({ day: state.day, type: "event", msg, good: true });
+  state.log.push({ day: state.day, type: "event", msg, good: true, round: state.round || 1 });
+  simNews(state, { kind: "event", icon: "⚡", party: "jo", t: ev.title });
   return msg;
 }
 

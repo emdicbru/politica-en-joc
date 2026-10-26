@@ -1,5 +1,6 @@
 // Simulador del 29N · Intel·ligència dels partits rivals. Regles senzilles i explicables, sense accés al DOM.
-// Campanya: on fa actes cada rival i per què. Investidura: quin acord proposa un candidat i què accepta del jugador.
+// Campanya: on fa actes cada rival i per què, a qui ataca i quins temes empeny. Investidura: quin acord proposa un
+// candidat i què accepta del jugador. Els rivals juguen amb les mateixes regles que el jugador.
 
 // ---------- Campanya ----------
 const SIM_STYLE_WHY = {
@@ -8,33 +9,87 @@ const SIM_STYLE_WHY = {
   mid: "en las circunscripciones medianas y rurales",
   own: "en los territorios con identidad propia",
 };
+// Accions de campanya de cada rival per jornada segons la mida de l'estructura del partit
+const SIM_RIVAL_ACTS = { big: 3, mid: 2, urban: 2, own: 2 };
+
+// On es juga escons cada partit: vots que li falten per guanyar-ne un (gap) i marge amb què conserva l'últim (hold),
+// en punts percentuals dels vots vàlids de la circumscripció
+function simSeatStakes(r, id) {
+  return r.provs.map((p) => {
+    if (p.votes[id] === undefined) return null;
+    const gap = simSeatGap(p, id), hold = simSeatHold(p, id);
+    return { i: p.i, gap: gap === null ? null : (gap / p.valid) * 100, hold: hold === null ? null : (hold / p.valid) * 100 };
+  }).filter(Boolean);
+}
 
 function simRivalsTurn(state) {
   const D = SIM_DIFF[state.diff] || SIM_DIFF.normal;
+  const k = D.rival;
   const moves = [];
-  // On ha fet míting el jugador avui: el rival més proper ideològicament hi respon
-  const myRallies = state.log.filter((l) => l.day === state.day && l.type === "miting").map((l) => l.arg);
-  const closest = [...state.rivals].sort((a, b) => simDistP(a, state.me) - simDistP(b, state.me))[0];
-  state.rivals.forEach((r) => {
-    // Regla 1: tria 2 circumscripcions segons el seu estil, amb una mica d'atzar
-    let cands = SIM_PROVS.filter((p) => simStands(r, p)).map((p) => {
-      let score = r.style === "big" ? p.seats : r.style === "urban" ? p.seats * p.urb : r.style === "mid" ? Math.min(p.seats, 8) * (1 - p.urb + 0.5) : p.seats * p.ter;
-      score *= 0.6 + simRand(state, `riv-${r.id}`) * 0.8;
-      return { p, score, why: SIM_STYLE_WHY[r.style] };
-    }).sort((a, b) => b.score - a.score).slice(0, 2);
-    // Regla 2: el rival que competeix pels teus votants respon on has fet míting
-    const answer = r === closest ? myRallies.find((i) => simStands(r, SIM_PROVS[i]) && !cands.some((c) => c.p.i === i)) : undefined;
-    if (answer !== undefined) cands = [cands[0], { p: SIM_PROVS[answer], why: "para responder a tu mitin" }];
-    cands.forEach(({ p }) => { state.camp[r.id][p.i] += 0.08 * D.rival; });
-    // Regla 3: si el jugador creix, el rival que competeix pels mateixos votants li disputa el suport
-    if (simDistP(r, state.me) < 3.5 && state.glob.jo > 0.15 && simRand(state, `atac-${r.id}`) < 0.35 * D.rival) {
-      state.glob.jo -= 0.04;
-      moves.push({ id: r.id, kind: "attack", msg: `${r.name} se dirige a los mismos votantes que tú: pierdes un poco de apoyo.` });
+  const r = simElection(state); // el sondeig intern de cada partit (els grans en fan cada dia)
+  const share = Object.fromEntries(Object.entries(r.totals).map(([id, t]) => [id, t.share]));
+  // On ha fet míting el jugador avui
+  const myRallies = state.log.filter((l) => l.day === state.day && l.type === "miting" && (l.round || 1) === (state.round || 1)).map((l) => l.arg);
+  let attacksOnMe = 0;
+  state.used.challenged = state.used.challenged || [];
+  state.replies = state.replies || [];
+  state.rivals.forEach((R) => {
+    const rnd = () => simRand(state, `riv-${R.id}`);
+    const stakes = simSeatStakes(r, R.id);
+    const n = SIM_RIVAL_ACTS[R.style] || 2;
+    const did = [];
+    // 1. Territori: on es juga escons (a prop de guanyar-ne o de perdre'n), amb les preferències del seu estil
+    const scored = stakes.map((x) => {
+      const p = SIM_PROVS[x.i];
+      const win = x.gap !== null ? Math.exp(-x.gap / 0.9) : 0;
+      const keep = x.hold !== null ? 1.1 * Math.exp(-x.hold / 0.9) : 0;
+      const style = R.style === "big" ? 0.6 + p.seats / 25 : R.style === "urban" ? 0.3 + p.urb : R.style === "mid" ? 1.2 - p.urb * 0.6 : 0.6 + p.ter;
+      return { i: x.i, s: (0.25 + win + keep) * style * (0.75 + rnd() * 0.5), seat: win + keep > 0.45 };
+    }).sort((a, b) => b.s - a.s);
+    // El rival que competeix pels teus votants respon on fas mítings (si hi té alguna cosa en joc)
+    const near = simDistP(R, state.me) < 3.2;
+    const answer = near ? myRallies.find((i) => stakes.some((x) => x.i === i)) : undefined;
+    const rallies = [];
+    if (answer !== undefined) rallies.push({ i: answer, why: "para responder a tu mitin", seat: false });
+    scored.forEach((x) => { if (rallies.length < Math.max(1, n - 1) && !rallies.some((y) => y.i === x.i)) rallies.push({ ...x, why: x.seat ? "se juega un escaño" : SIM_STYLE_WHY[R.style] }); });
+    rallies.forEach((x) => {
+      const p = SIM_PROVS[x.i];
+      state.camp[R.id][x.i] += 0.1 * k;
+      SIM_PROVS.forEach((q) => { if (q.i !== x.i && q.ccaa === p.ccaa && simStands(R, q)) state.camp[R.id][q.i] += 0.025 * k; });
+      did.push("miting");
+    });
+    moves.push({ id: R.id, kind: "camp", msg: `${R.name} hace campaña en ${rallies.map((x) => SIM_PROVS[x.i].name).join(" i ")}`, why: rallies.map((x) => x.why), provs: rallies.map((x) => x.i) });
+    const top = rallies.find((x) => x.seat) || rallies[0];
+    if (top) simNews(state, { kind: "rival", icon: top.seat ? "🎯" : "📣", party: R.id, prov: top.i, t: simNewsText(top.seat ? "rivEsco" : SIM_PROVS[top.i].seats >= 10 && R.style === "big" ? "rivMitingGran" : "rivMiting", state, { sig: R.sig, prov: SIM_PROVS[top.i].name }) });
+
+    // 2. Atac: a qui li pren votants. Si el jugador creix i competeix pels mateixos votants, el rival el té en el punt de mira.
+    if (did.length < n) {
+      const meThreat = near && share.jo > 0.03 && ((state.mom.jo || 0) > 0.1 || share.jo > share[R.id] * 0.5) ? (1 - simDistP(R, state.me) / 6) : 0;
+      const grudge = state.grudge?.[R.id] === state.day ? 0.35 : 0; // l'has atacat avui: respon
+      if (attacksOnMe < 2 && (meThreat > 0 || grudge) && rnd() < Math.min(0.85, (0.3 + meThreat * 0.5 + grudge) * k)) {
+        attacksOnMe++;
+        const overlap = Math.max(0, 1 - simDistP(R, state.me) / 6);
+        state.glob.jo -= (0.015 + 0.035 * overlap) * k;
+        if (!state.replies.includes(R.id)) state.replies.push(R.id);
+        did.push("atac");
+        moves.push({ id: R.id, kind: "attack", msg: `${R.name} carga contra ti: pierdes algo de apoyo.`, why: "Competís por los mismos votantes" });
+        simNews(state, { kind: "rival", icon: "⚔️", party: R.id, target: "jo", tone: "bad", t: simNewsText("rivAtacJo", state, { sig: R.sig, me: state.me.sig }) });
+      } else if (rnd() < 0.18 * k) {
+        // Estirada entre rivals que es disputen el mateix electorat
+        const T = state.rivals.filter((x) => x.id !== R.id && simDistP(x, R) < 3 && (!R.ccaa || !x.ccaa || x.ccaa.some((c) => R.ccaa.includes(c))))
+          .sort((a, b) => share[b.id] - share[a.id])[0];
+        if (T) {
+          state.glob[T.id] -= 0.012 * k; state.glob[R.id] -= 0.004;
+          did.push("atac");
+          simNews(state, { kind: "rival", icon: "⚔️", party: R.id, target: T.id, t: simNewsText("rivAtac", state, { sig: R.sig, target: T.sig }) });
+        }
+      }
     }
-    moves.push({ id: r.id, kind: "camp", msg: `${r.name} hace campaña en ${cands.map((c) => c.p.name).join(" i ")}`, why: cands.map((c) => c.why), provs: cands.map((c) => c.p.i) });
-    // Regla 4: una acció destacada del dia, segons l'estil del partit i la situació
-    const play = simRivalPlay(state, r, D);
-    if (play) moves.push({ id: r.id, kind: "play", ...play });
+    // 3. Una acció destacada segons l'estil i la situació
+    if (did.length < n) {
+      const play = simRivalPlay(state, R, D);
+      if (play) moves.push({ id: R.id, kind: "play", ...play });
+    }
   });
   return moves;
 }
@@ -42,45 +97,52 @@ function simRivalsTurn(state) {
 // Accions destacades dels rivals. Són genèriques i neutres: cap no els atribueix declaracions ni fets inventats.
 function simRivalPlay(state, r, D) {
   const rnd = () => simRand(state, `jugada-${r.id}`);
-  if (rnd() > 0.5) return null;
+  if (rnd() > 0.6) return null;
   const mine = SIM_PROVS.filter((p) => simStands(r, p));
   const biggest = [...mine].sort((a, b) => b.seats - a.seats)[0];
   const poll = state.polls[state.polls.length - 1];
   const close = poll && Math.abs((poll.est[r.id] || 0) - (poll.est.jo || 0)) < 4;
-  state.used.challenged = state.used.challenged || [];
   const options = [
     { k: "repte", w: close && !state.used.challenged.includes(r.id) && !(state.challenges || []).length && state.day < state.days - 1 ? 3 : 0 },
     { k: "anunci", w: r.style === "big" || r.style === "mid" ? 2 : 0.5 },
-    { k: "macro", w: 1.5 },
-    { k: "proposta", w: 1.5 },
-    { k: "fitxatge", w: 1 },
+    { k: "agenda", w: 1.8 },
+    { k: "fitxatge", w: 0.8 },
     { k: "ruta", w: r.style === "own" || r.style === "mid" ? 1.5 : 0.4 },
   ].filter((o) => o.w > 0);
   let x = rnd() * options.reduce((t, o) => t + o.w, 0);
-  const k = options.find((o) => (x -= o.w) < 0)?.k || "macro";
+  const k = options.find((o) => (x -= o.w) < 0)?.k || "anunci";
   if (k === "repte") {
     state.used.challenged.push(r.id);
     state.challenges = state.challenges || [];
     state.challenges.push(r.id);
+    simNews(state, { kind: "rival", icon: "🥊", party: r.id, target: "jo", t: simNewsText("rivRepte", state, { sig: r.sig, me: state.me.sig }) });
     return { icon: "⚔", msg: `${r.sig} te reta a un cara a cara en televisión. Lo encontrarás mañana en la agenda.`, why: "Las encuestas del juego os sitúan cerca" };
   }
-  if (k === "anunci") { state.glob[r.id] += 0.015 * D.rival; return { icon: "📺", msg: `${r.sig} lanza una campaña de anuncios en todo el Estado`, why: "Gana visibilidad en todas partes" }; }
-  if (k === "macro") { state.camp[r.id][biggest.i] += 0.12 * D.rival; return { icon: "🏟", msg: `${r.sig} hace un gran mitin en ${biggest.name}`, why: "Concentra fuerzas donde se reparten más escaños", provs: [biggest.i] }; }
-  if (k === "proposta") {
+  if (k === "anunci") {
+    state.glob[r.id] += 0.015 * D.rival;
+    simNews(state, { kind: "rival", icon: "📺", party: r.id, t: simNewsText("rivAnuncis", state, { sig: r.sig }) });
+    return { icon: "📺", msg: `${r.sig} lanza una campaña de anuncios en todo el Estado`, why: "Gana visibilidad en todas partes" };
+  }
+  if (k === "agenda") {
+    // Empeny el seu tema estrella perquè sigui el tema del dia
     const th = r.iss.map((v, t) => ({ v, t })).sort((a, b) => b.v - a.v)[Math.floor(rnd() * 2)].t;
-    r.iss[th] = Math.min(1.2, r.iss[th] + 0.05);
-    state.glob[r.id] += 0.01 * D.rival;
-    return { icon: "📄", msg: `${r.sig} presenta nuevas propuestas de ${SIM_THEMES[th].label.toLowerCase()}`, why: "Refuerza uno de sus temas estrella" };
+    state.push[th] += (r.style === "big" ? 0.8 : 0.5) * D.rival;
+    r.iss[th] = Math.min(1.2, r.iss[th] + 0.04);
+    simNews(state, { kind: "agenda", icon: SIM_THEMES[th].icon, party: r.id, theme: th, t: simNewsText("rivAgenda", state, { sig: r.sig, theme: SIM_THEMES[th].label.toLowerCase() }) });
+    return { icon: "📄", msg: `${r.sig} centra la campaña en ${SIM_THEMES[th].label.toLowerCase()}`, why: "Quiere que sea el tema del día" };
   }
   if (k === "fitxatge") {
-    const p = mine.filter((q) => q.seats >= 4)[Math.floor(rnd() * mine.filter((q) => q.seats >= 4).length)] || biggest;
+    const opts = mine.filter((q) => q.seats >= 4);
+    const p = opts[Math.floor(rnd() * opts.length)] || biggest;
     state.camp[r.id][p.i] += 0.1 * D.rival;
+    simNews(state, { kind: "rival", icon: "⭐", party: r.id, prov: p.i, t: simNewsText("rivFitxatge", state, { sig: r.sig, prov: p.name }) });
     return { icon: "★", msg: `${r.sig} presenta a un candidato conocido en ${p.name}`, why: "Un nombre conocido ayuda en la circunscripción", provs: [p.i] };
   }
   // Ruta pel territori: poc a cada lloc, però a moltes circumscripcions de la mateixa comunitat
   const ccaa = mine[Math.floor(rnd() * mine.length)].ccaa;
   const route = mine.filter((p) => p.ccaa === ccaa);
   route.forEach((p) => { state.camp[r.id][p.i] += 0.05 * D.rival; });
+  simNews(state, { kind: "rival", icon: "🚌", party: r.id, t: simNewsText("rivRuta", state, { sig: r.sig, ccaa }) });
   return { icon: "🚌", msg: `${r.sig} hace una ruta por ${ccaa}`, why: "Llega a las circunscripciones pequeñas", provs: route.map((p) => p.i) };
 }
 

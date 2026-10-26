@@ -47,6 +47,9 @@ const SIM_K = {
   census: 0.777, // electors / població (cens del 29N sobre població INE)
   blank: 0.012, null: 0.01,
   threshold: 0.03,
+  agenda: 0.75, // el tema del dia pesa un 75 % més per a tothom
+  mom: 0.09, // arrossegament: un partit que puja a les enquestes en guanya més (i al revés)
+  decay: 0.9, // cada nit, els efectes de campanya es dilueixen: el que es fa els últims dies pesa més
 };
 
 // ---------- Partida nova ----------
@@ -60,19 +63,23 @@ function simNewGame({ seed, mode = "express", diff = "normal", party }) {
     iss, attrs: { ...a }, lead: Math.min(0.75, 0.3 + (a.car * 0.4 + a.sol * 0.3 + a.prox * 0.3) / 12), prio: [...party.prio],
     shape: party.shape || "cercle", motto: party.motto || "", leader: party.leader || "",
   };
+  const HQ = SIM_PROVS.findIndex((p) => p.code === "M");
   const state = {
     v: SIM_VERSION, seed: String(seed), mode, diff, rc: 0,
     day: 1, slot: 0, days: 6, // sis dies de campanya i la jornada de reflexió, a tots els modes
-    money: D.money, cred: 60, moral: 60, media: 20,
+    money: D.money, cred: 60, moral: 60, media: 20, energy: SIM_ENERGY.max,
+    loc: HQ, route: [HQ], // la caravana surt de la seu, a Madrid
     me, rivals: SIM_RIVALS.map((r) => ({ ...r, iss: [...r.iss] })), // còpia: la partida pot canviar els temes dels rivals
-    awG: D.aw, aw: SIM_PROVS.map(() => 0),
-    camp: {}, glob: {}, noise: {}, used: { cand: [] }, seg: {}, offers: [], challenges: [],
-    log: [], polls: [], phase: "campaign",
+    awG: D.aw, aw: SIM_PROVS.map(() => 0), mob: SIM_PROVS.map(() => 0),
+    camp: {}, glob: {}, noise: {}, mom: {}, used: { cand: [] }, seg: {}, offers: [], challenges: [],
+    agenda: null, push: SIM_THEMES.map(() => 0), house: simHouseEffects(seed),
+    log: [], news: [], polls: [], phase: "campaign",
   };
   const ids = ["jo", ...SIM_RIVALS.map((r) => r.id)];
   ids.forEach((id) => {
     state.camp[id] = SIM_PROVS.map(() => 0);
     state.glob[id] = 0;
+    state.mom[id] = 0;
     const rng = simMulberry(simHash(`${state.seed}|noise|${id}`));
     state.noise[id] = SIM_PROVS.map(() => simGauss(rng) * D.noise);
   });
@@ -80,25 +87,56 @@ function simNewGame({ seed, mode = "express", diff = "normal", party }) {
   return state;
 }
 
+// Efecte de la casa de cada institut d'enquestes: un biaix petit i estable per partit (més gran com més gran és el partit)
+function simHouseEffects(seed) {
+  const ids = ["jo", ...SIM_RIVALS.map((r) => r.id)];
+  return Object.fromEntries(SIM_POLLSTERS.map((p) => {
+    const rng = simMulberry(simHash(`${seed}|casa|${p.k}`));
+    const b = Object.fromEntries(ids.map((id) => [id, simGauss(rng) * Math.sqrt((SIM_START_SHARE[id] ?? 2) / 100) * 2]));
+    const mean = Object.values(b).reduce((t, x) => t + x, 0) / ids.length;
+    ids.forEach((id) => { b[id] = Math.round((b[id] - mean) * 100) / 100; });
+    return [p.k, b];
+  }));
+}
+
+// Comença la campanya: enquesta de sortida (abans de començar) i el primer tema del dia
+function simKickoff(state) {
+  const first = simPoll(state, null, SIM_POLLSTERS[0].k);
+  first.day = 0;
+  simPushPoll(state, first);
+  simNextAgenda(state, true);
+  simNews(state, { kind: "start", icon: "🏁", t: state.round === 2 ? simNewsText("start2", state) : simNewsText("start", state) });
+  return first;
+}
+
 const simParties = (state) => [state.me, ...state.rivals];
 // Els partits territorials només es presenten a les seves comunitats
 const simStands = (party, prov) => (!party.ccaa || party.ccaa.includes(prov.ccaa)) && (!party.only || prov.ter >= party.only);
 const simAware = (state, i) => 1 - (1 - state.awG) * (1 - state.aw[i]);
+// Mobilització: quina part dels seus votants potencials va a votar (1 = la normal)
+function simEnth(state, id, i) {
+  if (id !== "jo") return 1;
+  return (0.94 + 0.12 * (state.moral ?? 60) / 100) * (1 + (state.mob?.[i] || 0));
+}
 
 // Utilitat d'un partit per a un tipus de votant d'una província
 function simUtility(state, party, seg, prov, i) {
   const segTer = seg.ter ?? 1.5 + prov.ter * 5;
   const wt = seg.k === "sob" ? 2.5 : 0.6 + prov.ter;
   const d = Math.sqrt((seg.eco - party.eco) ** 2 + wt * (segTer - party.ter) ** 2 + 0.8 * (seg.val - party.val) ** 2);
+  // L'agenda del dia: el tema del qual parlen tots els mitjans pesa més per a tothom
+  const ag = state.agenda;
   let salSum = 0, match = 0;
-  seg.sal.forEach((s, k) => { salSum += s; match += s * party.iss[k]; });
+  seg.sal.forEach((s, k) => { const w = k === ag ? s * (1 + SIM_K.agenda) : s; salSum += w; match += w * party.iss[k]; });
   let u = -SIM_K.alpha * d + SIM_K.beta * (match / salSum) + SIM_K.gamma * party.lead + (party.base || 0);
   // Implantació territorial: alguns partits són més forts a les províncies rurals (rural > 0) i d'altres a les urbanes
   if (party.rural) u += party.rural * (0.5 - prov.urb);
   u += state.camp[party.id][i] + state.glob[party.id] + state.noise[party.id][i];
+  // Arrossegament de les enquestes publicades
+  u += SIM_K.mom * (state.mom?.[party.id] || 0);
   if (party.id === "jo") {
     u += Math.log(Math.max(0.02, simAware(state, i)));
-    // Guanys o pèrdues amb un tipus de votant concret (fòrums sectorials, entrevistes a un públic jove...)
+    // Guanys o pèrdues amb un tipus de votant concret (fòrums sectorials, anuncis, entrevistes a un públic jove...)
     if (state.seg) u += state.seg[seg.k] || 0;
   }
   return u;
@@ -110,22 +148,25 @@ function simProvVotes(state, prov, i, viab = null) {
   const w = simSegmentWeights(prov);
   const electors = prov.pop * SIM_K.census;
   const votes = Object.fromEntries(parties.map((p) => [p.id, 0]));
-  let cast = 0;
+  const enth = parties.map((p) => simEnth(state, p.id, i));
+  let cast = 0, base = 0;
   SIM_SEGMENTS.forEach((seg) => {
     const share = w[seg.k];
     if (!share) return;
     const turnout = Math.min(0.95, seg.turn + (state.turnBoost || 0));
     const n = electors * share * turnout;
-    cast += n;
+    base += n;
     const util = parties.map((p) => {
       let u = simUtility(state, p, seg, prov, i);
       if (viab) u -= SIM_K.useful * (seg.k === "sob" ? 0.5 : 1) * (1 - viab[p.id]);
       return Math.exp(u / SIM_K.temp);
     });
     const tot = util.reduce((a, b) => a + b, 0);
-    parties.forEach((p, k) => { votes[p.id] += n * (1 - SIM_K.blank - SIM_K.null) * (util[k] / tot); });
+    // La mobilització suma votants que d'una altra manera s'haurien quedat a casa
+    parties.forEach((p, k) => { const v = n * (1 - SIM_K.blank - SIM_K.null) * (util[k] / tot) * enth[k]; votes[p.id] += v; cast += v; });
   });
-  const blank = cast * SIM_K.blank, nul = cast * SIM_K.null;
+  const blank = base * SIM_K.blank, nul = base * SIM_K.null;
+  cast += blank + nul;
   Object.keys(votes).forEach((id) => { votes[id] = Math.round(votes[id]); });
   return { votes, blank: Math.round(blank), null: Math.round(nul), cast: Math.round(cast), electors: Math.round(electors) };
 }
@@ -158,120 +199,282 @@ function simElection(state) {
     const seats = simSeatsFor(fin.votes, fin.blank, prov.seats);
     return { i, name: prov.name, seats: prov.seats, ...fin, ...seats, first: first.votes };
   });
+  return simTotals(state, provs);
+}
+// Totals d'una elecció a partir de les circumscripcions
+function simTotals(state, provs) {
   const ids = simParties(state).map((p) => p.id);
   // «useful»: vots que cada partit perd (o guanya, si és negatiu) per l'efecte del vot útil
   const totals = Object.fromEntries(ids.map((id) => [id, { votes: 0, seats: 0, useful: 0 }]));
   let valid = 0, cast = 0, electors = 0;
   provs.forEach((p) => {
     valid += p.valid; cast += p.cast; electors += p.electors;
-    Object.keys(p.votes).forEach((id) => { totals[id].votes += p.votes[id]; totals[id].seats += p.won[id]; totals[id].useful += p.first[id] - p.votes[id]; });
+    Object.keys(p.votes).forEach((id) => { totals[id].votes += p.votes[id]; totals[id].seats += p.won[id]; totals[id].useful += (p.first?.[id] ?? p.votes[id]) - p.votes[id]; });
   });
   ids.forEach((id) => { totals[id].share = totals[id].votes / valid; });
   return { provs, totals, valid, cast, electors, turnout: cast / electors };
 }
 
-// Estimació ràpida (per a l'enquesta del joc): resultat + soroll amb marge d'error.
+// Projecció d'escons a partir d'uns percentatges estatals (enquestes i enquesta a peu d'urna): a cada circumscripció,
+// el vot de cada partit es mou en la mateixa proporció que a tot l'Estat («swing» proporcional).
+function simProject(r, est) {
+  const provs = r.provs.map((p) => {
+    const votes = {};
+    Object.keys(p.votes).forEach((id) => {
+      const sh = r.totals[id].share;
+      votes[id] = sh > 0 ? Math.round(p.votes[id] * Math.max(0, est[id] / 100) / sh) : 0;
+    });
+    return { i: p.i, name: p.name, seats: p.seats, votes, blank: p.blank, ...simSeatsFor(votes, p.blank, p.seats) };
+  });
+  const seats = Object.fromEntries(Object.keys(r.totals).map((id) => [id, 0]));
+  provs.forEach((p) => Object.keys(p.won).forEach((id) => { seats[id] += p.won[id]; }));
+  return { seats, provs };
+}
+// Forquilla d'escons d'un partit: la projecció amb el seu vot al límit baix i al límit alt del marge d'error
+function simSeatRange(r, est, id, err) {
+  const shift = (d) => {
+    const e = { ...est };
+    const others = Object.keys(e).filter((x) => x !== id).reduce((t, x) => t + e[x], 0);
+    const nv = Math.max(0, e[id] + d);
+    const k = others > 0 ? (others - (nv - e[id])) / others : 1;
+    Object.keys(e).forEach((x) => { e[x] = x === id ? nv : e[x] * k; });
+    return simProject(r, e).seats[id];
+  };
+  return [shift(-err), shift(err)];
+}
+
+// Enquesta: resultat del model + error de mostra + biaix de l'institut. pollster: clau de SIM_POLLSTERS o null (interna).
 // També estima cada circumscripció: partit que va primer, posició del jugador i vots que li falten per al pròxim escó.
-function simPoll(state, sample = 1200) {
+function simPoll(state, sample = null, pollster = null) {
+  const P = pollster ? SIM_POLLSTERS.find((x) => x.k === pollster) : null;
+  const n = sample || P?.sample || 1600;
   const r = simElection(state);
-  const margin = 1.96 * Math.sqrt(0.25 / sample) * 100;
+  const margin = 1.96 * Math.sqrt(0.25 / n) * 100;
+  const house = P ? state.house?.[P.k] || {} : {};
   const est = {};
   Object.keys(r.totals).forEach((id) => {
     // L'error de cada partit depèn de la seva mida: és més petit com més petit és el partit
     const sh = r.totals[id].share;
-    const err = (simRand(state, `poll-${id}`) - 0.5) * 2 * 1.96 * Math.sqrt((sh * (1 - sh)) / sample) * 100 * 0.6;
-    est[id] = Math.max(0, sh * 100 + err);
+    const err = (simRand(state, `poll-${id}`) - 0.5) * 2 * 1.96 * Math.sqrt((sh * (1 - sh)) / n) * 100 * 0.6;
+    est[id] = Math.round(Math.max(0.1, sh * 100 + err + (house[id] || 0)) * 10) / 10;
   });
-  const provs = r.provs.map((p) => {
+  const proj = simProject(r, est);
+  const range = {};
+  Object.keys(est).forEach((id) => {
+    const e = 1.96 * Math.sqrt((est[id] / 100) * (1 - est[id] / 100) / n) * 100;
+    range[id] = proj.seats[id] || est[id] >= 1 ? simSeatRange(r, est, id, e) : [0, 0];
+    range[id][0] = Math.min(range[id][0], proj.seats[id]);
+    range[id][1] = Math.max(range[id][1], proj.seats[id]);
+  });
+  const provs = proj.provs.map((p) => {
     const order = Object.keys(p.votes).sort((a, b) => p.votes[b] - p.votes[a]);
     const gap = simSeatGap(p);
     return { lead: order[0], rank: order.indexOf("jo") + 1, won: p.won.jo || 0, need: gap === null ? null : Math.round((gap / p.valid) * 1000) / 10 };
   });
-  return { day: state.day, est, margin, sample, provs };
+  return { day: state.day, pollster: P ? P.k : null, internal: !P, est, margin, sample: n, seats: proj.seats, range, provs };
 }
+// Desa una enquesta: només la darrera conserva el detall per circumscripció (la partida desada no creix gaire)
+function simPushPoll(state, poll) {
+  state.polls.forEach((p) => { delete p.provs; delete p.range; });
+  poll.round = state.round || 1;
+  state.polls.push(poll);
+  return poll;
+}
+// Mitjana de les enquestes publicades fins avui (les internes no compten: no es publiquen)
+function simPollAvg(state, upto = Infinity) {
+  const pub = state.polls.filter((p) => !p.internal && p.day <= upto).slice(-3);
+  if (!pub.length) return null;
+  const ids = Object.keys(pub[pub.length - 1].est);
+  return Object.fromEntries(ids.map((id) => [id, Math.round((pub.reduce((t, p) => t + (p.est[id] || 0), 0) / pub.length) * 10) / 10]));
+}
+const simBanDay = (state) => Math.max(2, state.days - 1); // els dos últims dies, sense enquestes publicades
+const simPollsBanned = (state) => state.day >= simBanDay(state);
 
-// Vots que li falten al jugador per guanyar un escó més en una circumscripció (null si no s'hi presenta)
-function simSeatGap(p) {
-  if (p.votes.jo === undefined) return null;
-  const v = p.votes.jo, won = p.won.jo || 0;
+// Vots que li falten a un partit per guanyar un escó més en una circumscripció (null si no s'hi presenta)
+function simSeatGap(p, id = "jo") {
+  if (p.votes[id] === undefined) return null;
+  const v = p.votes[id], won = p.won[id] || 0;
   const last = p.winners[p.winners.length - 1];
   if (!last) return null;
-  if (last.id === "jo") return p.next ? 0 : null;
-  return Math.ceil(Math.max(p.elig.includes("jo") ? 0 : p.min - v, last.q * (won + 1) - v)) + 1;
+  if (last.id === id) return p.next ? 0 : null;
+  return Math.ceil(Math.max(p.elig.includes(id) ? 0 : p.min - v, last.q * (won + 1) - v)) + 1;
+}
+// Marge amb què un partit conserva el seu últim escó (vots que pot perdre abans que se l'endugui un altre)
+function simSeatHold(p, id) {
+  const won = p.won[id] || 0;
+  if (!won || !p.next) return null;
+  return Math.max(0, Math.floor((p.votes[id] / won - p.next.q) * won));
 }
 
+// ---------- Desplaçaments de la caravana ----------
+// Distància aproximada entre dues circumscripcions sobre el mapa (1 unitat ≈ 1,5 km). Illes, Ceuta i Melilla: amb avió.
+const SIM_FLY = ["PM", "GC", "TF", "CE", "ML"];
+function simTravel(from, to) {
+  if (from === to || from === null || from === undefined) return { k: "aqui", en: 0, cost: 0 };
+  const a = SIM_PROVS[from], b = SIM_PROVS[to];
+  const can = (p) => p.code === "GC" || p.code === "TF";
+  if (can(a) && can(b)) return { k: "prop", en: 3, cost: 0 };
+  if (SIM_FLY.includes(a.code) || SIM_FLY.includes(b.code)) return { k: "vol", en: 10, cost: 3 };
+  const ga = typeof SIM_MAP !== "undefined" ? SIM_MAP.provs[a.code] : null, gb = typeof SIM_MAP !== "undefined" ? SIM_MAP.provs[b.code] : null;
+  const d = ga && gb ? Math.hypot(ga.x - gb.x, ga.y - gb.y) : 200;
+  if (d < 115) return { k: "prop", en: 3, cost: 0 };
+  if (d < 270) return { k: "lluny", en: 7, cost: 0 };
+  return { k: "vol", en: 10, cost: 3 };
+}
+const SIM_TRAVEL_LABEL = { aqui: "Ya estás aquí", prop: "Cerca", lluny: "Unas horas de coche o tren", vol: "Hay que coger un avión" };
+
+// Rendiment del candidat segons l'energia que li queda
+const simTired = (state) => (state.energy < SIM_ENERGY.exhausted ? 2 : state.energy < SIM_ENERGY.tired ? 1 : 0);
+const simEff = (state) => [1, 0.8, 0.6][simTired(state)] * (1 + 0.12 * Math.max(0, state.mom?.jo || 0));
+
 // ---------- Campanya: accions del jugador ----------
+// cat: on surt a la interfície (terr: al territori · media: mitjans i missatge · estr: estratègia)
 const SIM_ACTIONS = {
-  miting: { label: "Mitin", cost: 8, needProv: true, desc: "Efecto fuerte en una circunscripción y un poco en el resto de la comunidad." },
-  xarxes: { label: "Campaña en las redes", cost: 3, desc: "Llega a todas partes, sobre todo a los jóvenes. Puede generar polémica." },
-  entrevista: { label: "Entrevista", cost: 4, desc: "Depende de la solvencia del líder. Puede salir muy bien o mal." },
-  candidat: { label: "Fichar a un candidato local", cost: 15, needProv: true, desc: "Un nombre conocido en la circunscripción. Una vez por provincia." },
-  tema: { label: "Reforzar un tema", cost: 5, needTheme: true, desc: "Hace más creíble una de tus propuestas." },
-  coalicio: { label: "Coalición preelectoral", cost: 10, needProv: true, desc: "Id juntos con una candidatura local en toda la comunidad: sumáis votos, pero compartís lista." },
-  matisar: { label: "Matizar una posición", cost: 2, needAxis: true, desc: "Acercas una posición al centro. Hay votantes moderados que te escuchan, pero pierdes credibilidad." },
-  enquesta: { label: "Encargar una encuesta", cost: 6, free: true, desc: "Una encuesta del juego nueva, con el detalle de cada circunscripción. No gasta ninguna franja." },
+  miting: { label: "Mitin", cost: 8, en: 18, needProv: true, cat: "terr", icon: "📣", desc: "Efecto fuerte en la circunscripción y algo en el resto de la comunidad. Con el candidato descansado, luce más." },
+  porta: { label: "Puerta a puerta", cost: 4, en: 12, needProv: true, cat: "terr", icon: "🚪", desc: "La militancia llama a las puertas: más participación de tus votantes. Cuanta más militancia, más efecto." },
+  candidat: { label: "Fichar a un candidato local", cost: 15, en: 8, needProv: true, cat: "terr", icon: "⭐", desc: "Un nombre conocido en la circunscripción. Una vez por provincia." },
+  coalicio: { label: "Coalición preelectoral", cost: 10, en: 8, needProv: true, cat: "terr", icon: "🤝", desc: "Id juntos con una candidatura local en toda la comunidad: sumáis votos, pero compartís lista." },
+  xarxes: { label: "Campaña en las redes", cost: 3, en: 4, cat: "media", icon: "📱", desc: "Llega a todas partes, sobre todo a los jóvenes. Barata, pero se puede volver en contra." },
+  anuncis: { label: "Publicidad electoral", cost: 12, en: 2, cat: "media", needSeg: true, icon: "📻", desc: "Carteles, radio, prensa e internet: llega a mucha gente sin riesgos, pero es cara. En España, la publicidad electoral en las televisiones privadas está prohibida. Puedes elegir el público." },
+  agenda: { label: "Marca la agenda", cost: 5, en: 8, needTheme: true, cat: "media", icon: "🗞️", desc: "Pones un tema en el centro del debate. Si mañana hablan de él todos los medios, sacan provecho los partidos que lo dominan." },
+  atac: { label: "Contraste con un rival", cost: 3, en: 6, needRival: true, cat: "media", icon: "⚔️", desc: "Reproches a un rival que compite por tus votantes. Si sale bien, le quitas votos; si no, te pasa factura." },
+  matisar: { label: "Matizar una posición", cost: 2, en: 4, needAxis: true, cat: "estr", icon: "🧭", desc: "Acercas una posición al centro. Hay votantes moderados que te escuchan, pero pierdes credibilidad." },
+  enquesta: { label: "Encuesta interna", cost: 6, en: 0, free: true, cat: "estr", icon: "📊", desc: "Una encuesta solo para tu partido, con el detalle de cada circunscripción. No gasta ninguna franja y no está afectada por la prohibición de publicar encuestas." },
+  descans: { label: "Descansa", cost: 0, en: 0, cat: "estr", icon: "🛌", desc: "El candidato recupera energía. Gasta una franja." },
 };
 const SIM_AXES = { eco: "economia", ter: "modelo territorial", val: "valors" };
+// Públics dels anuncis (tipus de votant) i «tothom»
+const SIM_AD_SEGS = ["", "jov", "jub", "mid", "ind", "rur", "urb"];
+
+// Energia que costa una acció (amb el desplaçament, si n'hi ha)
+function simActCost(state, type, arg) {
+  const a = SIM_ACTIONS[type];
+  const tr = a.needProv && arg !== null && arg !== undefined ? simTravel(state.loc, arg) : { en: 0, cost: 0, k: "aqui" };
+  return { money: a.cost + tr.cost, en: a.en + tr.en, travel: tr };
+}
 
 function simCanAct(state, type, arg) {
   const a = SIM_ACTIONS[type];
   if (!a || state.phase !== "campaign") return "No es momento de campaña.";
   if (!a.free && state.slot >= 3) return "Ya no te quedan franjas hoy.";
-  if (state.money < a.cost) return "No te queda suficiente dinero.";
   if (a.needProv && !(arg >= 0 && arg < SIM_PROVS.length)) return "Hay que elegir una circunscripción.";
+  const c = simActCost(state, type, arg);
+  if (state.money < c.money) return "No te queda suficiente dinero.";
+  if (c.en > state.energy) return "El candidato está agotado: tiene que descansar.";
   if (type === "candidat" && state.used.cand.includes(arg)) return "Ya tienes un candidato local en esta circunscripción.";
   if (type === "coalicio" && (state.used.coal || []).includes(SIM_PROVS[arg].ccaa)) return "Ya tienes una coalición en esta comunidad.";
   if (type === "coalicio" && (state.used.coal || []).length >= 2) return "Como máximo, dos coaliciones por campaña.";
   if (a.needTheme && !(arg >= 0 && arg < SIM_THEMES.length)) return "Hay que elegir un tema.";
   if (a.needAxis && !SIM_AXES[arg]) return "Hay que elegir un eje.";
+  if (a.needRival && !state.rivals.some((r) => r.id === arg)) return "Hay que elegir un rival.";
+  if (a.needSeg && arg !== null && arg !== "" && !SIM_SEGMENTS.some((g) => g.k === arg)) return "Hay que elegir un público.";
+  if (type === "atac" && (state.used.atac || []).some((x) => x.day === state.day && x.id === arg)) return "Hoy ya has cargado contra este rival.";
   if (type === "matisar" && Math.abs(state.me[arg] - 5) < 0.8) return "En este eje ya estás cerca del centro.";
-  if (type === "enquesta" && state.polls.some((p) => p.day === state.day)) return "Hoy ya tienes una encuesta.";
+  if (type === "enquesta" && state.polls.some((p) => p.day === state.day && p.internal)) return "Hoy ya tienes una encuesta interna.";
+  if (type === "descans" && state.energy >= SIM_ENERGY.max - 4) return "El candidato ya está descansado.";
   return null;
 }
 
+// Fa una acció del jugador. Retorna { ok, msg, good, fx } (fx: efectes visibles per a la interfície)
 function simAct(state, type, arg = null) {
   const err = simCanAct(state, type, arg);
   if (err) return { ok: false, msg: err };
   const a = SIM_ACTIONS[type];
   const me = state.me, camp = state.camp.jo;
-  state.money -= a.cost;
+  const c = simActCost(state, type, arg);
+  const eff = simEff(state);
+  state.money -= c.money;
+  state.energy = Math.max(0, state.energy - c.en);
   if (!a.free) state.slot++;
+  if (a.needProv) { state.loc = arg; if (state.route[state.route.length - 1] !== arg) state.route.push(arg); }
+  const fx = { prov: a.needProv ? arg : null, en: -c.en, money: -c.money, travel: c.travel.k };
   let msg = "", good = true;
   if (type === "miting") {
     const p = SIM_PROVS[arg];
-    // A les circumscripcions petites, un míting arriba a una part més gran de l'electorat
-    const boost = (0.18 + 0.03 * me.attrs.prox) * (1 + 0.9 * (1 - Math.min(p.seats, 16) / 16));
-    state.aw[arg] += (1 - state.aw[arg]) * 0.35;
+    // A les circumscripcions petites, un míting arriba a una part més gran de l'electorat. Repetir-lo al mateix lloc rendeix menys.
+    const times = state.log.filter((l) => l.type === "miting" && l.arg === arg && (l.round || 1) === (state.round || 1)).length;
+    const boost = (0.18 + 0.03 * me.attrs.prox) * (1 + 0.9 * (1 - Math.min(p.seats, 16) / 16)) * eff / (1 + 0.45 * times);
+    state.aw[arg] += (1 - state.aw[arg]) * 0.35 * eff;
     camp[arg] += boost;
     SIM_PROVS.forEach((q, j) => { if (j !== arg && q.ccaa === p.ccaa) { camp[j] += boost * 0.25; state.aw[j] += (1 - state.aw[j]) * 0.1; } });
+    // Els grans actes surten als informatius de tot l'Estat
+    if (p.seats >= 10) state.awG += (1 - state.awG) * 0.012 * eff;
+    state.moral = Math.min(100, state.moral + 1);
     state.media += 2;
+    fx.boost = boost;
     msg = `Mitin en ${p.name}: más notoriedad y apoyo en la circunscripción.`;
+    simNews(state, { kind: "miting", icon: "📣", party: "jo", prov: arg, t: simNewsText("miting", state, { sig: me.sig, prov: p.name, big: eff >= 0.95 && boost > 0.3 }) });
+  } else if (type === "porta") {
+    const p = SIM_PROVS[arg];
+    const k = 0.085 * (0.6 + state.moral / 100) * eff;
+    state.mob[arg] = Math.min(0.2, state.mob[arg] + k);
+    state.aw[arg] += (1 - state.aw[arg]) * 0.2 * eff;
+    camp[arg] += 0.12 * eff;
+    SIM_PROVS.forEach((q, j) => { if (j !== arg && q.ccaa === p.ccaa) state.mob[j] = Math.min(0.2, state.mob[j] + k * 0.3); });
+    state.moral = Math.min(100, state.moral + 2);
+    fx.mob = k;
+    msg = `Puerta a puerta en ${p.name}: la militancia anima a tus votantes a ir a votar.`;
+    simNews(state, { kind: "porta", icon: "🚪", party: "jo", prov: arg, t: simNewsText("porta", state, { sig: me.sig, prov: p.name }) });
   } else if (type === "xarxes") {
     // Les xarxes es saturen: cada missatge nou arriba a menys gent
     state.used.xarxes = (state.used.xarxes || 0) + 1;
     const sat = 1 / (1 + 0.14 * (state.used.xarxes - 1));
-    state.awG += (1 - state.awG) * 0.05 * sat;
-    state.glob.jo += 0.03 * sat;
-    if (simRand(state, "xarxes") < 0.18) {
+    state.awG += (1 - state.awG) * 0.035 * sat * eff;
+    state.glob.jo += 0.02 * sat * eff;
+    state.seg.jov = Math.min(0.5, (state.seg.jov || 0) + 0.02 * sat);
+    if (simRand(state, "xarxes") < 0.18 + (simTired(state) ? 0.08 : 0)) {
       state.cred -= 6; state.glob.jo -= 0.05; good = false;
       msg = "Un mensaje en las redes genera polémica: pierdes credibilidad.";
-    } else msg = "La campaña en las redes hace crecer tu notoriedad.";
-  } else if (type === "entrevista") {
-    const p = 0.3 + 0.06 * me.attrs.sol + state.cred / 400;
-    if (simRand(state, "entrevista") < p) {
-      state.awG += (1 - state.awG) * 0.06; state.cred += 3; state.glob.jo += 0.04;
-      msg = "La entrevista sale bien: ganas credibilidad y visibilidad.";
+      simNews(state, { kind: "polemica", icon: "📱", party: "jo", tone: "bad", t: simNewsText("xarxesKo", state, { sig: me.sig }) });
     } else {
-      state.cred -= 5; state.glob.jo -= 0.03; good = false;
-      msg = "La entrevista se complica: una respuesta poco clara te hace perder credibilidad.";
+      msg = "La campaña en las redes hace crecer tu notoriedad.";
+      simNews(state, { kind: "xarxes", icon: "📱", party: "jo", t: simNewsText("xarxes", state, { sig: me.sig }) });
     }
+  } else if (type === "anuncis") {
+    state.used.anuncis = (state.used.anuncis || 0) + 1;
+    const sat = 1 / (1 + 0.35 * (state.used.anuncis - 1));
+    state.awG += (1 - state.awG) * 0.05 * sat;
+    state.glob.jo += 0.01 * sat;
+    if (arg) state.seg[arg] = Math.min(0.5, (state.seg[arg] || 0) + 0.06 * sat);
+    fx.seg = arg || null;
+    const label = arg ? SIM_SEGMENTS.find((g) => g.k === arg).label.toLowerCase() : null;
+    msg = label ? `Publicidad pensada para el público «${label}»: te conoce más gente y conectas con estos votantes.` : "Carteles, cuñas de radio y anuncios en internet: te conoce mucha más gente en todas partes.";
+    simNews(state, { kind: "anuncis", icon: "📺", party: "jo", t: simNewsText("anuncis", state, { sig: me.sig }) });
   } else if (type === "candidat") {
-    camp[arg] += 0.32; state.aw[arg] += (1 - state.aw[arg]) * 0.25; state.used.cand.push(arg);
+    camp[arg] += 0.32 * eff; state.aw[arg] += (1 - state.aw[arg]) * 0.25; state.used.cand.push(arg);
     msg = `Fichas a un candidato conocido en ${SIM_PROVS[arg].name}.`;
-  } else if (type === "tema") {
-    me.iss[arg] = Math.min(1.3, me.iss[arg] + 0.2);
-    state.glob.jo += 0.02;
-    msg = `Refuerzas la propuesta de ${SIM_THEMES[arg].label.toLowerCase()}.`;
+    simNews(state, { kind: "candidat", icon: "⭐", party: "jo", prov: arg, t: simNewsText("candidat", state, { sig: me.sig, prov: SIM_PROVS[arg].name }) });
+  } else if (type === "agenda") {
+    state.push[arg] += 1.4 * eff;
+    me.iss[arg] = Math.min(1.3, me.iss[arg] + 0.12);
+    state.glob.jo += 0.01;
+    // Si avui ja és el tema del dia, aprofites l'ona
+    if (state.agenda === arg) { state.glob.jo += 0.03 * eff; fx.wave = true; }
+    msg = state.agenda === arg ? `Aprovechas que todo el mundo habla de ${SIM_THEMES[arg].label.toLowerCase()} para explicar tus propuestas.` : `Pones ${SIM_THEMES[arg].label.toLowerCase()} en el centro del debate: quizá mañana hablen de ello todos los medios.`;
+    simNews(state, { kind: "agenda", icon: SIM_THEMES[arg].icon, party: "jo", theme: arg, t: simNewsText("agenda", state, { sig: me.sig, theme: SIM_THEMES[arg].label.toLowerCase() }) });
+  } else if (type === "atac") {
+    const R = simPartyById(state, arg);
+    const d = simDistP(R, me);
+    const overlap = Math.max(0, 1 - d / 6);
+    (state.used.atac = state.used.atac || []).push({ day: state.day, id: arg });
+    // Surt bé més sovint amb solvència i credibilitat, i quan el rival competeix de veritat pels teus votants
+    const p = 0.42 + 0.05 * me.attrs.sol + state.cred / 400 + overlap * 0.15 - (simTired(state) ? 0.1 : 0);
+    if (simRand(state, `atac-${arg}`) < p) {
+      state.glob[arg] -= (0.02 + 0.06 * overlap) * eff;
+      state.glob.jo += (0.015 + 0.04 * overlap) * eff;
+      state.awG += (1 - state.awG) * 0.03;
+      fx.hit = arg;
+      msg = simGram(overlap > 0.25 ? `El contraste con ${simThe(R)} funciona: te disputas sus votantes y sales reforzado.` : `El contraste con ${simThe(R)} tiene eco, pero sus votantes quedan lejos de los tuyos.`);
+      simNews(state, { kind: "atac", icon: "⚔️", party: "jo", target: arg, t: simNewsText("atac", state, { sig: me.sig, target: R.sig }) });
+    } else {
+      state.cred -= 5; state.glob.jo -= 0.025; good = false;
+      state.glob[arg] += 0.01;
+      fx.backfire = arg;
+      msg = simGram(`El reproche a ${simThe(R)} se vuelve en tu contra: se te ve más pendiente de los demás que de tus propuestas.`);
+      simNews(state, { kind: "atac", icon: "⚔️", party: "jo", target: arg, tone: "bad", t: simNewsText("atacKo", state, { sig: me.sig, target: R.sig }) });
+    }
+    // El rival no s'ho quedarà: demà pot respondre
+    (state.grudge = state.grudge || {})[arg] = state.day;
   } else if (type === "coalicio") {
     // Soci local: una candidatura amb la identitat territorial mitjana de la comunitat. Com més lluny ideològicament, menys suma.
     const p = SIM_PROVS[arg];
@@ -282,59 +485,159 @@ function simAct(state, type, arg = null) {
     mates.forEach((q) => { camp[q.i] += boost; state.aw[q.i] += (1 - state.aw[q.i]) * 0.15; });
     state.cred -= Math.round(2 + d * 8);
     (state.used.coal = state.used.coal || []).push(p.ccaa);
-    msg = `Coalición con una candidatura local en ${p.ccaa}: sumáis fuerzas en ${mates.length === 1 ? "la circunscripción" : `las ${mates.length} circunscripciones`}.`;
+    msg = simGram(`Coalición con una candidatura local en ${p.ccaa}: sumáis fuerzas en ${mates.length === 1 ? "la circunscripción" : `las ${mates.length} circunscripciones`}.`);
     good = d < 0.45;
+    simNews(state, { kind: "coalicio", icon: "🤝", party: "jo", prov: arg, t: simNewsText("coalicio", state, { sig: me.sig, ccaa: p.ccaa }) });
   } else if (type === "matisar") {
     const before = me[arg];
     me[arg] = Math.round((before + (5 - before) * 0.3) * 10) / 10;
     state.cred -= 5;
     msg = `Matizas tu posición en ${SIM_AXES[arg]}: algunos votantes moderados te escuchan, pero te reprochan el cambio.`;
+    simNews(state, { kind: "matisar", icon: "🧭", party: "jo", t: simNewsText("matisar", state, { sig: me.sig, axis: SIM_AXES[arg] }) });
   } else if (type === "enquesta") {
-    state.polls.push(simPoll(state, 1600));
-    msg = "Tienes una encuesta del juego nueva, con el detalle de cada circunscripción.";
+    simPushPoll(state, simPoll(state, 2000, null));
+    msg = "Tienes una nueva encuesta interna, con el detalle de cada circunscripción.";
+  } else if (type === "descans") {
+    state.energy = Math.min(SIM_ENERGY.max, state.energy + SIM_ENERGY.rest);
+    fx.en = SIM_ENERGY.rest;
+    msg = "El candidato descansa unas horas y recupera energía.";
+  }
+  // El cansament té un preu: una relliscada en directe
+  if (type !== "descans" && type !== "enquesta" && simTired(state) && simRand(state, `relliscada-${state.day}-${state.slot}`) < (simTired(state) === 2 ? 0.24 : 0.1)) {
+    state.cred -= 4; state.glob.jo -= 0.03; good = false;
+    fx.gaffe = true;
+    msg += " El cansancio pasa factura: un resbalón del candidato corre por las redes.";
+    simNews(state, { kind: "relliscada", icon: "😬", party: "jo", tone: "bad", t: simNewsText("relliscada", state, { who: simLeaderName(state) }) });
   }
   state.cred = Math.max(0, Math.min(100, state.cred));
   state.glob.jo = Math.max(-0.6, Math.min(0.8, state.glob.jo));
   // La credibilitat també pesa: per sota de 40 resta, per sobre de 70 suma
   state.glob.jo += state.cred < 40 ? -0.01 : state.cred > 70 ? 0.01 : 0;
   state.log.push({ day: state.day, type, arg, msg, good, round: state.round || 1 });
-  return { ok: true, msg, good };
+  return { ok: true, msg, good, fx };
+}
+const simLeaderName = (state) => state.me.leader || `el candidato de ${state.me.sig}`;
+
+// ---------- L'agenda: de què parlen els mitjans cada dia ----------
+// Pesa el que han empès els partits (Marca l'agenda, propostes) i l'actualitat, que de vegades imposa un tema.
+function simNextAgenda(state, first = false) {
+  const rnd = () => simRand(state, `agenda-${state.day}`);
+  const prev = state.agenda;
+  const shock = !first && rnd() < 0.22 ? Math.floor(rnd() * SIM_THEMES.length) : null;
+  const w = SIM_THEMES.map((_, k) => (1 + state.push[k] * 2.4 + (k === shock ? 5 : 0)) * (k === prev ? 0.35 : 1));
+  let x = rnd() * w.reduce((t, v) => t + v, 0);
+  let pick = w.findIndex((v) => (x -= v) < 0);
+  if (pick < 0) pick = 0;
+  // Qui ha empès el tema que ha guanyat
+  const pushedByMe = state.push[pick] > 0 && (state.pushBy?.[pick] || []).includes("jo");
+  state.agenda = pick;
+  state.push = state.push.map((v) => v * 0.35);
+  state.pushBy = {};
+  const th = SIM_THEMES[pick];
+  simNews(state, { kind: "tema", icon: th.icon, theme: pick, t: simNewsText(shock === pick ? "temaXoc" : pushedByMe ? "temaMeu" : "tema", state, { theme: th.label.toLowerCase(), sig: state.me.sig }) });
+  return pick;
+}
+
+// ---------- Les notícies del dia (teletip i informatiu) ----------
+function simNews(state, n) {
+  state.news = state.news || [];
+  state.news.push({ day: state.day, slot: state.slot, round: state.round || 1, ...n });
+  if (state.news.length > 90) state.news.splice(0, state.news.length - 90);
+  // Qui empeny cada tema (per saber si el tema del dia l'ha posat el jugador)
+  if (n.kind === "agenda" && n.theme !== undefined) ((state.pushBy = state.pushBy || {})[n.theme] = state.pushBy[n.theme] || []).push(n.party);
 }
 
 // Els rivals juguen a sim-ai.js (simRivalsTurn).
 
-// Acaba la jornada: torn dels rivals i, cada 3 dies, enquesta del joc
+// Acaba la jornada: torn dels rivals, la nit (energia i desgast dels efectes), el tema de demà i l'enquesta del matí
 function simEndDay(state) {
   const moves = simRivalsTurn(state);
-  let poll = null;
-  if (state.day % 3 === 0) { poll = simPoll(state); state.polls.push(poll); }
+  // Desgast: els efectes de campanya es dilueixen; la notorietat es queda
+  Object.keys(state.camp).forEach((id) => { state.camp[id] = state.camp[id].map((v) => v * SIM_K.decay); state.glob[id] *= SIM_K.decay; });
+  Object.keys(state.seg).forEach((k) => { state.seg[k] *= 0.94; });
+  state.mob = state.mob.map((v) => v * 0.88);
+  state.energy = Math.min(SIM_ENERGY.max, state.energy + SIM_ENERGY.night);
   state.day++;
   state.slot = 0;
-  state.money += 6; // aportacions diàries de la militància
-  if (state.day > state.days) state.phase = "reflection";
-  else simDayOffers(state);
+  state.route = [state.loc];
+  state.money += 6 + (state.moral >= 70 ? 2 : 0); // aportacions diàries de la militància
+  let poll = null;
+  if (state.day > state.days) {
+    state.phase = "reflection";
+    simNews(state, { kind: "reflexio", icon: "🤫", t: simNewsText("reflexio", state) });
+  } else {
+    simNextAgenda(state);
+    if (!simPollsBanned(state)) poll = simPublishPoll(state);
+    else {
+      Object.keys(state.mom).forEach((id) => { state.mom[id] *= 0.7; });
+      if (state.day === simBanDay(state)) simNews(state, { kind: "veda", icon: "🚫", t: simNewsText("veda", state) });
+    }
+    simDayOffers(state);
+  }
   return { moves, poll };
 }
 
+// Enquesta publicada al matí per un institut (rotatiu): actualitza l'arrossegament de cada partit
+function simPublishPoll(state) {
+  const pub = state.polls.filter((p) => !p.internal);
+  const P = SIM_POLLSTERS[(pub.length) % SIM_POLLSTERS.length];
+  const poll = simPoll(state, null, P.k);
+  const prev = simPollAvg(state);
+  Object.keys(poll.est).forEach((id) => {
+    const trend = prev ? poll.est[id] - (prev[id] ?? poll.est[id]) : 0;
+    state.mom[id] = Math.max(-1, Math.min(1, 0.5 * (state.mom[id] || 0) + trend / 3));
+  });
+  simPushPoll(state, poll);
+  const order = Object.keys(poll.est).sort((a, b) => poll.est[b] - poll.est[a]);
+  const lead = simPartyById(state, order[0]);
+  const trend = prev ? poll.est.jo - (prev.jo ?? poll.est.jo) : 0;
+  simNews(state, { kind: "enquesta", icon: "📊", party: order[0], t: simNewsText("enquesta", state, { pollster: P.name, lead: lead.sig, x: simFmt1(poll.est[order[0]]), me: state.me.sig, y: simFmt1(poll.est.jo), trend }) });
+  // Les grans pujades i baixades són notícia
+  Object.keys(state.mom).forEach((id) => {
+    if (Math.abs(state.mom[id]) < 0.35) return;
+    simNews(state, { kind: "impuls", icon: state.mom[id] > 0 ? "📈" : "📉", party: id, t: simNewsText(state.mom[id] > 0 ? "puja" : "baixa", state, { sig: simPartyById(state, id).sig }) });
+  });
+  return poll;
+}
+const simFmt1 = (x) => (Math.round(x * 10) / 10).toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 // ---------- Debat: 3 preguntes; cada resposta té un perfil ideològic ----------
 // answers: [{ eco, ter, val }] (posició de la resposta triada). Puntua coherència amb el partit i l'atractiu general.
+// El cansament resta: un candidat esgotat no llueix igual.
+// Com sona una resposta del debat (0-1): coherència amb el programa i atractiu per a l'electorat del mig
+function simDebateAnswer(state, a) {
+  const me = state.me;
+  return {
+    coh: 1 - Math.min(1, Math.hypot(a.eco - me.eco, a.ter - me.ter, a.val - me.val) / 8),
+    appeal: 1 - Math.min(1, Math.hypot(a.eco - 5, a.ter - 4, a.val - 5) / 8),
+  };
+}
+// Nota del debat (0-1): sobretot la coherència, també l'atractiu i el carisma; el cansament hi resta
+function simDebateScore(state, answers) {
+  let coh = 0, appeal = 0;
+  answers.forEach((a) => { const r = simDebateAnswer(state, a); coh += r.coh; appeal += r.appeal; });
+  coh /= answers.length; appeal /= answers.length;
+  return { coh, appeal, score: 0.5 * coh + 0.3 * appeal + 0.2 * (state.me.attrs.car / 5) - 0.05 * simTired(state) };
+}
+// Els rivals solen treure una nota d'entre aquests dos valors (vegeu simDebate)
+const SIM_DEBATE_RIVALS = [0.41, 0.59];
 function simDebate(state, answers) {
   const me = state.me;
-  let coh = 0, appeal = 0;
-  answers.forEach((a) => {
-    coh += 1 - Math.min(1, Math.hypot(a.eco - me.eco, a.ter - me.ter, a.val - me.val) / 8);
-    appeal += 1 - Math.min(1, Math.hypot(a.eco - 5, a.ter - 4, a.val - 5) / 8);
-  });
-  coh /= answers.length; appeal /= answers.length;
-  const score = 0.5 * coh + 0.3 * appeal + 0.2 * (me.attrs.car / 5);
+  const { coh, appeal, score } = simDebateScore(state, answers);
   const delta = (score - 0.55) * 0.5;
   state.glob.jo += delta;
   state.awG += (1 - state.awG) * 0.08;
   state.cred += Math.round((coh - 0.6) * 20);
   state.cred = Math.max(0, Math.min(100, state.cred));
-  return { score, coh, appeal, delta };
+  state.energy = Math.max(0, state.energy - 10);
+  // Qui guanya el debat segons els analistes (el jugador o el rival que hi ha sortit més ben parat)
+  const rivals = state.rivals.filter((r) => !r.ccaa).map((r) => ({ id: r.id, s: 0.5 + (r.lead - 0.55) * 0.5 + (simRand(state, `debat-${r.id}`) - 0.5) * 0.18 }));
+  const best = rivals.sort((a, b) => b.s - a.s)[0];
+  const won = score >= best.s;
+  if (!won) state.glob[best.id] += 0.02;
+  simNews(state, { kind: "debat", icon: "🎙️", party: won ? "jo" : best.id, t: simNewsText(won ? "debatMeu" : "debatRival", state, { sig: won ? me.sig : simPartyById(state, best.id).sig }) });
+  return { score, coh, appeal, delta, won, best: best.id };
 }
-
 
 // Potencial del partit: escons que tindria si tothom el conegués, sense campanya de ningú.
 // Serveix per fixar objectius justos per a qualsevol ideologia.
@@ -342,8 +645,95 @@ function simPotential(state) {
   const s = JSON.parse(JSON.stringify(state));
   s.awG = 1;
   s.aw = s.aw.map(() => 1);
-  Object.keys(s.camp).forEach((id) => { s.camp[id] = s.camp[id].map(() => 0); s.glob[id] = 0; });
+  s.agenda = null;
+  Object.keys(s.camp).forEach((id) => { s.camp[id] = s.camp[id].map(() => 0); s.glob[id] = 0; s.mom[id] = 0; });
   return simElection(s).totals.jo.seats;
+}
+
+// ---------- Nit electoral: enquesta a peu d'urna i escrutini ----------
+// Implantació rural de cada partit: quant més vota a les circumscripcions rurals que a les urbanes (-0,6 a 0,6).
+// A la nit electoral, els vots de les meses rurals arriben abans i fan que, al principi, aquests partits vagin més amunt.
+function simRuralLean(r) {
+  const lean = {};
+  Object.keys(r.totals).forEach((id) => {
+    let rv = 0, rt = 0, uv = 0, ut = 0;
+    r.provs.forEach((p) => {
+      if (p.votes[id] === undefined) return;
+      const rur = 1 - SIM_PROVS[p.i].urb;
+      rv += p.votes[id] * rur; rt += p.valid * rur;
+      uv += p.votes[id] * (1 - rur); ut += p.valid * (1 - rur);
+    });
+    const a = rt ? rv / rt : 0, b = ut ? uv / ut : 0;
+    lean[id] = a + b > 0 ? Math.max(-0.6, Math.min(0.6, (a - b) / ((a + b) / 2))) : 0;
+  });
+  return lean;
+}
+// Ritme de l'escrutini de cada circumscripció: comença uns minuts després de les 20.00 h i les grans triguen més
+function simCountPace(i) {
+  const p = SIM_PROVS[i];
+  return { start: 14 + 22 * p.urb, dur: 105 + 115 * Math.min(1, p.seats / 24) };
+}
+// Escrutini a una hora concreta (minuts des de les 20.00 h). Torna vots i escons provisionals de cada partit.
+function simCountAt(r, t, lean = simRuralLean(r)) {
+  let counted = 0;
+  const totals = Object.fromEntries(Object.keys(r.totals).map((id) => [id, { votes: 0, seats: 0 }]));
+  const provs = r.provs.map((p) => {
+    const { start, dur } = simCountPace(p.i);
+    const x = Math.max(0, Math.min(1, (t - start) / dur));
+    const f = x * x * (3 - 2 * x);
+    if (f <= 0) return { i: p.i, f: 0, won: null, votes: null };
+    if (f >= 1) {
+      counted += p.valid;
+      Object.keys(p.votes).forEach((id) => { totals[id].votes += p.votes[id]; totals[id].seats += p.won[id]; });
+      return { i: p.i, f: 1, won: p.won, votes: p.votes, valid: p.valid, winners: p.winners, next: p.next, elig: p.elig, min: p.min };
+    }
+    // Les meses rurals es compten abans: al principi pesen més els partits amb implantació rural
+    const raw = {};
+    let rawSum = 0, finSum = 0;
+    Object.keys(p.votes).forEach((id) => { raw[id] = p.votes[id] * Math.max(0.5, 1 + 0.3 * (1 - f) * (lean[id] || 0)); rawSum += raw[id]; finSum += p.votes[id]; });
+    const votes = {};
+    Object.keys(raw).forEach((id) => { votes[id] = Math.round((raw[id] / rawSum) * finSum * f); });
+    const blank = Math.round(p.blank * f);
+    const s = simSeatsFor(votes, blank, p.seats);
+    counted += s.valid;
+    Object.keys(votes).forEach((id) => { totals[id].votes += votes[id]; totals[id].seats += s.won[id]; });
+    return { i: p.i, f, votes, valid: s.valid, ...s };
+  });
+  const pct = counted / r.valid;
+  const seated = provs.filter((p) => p.f > 0).reduce((t, p) => t + SIM_PROVS[p.i].seats, 0);
+  return { t, pct, totals, provs, seated, valid: counted };
+}
+// Escons en joc: circumscripcions on l'últim escó es decideix per pocs vots (en % dels vots escrutats)
+function simBattles(c, n = 3) {
+  const out = [];
+  c.provs.forEach((p) => {
+    if (!p.f || !p.next || !p.winners?.length) return;
+    const last = p.winners[p.winners.length - 1];
+    if (last.id === p.next.id) return;
+    const gap = simSeatGap(p, p.next.id);
+    if (gap === null) return;
+    const pct = (gap / p.valid) * 100;
+    if (pct < 1.2) out.push({ i: p.i, holder: last.id, chaser: p.next.id, gap, pct, f: p.f });
+  });
+  return out.sort((a, b) => a.pct - b.pct).slice(0, n);
+}
+// Enquesta a peu d'urna (20.00 h): el resultat real amb un error petit, i la projecció d'escons amb forquilla
+function simExitPoll(state, r) {
+  const rng = simMulberry(simHash(`${state.seed}|peu-urna|${state.round || 1}`));
+  const est = {};
+  Object.keys(r.totals).forEach((id) => {
+    const sh = r.totals[id].share * 100;
+    est[id] = Math.round(Math.max(0.1, sh + simGauss(rng) * Math.min(1.2, 0.05 + 0.13 * sh ** 0.8)) * 10) / 10;
+  });
+  const proj = simProject(r, est);
+  const range = {};
+  Object.keys(est).forEach((id) => {
+    const e = Math.min(2, 0.1 + 0.15 * est[id] ** 0.8);
+    range[id] = proj.seats[id] || est[id] >= 1 ? simSeatRange(r, est, id, e) : [0, 0];
+    range[id][0] = Math.min(range[id][0], proj.seats[id]);
+    range[id][1] = Math.max(range[id][1], proj.seats[id]);
+  });
+  return { est, seats: proj.seats, range };
 }
 
 // =========================================================
@@ -667,7 +1057,9 @@ const SIM_FORUMS = [
   { k: "pagesia", name: "Un encuentro de organizaciones agrarias", seg: "rur", th: 5, pos: { ax: "val", p: 7 } },
   { k: "veinal", name: "Una federación de asociaciones vecinales", seg: "urb", th: 0, pos: { ax: "eco", p: 3 } },
 ];
-const SIM_MEDIA_TYPES = { entrevista: "Entrevista", forum: "Foro", cara: "Cara a cara" };
+const SIM_MEDIA_TYPES = { entrevista: "Entrevista", forum: "Foro", cara: "Cara a cara", replica: "Réplica" };
+// Energia que gasta cada proposta de l'agenda
+const SIM_OFFER_EN = { entrevista: 10, forum: 10, cara: 14, replica: 4 };
 
 // Ofertes del dia: dues propostes de mitjans o d'entitats i, si un rival t'ha reptat, un cara a cara
 function simDayOffers(state) {
@@ -689,8 +1081,9 @@ function simDayOffers(state) {
       out.push({ id: `${day}-${k}`, type: "forum", forum: f.k, status: "nova" });
     }
   }
-  // Els reptes a cara a cara van primer a l'agenda
+  // Els reptes a cara a cara van primer a l'agenda i, abans encara, les rèpliques als rivals que t'han atacat
   (state.challenges || []).splice(0).reverse().forEach((id, k) => out.unshift({ id: `${day}-c${k}`, type: "cara", rival: id, status: "nova" }));
+  (state.replies || []).splice(0).reverse().forEach((id, k) => out.unshift({ id: `${day}-r${k}`, type: "replica", rival: id, status: "nova" }));
   // No es repeteix el mateix mitjà o fòrum el mateix dia
   const seen = new Set();
   state.offers = out.filter((o) => { const key = o.outlet || o.forum || o.rival; if (seen.has(key)) return false; seen.add(key); return true; });
@@ -727,10 +1120,11 @@ function simDoInterview(state, offerId, picks) {
   const qs = simMediaQuestions(state, offer);
   const answers = qs.map((q, k) => q.a[picks[k]] || q.a[0]);
   const evasive = answers.filter((a) => a.ev).length;
-  let quality = answers.reduce((t, a) => t + simAnswerQuality(state, a), 0) / answers.length + (state.me.attrs.sol - 3) * 0.03;
+  let quality = answers.reduce((t, a) => t + simAnswerQuality(state, a), 0) / answers.length + (state.me.attrs.sol - 3) * 0.03 - 0.05 * simTired(state);
   const stakes = offer.tone === "dura" ? 1.5 : 1;
   const delta = (quality - 0.55) * stakes;
   state.slot++;
+  state.energy = Math.max(0, state.energy - SIM_OFFER_EN.entrevista);
   // Notorietat segons l'abast del mitjà
   if (o.reach === "estatal") state.awG += (1 - state.awG) * 0.05 * o.aud;
   else {
@@ -746,6 +1140,7 @@ function simDoInterview(state, offerId, picks) {
   const where = o.reach === "estatal" ? "en todo el Estado" : o.reach === "ccaa" ? `a ${SIM_PROVS[offer.prov].ccaa}` : `a ${SIM_PROVS[offer.prov].name}`;
   const msg = `Entrevista en ${o.short.toLowerCase()}: ${good ? "sale bien" : "no sale muy bien"} y te conocen más ${where}.`;
   state.log.push({ day: state.day, type: "media", arg: offer.id, msg, good, round: state.round || 1 });
+  simNews(state, { kind: "entrevista", icon: "🎙️", party: "jo", tone: good ? null : "bad", prov: o.reach === "estatal" ? null : offer.prov, t: simNewsText(good ? "entrevista" : "entrevistaKo", state, { who: simLeaderName(state), outlet: o.short.toLowerCase() }) });
   return { quality, delta, evasive, msg, good, outlet: o, where };
 }
 
@@ -762,6 +1157,7 @@ function simDoForum(state, offerId, k) {
   else if (k === 1) { segD = view > 0 ? 0.12 : -0.03; cred = 3; }
   else { segD = 0.06; }
   state.slot++;
+  state.energy = Math.max(0, state.energy - SIM_OFFER_EN.forum);
   state.seg[f.seg] = Math.max(-0.3, Math.min(0.5, (state.seg[f.seg] || 0) + segD));
   state.cred = Math.max(0, Math.min(100, state.cred + cred));
   state.awG += (1 - state.awG) * 0.015;
@@ -771,6 +1167,7 @@ function simDoForum(state, offerId, k) {
     : k === 1 ? (segD > 0 ? `${f.name}: defiendes tu programa y el público (${label}) te aplaude.` : `${f.name}: defiendes tu programa ante un público (${label}) que no está de acuerdo. Ganas credibilidad.`)
       : `${f.name}: un discurso correcto, sin mucho impacto (${label}).`;
   state.log.push({ day: state.day, type: "forum", arg: offer.id, msg, good: segD >= 0 && cred >= 0, round: state.round || 1 });
+  simNews(state, { kind: "forum", icon: "🏛️", party: "jo", t: simNewsText("forum", state, { sig: me.sig, forum: f.name.charAt(0).toLowerCase() + f.name.slice(1) }) });
   return { segD, cred, msg, seg: f.seg, label, view };
 }
 
@@ -780,17 +1177,19 @@ function simDoCara(state, offerId, picks) {
   if (!offer || offer.status !== "nova" || state.slot >= 3) return null;
   const R = state.rivals.find((r) => r.id === offer.rival);
   const qs = simMediaQuestions(state, offer);
-  const mine = qs.reduce((t, q, k) => t + simAnswerQuality(state, q.a[picks[k]] || q.a[0]), 0) / qs.length + (state.me.attrs.car - 3) * 0.04;
+  const mine = qs.reduce((t, q, k) => t + simAnswerQuality(state, q.a[picks[k]] || q.a[0]), 0) / qs.length + (state.me.attrs.car - 3) * 0.04 - 0.05 * simTired(state);
   const theirs = 0.55 + (R.lead - 0.55) * 0.5 + (simRand(state, `cara-${offer.id}`) - 0.5) * 0.12;
   const won = mine >= theirs;
   state.slot++;
+  state.energy = Math.max(0, state.energy - SIM_OFFER_EN.cara);
   state.awG += (1 - state.awG) * 0.05;
   state.glob.jo += won ? 0.05 : -0.02;
   state.glob[R.id] += won ? -0.02 : 0.02;
   state.cred = Math.max(0, Math.min(100, state.cred + (won ? 3 : -2)));
   offer.status = "feta";
-  const msg = won ? `Cara a cara con el candidato de ${R.sig}: los analistas te dan como ganador.` : `Cara a cara con el candidato de ${R.sig}: tu rival sale mejor parado.`;
+  const msg = simGram(won ? `Cara a cara con el candidato de ${simThe(R)}: los analistas te dan como ganador.` : `Cara a cara con el candidato de ${simThe(R)}: tu rival sale mejor parado.`);
   state.log.push({ day: state.day, type: "cara", arg: offer.id, msg, good: won, round: state.round || 1 });
+  simNews(state, { kind: "cara", icon: "⚔️", party: won ? "jo" : R.id, target: won ? R.id : "jo", t: simNewsText(won ? "caraMeu" : "caraRival", state, { sig: state.me.sig, rival: R.sig }) });
   return { won, mine, theirs, msg, rival: R };
 }
 
@@ -798,14 +1197,43 @@ function simDoCara(state, offerId, picks) {
 function simDecline(state, offerId) {
   const offer = simOffer(state, offerId);
   if (!offer || offer.status !== "nova") return null;
+  if (offer.type === "replica") return simDoReplica(state, offerId, 2);
   offer.status = "rebutjada";
   if (offer.type === "cara") {
     const R = state.rivals.find((r) => r.id === offer.rival);
     state.cred = Math.max(0, state.cred - 2);
     state.glob[R.id] += 0.01;
-    const msg = `Declinas el cara a cara con el candidato de ${R.sig}: se te reprocha que rehúyas el debate.`;
+    const msg = simGram(`Declinas el cara a cara con el candidato de ${simThe(R)}: se te reprocha que rehúyas el debate.`);
     state.log.push({ day: state.day, type: "cara", arg: offer.id, msg, good: false, round: state.round || 1 });
     return { msg };
   }
   return { msg: "Declinas la propuesta." };
+}
+
+// Rèplica a l'atac d'un rival: és una declaració, no gasta franja, però s'ha de fer el mateix dia.
+// k: 0 respondre amb dades · 1 contraatacar · 2 no respondre
+function simDoReplica(state, offerId, k) {
+  const offer = simOffer(state, offerId);
+  if (!offer || offer.status !== "nova" || offer.type !== "replica") return null;
+  const R = simPartyById(state, offer.rival), me = state.me;
+  const rnd = simRand(state, `replica-${offer.id}`);
+  let good = false, msg;
+  if (k === 0) {
+    good = rnd < 0.5 + 0.08 * me.attrs.sol + state.cred / 500 - 0.08 * simTired(state);
+    if (good) { state.glob.jo += 0.03; state.cred += 3; msg = simGram(`Desmontas los reproches de ${simThe(R)} con datos: la réplica te da credibilidad.`); }
+    else { state.cred -= 2; msg = simGram(`La réplica a ${simThe(R)} llega tarde y con poca fuerza.`); }
+  } else if (k === 1) {
+    good = rnd < 0.4 + 0.08 * me.attrs.car - 0.1 * simTired(state);
+    if (good) { state.glob.jo += 0.04; state.glob[R.id] -= 0.03; state.awG += (1 - state.awG) * 0.02; msg = simGram(`Contraatacas y el rifirrafe con ${simThe(R)} se hace viral: te ven como una alternativa.`); }
+    else { state.glob.jo -= 0.02; state.cred -= 4; msg = simGram(`El contraataque a ${simThe(R)} enciende la polémica y sales escaldado.`); }
+  } else {
+    state.glob.jo -= 0.015;
+    msg = simGram(`No respondes a ${simThe(R)}: su mensaje cala entre algunos de tus votantes.`);
+  }
+  if (k < 2) state.energy = Math.max(0, state.energy - SIM_OFFER_EN.replica);
+  state.cred = Math.max(0, Math.min(100, state.cred));
+  offer.status = k < 2 ? "feta" : "rebutjada";
+  state.log.push({ day: state.day, type: "replica", arg: offer.id, msg, good, round: state.round || 1 });
+  if (k < 2) simNews(state, { kind: "replica", icon: "💬", party: "jo", target: R.id, tone: good ? null : "bad", t: simNewsText(good ? "replica" : "replicaKo", state, { sig: me.sig, rival: R.sig }) });
+  return { good, msg, k, rival: R };
 }

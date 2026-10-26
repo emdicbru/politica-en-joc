@@ -4,19 +4,49 @@
 // simplificades per al joc: serveixen per donar personalitat a cada província, no per predir res.
 
 // Versió de l'esquema de la partida desada: si canvia, les partides antigues es descarten amb un avís
-const SIM_VERSION = 3;
+const SIM_VERSION = 4;
 
-// Temes del programa (els mateixos noms que l'argumentari de l'Aprèn)
+// Temes del programa (els mateixos noms que l'argumentari de l'Aprèn). «icon»: per a l'agenda i el teletip.
 const SIM_THEMES = [
-  { k: "hab", label: "Vivienda" },
-  { k: "eco", label: "Economía e impuestos" },
-  { k: "pen", label: "Pensiones" },
-  { k: "ter", label: "Modelo territorial" },
-  { k: "imm", label: "Inmigración" },
-  { k: "clima", label: "Clima y energía" },
-  { k: "serv", label: "Sanidad y educación" },
-  { k: "seg", label: "Seguridad y justicia" },
+  { k: "hab", label: "Vivienda", icon: "🏠" },
+  { k: "eco", label: "Economía e impuestos", icon: "💶" },
+  { k: "pen", label: "Pensiones", icon: "👵" },
+  { k: "ter", label: "Modelo territorial", icon: "🗺️" },
+  { k: "imm", label: "Inmigración", icon: "🛂" },
+  { k: "clima", label: "Clima y energía", icon: "🌍" },
+  { k: "serv", label: "Sanidad y educación", icon: "🏥" },
+  { k: "seg", label: "Seguridad y justicia", icon: "🚔" },
 ];
+
+// ---------- Calendari de la campanya ----------
+// Els sis dies del joc resumeixen els quinze de la campanya real (del 13 al 27 de novembre). La llei prohibeix publicar
+// enquestes els cinc dies anteriors a la votació (art. 69.7 de la LOREG): des del dia 5 (24 de novembre) només n'hi ha
+// d'internes, que el partit encarrega i no es poden difondre.
+const SIM_DATES = [
+  { d: "13 de noviembre", w: "Viernes" },
+  { d: "16 de noviembre", w: "Lunes" },
+  { d: "19 de noviembre", w: "Jueves" },
+  { d: "22 de noviembre", w: "Domingo" },
+  { d: "24 de noviembre", w: "Martes" },
+  { d: "27 de noviembre", w: "Viernes" },
+];
+const SIM_BAN_DAY = 5; // primer dia sense enquestes publicades
+const SIM_SLOTS = [
+  { k: "mati", label: "Mañana", icon: "☀️" },
+  { k: "tarda", label: "Tarde", icon: "🌤️" },
+  { k: "vespre", label: "Noche", icon: "🌙" },
+];
+
+// Instituts d'enquestes (inventats). Cada un té el seu biaix («efecte de la casa»), que es fixa a cada partida.
+const SIM_POLLSTERS = [
+  { k: "agora", name: "Ágora Datos", sample: 1200 },
+  { k: "nord", name: "Barómetro Norte", sample: 1800 },
+  { k: "plural", name: "Muestra Plural", sample: 1000 },
+  { k: "i360", name: "Indicador 360", sample: 2400 },
+];
+
+// Energia del candidat (0-100). Cansat, rendeix menys i té més risc de relliscar.
+const SIM_ENERGY = { max: 100, night: 34, rest: 26, tired: 35, exhausted: 18 };
 
 // [nom (com a PROVINCES), codi, comunitat, població, identitat territorial, urbanització, envelliment, renda] (0-1)
 const SIM_PROV_RAW = [
@@ -140,6 +170,8 @@ const SIM_REAL_PROFILE = {
 // de manera que no canvia el punt de partida entre ells, però fa que a un partit nou li costi créixer.
 const SIM_LOYALTY = 0.8;
 const SIM_START_SHARE = { pp: 33.1, psoe: 31.7, vox: 12.4, fa: 10.7, podemos: 1.6, erc: 1.9, junts: 1.6, bildu: 1.4, pnv: 1.1, bng: 0.6, cc: 0.5, salf: 4.6 };
+// Escons del 2023, per comparar-hi a la nit electoral (Sumar es reparteix entre Frente Amplio i Podemos segons els diputats de cada grup)
+const SIM_SEATS_2023 = { pp: 137, psoe: 121, vox: 33, fa: 27, podemos: 4, erc: 7, junts: 7, bildu: 6, pnv: 5, bng: 1, cc: 1, salf: 0 };
 const SIM_RIVALS = (typeof PARTIES !== "undefined" ? PARTIES : []).filter((p) => SIM_REAL_PROFILE[p.id]).map((p) => {
   const R = SIM_REAL_PROFILE[p.id];
   return {

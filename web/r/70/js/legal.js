@@ -272,14 +272,46 @@ function coffeeResultNote(good) {
 }
 
 
+// Peu de pàgina: franja fosca amb la marca, l'idioma i el cafè; tres grups d'enllaços (el projecte, ajuda, legal) i la nota d'independència
 function legalFooter() {
   return `<footer class="site-foot">
-    <p class="sf-line">Web no oficial. No té cap vincle amb partits, institucions ni mitjans de comunicació.</p>
-    ${COFFEE_URL ? `<p class="sf-line sf-coffee">Gratuïta. Si t'agrada, ${coffeeLink("convida'm a un cafè")}.</p>` : ""}
-    <p class="sf-line"><button class="linklike" type="button" data-report>🐞 Avisa d'un error</button></p>
-    <p class="sf-line sf-lang">${langLinks()}</p>
-    <p class="sf-line sf-author">Feta per <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a> · <a href="#premsa">Sala de premsa</a></p>
-    <nav aria-label="Informació legal">${LEGAL_PAGES.map((p) => `<a href="#legal/${p.k}">${p.h}</a>`).join("")}${ANALYTICS_ON ? `<button class="linklike" data-open-consent>Configuració de galetes</button>` : ""}</nav>
+    <div class="sf-in">
+      <div class="sf-main">
+        <div class="sf-id">
+          <a class="sf-brand" href="#inici">
+            <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 200 200"><g transform="translate(0 -16)"><path d="M30 144 A70 70 0 0 1 170 144" fill="none" stroke="#17173d" stroke-width="26" stroke-linecap="round"/><path d="M66 144 A34 34 0 0 1 134 144" fill="none" stroke="#17173d" stroke-width="26" stroke-linecap="round"/><circle cx="100" cy="144" r="15" fill="#ff4b2b"/></g></svg></span>
+            <span><b>Política en Joc</b><small>Les eleccions del 29N, jugant.</small></span>
+          </a>
+          <div class="sf-acts">
+            <div class="sf-lang" role="group" aria-label="Idioma"><span aria-hidden="true">🌐</span>${langLinks("lang-sw sf-sw")}</div>
+            ${coffeeLink("Convida'm a un cafè", "sf-coffee")}
+          </div>
+        </div>
+        <div class="sf-cols">
+          <section class="sf-col">
+            <h2>El projecte</h2>
+            <ul>
+              <li><a href="#premsa">Sala de premsa</a></li>
+              <li><a href="#legal/credits">Crèdits i fonts</a></li>
+              <li><a href="https://x.com/emdicbru" target="_blank" rel="noopener">Feta per @emdicbru</a></li>
+            </ul>
+          </section>
+          <section class="sf-col">
+            <h2>Ajuda</h2>
+            <ul>
+              <li><a href="#apren">Guia per votar el 29N</a></li>
+              <li><button class="linklike" type="button" data-report>Avisa d'un error</button></li>
+              ${ANALYTICS_ON ? `<li><button class="linklike" type="button" data-open-consent>Configuració de galetes</button></li>` : ""}
+            </ul>
+          </section>
+          <nav class="sf-col" aria-label="Informació legal">
+            <h2>Legal</h2>
+            <ul>${LEGAL_PAGES.filter((p) => p.k !== "credits").map((p) => `<li><a href="#legal/${p.k}">${p.h}</a></li>`).join("")}</ul>
+          </nav>
+        </div>
+      </div>
+      <p class="sf-note"><span>© 2026 Política en Joc</span><span>Web gratuïta, no oficial i independent: no té cap vincle amb partits, institucions ni mitjans de comunicació.</span></p>
+    </div>
   </footer>`;
 }
 

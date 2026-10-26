@@ -77,6 +77,8 @@ const LEGAL_TEXT = {
     <p><b>d) Estadística d'ús anònima.</b> L'app compta de manera agregada i anònima l'ús que se'n fa (visites per dia i per hora, seccions visitades, partides jugades, tipus de dispositiu i web d'origen per categories). No es recullen dades identificatives ni s'associa a cap compte. Es pot desactivar des de la Política de galetes.</p>
     <p><b>e) Monedes i botiga.</b> Si una persona amb compte compra articles de la botiga del joc, es desen al seu perfil els articles que té i els que porta posats; el marc i el títol són visibles als rànquings. Les monedes són una moneda fictícia del joc.</p>
     <p><b>f) Avisos d'error.</b> Si una persona avisa d'un error, es desa el text que escriu, el correu electrònic si l'indica voluntàriament (per poder-li respondre), la secció de l'app on era, el tipus de dispositiu i navegador, la mida de la pantalla, la versió de l'app, l'últim error tècnic de la pàgina i, si té sessió iniciada, el seu identificador d'usuari. Només ho veu l'equip de l'app, s'utilitza exclusivament per corregir l'error i respondre-li, i s'esborra quan ja no és necessari i com a molt al cap de dotze mesos.</p>
+    <p><b>h) Vídeos d'anunciants (opcional).</b> Quan el repte diari ofereix una partida extra a canvi de veure un vídeo, si una persona prem «Mira el vídeo» per jugar una tercera partida del repte diari, es carrega el servei d'anuncis de Google (AdSense) i es mostra un vídeo d'un anunciant. Abans, Google demana el consentiment per a les galetes i, si es denega, mostra anuncis no personalitzats. Google tracta l'adreça IP, identificadors del dispositiu i del navegador i, amb consentiment, dades per personalitzar els anuncis, com a responsable independent d'acord amb la seva <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">política de privadesa</a>. Si no es demana el vídeo, no es carrega res de Google Ads.</p>
+    <p><b>g) Contactes de premsa.</b> Per enviar les notes de premsa de Política en Joc, es tracten el nom, el mitjà, l'adreça electrònica professional i les etiquetes temàtiques de periodistes i mitjans de comunicació, obtingudes de fonts públiques professionals o facilitades per les mateixes persones. Només hi accedeix l'equip de l'app. Cada correu inclou un enllaç per deixar de rebre'n, i també es pot demanar per escrit.</p>
     ${ANALYTICS_ON ? `<p><b>c) Dades d'analítica.</b> Únicament amb el consentiment previ de la persona usuària, es recullen dades d'ús agregades mitjançant Google Analytics: pàgines consultades, tipus de dispositiu i navegador, ubicació aproximada i durada de la visita.</p>` : ""}
     <p>No es tracten categories especials de dades ni es fan perfils amb finalitats publicitàries o decisions automatitzades.</p>
 
@@ -84,6 +86,8 @@ const LEGAL_TEXT = {
     <div class="legal-table two">
       <div class="lt-row head"><b>Finalitat</b><b>Base jurídica</b></div>
       <div class="lt-row"><span>Gestió del compte i prestació del servei: desament del progrés, rànquings, duels i lligues.</span><span>Execució de les condicions d'ús acceptades per la persona usuària (art. 6.1.b RGPD).</span></div>
+      <div class="lt-row"><span>Mostrar un vídeo d'un anunciant quan la persona el demana per jugar una partida extra.</span><span>Consentiment de la persona usuària (art. 6.1.a RGPD), que el demana el missatge de Google abans del vídeo i es pot retirar en qualsevol moment.</span></div>
+      <div class="lt-row"><span>Enviament de notes de premsa a periodistes i mitjans de comunicació.</span><span>Interès legítim del responsable en la difusió del projecte entre professionals de la informació (art. 6.1.f RGPD), amb dret d'oposició en qualsevol moment.</span></div>
       <div class="lt-row"><span>Seguretat del servei i prevenció d'usos fraudulents.</span><span>Interès legítim del responsable (art. 6.1.f RGPD).</span></div>
       ${ANALYTICS_ON ? `<div class="lt-row"><span>Elaboració d'estadístiques d'ús.</span><span>Consentiment de la persona usuària (art. 6.1.a RGPD), revocable en qualsevol moment.</span></div>` : ""}
       <div class="lt-row"><span>Atenció de consultes i de sol·licituds d'exercici de drets.</span><span>Compliment d'obligacions legals (art. 6.1.c RGPD).</span></div>
@@ -93,6 +97,8 @@ const LEGAL_TEXT = {
     <ul>
       <li>GitHub, Inc., com a proveïdor de l'allotjament dels fitxers de l'app (codi, imatges, tipografies i dades públiques com els titulars o els resultats), en qualitat d'encarregat del tractament. Només rep les dades tècniques necessàries per servir-los, com l'adreça IP.</li>
       <li>Google Ireland Limited i Google LLC, com a proveïdors dels serveis Firebase (autenticació, base de dades i allotjament)${ANALYTICS_ON ? " i Google Analytics" : ""}, en qualitat d'encarregats del tractament.</li>
+      <li>Google Ireland Limited (AdSense), que serveix els vídeos d'anunciants només quan es demanen, com a responsable independent per als anuncis.</li>
+      <li>Sendinblue SAS (Brevo), amb seu a França, com a proveïdor de l'enviament dels correus de les notes de premsa, en qualitat d'encarregat del tractament.</li>
       <li>GitHub, Inc., que allotja el fitxer públic de titulars de premsa. La seva consulta comporta la transmissió de l'adreça IP.</li>
       <li>Wikimedia Foundation, Inc., des d'on es carreguen les fotografies. La seva visualització comporta la transmissió de l'adreça IP.</li>
       <li>Els mitjans de comunicació El País i VilaWeb, els canals RSS dels quals es consulten directament des del navegador per mostrar titulars recents. Aquesta consulta comporta la transmissió de l'adreça IP.</li>
@@ -104,7 +110,7 @@ const LEGAL_TEXT = {
     <p>Alguns dels proveïdors esmentats poden tractar dades als Estats Units. Aquestes transferències s'emparen en el Marc de privadesa de dades UE-EUA o en les clàusules contractuals tipus aprovades per la Comissió Europea.</p>
 
     <h2>6. Termini de conservació</h2>
-    <p>Les dades es conserven mentre el compte estigui actiu. Quan se suprimeix el compte, s'eliminen el perfil, els resultats del repte diari, els duels, la pertinença a lligues i els pronòstics, sens perjudici de les còpies de seguretat dels proveïdors, que s'eliminen d'acord amb els seus cicles de rotació.${ANALYTICS_ON ? " Les dades d'analítica es conserven durant el període configurat a Google Analytics, que no supera els catorze mesos." : ""}</p>
+    <p>Les dades dels contactes de premsa es conserven mentre siguin útils per a la difusió del projecte i fins que la persona s'oposi a rebre més comunicacions; en aquest cas, se'n conserva només l'adreça marcada com a baixa per no tornar-li a escriure. Les dades es conserven mentre el compte estigui actiu. Quan se suprimeix el compte, s'eliminen el perfil, els resultats del repte diari, els duels, la pertinença a lligues i els pronòstics, sens perjudici de les còpies de seguretat dels proveïdors, que s'eliminen d'acord amb els seus cicles de rotació.${ANALYTICS_ON ? " Les dades d'analítica es conserven durant el període configurat a Google Analytics, que no supera els catorze mesos." : ""}</p>
 
     <h2>7. Drets de les persones interessades</h2>
     <p>La persona interessada pot exercir els drets d'accés, rectificació, supressió, oposició, limitació del tractament i portabilitat, així com retirar el consentiment prestat, per mitjà de:</p>
@@ -146,6 +152,8 @@ const LEGAL_TEXT = {
       <div class="lt-row"><code>r29n-cafe</code><span>Pròpia · preferències</span><span>Recordar quan s'ha mostrat per darrer cop la invitació a fer una aportació, perquè no aparegui més d'un cop cada cinc dies.</span><span>Fins que s'elimini</span></div>
       <div class="lt-row"><code>r29n-news</code><span>Pròpia · preferències</span><span>Recordar els partits i temes que segueixes a Notícies, l'hora de la darrera visita (per marcar els titulars nous) i si ja has vist «El dia en 1 minut».</span><span>Fins que s'elimini</span></div>
       <div class="lt-row"><code>r29n-debat</code><span>Pròpia · preferències</span><span>Recordar el candidat i el partit que has creat al simulador de debat.</span><span>Fins que s'elimini</span></div>
+      <div class="lt-row"><code>r29n-diari-intents</code><span>Pròpia · funcional</span><span>Comptar les partides del repte diari que has jugat avui (per donar-te proves noves i, si escau, el límit de partides).</span><span>Fins que s'elimini</span></div>
+      <div class="lt-row"><code>r29n-ads</code><span>Pròpia · funcional</span><span>Recordar si hi ha vídeos d'anunciants i com estan configurats. No conté dades personals.</span><span>Fins que s'elimini</span></div>
       <div class="lt-row"><code>r29n-sim-prefs</code><span>Pròpia · preferències</span><span>Recordar si ja s'ha vist el tutorial del simulador.</span><span>Fins que s'elimini</span></div>
       ${ANALYTICS_ON ? `<div class="lt-row"><code>r29n-consent</code><span>Pròpia · tècnica</span><span>Desar les preferències sobre galetes.</span><span>12 mesos</span></div>` : ""}
       <div class="lt-row"><code>pendingDuel</code>, <code>pendingLeague</code><span>Pròpia · sessió</span><span>Conservar un enllaç d'invitació durant l'inici de sessió.</span><span>Fins al tancament de la pestanya</span></div>
@@ -154,7 +162,8 @@ const LEGAL_TEXT = {
       <div class="lt-row"><code>_ga_&lt;ID&gt;</code><span>Google · analítica</span><span>Mantenir l'estat de la sessió d'analítica.</span><span>2 anys</span></div>
       <div class="lt-row"><code>firebase_installations</code><span>Google (Firebase) · analítica</span><span>Identificador d'instal·lació associat a l'analítica.</span><span>Fins que s'elimini</span></div>` : ""}
     </div>
-    <p>El lloc web no utilitza galetes publicitàries. Les tipografies s'allotgen al mateix servidor, de manera que la seva càrrega no implica cap connexió amb tercers.</p>
+    <p><b>Galetes publicitàries, només si demanes un vídeo.</b> Mentre no demanis cap vídeo, el lloc web no utilitza galetes publicitàries. Si el repte diari t'ofereix una partida extra i prems «Mira el vídeo», Google (AdSense) pot desar galetes com <code>__gads</code>, <code>__gpi</code>, <code>__eoi</code>, <code>IDE</code> i <code>FCCDCF</code> (aquesta última, per recordar el consentiment), d'acord amb el seu missatge de consentiment i la seva <a href="https://business.safety.google/adscookies/" target="_blank" rel="noopener">informació sobre galetes</a>. Si no demanes cap vídeo, no se'n desa cap.</p>
+    <p>Les tipografies s'allotgen al mateix servidor, de manera que la seva càrrega no implica cap connexió amb tercers.</p>
 
     <h2>3. Base jurídica</h2>
     <p>Les galetes tècniques i de preferències són necessàries per prestar el servei sol·licitat i estan exemptes del deure d'obtenir consentiment, d'acord amb l'article 22.2 de la LSSI-CE.${ANALYTICS_ON ? " Les galetes d'analítica només s'instal·len amb el consentiment previ de la persona usuària." : ""}</p>
@@ -259,15 +268,17 @@ function coffeeResultNote(good) {
   const last = store.get(COFFEE_KEY, 0);
   if (Date.now() - last < 5 * 864e5) return "";
   store.set(COFFEE_KEY, Date.now());
-  return `<p class="coffee-note">Política en Joc és gratuïta i sense anuncis. Si t'ho has passat bé, ${coffeeLink("convida'm a un cafè")}.</p>`;
+  return `<p class="coffee-note">Política en Joc és gratuïta. Si t'ho has passat bé, ${coffeeLink("convida'm a un cafè")}.</p>`;
 }
+
 
 function legalFooter() {
   return `<footer class="site-foot">
     <p class="sf-line">Web no oficial. No té cap vincle amb partits, institucions ni mitjans de comunicació.</p>
-    ${COFFEE_URL ? `<p class="sf-line sf-coffee">Gratuïta i sense anuncis. Si t'agrada, ${coffeeLink("convida'm a un cafè")}.</p>` : ""}
+    ${COFFEE_URL ? `<p class="sf-line sf-coffee">Gratuïta. Si t'agrada, ${coffeeLink("convida'm a un cafè")}.</p>` : ""}
     <p class="sf-line"><button class="linklike" type="button" data-report>🐞 Avisa d'un error</button></p>
-    <p class="sf-line sf-author">Feta per <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a></p>
+    <p class="sf-line sf-lang">${langLinks()}</p>
+    <p class="sf-line sf-author">Feta per <a href="https://x.com/emdicbru" target="_blank" rel="noopener">@emdicbru</a> · <a href="#premsa">Sala de premsa</a></p>
     <nav aria-label="Informació legal">${LEGAL_PAGES.map((p) => `<a href="#legal/${p.k}">${p.h}</a>`).join("")}${ANALYTICS_ON ? `<button class="linklike" data-open-consent>Configuració de galetes</button>` : ""}</nav>
   </footer>`;
 }

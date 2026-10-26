@@ -62,20 +62,20 @@ function actorAvatar(a, size = "") {
 registerGame({
   id: "match",
   cat: "parlament",
-  tagline: "Partits, polítics i entitats: fes match amb el que defensen.",
-  kicker: "Llisca i decideix",
-  title: "Match ideològic",
+  tagline: "Partidos, políticos y entidades: haz match con lo que defienden.",
+  kicker: "Desliza y decide",
+  title: "Match ideológico",
   level: 2,
-  meta: "5 perfils",
+  meta: "5 perfiles",
   icon: icon(`<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>`),
-  desc: "Et presentem un partit, un polític o una entitat de la societat civil i et van sortint targetes. Si hi encaixa, MATCH. Si no, NO MATCH. Llisca a la dreta o a l'esquerra.",
-  rules: ["5 perfils · 6 targetes", "→ Match · ← No match", "Perfil perfecte: +50", "Tecles ← →"],
+  desc: "Te presentamos un partido, un político o una entidad de la sociedad civil y te van saliendo tarjetas. Si encaja, MATCH. Si no, NO MATCH. Desliza a la derecha o a la izquierda.",
+  rules: ["5 perfiles · 6 tarjetas", "→ Match · ← No match", "Perfil perfecto: +50", "Teclas ← →"],
   start(ctx) {
     const ROUNDS = 5;
     const actors = sample(MATCH_ACTORS, ROUNDS);
     let r = 0, score = 0, streak = 0, hits = 0, total = 0, decideFn = null;
     const results = [], recap = [];
-    ctx.hud([["r", "Perfil", `1/${ROUNDS}`], ["pts", "Punts", "0"], ["x", "Ratxa", "0"]]);
+    ctx.hud([["r", "Perfil", `1/${ROUNDS}`], ["pts", "Puntos", "0"], ["x", "Racha", "0"]]);
     ctx.onKey((e) => {
       if (e.key === "ArrowRight") decideFn?.(true);
       else if (e.key === "ArrowLeft") decideFn?.(false);
@@ -90,7 +90,7 @@ registerGame({
 
     function next() {
       if (r >= ROUNDS) {
-        return ctx.finish({ score, ratio: total ? hits / total : 0, unit: `punts · ${hits}/${total} encerts`, xp: Math.round(score / 7), recap: recap.slice(0, 10) });
+        return ctx.finish({ score, ratio: total ? hits / total : 0, unit: `puntos · ${hits}/${total} aciertos`, xp: Math.round(score / 7), recap: recap.slice(0, 10) });
       }
       const actor = actors[r];
       const cards = deck(actor);
@@ -171,8 +171,8 @@ registerGame({
         zone.remove();
         const fb = h(`<div></div>`);
         wrap.appendChild(fb);
-        explain(fb, perfect, `${roundOk} de ${cards.length} targetes encertades.`, perfect ? "Match perfecte! +50" : "Perfil acabat");
-        nextButton(fb, r + 1 < ROUNDS ? "Següent perfil" : "Veure el resultat").then(() => { r++; next(); });
+        explain(fb, perfect, `${roundOk} de ${cards.length} tarjetas acertadas.`, perfect ? "¡Match perfecto! +50" : "Perfil terminado");
+        nextButton(fb, r + 1 < ROUNDS ? "Siguiente perfil" : "Ver el resultado").then(() => { r++; next(); });
       }
     }
   },
@@ -188,17 +188,17 @@ const binary = (label, prompt, options, correctIndex, explainText, recapQ) =>
 
 function tfItem(rng, key = null) {
   const s = makeStatement(rng, key);
-  return binary("Cert o fals?", `<div class="q-text">${esc(s.text)}</div>`, ["✕ Fals", "✓ Cert"], s.truth ? 1 : 0, s.exp, s.text);
+  return binary("¿Cierto o falso?", `<div class="q-text">${esc(s.text)}</div>`, ["✕ Falso", "✓ Cierto"], s.truth ? 1 : 0, s.exp, s.text);
 }
 function matchItem(rng) {
   const a = MATCH_ACTORS[Math.floor(rng() * MATCH_ACTORS.length)];
   const yes = rng() < 0.5;
   const list = yes ? a.yes : a.no;
   const t = list[Math.floor(rng() * list.length)];
-  return binary("Match ideològic",
+  return binary("Match ideológico",
     `<div class="match-q">${actorAvatar(a, "sm")}<b>${esc(a.name)}</b><span class="mq-plus">+</span><span class="mq-concept">${esc(t)}</span></div>`,
     ["✕ No match", "♥ Match"], yes ? 1 : 0,
-    yes ? `${a.name} i «${t}» fan match.` : `${a.name} i «${t}» no fan match.`, `${a.name} + ${t}`);
+    yes ? `${a.name} y «${t}» hacen match.` : `${a.name} y «${t}» no hacen match.`, `${a.name} + ${t}`);
 }
 function versusItem(rng, key = null) {
   const mode = ["prov", "party", "event"][Math.floor(rng() * 3)];
@@ -211,37 +211,120 @@ function versusItem(rng, key = null) {
   };
   if (mode === "event") {
     const [a, b] = two(EVENTS.filter((e) => !key || !e.since || e.since <= key), (x, y) => x.y !== y.y);
-    return binary("Què va passar abans?", `<div class="q-text small">Toca el fet més antic</div>`,
+    return binary("¿Qué pasó antes?", `<div class="q-text small">Toca el hecho más antiguo</div>`,
       [a.t, b.t], a.y < b.y ? 0 : 1, `${a.t}: ${a.y}. ${b.t}: ${b.y}.`, `${a.t} / ${b.t}`);
   }
   if (mode === "party") {
     const [a, b] = two(CONGRESS[2023].parties, (x, y) => x.seats !== y.seats);
-    return binary("Congrés del 23-J", `<div class="q-text">Quin partit va treure més escons?</div>`,
+    return binary("Congreso del 23-J", `<div class="q-text">¿Qué partido sacó más escaños?</div>`,
       [a.name, b.name], a.seats > b.seats ? 0 : 1, `${a.name}: ${a.seats} · ${b.name}: ${b.seats}.`, `${a.name} / ${b.name}`);
   }
   const [a, b] = two(PROVINCES, (x, y) => x.seats !== y.seats);
-  return binary("Diputats per província (29N)", `<div class="q-text">Quina província elegeix més diputats?</div>`,
+  return binary("Diputados por provincia (29N)", `<div class="q-text">¿Qué provincia elige más diputados?</div>`,
     [a.name, b.name], a.seats > b.seats ? 0 : 1, `${a.name}: ${a.seats} · ${b.name}: ${b.seats}.`, `${a.name} / ${b.name}`);
 }
 
-function dailyItems(key) {
-  const rng = seededRng(hashString(`daily-${key}`));
+// Les 10 proves del repte. La partida 1 és la de tothom (la que compta per al rànquing); la 2a i la 3a del dia tenen
+// proves noves: cap no repeteix la pregunta d'una partida anterior d'aquell dia.
+function dailyItems(key, attempt = 1) {
   const avail = (arr) => arr.filter((x) => !x.since || x.since <= key);
   const Q = avail(QUESTIONS);
   const easy = Q.filter((q) => !q.hard), hard = Q.filter((q) => q.hard);
-  const items = [
-    questionRound(sample(easy, 1, rng)[0], rng),
-    tfItem(rng, key),
-    matchItem(rng),
-    quoteRound(pickQuote(rng), rng),
-    versusItem(rng, key),
-    yearRound(sample(avail(EVENTS), 1, rng)[0], rng),
-    figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES)),
-    tfItem(rng, key),
-    matchItem(rng),
-    questionRound(sample(hard, 1, rng)[0], rng),
+  const gens = [
+    (rng) => questionRound(sample(easy, 1, rng)[0], rng),
+    (rng) => tfItem(rng, key),
+    (rng) => matchItem(rng),
+    (rng) => quoteRound(pickQuote(rng), rng),
+    (rng) => versusItem(rng, key),
+    (rng) => yearRound(sample(avail(EVENTS), 1, rng)[0], rng),
+    (rng) => figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES)),
+    (rng) => tfItem(rng, key),
+    (rng) => matchItem(rng),
+    (rng) => questionRound(sample(hard, 1, rng)[0], rng),
   ];
+  const rng = seededRng(hashString(attempt === 1 ? `daily-${key}` : `daily-${key}-${attempt}`));
+  if (attempt === 1) return shuffle(gens.map((g) => g(rng)), rng);
+  const seen = new Set();
+  for (let a = 1; a < attempt; a++) dailyItems(key, a).forEach((it) => seen.add(it.recapQ));
+  const items = gens.map((g) => {
+    let it = g(rng);
+    for (let k = 0; k < 25 && seen.has(it.recapQ); k++) it = g(rng);
+    seen.add(it.recapQ);
+    return it;
+  });
   return shuffle(items, rng);
+}
+
+// ---------- Partides del dia ----------
+// Es compten en aquest dispositiu. Amb el límit actiu (Centre de control › Anuncis): 2 partides i una 3a si es mira
+// un vídeo d'un anunciant. Sense límit, es pot jugar sempre (cada partida, amb proves noves).
+const DAILY_TRIES_KEY = "r29n-diari-intents";
+const DAILY_FREE = 2, DAILY_MAX = 3;
+function dailyTries(key = todayKey()) {
+  const t = store.get(DAILY_TRIES_KEY, {});
+  return t.key === key ? t.n : dailyResult(key) ? 1 : 0;
+}
+function dailyTryAdd(key = todayKey()) {
+  const t = store.get(DAILY_TRIES_KEY, {}), n = dailyTries(key) + 1;
+  store.set(DAILY_TRIES_KEY, { key, n, ad: t.key === key && !!t.ad });
+  return n;
+}
+function dailyIntroNote(r) {
+  if (!r) return "";
+  const n = dailyTries(), left = DAILY_FREE - n;
+  const best = `Tu mejor tiempo de hoy: <b>${fmtSecs(r.ms)}</b>.`;
+  if (n >= DAILY_MAX) return `<p class="intro-note">${best} Ya has jugado las ${DAILY_MAX} partidas que cuentan.</p>`;
+  if (window.Ads?.limit() && left <= 0) return `<p class="intro-note">${best}</p>`;
+  return `<p class="intro-note">${best} Puedes volver a jugar con pruebas nuevas: en el ranking cuenta la mejor de las ${DAILY_MAX} partidas${window.Ads?.limit() ? ` (te ${left === 1 ? "queda 1 partida" : `quedan ${left} partidas`} y una 3.ª con vídeo)` : ""}.</p>`;
+}
+function dailyPracticeVerdict(attempt, better, prev) {
+  const lim = window.Ads?.limit();
+  if (attempt > DAILY_MAX) return `Partida de práctica: en el ranking cuenta la mejor de las ${DAILY_MAX} primeras partidas del día.`;
+  const more = attempt < DAILY_MAX ? (lim && attempt >= DAILY_FREE ? " Todavía puedes jugar otra viendo un vídeo." : " Todavía puedes jugar otra.") : " ¡Mañana, reto nuevo!";
+  return better ? `Has mejorado tu tiempo de hoy (antes: ${fmtSecs(prev.ms)}). ¡Ahora cuenta este para el ranking!${more}` : `No has superado tu mejor tiempo de hoy (${fmtSecs(prev.ms)}), que es el que cuenta.${more}`;
+}
+const dailyAdUnlocked = (key = todayKey()) => { const t = store.get(DAILY_TRIES_KEY, {}); return t.key === key && !!t.ad; };
+function dailyAdUnlock(key = todayKey()) { store.set(DAILY_TRIES_KEY, { key, n: dailyTries(key), ad: true }); }
+
+// Què pot fer ara: "free" (jugar), "ad" (cal mirar el vídeo), "out" (ja no queden partides avui)
+function dailyAccess(key = todayKey()) {
+  const n = dailyTries(key);
+  if (!window.Ads?.limit()) return "free";
+  if (n < DAILY_FREE) return "free";
+  if (n < DAILY_MAX) return dailyAdUnlocked(key) ? "free" : window.Ads.ready() ? "ad" : "out";
+  return "out";
+}
+// Pantalla d'inici del repte quan no es pot jugar directament (core.js › showIntro)
+function dailyGate() {
+  // La configuració dels anuncis pot haver canviat des de la darrera visita: si és així, es torna a pintar
+  const before = JSON.stringify(window.Ads?.cfg?.() || {});
+  window.Ads?.refresh?.().then(() => { if (JSON.stringify(window.Ads.cfg()) !== before && location.hash === "#joc/diari" && $(".card.intro")) showIntro(gameById("diari")); });
+  const access = dailyAccess();
+  if (access === "free") return null;
+  if (access === "ad") return {
+    html: `<div class="daily-ad">
+      <p><b>Ya has jugado las ${DAILY_FREE} partidas de hoy.</b> Mira un vídeo corto de un anunciante y juega una tercera, con pruebas nuevas.</p>
+      <button class="btn primary lg" type="button" data-ad-go>▶ Mira el vídeo y juega</button>
+      <p class="muted" data-ad-msg>Si mejoras el tiempo, también cuenta para el ranking. El vídeo lo sirve Google, que te puede pedir permiso para las cookies.</p>
+    </div>`,
+    bind(el, start) {
+      const btn = $("[data-ad-go]", el), msg = $("[data-ad-msg]", el);
+      btn.addEventListener("click", async () => {
+        btn.disabled = true; btn.textContent = "Cargando el vídeo…";
+        const r = await window.Ads.reward("repte-tercera");
+        if (r.ok) { dailyAdUnlock(); toast("¡Gracias! Ya puedes jugar la 3.ª partida"); start(); return; }
+        btn.disabled = false; btn.textContent = "▶ Vuelve a intentarlo";
+        msg.textContent = r.why === "blocked" ? "No se ha podido cargar el vídeo: quizá tienes un bloqueador de anuncios. Desactívalo para esta web y vuelve a intentarlo."
+          : r.why === "dismissed" ? "El vídeo se ha cerrado antes de acabar. Para jugar la 3.ª partida hay que verlo entero."
+          : "Ahora mismo no hay ningún vídeo disponible. Vuelve a intentarlo dentro de un rato.";
+      });
+    },
+  };
+  return {
+    html: `<div class="daily-ad out"><p><b>Ya has jugado todas las partidas de hoy.</b> ¡Mañana habrá un reto nuevo!</p>
+      <div class="row center"><a class="btn primary" href="#ranking">Ver el ranking</a><a class="btn" href="#jocs">Otros juegos</a></div></div>`,
+    bind() {},
+  };
 }
 
 const DAILY_PENALTY = 10000; // +10 s per error
@@ -253,7 +336,7 @@ function dailyResult(key = todayKey()) {
 }
 
 function dailyShareText(key, r) {
-  return `Política en Joc · Repte #${dailyNumber(key)}\n⏱ ${fmtSecs(r.ms)} · ${r.hits}/10\n${r.grid}\n${location.origin}${location.pathname}`;
+  return `Política en Joc · Reto #${dailyNumber(key)}\n⏱ ${fmtSecs(r.ms)} · ${r.hits}/10\n${r.grid}\n${location.origin}${location.pathname}`;
 }
 
 async function shareDaily(key) {
@@ -262,43 +345,47 @@ async function shareDaily(key) {
   const text = dailyShareText(key, r);
   try {
     if (navigator.share) await navigator.share({ text });
-    else { await navigator.clipboard.writeText(text); toast("Resultat copiat"); }
+    else { await navigator.clipboard.writeText(text); toast("Resultado copiado"); }
   } catch { /* cancel·lat */ }
 }
 
 registerGame({
   id: "diari",
   cat: "daily",
-  tagline: "10 reptes cada dia. Contra el rellotge.",
-  kicker: "Cada dia, un de nou",
-  title: "Repte diari",
+  tagline: "10 retos cada día. Contra el reloj.",
+  kicker: "Cada día, uno nuevo",
+  title: "Reto diario",
   level: 2,
-  meta: "10 reptes",
+  meta: "10 retos",
   icon: icon(`<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/>`),
-  desc: "10 dinàmiques dels minijocs, iguals per a tothom i noves cada dia. No hi ha límit de temps: el cronòmetre corre i guanya qui ho resol més ràpid. Cada error suma 10 segons.",
-  rules: ["10 reptes", "Cronòmetre en marxa", "Error: +10 s", "Només compta el primer intent"],
+  desc: "10 dinámicas de los minijuegos, iguales para todo el mundo y nuevas cada día. No hay límite de tiempo: el cronómetro corre y gana quien lo resuelve más rápido. Cada error suma 10 segundos. Puedes jugar hasta 3 partidas al día, cada una con pruebas nuevas: en el ranking cuenta la mejor.",
+  rules: ["10 retos", "Cronómetro en marcha", "Error: +10 s", "Cuenta la mejor de 3 partidas"],
+  gate: () => dailyGate(),
   status() {
     const r = dailyResult();
-    return r ? `<span class="gc-status done">Fet · ${fmtSecs(r.ms)}</span>` : `<span class="gc-status new">Nou repte</span>`;
+    return r ? `<span class="gc-status done">Hecho · ${fmtSecs(r.ms)}</span>` : `<span class="gc-status new">Nuevo reto</span>`;
   },
   introExtra() {
     const r = dailyResult();
     const d = Progress.data.daily;
     return `<div class="daily-box">
-      <div><small>Repte</small><strong>#${dailyNumber()}</strong></div>
-      <div><small>Avui</small><strong>${r ? fmtSecs(r.ms) : "—"}</strong></div>
-      <div><small>Ratxa</small><strong>${d.streak} ${d.streak === 1 ? "dia" : "dies"}</strong></div>
-    </div>${r ? `<p class="intro-note">Ja has fet el repte d'avui. Pots tornar a jugar, però no comptarà per al rànquing.</p>` : ""}`;
+      <div><small>Reto</small><strong>#${dailyNumber()}</strong></div>
+      <div><small>Hoy</small><strong>${r ? fmtSecs(r.ms) : "—"}</strong></div>
+      <div><small>Racha</small><strong>${d.streak} ${d.streak === 1 ? "día" : "días"}</strong></div>
+    </div>${dailyIntroNote(r)}`;
   },
   start(ctx) {
     const key = todayKey();
-    const items = dailyItems(key);
+    const attempt = dailyTryAdd(key);
+    window.Stats?.add("ad", 1, `partida${Math.min(attempt, 4)}`);
+    // Mentre no s'hagi acabat la partida que compta, és la de tothom (encara que se n'hagi deixat una a mitges)
+    const items = dailyItems(key, dailyResult(key) ? attempt : 1);
     const N = items.length;
     let i = 0, errors = 0, hits = 0, penalty = 0, t0 = 0, ended = false;
     const results = [], recap = [];
     const elapsed = () => performance.now() - t0 + penalty;
 
-    ctx.hud([["q", "Repte", `1/${N}`], ["t", "Temps", "0,0"], ["e", "Errors", "0"]]);
+    ctx.hud([["q", "Reto", `1/${N}`], ["t", "Tiempo", "0,0"], ["e", "Errores", "0"]]);
     ctx.countIn(() => {
       t0 = performance.now();
       ctx.every(100, () => {
@@ -348,34 +435,39 @@ registerGame({
       const ms = Math.round(elapsed());
       const grid = results.map((ok) => (ok ? "🟩" : "🟥")).join("");
       const d = Progress.data.daily;
-      const first = !dailyResult(key);
-      let xp = 0;
+      const prev = dailyResult(key), first = !prev;
+      // Al rànquing compta el millor temps de les 3 primeres partides del dia (cadascuna amb proves diferents)
+      const counts = attempt <= DAILY_MAX, better = counts && (!prev || ms < prev.ms);
+      let xp = 0, sub = null;
       if (first) {
         d.streak = d.last === dateKeyOffset(-1) ? d.streak + 1 : d.last === key ? d.streak : 1;
         d.last = key;
-        d.scores[key] = { ms, hits, errors, grid };
-        Progress.save();
         if (d.streak >= 3) ctx.achieve("diari3");
         xp = 40 + hits * 10 + Math.max(0, 90 - Math.round(ms / 1000));
-        Progress.record("diari", hits, xp);
-        window.Online?.submitDaily?.(key, { ms, hits, errors });
+      } else xp = hits * 4; // les partides següents donen una mica d'experiència
+      if (better) {
+        d.scores[key] = { ms, hits, errors, grid, n: attempt };
+        Progress.save();
+        sub = window.Online?.submitDaily?.(key, { ms, hits, errors, n: attempt });
       }
+      Progress.record("diari", hits, xp);
       ctx.finish({
         score: hits, noRecord: true, xp,
         display: fmtTime(ms),
         ratio: hits / N,
-        unit: `${hits}/${N} encerts · ${errors} ${errors === 1 ? "error" : "errors"} (+${errors * 10} s)`,
-        verdict: !first ? "Repte repetit: no compta per al rànquing. Torna demà!"
-          : errors === 0 ? "Ple perfecte. A veure qui et supera avui." : hits >= 7 ? "Molt bon temps. Comparteix-lo i repta els teus amics." : "Demà més! El rellotge no perdona.",
+        unit: `${hits}/${N} aciertos · ${errors} ${errors === 1 ? "error" : "errores"} (+${errors * 10} s)`,
+        verdict: !first ? dailyPracticeVerdict(attempt, better, prev)
+          : errors === 0 ? "Pleno perfecto. A ver quién te supera hoy." : hits >= 7 ? "Muy buen tiempo. Compártelo y reta a tus amigos." : "¡Mañana más! El reloj no perdona.",
         extraHtml: `<div class="daily-share">
             <div class="share-grid">${grid}</div>
-            <button class="btn primary" data-share-daily>Comparteix el resultat</button>
-            <a class="btn" href="#ranking">Veure el rànquing</a>
+            <button class="btn primary" data-share-daily>Comparte el resultado</button>
+            <a class="btn" href="#ranking">Ver el ranking</a>
           </div>
           <div id="daily-rank"></div>`,
         onShown(body) {
           $("[data-share-daily]", body)?.addEventListener("click", () => shareDaily(key));
-          if (window.Online?.renderDailyMini) window.Online.renderDailyMini($("#daily-rank", body), key);
+          // El rànquing es pinta quan ja s'ha desat el temps (si ha millorat)
+          if (window.Online?.renderDailyMini) Promise.resolve(sub).then(() => window.Online.renderDailyMini($("#daily-rank", body), key));
         },
         recap,
       });

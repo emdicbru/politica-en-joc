@@ -815,6 +815,8 @@ function renderNoticies(arg) {
 let nxQuizData = null;
 async function nxLoadQuiz() {
   if (nxQuizData) return nxQuizData;
+  // Les preguntes de data/quiz.json són en català: en castellà només hi ha les automàtiques (amb plantilles traduïdes)
+  if (PEJ_LANG === "es") return (nxQuizData = { questions: [] });
   try {
     const r = await fetch(`${window.PEJ_DATA || "data/"}quiz.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
     nxQuizData = r.ok ? await r.json() : { questions: [] };

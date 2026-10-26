@@ -38,6 +38,24 @@ function h(html) {
   return t.content.firstElementChild;
 }
 
+// ---------- Idioma ----------
+// L'app s'escriu en català (/) i tools/tradueix.js en genera la versió en castellà (/es/). Totes dues comparteixen el
+// progrés (és el mateix domini). La tria es desa a r29n-lang; sense tria, un navegador en castellà va a /es/ (index.html).
+const PEJ_LANG = document.documentElement.lang === "es" ? "es" : "ca";
+window.PEJ_LANG = PEJ_LANG;
+const LANG_KEY = "r29n-lang";
+const LANG_NAMES = [["ca", "Català"], ["es", "Castellano"]];
+const langHref = (to) => new URL(to === PEJ_LANG ? "./" : to === "es" ? "es/" : "../", location.href).pathname + location.search + location.hash;
+const langLinks = (cls = "lang-sw") => `<span class="${cls}" role="group" aria-label="Idioma">${LANG_NAMES.map(([k, n]) =>
+  `<a href="${langHref(k)}" data-lang="${k}" lang="${k}" hreflang="${k}"${k === PEJ_LANG ? ' aria-current="true"' : ""}>${n}</a>`).join("")}</span>`;
+document.addEventListener("click", (e) => {
+  const a = e.target.closest?.("[data-lang]");
+  if (!a) return;
+  e.preventDefault();
+  try { localStorage.setItem(LANG_KEY, a.dataset.lang); } catch { /* sense emmagatzematge */ }
+  if (a.dataset.lang !== PEJ_LANG) location.href = langHref(a.dataset.lang);
+});
+
 // ---------- Emmagatzematge ----------
 const store = {
   get(key, fallback) {
@@ -257,7 +275,7 @@ const DYNAMIC_GAMES = new Map();
 const gameById = (id) => GAMES.find((g) => g.id === id) || DYNAMIC_GAMES.get(id);
 
 // ---------- Navegació ----------
-const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga"];
+const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga", "premsa", "baixa"];
 let session = null; // partida en curs
 
 function route() {
@@ -290,6 +308,8 @@ function route() {
   if (v === "control") renderControl();
   if (v === "pronostics") renderPronostics(arg);
   if (v === "botiga") renderBotiga();
+  if (v === "premsa") renderPremsa(arg);
+  if (v === "baixa") renderBaixa(arg);
   updateTabIndicator();
   window.scrollTo({ top: 0 });
 }
@@ -336,6 +356,13 @@ function showIntro(game) {
     </div>`);
   body.appendChild(el);
   const startBtn = $("[data-start]", el);
+  // Un joc pot condicionar si es pot començar (p. ex. el repte diari, amb el límit de partides del dia)
+  const gate = game.gate?.();
+  if (gate) {
+    startBtn.replaceWith(h(gate.html));
+    gate.bind(el, () => startGame(game));
+    return;
+  }
   startBtn.focus();
   startBtn.addEventListener("click", () => { Sfx.play("pick"); startGame(game); });
 }
@@ -471,7 +498,7 @@ function showResult(game, result) {
   }
   result.onShown?.(body);
 
-  $("[data-again]", body)?.addEventListener("click", () => startGame(game));
+  $("[data-again]", body)?.addEventListener("click", () => (game.gate?.() ? showIntro(game) : startGame(game)));
   const great = levelUp || (ratio !== null ? ratio >= .75 : isRecord && prevBest !== undefined);
   Sfx.play(great || (ratio !== null && ratio >= .5) ? "win" : "lose");
   if (great) confetti();

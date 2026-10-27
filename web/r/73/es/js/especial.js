@@ -390,6 +390,7 @@ function espPorraBind(root) {
   $$("[data-pv]", box).forEach((i) => i.addEventListener("input", () => set(i.dataset.pv, Math.round(Number(i.value.replace(/\D/g, "")) || 0))));
   $("[data-psave]", box).addEventListener("click", () => {
     if (espPorraState() !== "oberta") return toast("La porra ya está cerrada");
+    if (espPreview()) return toast("Vista previa: la porra no se guarda");
     store.set(ESP_PORRA_KEY, { s: { ...s }, t: Date.now() });
     Sfx.play("pick");
     toast("Porra guardada");

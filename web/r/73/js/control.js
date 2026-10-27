@@ -11,7 +11,7 @@ const CTL_ROLES = {
   propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
 };
 // Què cal per veure cada pestanya
-const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, errors: 1, prev: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4 };
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4 };
 let ctlRoleCache = { email: null, role: undefined, loading: false };
 function ctlRole() {
   const email = window.Online?.user?.email?.toLowerCase();
@@ -97,7 +97,18 @@ async function ctlCheckFile() {
   } catch { ctlFile = { missing: true }; }
 }
 
+// Si alguna cosa falla en pintar el control, es mostra l'error (en lloc d'una pàgina en blanc) i es pot tornar a provar
 function renderControl(fromLive = false) {
+  try { renderControlPage(fromLive); } catch (e) {
+    console.error(e);
+    const root = $("#control-page");
+    if (root) {
+      root.innerHTML = `<div class="card ctl-gate"><span class="ctl-gate-i">⚠️</span><h1 class="page-title">El control no s'ha pogut obrir</h1><p class="muted">${esc(String(e?.message || e))}</p><button class="btn primary" type="button" data-ctl-retry>Torna-ho a provar</button></div>`;
+      $("[data-ctl-retry]", root).addEventListener("click", () => { sessionStorage.removeItem("ctl-tab"); renderControl(); });
+    }
+  }
+}
+function renderControlPage(fromLive = false) {
   const root = $("#control-page");
   if (!root) return;
   const O = window.Online;
@@ -148,24 +159,43 @@ function renderControl(fromLive = false) {
   for (let i = todo.length - 1; i >= 0; i--) if (todo[i].tab && !ctlCan(CTL_TAB_ROLE[todo[i].tab] || 3)) todo.splice(i, 1);
   const changed = ctlDraft ? ctlChanges() : [];
   const dot = (keys) => (changed.some((x) => keys.some((k) => x.startsWith(k))) ? `<i class="ctl-dot"></i>` : "");
-  const TABS = [["resum", "🏠 Resum", ""], ["usuaris", "📊 Usuaris", ""], ["errors", "🐞 Errors", ctlRpt.list && ctlRpt.list.some((r) => r.status === "nou") ? `<i class="ctl-dot"></i>` : ""], ["noticies", "📰 Notícies", ""], ["notif", "🔔 Notificacions", ""], ["premsa", "📣 Premsa", ""], ["anuncis", "💶 Anuncis", ""], ["fases", "29N · 📅 Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "29N · 📺 Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "29N · 🎯 Porra i pronòstics", dot(["Porra", "Pronòstics"])], ["prev", "👁 Previsualitza", ""], ["ajuda", "❓ Ajuda", ""]];
-  TABS.splice(1, 0, ...(ctlCan(4) ? [["equip", "👥 Equip", ""]] : []));
-  const allowed = TABS.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3));
-  TABS.length = 0; TABS.push(...allowed);
+  const newErr = ctlRpt.list ? ctlRpt.list.filter((r) => r.status === "nou").length : 0;
+  const labSoon = ctlLabItems().filter((x) => x.from > now).length;
+  const count = (n) => (n ? `<em class="ctl-n">${n}</em>` : "");
+  const GROUPS = [
+    ["General", [["resum", "🏠", "Resum"], ["usuaris", "📊", "Usuaris"], ["errors", "🐞", "Errors", count(newErr)], ["equip", "👥", "Equip"]]],
+    ["Contingut", [["noticies", "📰", "Notícies"], ["notif", "🔔", "Notificacions"], ["premsa", "📣", "Premsa"], ["anuncis", "💶", "Anuncis"]]],
+    ["Especial del 29N", [["fases", "📅", "Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "📺", "Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "🎯", "Porra i pronòstics", dot(["Porra", "Pronòstics"])]]],
+    ["Eines", [["lab", "🧪", "Laboratori", count(labSoon)], ["ajuda", "❓", "Ajuda"]]],
+  ].map(([g, items]) => [g, items.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3))]).filter(([, items]) => items.length);
+  const TABS = GROUPS.flatMap(([, items]) => items);
   let tab = sessionStorage.getItem("ctl-tab") || "resum";
+  if (tab === "prev") tab = "lab";
   if (!TABS.some(([k]) => k === tab)) tab = "resum";
+  const cur = TABS.find(([k]) => k === tab);
   const panel = (k, inner) => (k === tab ? `<div class="ctl-panel">${inner}</div>` : "");
 
+  if (!ctlRpt.list && !ctlRpt.loading && !ctlRpt.failed && ctlCan(1)) ctlRptLoad();
   root.innerHTML = `<div class="ctl">
-    <header class="ctl-head">
-      <div><p class="kicker">Política en Joc · ${esc(O.user.email)} · <b>${CTL_ROLES[ctlRole()].name}</b></p><h1 class="page-title">Centre de control</h1></div>
-      <span class="ctl-conn ${Esp.live ? "on" : ""}">${Esp.live ? "● Connectat en directe" : "● Sense connexió en directe"}</span>
-    </header>
-    ${pv ? `<div class="esp-preview">👁 Tens una previsualització activa en aquesta pestanya (${esc(pv.label)}). <button type="button" data-pv-off>Treu-la</button></div>` : ""}
-    <nav class="ctl-tabs" role="tablist">${TABS.map(([k, t, d]) => `<button type="button" role="tab" aria-selected="${k === tab}" class="${k === tab ? "on" : ""}" data-tab="${k}">${t}${d}</button>`).join("")}</nav>
+    <aside class="ctl-side">
+      <div class="ctl-me"><span class="ctl-logo" aria-hidden="true">🎛️</span><div><b>Centre de control</b><small>${esc(O.user.email)}</small></div></div>
+      <div class="ctl-badges"><span class="ctl-role">${CTL_ROLES[ctlRole()].name}</span><span class="ctl-conn ${Esp.live ? "on" : ""}">${Esp.live ? "En directe" : "Sense directe"}</span></div>
+      <nav class="ctl-nav" aria-label="Seccions del Centre de control">${GROUPS.map(([g, items]) => `<div class="ctl-ng"><p>${g}</p>${items.map(([k, ic, t, d]) => `<button type="button" class="${k === tab ? "on" : ""}" ${k === tab ? 'aria-current="page"' : ""} data-tab="${k}"><span aria-hidden="true">${ic}</span><b>${t}</b>${d || ""}</button>`).join("")}</div>`).join("")}</nav>
+      <a class="ctl-back" href="#inici">← Torna a la web</a>
+    </aside>
+    <div class="ctl-main">
+    <header class="ctl-ph"><h1><span aria-hidden="true">${cur[1]}</span> ${cur[2]}</h1></header>
+    ${pv || Object.keys(featPreviews()).length ? `<div class="esp-preview">🧪 Tens una vista prèvia activa en aquesta pestanya${pv ? ` (${esc(pv.label)})` : ""}. <button type="button" data-pv-off>Tanca-la</button></div>` : ""}
 
     ${panel("resum", `
-      <p class="ctl-intro">Com està l'especial ara mateix i què toca fer.</p>
+      <section class="ctl-kpis">
+        <button type="button" class="ctl-kpi ${newErr ? "hot" : ""}" data-tab="errors"><small>Errors nous</small><b>${ctlRpt.list ? newErr : ctlRpt.failed ? "?" : "…"}</b><span>${ctlRpt.list ? `de ${ctlRpt.list.length} avisos` : ctlRpt.failed ? "no s'han pogut llegir" : "carregant"}</span></button>
+        <button type="button" class="ctl-kpi" data-tab="lab"><small>Funcions en prova</small><b>${labSoon}</b><span>${labSoon ? "encara no les veu la gent" : "totes ja són públiques"}</span></button>
+        <div class="ctl-kpi"><small>Repte diari</small><b>#${dailyNumber()}</b><span>nou cada dia a les 00:00</span></div>
+        <div class="ctl-kpi"><small>Fins al 29N</small><b>${Math.max(0, Math.ceil((ESP_T.dia - now) / 864e5))}</b><span>dies</span></div>
+      </section>
+      ${ctlLabSoonHtml()}
+      <h2 class="ctl-h2">Especial del 29N</h2>
       <section class="ctl-status">
         <div class="ctl-st"><small>Fase pública</small><b>${ctlName(CTL_FASES, pubFase)}</b><span class="ctl-tag ${Esp.cfg.fase === "auto" ? "" : "warn"}">${Esp.cfg.fase === "auto" ? "automàtica" : "forçada"}</span></div>
         <div class="ctl-st"><small>Resultats</small><b>${ctlName(CTL_RES, pubRes)}</b><span class="ctl-tag ${pubRes === "simulacre" ? "warn" : ""}">${pubRes === "off" ? "no es mostren" : pubRes === "simulacre" ? "públic!" : "en directe"}</span></div>
@@ -245,16 +275,7 @@ function renderControl(fromLive = false) {
         </ol>
       </section>`)}
 
-    ${panel("prev", `
-      <p class="ctl-intro">Mira l'app com la veuria la gent en cada moment. Només ho veus tu, en aquesta pestanya.</p>
-      <section class="card ctl-prev">
-        <div class="ctl-pvs">
-          <button type="button" data-pv="previa"><span>🌙</span><b>Jornada de reflexió</b><small>28N</small></button>
-          <button type="button" data-pv="dia"><span>🗳️</span><b>Jornada electoral</b><small>29N, migdia</small></button>
-          <button type="button" data-pv="nit"><span>📺</span><b>Nit electoral</b><small>Simulacre de 3 minuts</small></button>
-          <button type="button" data-pv="despres"><span>📊</span><b>L'endemà</b><small>Simulacre acabat</small></button>
-        </div>
-      </section>`)}
+    ${panel("lab", ctlLabHtml())}
 
     ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
 
@@ -285,6 +306,7 @@ function renderControl(fromLive = false) {
           <li>Si alguna cosa falla: "Resultats: Cap" i un missatge destacat.</li></ol>
       </section>`)}
 
+    </div>
     ${ctlDirty() ? `<div class="ctl-bar"><div><b>Canvis sense publicar</b><small>${esc(ctlChanges().join(" · "))}</small></div><button class="btn ghost" type="button" data-discard>Descarta</button><button class="btn primary" type="button" data-publish>Publica</button></div>` : ""}
   </div>`;
 
@@ -369,15 +391,69 @@ function renderControl(fromLive = false) {
     const t = { previa: ESP_T.previa + 10 * 3600e3, dia: ESP_T.obre + 5 * 3600e3, nit: ESP_T.nit + 1800e3, despres: ESP_T.endema + 6 * 3600e3 }[f];
     const res = f === "nit" || f === "despres" ? "simulacre" : "off";
     sessionStorage.setItem(ESP_PREVIEW_KEY, JSON.stringify({ fase: f, resultats: res, t, at: Date.now(), simInici: f === "despres" ? Date.now() - 600000 : Date.now(), simDurada: 3, label: b.querySelector("b").textContent }));
+    sessionStorage.setItem(FEAT_PREVIEW_KEY, JSON.stringify({ ...featPreviews(), ["29N · " + b.querySelector("b").textContent]: true }));
     Esp.data = null; Esp.prev = null; Esp.feed = [];
     location.hash = f === "previa" || f === "dia" ? "#inici" : "#nit";
   }));
-  $("[data-pv-off]", root)?.addEventListener("click", () => { sessionStorage.removeItem(ESP_PREVIEW_KEY); Esp.data = null; Esp.feed = []; redraw(); });
+  $("[data-pv-off]", root)?.addEventListener("click", () => { featPreviewOff(); featPill(); redraw(); });
+  $$("[data-lab]", root).forEach((b) => b.addEventListener("click", () => {
+    const x = ctlLabItems().find((i) => i.id === b.dataset.lab);
+    if (!x) return;
+    if (x.from > Date.now()) {
+      sessionStorage.setItem(FEAT_PREVIEW_KEY, JSON.stringify({ ...featPreviews(), [x.id]: true }));
+      if (x.t) sessionStorage.setItem(ESP_PREVIEW_KEY, JSON.stringify({ fase: "auto", resultats: "off", t: x.t, at: Date.now(), label: x.name }));
+      Esp.data = null; Esp.prev = null; Esp.feed = [];
+      Sfx.play("pick");
+    }
+    location.hash = x.go;
+  }));
   // Rellotge i progrés del simulacre
   clearInterval(ctlTick);
   ctlTick = setInterval(() => { if (!location.hash.startsWith("#control")) return clearInterval(ctlTick); if (!document.hidden && !document.activeElement?.matches?.("input,textarea")) renderControl(true); }, 30000);
 }
 window.renderControl = renderControl;
+
+// ---------- Laboratori: funcions que la gent encara no pot provar ----------
+// Cada funció diu quan la veurà tothom; abans, l'equip la pot provar en aquesta pestanya (vista prèvia, sense desar res).
+function ctlLabItems() {
+  if (typeof DAILY_V3_FROM === "undefined" || typeof DAILY_V2_FROM === "undefined" || typeof ESP_T === "undefined" || typeof PRON_OPEN === "undefined") return [];
+  const [y, m, d] = DAILY_V2_FROM.split("-").map(Number);
+  const [y3, m3, d3] = DAILY_V3_FROM.split("-").map(Number);
+  return [
+    { id: "diari3", icon: "🧠", name: "Repte diari amb dinàmiques noves", go: "#joc/diari", from: new Date(y3, m3 - 1, d3).getTime(),
+      desc: "Cada dia, cinc proves especials triades entre nou: siluetes de províncies, aritmètica del Congrés, parelles de sigles, l'intrús, completa la frase, ordena, el mapa, el número i la llei d'Hondt. La partida de prova no compta." },
+    { id: "diari2", icon: "🧩", name: "Repte diari amb proves noves", go: "#joc/diari", from: new Date(y, m - 1, d).getTime(),
+      desc: "Ordena, el mapa, endevina el número i la llei d'Hondt, amb el rellotge aturat durant la correcció. La partida de prova no compta per al rànquing ni per a la ratxa." },
+    { id: "porra", icon: "🎯", name: "Porra d'escons", go: "#nit/porra", from: ESP_T.porra, t: ESP_T.porra + 2 * 864e5,
+      desc: "Cadascú reparteix els 350 escons entre els partits. En vista prèvia, la porra no es desa." },
+    { id: "pron", icon: "🎟️", name: "Lliga de pronòstics", go: "#pronostics", from: PRON_OPEN, t: PRON_OPEN + 864e5,
+      desc: "Les 1.000 fitxes, les preguntes sobre el resultat i les lligues d'amics. En vista prèvia, no es desa cap pronòstic." },
+  ];
+}
+function ctlLabCard(x) {
+  const pub = Date.now() >= x.from;
+  return `<article class="ctl-lab ${pub ? "pub" : ""}">
+    <span class="ctl-lab-i" aria-hidden="true">${x.icon}</span>
+    <div class="ctl-lab-b"><h3>${esc(x.name)}</h3><p>${esc(x.desc)}</p>
+      <p class="ctl-lab-when">${pub ? `<span class="ctl-tag ok">Pública</span> Ja la veu tothom` : `<span class="ctl-tag warn">En prova</span> La gent la veurà ${ctlDate(x.from)} (${ctlRel(x.from)})`}</p></div>
+    <button class="btn ${pub ? "ghost" : "primary"}" type="button" data-lab="${x.id}">${pub ? "Obre-la" : "Prova-la"}</button>
+  </article>`;
+}
+// Al resum: només les que encara no són públiques
+function ctlLabSoonHtml() {
+  const soon = ctlLabItems().filter((x) => x.from > Date.now()).sort((a, b) => a.from - b.from);
+  if (!soon.length) return "";
+  return `<section class="card ctl-soon"><div class="ctl-card-h"><h2>🧪 Properes funcions</h2><button type="button" class="linklike" data-tab="lab">Obre el laboratori</button></div>
+    <ol>${soon.map((x) => `<li><span aria-hidden="true">${x.icon}</span><b>${esc(x.name)}</b><small>${ctlRel(x.from)}</small><button type="button" class="btn sm" data-lab="${x.id}">Prova-la</button></li>`).join("")}</ol></section>`;
+}
+function ctlLabHtml() {
+  const phases = [["previa", "🌙", "Jornada de reflexió", ESP_T.previa, "El dia abans de votar: sense propaganda ni enquestes."], ["dia", "🗳️", "Jornada electoral", ESP_T.dia, "El 29N amb els col·legis oberts."], ["nit", "📺", "Nit electoral", ESP_T.nit, "Escrutini simulat de 3 minuts."], ["despres", "📊", "L'endemà", ESP_T.endema, "Resultats finals (simulats)."]];
+  return `<p class="ctl-intro">Prova les funcions abans que les vegi la gent. La vista prèvia és només per a tu, en aquesta pestanya, i no desa res: ni partides, ni porres, ni pronòstics. Per sortir-ne, toca «Surt» a la pastilla de baix.</p>
+    <h2 class="ctl-h2">Funcions noves</h2>
+    <div class="ctl-labs">${ctlLabItems().map(ctlLabCard).join("")}</div>
+    <h2 class="ctl-h2">Especial del 29N, fase per fase</h2>
+    <div class="ctl-pvs">${phases.map(([k, ic, t, at, d]) => `<button type="button" data-pv="${k}"><span aria-hidden="true">${ic}</span><b>${t}</b><small>${ctlDate(at)} · ${ctlRel(at)}</small><em>${d}</em></button>`).join("")}</div>`;
+}
 
 // ---------- Notificacions push ----------
 // Els enviaments queden a la cua (pushes/) i els fa GitHub Actions (tools/push.js, cada 5 minuts).
@@ -592,15 +668,18 @@ function ctlTeamBind(root) {
 }
 
 // ---------- Errors: els avisos que envia la gent («Avisa d'un error», report.js) ----------
-const ctlRpt = { list: null, loading: false, filter: "nou" };
+const ctlRpt = { list: null, loading: false, failed: false, filter: "nou" };
 async function ctlRptLoad() {
   if (ctlRpt.loading) return;
   ctlRpt.loading = true;
   ctlRpt.list = await window.Online.reportList();
+  // Si no es pot llegir, no es torna a provar sol (es repintaria i llegiria sense parar): hi ha un botó per reintentar-ho
+  ctlRpt.failed = !ctlRpt.list;
   ctlRpt.loading = false;
   if (location.hash.startsWith("#control")) renderControl(true);
 }
 function ctlRptHtml() {
+  if (!ctlRpt.list && ctlRpt.failed) return `<div class="card"><p class="muted">No s'han pogut llegir els avisos.</p><button class="btn" type="button" data-rpt-reload>Torna-ho a provar</button></div>`;
   if (!ctlRpt.list) { ctlRptLoad(); return `<div class="card"><p class="muted">Carregant els avisos…</p></div>`; }
   const L = ctlRpt.list;
   const n = (s) => L.filter((r) => r.status === s).length;
@@ -625,7 +704,7 @@ function ctlRptHtml() {
 }
 function ctlRptBind(root) {
   $$("[data-rpt-f]", root).forEach((b) => b.addEventListener("click", () => { ctlRpt.filter = b.dataset.rptF; renderControl(true); }));
-  $("[data-rpt-reload]", root)?.addEventListener("click", () => { ctlRpt.list = null; renderControl(true); });
+  $("[data-rpt-reload]", root)?.addEventListener("click", () => { ctlRpt.list = null; ctlRpt.failed = false; renderControl(true); });
   $$("[data-rpt-set]", root).forEach((b) => b.addEventListener("click", async () => {
     if (await window.Online.reportSet(b.dataset.rptSet, b.dataset.v)) { const r = ctlRpt.list.find((x) => x.id === b.dataset.rptSet); if (r) r.status = b.dataset.v; renderControl(true); }
   }));

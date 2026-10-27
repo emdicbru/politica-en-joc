@@ -464,7 +464,7 @@ function mergeProgress(local, cloud) {
     plays: maxMap(local.plays, cloud.plays),
     ach: { ...(cloud.ach || {}), ...(local.ach || {}) },
     learn: maxMap(local.learn, cloud.learn),
-    daily: { last, streak, scores: { ...(ld.scores || {}), ...(cd.scores || {}) } },
+    daily: { last, streak, scores: { ...(ld.scores || {}), ...(cd.scores || {}) }, frozen: [...new Set([...(ld.frozen || []), ...(cd.frozen || [])])].sort().slice(-60) },
     shop: mergeShop(local.shop, cloud.shop),
   };
 }
@@ -1405,14 +1405,21 @@ let rankTab = "world";
 
 // Al rànquing del dia hi va el millor temps de les 3 primeres partides (n = número de partida): el primer es crea i,
 // si una partida posterior el millora, s'actualitza (les regles només deixen baixar el temps i fins a la 3a partida).
-Online.submitDaily = async (key, { ms, hits, errors, n = 1 }) => {
+Online.submitDaily = async (key, { ms, hits, errors, n = 1, f = null, f1 = null }) => {
   // Sense nom d'usuari no es publica res (es fa en desar-lo)
   if (!ready || !Online.user || !Online.profile?.handle || n > 3) return;
   const ref = F.doc(db, "dailies", key, "entries", Online.user.uid);
   const snap = await safe(() => F.getDoc(ref), "No se ha podido publicar el tiempo");
   if (!snap) return;
   ms = Math.max(3000, Math.round(ms));
-  if (!snap.exists()) return safe(() => F.setDoc(ref, { ...me(), ms, hits, errors, n, createdAt: F.serverTimestamp() }), "No se ha podido publicar el tiempo");
+  if (!snap.exists()) {
+    const base = { ...me(), ms, hits, errors, n, createdAt: F.serverTimestamp() };
+    const fails = f || f1;
+    if (Array.isArray(fails)) {
+      try { await F.setDoc(ref, { ...base, f: fails.slice(0, 10), fd: true }); return; } catch { /* regles sense el camp f: es desa sense el detall */ }
+    }
+    return safe(() => F.setDoc(ref, base), "No se ha podido publicar el tiempo");
+  }
   const cur = snap.data();
   if (ms >= cur.ms || n <= (cur.n || 1)) return;
   await safe(() => F.updateDoc(ref, { ms, hits, errors, n, t: F.serverTimestamp() }), "No se ha podido publicar el tiempo");
@@ -1448,8 +1455,56 @@ Online.renderDailyMini = async (box, key) => {
   const top = await worldTop(key, 5);
   const pos = await myPosition(key);
   if (!top) return;
-  box.innerHTML = `<h4 class="section-title sm" style="margin-top:0">Ranking mundial de hoy${pos ? ` · eres el #${fmt(pos)}` : ""}</h4>${rankRows(top)}`;
+  box.innerHTML = `<div class="dsoc" data-soc></div><h4 class="section-title sm" style="margin-top:0">Ranking mundial de hoy${pos ? ` · eres el #${fmt(pos)}` : ""}</h4>${rankRows(top)}`;
+  const soc = $("[data-soc]", box), lines = [];
+  const paint = () => { soc.innerHTML = lines.join(""); };
+  // Percentil: quanta gent ha fet un temps pitjor
+  const total = await safe(() => F.getCountFromServer(F.collection(db, "dailies", key, "entries")));
+  const n = total?.data().count || 0;
+  const pct = pos && n >= 5 ? Math.round((100 * (n - pos)) / (n - 1)) : null;
+  (Online.dailySocial ||= {})[key] = { pct, n };
+  if (pct !== null) lines.push(`<p class="dsoc-pct"><b>${pct} %</b><span>Has sido más rápido que el ${pct} % de las ${fmt(n)} personas que han hecho el reto hoy.</span></p>`);
+  paint();
+  // La prova que més gent ha fallat a la partida de tothom
+  const hard = await dailyHardest(key);
+  if (hard) {
+    const it = dailyItems(key, 1)[hard.k];
+    const mine = dailyResult(key)?.f1;
+    const you = Array.isArray(mine) ? (mine.includes(hard.k) ? "Tú también la has fallado." : "¡Tú la has acertado!") : "";
+    lines.push(`<div class="dsoc-hard"><small>La prueba más difícil de hoy</small><b>«${esc(String(it?.recapQ || "").slice(0, 120))}»</b><span>Solo la ha acertado el ${hard.pct} % de la gente. ${you}</span></div>`);
+    paint();
+  }
+  // Posició a les lligues d'amics
+  const leagues = (await myLeagues()).slice(0, 3);
+  for (const lg of leagues) {
+    const entries = await leagueEntries(lg, key);
+    const i = entries.findIndex((e) => e.uid === Online.user.uid);
+    if (i < 0) continue;
+    lines.push(`<a class="dsoc-lg" href="#ranking"><span>🏆 ${esc(lg.name)}</span><b>#${i + 1}</b><small>de ${entries.length} ${entries.length === 1 ? "miembro" : "miembros"} que lo han hecho hoy</small></a>`);
+    paint();
+  }
 };
+
+// Prova més fallada del dia (comptadors al servidor, guardats 10 minuts en aquesta sessió). Cal un mínim de 10 partides.
+async function dailyHardest(key) {
+  const ck = `r29n-dhard-${key}`;
+  try { const c = JSON.parse(sessionStorage.getItem(ck) || "null"); if (c && Date.now() - c.t < 6e5) return c.v; } catch { /* sense memòria */ }
+  const col = F.collection(db, "dailies", key, "entries");
+  const base = await safe(() => F.getCountFromServer(F.query(col, F.where("fd", "==", true))));
+  const n = base?.data().count || 0;
+  let v = null;
+  if (n >= 10) {
+    const counts = [];
+    for (let k = 0; k < 10; k++) {
+      const c = await safe(() => F.getCountFromServer(F.query(col, F.where("f", "array-contains", k))));
+      counts.push(c?.data().count || 0);
+    }
+    const k = counts.indexOf(Math.max(...counts));
+    if (counts[k] > 0) v = { k, pct: Math.round(100 * (1 - counts[k] / n)), n };
+  }
+  try { sessionStorage.setItem(ck, JSON.stringify({ t: Date.now(), v })); } catch { /* sense memòria */ }
+  return v;
+}
 
 // ---------- Duel de campanya: el simulador informa del progrés i del resultat ----------
 // Al duel, «i» és el dia de campanya i «score» i «hits» són els escons. Les regles de Firestore ja permeten que cada jugador actualitzi el seu camp p_<uid>.
@@ -1517,6 +1572,17 @@ async function renderWorld(box, key) {
     ${rankRows(top)}`;
 }
 
+// Temps d'avui dels membres d'una lliga (de 30 en 30, el límit de Firestore per a «in»)
+async function leagueEntries(lg, key) {
+  const entries = [];
+  for (let i = 0; i < lg.members.length; i += 30) {
+    const chunk = lg.members.slice(i, i + 30);
+    const snap = await safe(() => F.getDocs(F.query(F.collection(db, "dailies", key, "entries"), F.where("uid", "in", chunk))));
+    if (snap) entries.push(...snap.docs.map((d) => d.data()));
+  }
+  return entries.sort((a, b) => a.ms - b.ms);
+}
+
 async function myLeagues() {
   const snap = await safe(() => F.getDocs(F.query(F.collection(db, "leagues"), F.where("members", "array-contains", Online.user.uid), F.limit(20))));
   return snap ? snap.docs.map((d) => d.data()) : [];
@@ -1565,14 +1631,7 @@ async function renderLeagues(box, key) {
     </section>`);
     list.appendChild(sec);
     $("[data-invite]", sec).addEventListener("click", () => inviteLeague(lg));
-    // Temps d'avui dels membres (de 30 en 30, el límit de Firestore per a «in»)
-    const entries = [];
-    for (let i = 0; i < lg.members.length; i += 30) {
-      const chunk = lg.members.slice(i, i + 30);
-      const snap = await safe(() => F.getDocs(F.query(F.collection(db, "dailies", key, "entries"), F.where("uid", "in", chunk))));
-      if (snap) entries.push(...snap.docs.map((d) => d.data()));
-    }
-    entries.sort((a, b) => a.ms - b.ms);
+    const entries = await leagueEntries(lg, key);
     const missing = lg.members.length - entries.length;
     $(".league-body", sec).innerHTML = rankRows(entries) +
       (missing > 0 ? `<p class="muted" style="margin-top:8px">${missing} ${missing === 1 ? "miembro aún no ha" : "miembros aún no han"} hecho el reto de hoy.</p>` : "");

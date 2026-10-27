@@ -20,18 +20,18 @@ const PRON_EXTRA_STEP = 50;
 const pronBudget = (b) => PRON_BASE + (b?.extra || 0);
 const PRON_INV23 = ["psoe", "fa", "podemos", "erc", "junts", "bildu", "pnv", "bng", "cc"]; // investidura del 2023
 const pronRange = (party, cuts) => ({
-  opts: [[`a`, `Menos de ${cuts[0]}`], [`b`, `De ${cuts[0]} a ${cuts[1] - 1}`], [`c`, `De ${cuts[1]} a ${cuts[2] - 1}`], [`d`, `${cuts[2]} o más`]],
+  opts: [[`a`, `Menys de ${cuts[0]}`], [`b`, `De ${cuts[0]} a ${cuts[1] - 1}`], [`c`, `De ${cuts[1]} a ${cuts[2] - 1}`], [`d`, `${cuts[2]} o més`]],
   res: (d) => { const n = d.seats[party] || 0; return n < cuts[0] ? "a" : n < cuts[1] ? "b" : n < cuts[2] ? "c" : "d"; },
 });
 const PRON_M = [
-  { id: "m1", q: "¿Quién será la primera fuerza?", opts: [["pp", "PP"], ["psoe", "PSOE"], ["vox", "Vox"], ["altre", "Otro partido"]], res: (d) => (["pp", "psoe", "vox"].includes(d.ranking[0]) ? d.ranking[0] : "altre") },
-  { id: "m2", q: "¿Cuántos escaños sacará el PP?", ...pronRange("pp", [120, 140, 160]) },
-  { id: "m3", q: "¿Cuántos escaños sacará el PSOE?", ...pronRange("psoe", [100, 120, 140]) },
-  { id: "m4", q: "¿Cuántos escaños sacará Vox?", ...pronRange("vox", [30, 45, 60]) },
-  { id: "m8", q: "¿Cuántos escaños sacará Frente Amplio?", ...pronRange("fa", [15, 25, 35]) },
-  { id: "m5", q: "¿La participación será más alta o más baja que en 2023 (66,6 %)?", opts: [["alta", "Más alta"], ["baixa", "Más baja"]], res: (d) => ((d.participacio || 0) >= 66.6 ? "alta" : "baixa") },
-  { id: "m6", q: "¿PP y Vox sumarán mayoría absoluta (176)?", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.pp || 0) + (d.seats.vox || 0) >= 176 ? "si" : "no") },
-  { id: "m7", q: "¿Los partidos que invistieron a Sánchez en 2023 volverán a sumar 176?", hint: "PSOE, FA, Podemos, ERC, Junts, EH Bildu, PNV, BNG y CC", opts: [["si", "Sí"], ["no", "No"]], res: (d) => (PRON_INV23.reduce((a, k) => a + (d.seats[k] || 0), 0) >= 176 ? "si" : "no") },
+  { id: "m1", q: "Qui serà la primera força?", opts: [["pp", "PP"], ["psoe", "PSOE"], ["vox", "Vox"], ["altre", "Un altre partit"]], res: (d) => (["pp", "psoe", "vox"].includes(d.ranking[0]) ? d.ranking[0] : "altre") },
+  { id: "m2", q: "Quants escons traurà el PP?", ...pronRange("pp", [120, 140, 160]) },
+  { id: "m3", q: "Quants escons traurà el PSOE?", ...pronRange("psoe", [100, 120, 140]) },
+  { id: "m4", q: "Quants escons traurà Vox?", ...pronRange("vox", [30, 45, 60]) },
+  { id: "m8", q: "Quants escons traurà Frente Amplio?", ...pronRange("fa", [15, 25, 35]) },
+  { id: "m5", q: "La participació serà més alta o més baixa que el 2023 (66,6 %)?", opts: [["alta", "Més alta"], ["baixa", "Més baixa"]], res: (d) => ((d.participacio || 0) >= 66.6 ? "alta" : "baixa") },
+  { id: "m6", q: "PP i Vox sumaran majoria absoluta (176)?", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.pp || 0) + (d.seats.vox || 0) >= 176 ? "si" : "no") },
+  { id: "m7", q: "Els partits que van investir Sánchez el 2023 tornaran a sumar 176?", hint: "PSOE, FA, Podemos, ERC, Junts, EH Bildu, PNV, BNG i CC", opts: [["si", "Sí"], ["no", "No"]], res: (d) => (PRON_INV23.reduce((a, k) => a + (d.seats[k] || 0), 0) >= 176 ? "si" : "no") },
 ];
 const PronState = { mine: null, draft: null, loaded: false, tab: "meus", league: null, members: null, saving: false };
 
@@ -75,7 +75,7 @@ function pronBalance(b, r, pots = Esp.cfg.pronPots) {
   PRON_M.forEach((m) => { total += pronQ(m, b?.[m.id], r.res[m.id], pots).got; });
   return { staked, won: total - (pronBudget(b) - staked), total: Math.round(total), partial };
 }
-const pronFmt = (n) => `${fmt(Math.round(n))} fichas`;
+const pronFmt = (n) => `${fmt(Math.round(n))} fitxes`;
 function pronCountdown() {
   const s = Math.max(0, Math.round((PRON_CLOSE - espNow()) / 1000));
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
@@ -104,22 +104,22 @@ async function renderPronostics(arg) {
   const r = pronResults(night || Esp.cfg.pronRes ? Esp.data : null);
   const mine = PronState.mine || {};
   const bal = pronBalance(mine, st === "oberta" ? null : r);
-  const status = st === "aviat" ? `Se abre el 23 de noviembre` : st === "oberta" ? `Se cierra dentro de <b>${pronCountdown()}</b> (29N, 20:00)` : st === "off" ? "No disponible" : r?.final ? "Liquidada" : r ? "Cerrada · se resuelve en directo con el escrutinio" : "Cerrada · se resolverá con el escrutinio";
+  const status = st === "aviat" ? `S'obre el 23 de novembre` : st === "oberta" ? `Es tanca d'aquí a <b>${pronCountdown()}</b> (29N, 20:00)` : st === "off" ? "No disponible" : r?.final ? "Liquidada" : r ? "Tancada · es resol en directe amb l'escrutini" : "Tancada · es resoldrà amb l'escrutini";
   root.innerHTML = `${espPreviewBar()}
     <header class="pron-hero">
-      <div><p class="esp-k">🎟️ Juego · elecciones del 29N</p><h1>Liga de pronósticos</h1>
-        <p>Reparte tus <b>${fmt(PRON_BASE)} fichas</b> (y, si quieres, las monedas que hayas ganado jugando) entre al menos ${PRON_MIN_Q} preguntas. En cada pregunta, las fichas de quienes fallan se reparten a partes iguales entre quienes aciertan. ¡Pon más donde estés más seguro!</p>
+      <div><p class="esp-k">🎟️ Joc · eleccions del 29N</p><h1>Lliga de pronòstics</h1>
+        <p>Reparteix les teves <b>${fmt(PRON_BASE)} fitxes</b> (i, si vols, les monedes que hagis guanyat jugant) entre almenys ${PRON_MIN_Q} preguntes. A cada pregunta, les fitxes dels qui fallen es reparteixen a parts iguals entre els qui encerten. Posa'n més on estiguis més segur!</p>
         <p class="pron-status">${status}</p></div>
-      <div class="pron-wallet"><small>${st === "oberta" || st === "aviat" ? "Te quedan por repartir" : !r ? "En juego" : r.final ? "Tus fichas" : bal.partial ? "Recuperarías (sin el bote)" : "Ahora mismo tendrías"}</small><b>${fmt(st === "oberta" || st === "aviat" ? pronBudget(PronState.draft || mine) - pronStaked(PronState.draft || mine) : bal.total)}</b><span>fichas</span></div>
+      <div class="pron-wallet"><small>${st === "oberta" || st === "aviat" ? "Et queden per repartir" : !r ? "En joc" : r.final ? "Les teves fitxes" : bal.partial ? "Recuperaries (sense el pot)" : "Ara mateix tindries"}</small><b>${fmt(st === "oberta" || st === "aviat" ? pronBudget(PronState.draft || mine) - pronStaked(PronState.draft || mine) : bal.total)}</b><span>fitxes</span></div>
     </header>
-    <nav class="pron-tabs">${[["meus", "Mis pronósticos"], ["lligues", "Mis ligas"], ["general", "Ranking general"]].map(([k, t]) => `<button type="button" class="${PronState.tab === k ? "on" : ""}" data-ptab="${k}">${t}</button>`).join("")}</nav>
+    <nav class="pron-tabs">${[["meus", "Els meus pronòstics"], ["lligues", "Les meves lligues"], ["general", "Rànquing general"]].map(([k, t]) => `<button type="button" class="${PronState.tab === k ? "on" : ""}" data-ptab="${k}">${t}</button>`).join("")}</nav>
     <div data-pbody></div>
-    <p class="sim-fiction">Las fichas son una moneda inventada de Política en Joc: no se pueden comprar, no tienen ningún valor y no se pueden canjear por nada. Las que ganes se guardan para las próximas elecciones.</p>`;
+    <p class="sim-fiction">Les fitxes són una moneda inventada de Política en Joc: no es poden comprar, no tenen cap valor i no es poden bescanviar per res. Les que guanyis es guarden per a les properes eleccions.</p>`;
   espBind(root);
   $$("[data-ptab]", root).forEach((b) => b.addEventListener("click", () => { PronState.tab = b.dataset.ptab; renderPronostics(); }));
   const body = $("[data-pbody]", root);
   if (!logged) {
-    body.innerHTML = `<div class="card pron-login"><h2 class="section-title sm">Entra para jugar</h2><p>Los pronósticos se guardan en tu cuenta para que los puedas comparar con tus ligas de amigos.</p><button class="btn primary lg" type="button" data-plogin>Entra</button></div>`;
+    body.innerHTML = `<div class="card pron-login"><h2 class="section-title sm">Entra per jugar</h2><p>Els pronòstics es guarden al teu compte perquè els puguis comparar amb les teves lligues d'amics.</p><button class="btn primary lg" type="button" data-plogin>Entra</button></div>`;
     $("[data-plogin]", body).addEventListener("click", () => O?.accountClick?.());
     return;
   }
@@ -135,27 +135,27 @@ function pronMine(body, st, r) {
   const dirty = JSON.stringify([...PRON_M.map((m) => D[m.id] || null), D.extra || 0]) !== JSON.stringify([...PRON_M.map((m) => PronState.mine?.[m.id] || null), PronState.mine?.extra || 0]);
   const coins = typeof Coins !== "undefined" ? Coins.balance() + (PronState.mine?.extra || 0) : 0;
   const maxExtra = Math.min(PRON_EXTRA_MAX, Math.floor(coins / PRON_EXTRA_STEP) * PRON_EXTRA_STEP);
-  body.innerHTML = `${st === "aviat" ? `<div class="card pron-soon"><b>Los mercados se abren el 23 de noviembre.</b> Ya puedes hacerte una idea de los pronósticos que habrá.</div>` : ""}
+  body.innerHTML = `${st === "aviat" ? `<div class="card pron-soon"><b>Els mercats s'obren el 23 de novembre.</b> Ja pots fer-te una idea dels pronòstics que hi haurà.</div>` : ""}
     ${open && typeof Coins !== "undefined" ? `<section class="card pron-extra">
-      <div><b>🪙 Añade monedas</b><p>${maxExtra || D.extra ? `${D.extra ? `Añades ${fmt(D.extra)} monedas; puedes añadir hasta ${fmt(maxExtra)}.` : `Tienes ${fmt(coins)} monedas de juego.`} Las que añadas se convierten en fichas de esta Liga: si aciertas, las multiplicarás, pero no vuelven al monedero.` : `Juega a los minijuegos para ganar monedas y añadirlas aquí (hacen falta ${PRON_EXTRA_STEP}).`} <a href="#botiga">¿Qué son?</a></p></div>
-      ${maxExtra || D.extra ? `<div class="pron-stake"><span>Añades</span><button type="button" data-ex="-${PRON_EXTRA_STEP}" aria-label="Menos">−</button><input type="text" inputmode="numeric" data-exv value="${D.extra || 0}" aria-label="Monedas"><button type="button" data-ex="${PRON_EXTRA_STEP}" aria-label="Más">+</button></div>` : ""}
-    </section>` : !open && PronState.mine?.extra ? `<p class="muted">Añadiste ${fmt(PronState.mine.extra)} monedas de juego.</p>` : ""}
+      <div><b>🪙 Afegeix-hi monedes</b><p>${maxExtra || D.extra ? `${D.extra ? `Hi afegeixes ${fmt(D.extra)} monedes; en pots afegir fins a ${fmt(maxExtra)}.` : `Tens ${fmt(coins)} monedes de joc.`} Les que hi afegeixis es converteixen en fitxes d'aquesta Lliga: si encertes, les multiplicaràs, però no tornen al moneder.` : `Juga als minijocs per guanyar monedes i afegir-les aquí (en calen ${PRON_EXTRA_STEP}).`} <a href="#botiga">Què són?</a></p></div>
+      ${maxExtra || D.extra ? `<div class="pron-stake"><span>Hi afegeixes</span><button type="button" data-ex="-${PRON_EXTRA_STEP}" aria-label="Menys">−</button><input type="text" inputmode="numeric" data-exv value="${D.extra || 0}" aria-label="Monedes"><button type="button" data-ex="${PRON_EXTRA_STEP}" aria-label="Més">+</button></div>` : ""}
+    </section>` : !open && PronState.mine?.extra ? `<p class="muted">Hi vas afegir ${fmt(PronState.mine.extra)} monedes de joc.</p>` : ""}
     <div class="pron-list">${PRON_M.map((m) => {
       const b = D[m.id];
       const out = r?.res?.[m.id];
       const q = out && b ? pronQ(m, b, out, Esp.cfg.pronPots) : null;
       return `<section class="card pron-m ${b ? "has" : ""}">
-        <header><h3>${esc(m.q)}</h3><span class="pron-x">${b?.a ? fmt(b.a) : "Bote"}</span></header>
+        <header><h3>${esc(m.q)}</h3><span class="pron-x">${b?.a ? fmt(b.a) : "Pot"}</span></header>
         ${m.hint ? `<p class="muted pron-hint">${esc(m.hint)}</p>` : ""}
-        <div class="pron-opts">${m.opts.map(([o, t]) => `<button type="button" data-mo="${m.id}" data-o="${o}" class="${b?.o === o ? "on" : ""} ${out === o ? "win" : ""}" ${open ? "" : "disabled"}>${esc(t)}${out === o ? ` <small>${r.final ? "✔" : "ahora"}</small>` : ""}</button>`).join("")}</div>
-        ${open ? `<div class="pron-stake ${b ? "" : "off"}"><span>Pones</span><button type="button" data-st="${m.id}" data-d="-50" aria-label="Menos">−</button><input type="text" inputmode="numeric" data-sv="${m.id}" value="${b?.a || 0}" aria-label="Fichas"><button type="button" data-st="${m.id}" data-d="50" aria-label="Más">+</button><span class="pron-ret">Si la aciertas, las recuperas y te toca parte del bote</span></div>`
-          : b ? `<p class="pron-res">Has puesto <b>${fmt(b.a)}</b> a «${esc(m.opts.find(([o]) => o === b.o)?.[1] || b.o)}»${q ? (out === b.o ? ` · <span class="up">${r.final ? "acertada" : "ahora la aciertas"}${q.share ? `: +${fmt(Math.round(q.share))} del bote` : q.share === null ? " (el bote se publica a las 20:00)" : ""}</span>` : q.lost ? ` · <span class="down">${r.final ? "fallada" : "ahora la fallas"}</span>` : ` · nadie la ha acertado: la recuperas`) : ""}</p>` : `<p class="muted pron-res">No pusiste fichas.</p>`}
+        <div class="pron-opts">${m.opts.map(([o, t]) => `<button type="button" data-mo="${m.id}" data-o="${o}" class="${b?.o === o ? "on" : ""} ${out === o ? "win" : ""}" ${open ? "" : "disabled"}>${esc(t)}${out === o ? ` <small>${r.final ? "✔" : "ara"}</small>` : ""}</button>`).join("")}</div>
+        ${open ? `<div class="pron-stake ${b ? "" : "off"}"><span>Hi poses</span><button type="button" data-st="${m.id}" data-d="-50" aria-label="Menys">−</button><input type="text" inputmode="numeric" data-sv="${m.id}" value="${b?.a || 0}" aria-label="Fitxes"><button type="button" data-st="${m.id}" data-d="50" aria-label="Més">+</button><span class="pron-ret">Si l'encertes, les recuperes i et toca part del pot</span></div>`
+          : b ? `<p class="pron-res">Hi has posat <b>${fmt(b.a)}</b> a «${esc(m.opts.find(([o]) => o === b.o)?.[1] || b.o)}»${q ? (out === b.o ? ` · <span class="up">${r.final ? "encertada" : "ara l'encertes"}${q.share ? `: +${fmt(Math.round(q.share))} del pot` : q.share === null ? " (el pot es publica a les 20:00)" : ""}</span>` : q.lost ? ` · <span class="down">${r.final ? "fallada" : "ara la falles"}</span>` : ` · ningú l'ha encertada: la recuperes`) : ""}</p>` : `<p class="muted pron-res">No hi vas posar fitxes.</p>`}
       </section>`;
     }).join("")}</div>
     ${open ? (() => {
       const n = pronCount(D), ok = left === 0 && n >= PRON_MIN_Q;
-      const need = n < PRON_MIN_Q ? `Responde al menos ${PRON_MIN_Q} preguntas (tienes ${n})` : left > 0 ? `Repártelas todas: quedan ${fmt(left)}` : left < 0 ? `Te pasas de ${fmt(-left)} fichas` : dirty ? "Todo listo: guárdalo" : "Guardado. Puedes cambiarlo hasta las 20:00 del 29N.";
-      return `<div class="pron-bar ${left < 0 ? "bad" : ok ? "ok" : ""}"><div><b>${n}/${PRON_M.length} preguntas · ${fmt(pronBudget(D) - left)} de ${fmt(pronBudget(D))} fichas</b><small>${need}</small></div><button class="btn primary" type="button" data-psave ${!dirty || !ok || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Guardando…" : "Guarda"}</button></div>`;
+      const need = n < PRON_MIN_Q ? `Respon almenys ${PRON_MIN_Q} preguntes (en tens ${n})` : left > 0 ? `Reparteix-les totes: en queden ${fmt(left)}` : left < 0 ? `Et passes de ${fmt(-left)} fitxes` : dirty ? "Tot a punt: desa-ho" : "Desat. Pots canviar-ho fins a les 20:00 del 29N.";
+      return `<div class="pron-bar ${left < 0 ? "bad" : ok ? "ok" : ""}"><div><b>${n}/${PRON_M.length} preguntes · ${fmt(pronBudget(D) - left)} de ${fmt(pronBudget(D))} fitxes</b><small>${need}</small></div><button class="btn primary" type="button" data-psave ${!dirty || !ok || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Desant…" : "Desa"}</button></div>`;
     })() : ""}`;
   if (!open) return;
   const redraw = () => pronMine(body, st, r);
@@ -172,6 +172,7 @@ function pronMine(body, st, r) {
   $$("[data-st]", body).forEach((b) => b.addEventListener("click", () => setA(b.dataset.st, (D[b.dataset.st]?.a || 0) + Number(b.dataset.d))));
   $$("[data-sv]", body).forEach((i) => i.addEventListener("change", () => setA(i.dataset.sv, Number(i.value.replace(/\D/g, "")) || 0)));
   $("[data-psave]", body)?.addEventListener("click", async () => {
+    if (espPreview()) return toast("Vista prèvia: els pronòstics no es desen");
     const bets = {};
     PRON_M.forEach((m) => { if (D[m.id] && D[m.id].a > 0) bets[m.id] = { o: D[m.id].o, a: D[m.id].a }; });
     if (D.extra > 0) bets.extra = D.extra;
@@ -183,7 +184,7 @@ function pronMine(body, st, r) {
       if (typeof Coins !== "undefined") Coins.setBet(D.extra || 0);
       if ((D.extra || 0) > prevExtra) window.Stats?.add("aposta", D.extra - prevExtra);
     }
-    if (ok) { PronState.mine = { ...bets }; PronState.draft = null; Sfx.play("unlock"); toast("Pronósticos guardados"); Progress.unlock("pron-fet"); }
+    if (ok) { PronState.mine = { ...bets }; PronState.draft = null; Sfx.play("unlock"); toast("Pronòstics desats"); Progress.unlock("pron-fet"); }
     else PronState.draft = D;
     renderPronostics();
   });
@@ -194,10 +195,10 @@ function pronWalletSync() {
 }
 
 async function pronLeagues(body, st, r) {
-  body.innerHTML = `<div class="card"><p class="muted">Cargando tus ligas…</p></div>`;
+  body.innerHTML = `<div class="card"><p class="muted">Carregant les teves lligues…</p></div>`;
   const leagues = await window.Online.pronLeagues();
   if (!leagues.length) {
-    body.innerHTML = `<div class="card pron-empty"><h2 class="section-title sm">Juega con tus amigos</h2><p>Las ligas de pronósticos son las mismas Ligas de amigos del reto diario. Crea una o únete con un código.</p><a class="btn primary" href="#ranking">Crea o únete a una liga</a></div>`;
+    body.innerHTML = `<div class="card pron-empty"><h2 class="section-title sm">Juga amb els teus amics</h2><p>Les lligues de pronòstics són les mateixes Lligues d'amics del repte diari. Crea'n una o uneix-te amb un codi.</p><a class="btn primary" href="#ranking">Crea o uneix-te a una lliga</a></div>`;
     return;
   }
   const lg = leagues.find((l) => l.code === PronState.league) || leagues[0];
@@ -208,17 +209,17 @@ async function pronLeagues(body, st, r) {
   if (closed) rows.sort((a, b) => b.b.total - a.b.total);
   else rows.sort((a, b) => b.n - a.n);
   const missing = lg.members.length - docs.length;
-  body.innerHTML = `<div class="pron-lg-pick">${leagues.map((l) => `<button type="button" class="${l.code === lg.code ? "on" : ""}" data-lg="${l.code}">${esc(l.name)} <small>${l.members.length}</small></button>`).join("")}<a class="linklike" href="#ranking">Gestiona las ligas →</a></div>
+  body.innerHTML = `<div class="pron-lg-pick">${leagues.map((l) => `<button type="button" class="${l.code === lg.code ? "on" : ""}" data-lg="${l.code}">${esc(l.name)} <small>${l.members.length}</small></button>`).join("")}<a class="linklike" href="#ranking">Gestiona les lligues →</a></div>
     <section class="card pron-lg">
       <h2 class="section-title sm">${esc(lg.name)}</h2>
-      <p class="muted">${closed ? (r ? (r.final ? "Resultado final de la liga." : "Clasificación provisional: se mueve con el escrutinio.") : "Los pronósticos ya están cerrados. La clasificación llegará con el escrutinio.") : "Hasta que cierren los colegios no se ve qué ha pronosticado nadie: solo quién ya ha jugado."}</p>
+      <p class="muted">${closed ? (r ? (r.final ? "Resultat final de la lliga." : "Classificació provisional: es mou amb l'escrutini.") : "Els pronòstics ja estan tancats. La classificació arribarà amb l'escrutini.") : "Fins que tanquin els col·legis no es veu què ha pronosticat ningú: només qui ja ha jugat."}</p>
       <ol class="pron-rank">${rows.map(({ p, b, n }, i) => `<li class="${p.uid === window.Online.user.uid ? "me" : ""}">
         <span class="pron-pos">${closed && r ? i + 1 : ""}</span>
         ${p.photo ? `<img src="${esc(p.photo)}" alt="" referrerpolicy="no-referrer">` : `<span class="pron-av">${esc((p.name || "?")[0])}</span>`}
-        <span class="pron-nm"><b>${esc(p.name || "Jugador")}</b><small>${closed ? PRON_M.filter((m) => p[m.id]).map((m) => `${esc(m.opts.find(([o]) => o === p[m.id].o)?.[1] || "")} (${fmt(p[m.id].a)})`).slice(0, 3).join(" · ") + (n > 3 ? " …" : "") : `${n} ${n === 1 ? "pronóstico" : "pronósticos"}`}</small></span>
+        <span class="pron-nm"><b>${esc(p.name || "Jugador")}</b><small>${closed ? PRON_M.filter((m) => p[m.id]).map((m) => `${esc(m.opts.find(([o]) => o === p[m.id].o)?.[1] || "")} (${fmt(p[m.id].a)})`).slice(0, 3).join(" · ") + (n > 3 ? " …" : "") : `${n} ${n === 1 ? "pronòstic" : "pronòstics"}`}</small></span>
         <b class="pron-pts">${closed && r ? fmt(b.total) : n ? "✔" : "—"}</b>
       </li>`).join("")}</ol>
-      ${missing > 0 ? `<p class="muted">${missing} ${missing === 1 ? "miembro aún no ha" : "miembros aún no han"} hecho pronósticos.</p>` : ""}
+      ${missing > 0 ? `<p class="muted">${missing} ${missing === 1 ? "membre encara no ha" : "membres encara no han"} fet pronòstics.</p>` : ""}
     </section>`;
   $$("[data-lg]", body).forEach((b) => b.addEventListener("click", () => { PronState.league = b.dataset.lg; pronLeagues(body, st, r); }));
 }
@@ -226,13 +227,13 @@ async function pronLeagues(body, st, r) {
 function pronGeneral(body, r) {
   const rank = Esp.cfg.pronRank || [];
   if (!rank.length) {
-    body.innerHTML = `<div class="card pron-empty"><h2 class="section-title sm">Ranking general</h2><p>El ranking de todo el mundo se publica cuando acabe el escrutinio y se liquiden los pronósticos. Hasta entonces, ¡juega con tus ligas!</p></div>`;
+    body.innerHTML = `<div class="card pron-empty"><h2 class="section-title sm">Rànquing general</h2><p>El rànquing de tothom es publica quan acabi l'escrutini i es liquidin els pronòstics. Fins aleshores, juga amb les teves lligues!</p></div>`;
     return;
   }
   const meUid = window.Online?.user?.uid;
-  body.innerHTML = `<section class="card pron-lg"><h2 class="section-title sm">Ranking general</h2>
+  body.innerHTML = `<section class="card pron-lg"><h2 class="section-title sm">Rànquing general</h2>
     <ol class="pron-rank">${rank.map((p, i) => `<li class="${p.uid === meUid ? "me" : ""}"><span class="pron-pos">${i + 1}</span>${p.photo ? `<img src="${esc(p.photo)}" alt="" referrerpolicy="no-referrer">` : `<span class="pron-av">${esc((p.name || "?")[0])}</span>`}<span class="pron-nm"><b>${esc(p.name || "Jugador")}</b></span><b class="pron-pts">${fmt(p.fitxes)}</b></li>`).join("")}</ol>
-    ${PronState.mine?.fitxes !== undefined ? `<p>Tú tienes <b>${pronFmt(PronState.mine.fitxes)}</b>.</p>` : ""}</section>`;
+    ${PronState.mine?.fitxes !== undefined ? `<p>Tu en tens <b>${pronFmt(PronState.mine.fitxes)}</b>.</p>` : ""}</section>`;
 }
 
 // Targeta per a la columna de la nit electoral
@@ -240,12 +241,12 @@ function pronNitCard(d) {
   const st = pronState();
   if (st === "off" || st === "aviat") return "";
   const mine = PronState.mine;
-  if (!window.Online?.user || !mine) return `<section class="card pron-nit"><h2 class="section-title sm">🎟️ Liga de pronósticos</h2><p class="muted">${st === "oberta" ? "¡Reparte tus fichas antes de las 20:00!" : "Mira cómo van tus ligas."}</p><a class="btn" href="#pronostics">${st === "oberta" ? "Haz los pronósticos" : "Abre la liga"}</a></section>`;
+  if (!window.Online?.user || !mine) return `<section class="card pron-nit"><h2 class="section-title sm">🎟️ Lliga de pronòstics</h2><p class="muted">${st === "oberta" ? "Reparteix les teves fitxes abans de les 20:00!" : "Mira com van les teves lligues."}</p><a class="btn" href="#pronostics">${st === "oberta" ? "Fes els pronòstics" : "Obre la lliga"}</a></section>`;
   const r = pronResults(d);
   const b = pronBalance(mine, r);
-  return `<section class="card pron-nit"><h2 class="section-title sm">🎟️ Tus fichas</h2>
-    <p class="pron-nit-n"><b>${fmt(r ? b.total : pronBudget(mine) - b.staked)}</b> fichas ${r ? (r.final ? "(final)" : "ahora mismo") : ""}</p>
-    <a class="btn" href="#pronostics/lligues">Mira tus ligas</a></section>`;
+  return `<section class="card pron-nit"><h2 class="section-title sm">🎟️ Les teves fitxes</h2>
+    <p class="pron-nit-n"><b>${fmt(r ? b.total : pronBudget(mine) - b.staked)}</b> fitxes ${r ? (r.final ? "(final)" : "ara mateix") : ""}</p>
+    <a class="btn" href="#pronostics/lligues">Mira les teves lligues</a></section>`;
 }
 
-ACHIEVEMENTS.push({ id: "pron-fet", name: "Pronosticador", desc: "Reparte tus fichas en la Liga de pronósticos del 29N." });
+ACHIEVEMENTS.push({ id: "pron-fet", name: "Pronosticador", desc: "Reparteix les teves fitxes a la Lliga de pronòstics del 29N." });

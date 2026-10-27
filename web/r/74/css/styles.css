@@ -1223,6 +1223,33 @@ input:focus { outline: none; background: #fff; box-shadow: 3px 3px 0 var(--ink);
 .dsoc-lg b { grid-row: span 2; font-family: var(--display); font-weight: 900; font-size: 1.4rem; }
 .dsoc-lg small { font-size: .78rem; color: var(--muted); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .ord-i.ko { animation: none; } }
+/* Repte diari: silueta, aritmètica del Congrés i parelles */
+.dshape { display: grid; place-items: center; margin: 12px auto 0; width: min(240px, 70%); aspect-ratio: 1; padding: 12px; border: 2px dashed color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 18px; background: #dcebf3; }
+.dshape svg { width: 100%; height: 100%; }
+.dshape path { fill: var(--yellow); stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.coal { display: grid; gap: 12px; }
+.coal-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.coal-p { --pc: var(--ink); display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 2px solid var(--ink); border-radius: 99px; background: var(--card); font: inherit; font-weight: 800; color: var(--ink); cursor: pointer; box-shadow: inset 6px 0 0 var(--pc); }
+.coal-p small { font-family: var(--display); font-weight: 900; font-variant-numeric: tabular-nums; }
+.coal-p.on { background: var(--pc); color: #fff; box-shadow: 2px 2px 0 var(--ink); }
+.coal-p:disabled { opacity: .35; cursor: not-allowed; text-decoration: line-through; }
+.coal-p.on:disabled { opacity: 1; text-decoration: none; }
+.coal-bar { position: relative; height: 16px; border-radius: 99px; background: var(--paper-2); border: 2px solid var(--ink); overflow: hidden; }
+.coal-bar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .25s var(--ease); }
+.coal-bar u { position: absolute; top: -2px; bottom: -2px; left: calc(176 / 350 * 100%); width: 0; border-left: 3px dashed var(--red); }
+.coal-sum { margin: 0; font-weight: 700; text-align: center; }
+.coal-sum b { font-family: var(--display); font-size: 1.4rem; }
+.coal-sum.ok { color: var(--ok); }
+.coal > [data-ok] { justify-self: center; min-width: 200px; }
+.prs { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.6fr); gap: 12px; }
+.prs-c { display: grid; gap: 8px; align-content: start; }
+.prs-l, .prs-r { --pc: transparent; font: inherit; text-align: left; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); color: var(--ink); cursor: pointer; box-shadow: inset 8px 0 0 var(--pc); min-height: 48px; }
+.prs-l b { font-family: var(--display); font-weight: 900; }
+.prs-l.on { outline: 3px solid var(--pc); outline-offset: 2px; }
+.prs-r { font-size: .88rem; font-weight: 700; }
+.prs-r.ok { background: var(--ok-soft); }
+.prs-r.ko { background: var(--ko-soft); }
+@media (max-width: 480px) { .prs { grid-template-columns: minmax(0, .7fr) minmax(0, 1.6fr); gap: 8px; } .prs-r { font-size: .8rem; padding: 8px; } }
 
 /* =========================================================
    Rànquing
@@ -5391,6 +5418,122 @@ body.lesson .tabbar, body.lesson .site-foot { display: none; }
 .ls-nav[hidden] { display: none; }
 .ls-prev { width: 56px; padding-inline: 0; font-size: 1.2rem; justify-content: center; }
 .ls-next { width: 100%; justify-content: center; }
+
+/* ---------- Visor d'històries ---------- */
+body.lesson { overflow: hidden; }
+body.lesson .toast { z-index: 97; }
+.ls.sv { position: fixed; inset: 0; z-index: 90; max-width: none; min-height: 0; margin: 0; display: grid; grid-template-columns: auto auto auto; grid-template-rows: none; justify-content: center; align-items: center; gap: 22px; background: radial-gradient(90% 70% at 50% 40%, color-mix(in srgb, var(--tone) 38%, #10112e), #0b0c24); animation: nxsFade .2s ease; }
+.sv-frame { --tone: var(--blue); position: relative; width: min(480px, calc((100dvh - 36px) * .5625), 100vw); height: min(860px, calc(100dvh - 36px)); display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden; border-radius: 22px; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 26%, var(--paper)) 0, var(--paper) 230px); box-shadow: 0 30px 90px rgba(0, 0, 0, .5); transition: background .35s; animation: svOpen .32s var(--ease); }
+@keyframes svOpen { from { opacity: 0; transform: scale(.94); } }
+.sv-frame.cover { color: #fff; background: radial-gradient(120% 70% at 80% 0%, color-mix(in srgb, var(--tone) 78%, transparent), transparent 70%), linear-gradient(170deg, color-mix(in srgb, var(--tone) 58%, var(--ink)), var(--ink) 78%); }
+.sv-frame.cover::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 255, 255, .08) 1px, transparent 1.7px) 0 0 / 11px 11px; pointer-events: none; }
+/* Barres de progrés per pas */
+.sv-bars { position: relative; z-index: 3; display: flex; gap: 4px; padding: 10px 12px 0; transition: opacity .2s; }
+.sv-bars i { flex: 1; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 18%, transparent); overflow: hidden; }
+.sv-bars b { display: block; height: 100%; width: 0; background: var(--ink); }
+.cover .sv-bars i { background: rgba(255, 255, 255, .3); }
+.cover .sv-bars b { background: #fff; }
+.sv-bars i.done b { width: 100%; }
+.sv-bars i.cur b { animation: nxsBar var(--dur, 8s) linear forwards; }
+.sv.paused .sv-bars i.cur b, .sv.hold .sv-bars i.cur b { animation-play-state: paused; }
+/* Capçalera: avatar del capítol, títol, aturar i sortir */
+.sv-top { position: relative; z-index: 3; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 9px; padding: 9px 8px 6px 12px; transition: opacity .2s; }
+.sv-av { display: grid; place-items: center; width: 34px; height: 34px; box-sizing: border-box; border-radius: 50%; background: var(--tone); color: #fff; border: 2px solid var(--ink); box-shadow: 0 0 0 2px var(--card); font-family: var(--display); font-weight: 900; font-size: .82rem; text-shadow: 1px 1px 0 rgba(0, 0, 0, .35); }
+.cover .sv-av { border-color: #fff; box-shadow: 0 0 0 2px color-mix(in srgb, var(--tone) 60%, transparent); }
+.sv-who { display: grid; min-width: 0; line-height: 1.15; }
+.sv-who b { font-family: var(--display); font-weight: 800; font-size: .8rem; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sv-who small { font-size: .7rem; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cover .sv-who small { color: rgba(255, 255, 255, .72); }
+.sv-btn { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; text-decoration: none; }
+.sv-btn:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.sv-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.sv-btn svg path[d^="M8 5l"] { fill: currentColor; }
+.sv .ls-x { border: 0; box-shadow: none; background: transparent; color: inherit; }
+.sv .ls-x:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+/* Contingut del pas: es desplaça dins la pantalla */
+.sv .ls-stage { position: relative; z-index: 2; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 10px 20px 22px; container: sv / inline-size; scrollbar-width: thin; cursor: pointer; -webkit-user-select: text; user-select: text; }
+.sv .ls-stage :is(a, button, input, select, label, .ap-w, .choice) { cursor: auto; }
+.sv .ls-stage :is(a, button, .choice) { cursor: pointer; }
+.sv .ls-step { min-height: 100%; }
+/* El pas i el capítol ja surten a la capçalera */
+.sv .ls-content > .kicker:first-child { display: none; }
+.sv .ls-nav { position: relative; z-index: 3; padding: 10px 14px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to bottom, transparent, var(--paper) 40%); transition: opacity .2s; }
+.cover .ls-nav { background: none; }
+.sv .ls-prev { width: 48px; height: 48px; border-radius: 50%; }
+.sv .ls-next { border-radius: 99px; }
+.cover .ls-prev { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .55); box-shadow: none; }
+.cover .ls-prev:disabled { opacity: .35; }
+/* La barra s'ha omplert: el botó convida a passar */
+.sv-frame.ready .ls-next:not(:disabled) { animation: svNudge 1.6s var(--ease) infinite; }
+@keyframes svNudge { 0%, 70%, 100% { transform: none; } 80% { transform: translateX(5px); } 90% { transform: translateX(-2px); } }
+/* Mantenir premut: només queda el contingut */
+.sv.hold .sv-bars, .sv.hold .sv-top, .sv.hold .ls-nav { opacity: 0; }
+/* Fletxes a banda i banda (pantalles grans) */
+.sv-arrow { display: grid; place-items: center; width: 52px; height: 52px; padding: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .12); cursor: pointer; transition: opacity .2s, background .2s; }
+.sv-arrow:hover:not(:disabled) { background: rgba(255, 255, 255, .25); }
+.sv-arrow:disabled { opacity: .25; cursor: default; }
+.sv-arrow svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 699px) {
+  .ls.sv { grid-template-columns: 1fr; gap: 0; background: var(--ink); }
+  .sv-arrow { display: none; }
+  .sv-frame { width: 100vw; height: 100dvh; border-radius: 0; padding-top: env(safe-area-inset-top); box-sizing: border-box; animation-name: svOpenM; }
+  @keyframes svOpenM { from { opacity: 0; transform: translateY(24px); } }
+}
+@media (prefers-reduced-motion: reduce) { .sv-frame, .ls.sv { animation: none; } .sv-frame.ready .ls-next { animation: none; } }
+
+/* Portades (introducció, essencials i resultat) */
+.cover .kicker { color: rgba(255, 255, 255, .78); }
+.cover .ls-intro { align-content: center; min-height: 100%; }
+.cover .ls-art { box-shadow: 6px 6px 0 rgba(0, 0, 0, .35); border-color: var(--ink); color: var(--ink); }
+.cover .ls-title { color: #fff; text-shadow: 4px 4px 0 var(--tone); font-size: clamp(2rem, 11cqi, 2.8rem); }
+.cover .ls-lead { color: rgba(255, 255, 255, .88); }
+.cover .ls-lead .term { color: #fff; }
+.cover .ls-key, .cover .ls-meta span, .cover .ls-practice { color: var(--ink); }
+.cover .ls-meta span { border-color: transparent; }
+.cover .ls-key .kicker, .cover .ls-practice .kicker { color: var(--muted); }
+.cover .ls-alt { color: rgba(255, 255, 255, .7); }
+.cover .ls-alt a, .cover .ls-alt .linklike, .cover .ls-back { color: #fff; }
+.cover .ls-end { border: 0; background: none; box-shadow: none; padding: 18px 0; align-content: center; min-height: 100%; box-sizing: border-box; }
+.cover .ls-end > p { color: rgba(255, 255, 255, .88); }
+.cover .ls-score { color: var(--ink); }
+.cover .ls-end .btn:not(.primary) { background: transparent; color: #fff; border-color: #fff; box-shadow: none; }
+/* Essencials: cada targeta, una història */
+.cover .ls-ess { border: 0; background: none; box-shadow: none; padding: 6px 0; align-content: center; min-height: 100%; box-sizing: border-box; gap: 12px; }
+.cover .ls-ess-art { height: 180px; border: 3px solid var(--ink); background: var(--dots) 0 0 / 9px 9px, color-mix(in srgb, var(--tone) 30%, var(--card)); box-shadow: 6px 6px 0 rgba(0, 0, 0, .35); transform: rotate(-2deg); color: var(--ink); }
+.cover .ls-ess-art svg { height: 150px; }
+.cover .ls-ess .ls-h { color: #fff; font-size: clamp(1.7rem, 9cqi, 2.3rem); text-transform: uppercase; letter-spacing: -.045em; line-height: 1; text-shadow: 3px 3px 0 var(--tone); }
+.cover .ls-ess-list li { font-size: 1.04rem; }
+.cover .ls-ess-list li::before { background: var(--tone); color: #fff; box-shadow: 0 0 0 2px #fff; }
+.cover .ls-ess-list .term { color: #fff; }
+.cover .ls-ess-more { color: #fff; }
+
+/* El contingut dels capítols, a l'amplada de la pantalla vertical */
+@container sv (max-width: 560px) {
+  .num-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .vote-types, .hondt-steps, .ap-compare, .ap-cards, .ap-cards.four, .ap-steps, .ap-steps.wide { grid-template-columns: 1fr; }
+  .choices.two { grid-template-columns: 1fr; }
+  .ls-h { font-size: clamp(1.35rem, 7.4cqi, 1.8rem); }
+  .ls-qh { font-size: clamp(1.15rem, 6cqi, 1.45rem); }
+}
+
+/* ---------- Portada: fila de capítols en format història ---------- */
+.apx-stories { display: flex; gap: 14px; overflow-x: auto; margin: 4px -4px 18px; padding: 6px 4px 8px; scrollbar-width: none; scroll-snap-type: x proximity; }
+.apx-stories::-webkit-scrollbar { display: none; }
+.apx-st { flex: none; width: 78px; display: grid; justify-items: center; gap: 6px; text-decoration: none; color: var(--ink); scroll-snap-align: start; }
+.apx-st-ring { position: relative; display: grid; place-items: center; width: 74px; height: 74px; border-radius: 50%; background: conic-gradient(var(--tone) calc(var(--p, 1) * 1turn), color-mix(in srgb, var(--ink) 14%, transparent) 0); transition: transform .15s var(--ease); }
+.apx-st:hover .apx-st-ring { transform: scale(1.05); }
+.apx-st.st-ok .apx-st-ring { background: color-mix(in srgb, var(--ink) 22%, transparent); }
+.apx-st-in { display: grid; place-items: center; width: 64px; height: 64px; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--paper); background: var(--dots) 0 0 / 7px 7px, color-mix(in srgb, var(--tone) 26%, var(--card)); overflow: hidden; }
+.apx-st-in svg { width: 120%; height: auto; flex: none; }
+.apx-st-txt { font-size: 1.7rem; }
+.apx-st.st-ok .apx-st-in { filter: saturate(.55); }
+.apx-st-ok, .apx-st-now { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); font-style: normal; font-weight: 900; border: 2px solid var(--paper); border-radius: 99px; line-height: 1; }
+.apx-st-ok { right: auto; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; background: var(--ok); color: #fff; font-size: .7rem; left: auto; transform: none; right: 0; bottom: 0; }
+.apx-st-now { padding: 3px 7px; background: var(--red); color: #fff; font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; }
+.apx-st small { width: 100%; text-align: center; font-size: .72rem; font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.apx-st.st-ok small { color: var(--muted); }
+.apx-st:focus-visible { outline: none; }
+.apx-st:focus-visible .apx-st-ring { outline: 3px solid var(--blue); outline-offset: 3px; }
 
 /* Introducció de la lliçó */
 .ls-intro { display: grid; justify-items: center; text-align: center; gap: 10px; }

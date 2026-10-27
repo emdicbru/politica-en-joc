@@ -628,8 +628,8 @@ function makeStatement(rng = Math.random, key = null) {
       return { text: `${e.t}: el año ${y}.`, truth: y === e.y, exp: `Fue en ${e.y}. ${e.d}` };
     },
     () => {
-      const a = pick(ARTICLES);
-      const other = pick(ARTICLES.filter((x) => x !== a));
+      const a = pick(P(ARTICLES));
+      const other = pick(P(ARTICLES).filter((x) => x !== a));
       return { text: `El artículo ${a.n} de la Constitución trata sobre: «${(t ? a : other).t}».`, truth: t, exp: `El artículo ${a.n} trata sobre: «${a.t}».` };
     },
     () => {

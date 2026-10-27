@@ -190,8 +190,9 @@ function tfItem(rng, key = null) {
   const s = makeStatement(rng, key);
   return binary("Cert o fals?", `<div class="q-text">${esc(s.text)}</div>`, ["✕ Fals", "✓ Cert"], s.truth ? 1 : 0, s.exp, s.text);
 }
-function matchItem(rng) {
-  const a = MATCH_ACTORS[Math.floor(rng() * MATCH_ACTORS.length)];
+function matchItem(rng, key = null) {
+  const pool = key ? MATCH_ACTORS.filter((x) => !x.since || x.since <= key) : MATCH_ACTORS;
+  const a = pool[Math.floor(rng() * pool.length)];
   const yes = rng() < 0.5;
   const list = yes ? a.yes : a.no;
   const t = list[Math.floor(rng() * list.length)];
@@ -230,11 +231,20 @@ function dailyItems(key, attempt = 1) {
   const avail = (arr) => arr.filter((x) => !x.since || x.since <= key);
   const Q = avail(QUESTIONS);
   const easy = Q.filter((q) => !q.hard), hard = Q.filter((q) => q.hard);
-  // Des de DAILY_V2_FROM (reptes-mec.js): proves d'ordenar, de mapa i, un dia sí i un dia no, d'endevinar un número o de llei d'Hondt
-  const gens = key >= DAILY_V2_FROM || featPreview("diari2") ? [
+  // Des de DAILY_V3_FROM: cinc proves clàssiques i cinc d'especials que canvien cada dia (reptes-mec.js)
+  const gens = key >= DAILY_V3_FROM || featPreview("diari3") ? [
     (rng) => questionRound(sample(easy, 1, rng)[0], rng),
     (rng) => (rng() < 0.5 ? tfItem(rng, key) : versusItem(rng, key)),
-    (rng) => matchItem(rng),
+    (rng) => (rng() < 0.5 ? matchItem(rng, key) : quoteRound(pickQuote(rng), rng)),
+    (rng) => (rng() < 0.5 ? yearRound(sample(avail(EVENTS), 1, rng)[0], rng) : figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES))),
+    (rng) => questionRound(sample(hard, 1, rng)[0], rng),
+    ...dailySpecials(key),
+  ]
+  // Des de DAILY_V2_FROM (reptes-mec.js): proves d'ordenar, de mapa i, un dia sí i un dia no, d'endevinar un número o de llei d'Hondt
+  : key >= DAILY_V2_FROM || featPreview("diari2") ? [
+    (rng) => questionRound(sample(easy, 1, rng)[0], rng),
+    (rng) => (rng() < 0.5 ? tfItem(rng, key) : versusItem(rng, key)),
+    (rng) => matchItem(rng, key),
     (rng) => quoteRound(pickQuote(rng), rng),
     (rng) => yearRound(sample(avail(EVENTS), 1, rng)[0], rng),
     (rng) => figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES)),
@@ -388,7 +398,7 @@ registerGame({
   start(ctx) {
     const key = todayKey();
     // Vista prèvia del repte nou (Laboratori del Centre de control): no compta ni com a partida, ni per a la ratxa ni per al rànquing
-    const preview = featPreview("diari2") && key < DAILY_V2_FROM;
+    const preview = (featPreview("diari2") && key < DAILY_V2_FROM) || (featPreview("diari3") && key < DAILY_V3_FROM);
     const attempt = preview ? 1 : dailyTryAdd(key);
     if (!preview) window.Stats?.add("ad", 1, `partida${Math.min(attempt, 4)}`);
     // Mentre no s'hagi acabat la partida que compta, és la de tothom (encara que se n'hagi deixat una a mitges)

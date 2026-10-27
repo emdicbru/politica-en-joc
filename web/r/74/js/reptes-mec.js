@@ -335,3 +335,181 @@ async function shareDailyImage(key) {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast("Imatge descarregada");
 }
+
+// =========================================================
+// Repte diari, tercera tanda de proves (a partir de DAILY_V3_FROM): silueta de província, aritmètica del Congrés,
+// parelles de sigles, l'intrús i completa la frase. Cada dia en surten cinc d'especials, triades a l'atzar.
+// =========================================================
+const DAILY_V3_FROM = "2026-10-29";
+
+// ---------- Silueta: quina província és? ----------
+function shapeItem(rng) {
+  const pool = SIM_PROVS.filter((p) => !["CE", "ML"].includes(p.code));
+  const target = pool[Math.floor(rng() * pool.length)];
+  const others = sample(pool.filter((p) => p !== target), 3, rng);
+  const { options, correctIndex } = prepOptions([target, ...others].map((p) => p.name), rng);
+  // Contorn retallat a la seva caixa (els camins del mapa són coordenades absolutes)
+  const d = SIM_MAP.provs[target.code].d;
+  const nums = (d.match(/-?\d+(\.\d+)?/g) || []).map(Number);
+  const xs = nums.filter((_, i) => i % 2 === 0), ys = nums.filter((_, i) => i % 2 === 1);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0, hh = Math.max(...ys) - y0;
+  const pad = Math.max(w, hh) * 0.08;
+  return {
+    label: "Silueta", columns: 2,
+    prompt: `<div class="q-text">Quina província té aquesta forma?</div><div class="dshape"><svg viewBox="${x0 - pad} ${y0 - pad} ${w + pad * 2} ${hh + pad * 2}" role="img" aria-label="Contorn d'una província"><path d="${d}"/></svg></div>`,
+    options, correctIndex,
+    explain: `És ${target.name} (${target.ccaa}).`, recapQ: `Silueta de ${target.name}`, recapA: target.name,
+  };
+}
+
+// ---------- Aritmètica del Congrés: fes 176 amb condicions ----------
+// Amb els escons del 23-J: cal incloure un partit, no se'n poden fer servir uns altres i no es poden passar d'un
+// nombre de partits (el mínim possible, calculat aquí). És aritmètica, no cap pronòstic de pactes.
+function coalitionItem(rng) {
+  const parties = CONGRESS[2023].parties;
+  const by = (id) => parties.find((p) => p.id === id);
+  const PLANS = [
+    { req: "psoe", no: ["pp", "vox"] }, { req: "psoe", no: ["pp"] }, { req: "pp", no: ["psoe"] }, { req: "pp", no: ["psoe", "vox"] },
+    { req: "psoe", no: ["pp", "vox", "junts"] }, { req: "pp", no: ["psoe", "sumar"] }, { req: "sumar", no: ["pp", "psoe"] },
+  ];
+  const plan = PLANS[Math.floor(rng() * PLANS.length)];
+  const pool = parties.filter((p) => !plan.no.includes(p.id) && p.id !== plan.req);
+  // Mínim de partits per arribar a 176 (amb el que és obligatori)
+  let best = Infinity;
+  for (let m = 0; m < 1 << pool.length; m++) {
+    let sum = by(plan.req).seats, n = 1;
+    pool.forEach((p, i) => { if (m & (1 << i)) { sum += p.seats; n++; } });
+    if (sum >= 176 && n < best) best = n;
+  }
+  if (!Number.isFinite(best)) return coalitionItem(rng);
+  const shown = shuffle(parties.map((p) => ({ ...p })), rng);
+  const names = (ids) => ids.map((id) => by(id).name).join(" ni ");
+  return {
+    label: "Aritmètica del Congrés", kind: "coalition", waitKo: 2600,
+    prompt: `<div class="q-text">Arriba a 176 escons amb ${by(plan.req).name}, sense ${names(plan.no)} i amb ${best} partits com a màxim</div><p class="dmec-hint">Escons del Congrés del 23-J. Toca els partits per sumar-los.</p>`,
+    explain: `Hi ha combinacions de ${best} partits que hi arriben. És només aritmètica: no diu res de quins pactes són possibles.`,
+    recapQ: `176 amb ${by(plan.req).name}, sense ${names(plan.no)}, màxim ${best} partits`, recapA: `${best} partits`,
+    play(ctx, card) {
+      return dailyPlay(ctx, card, `<div class="coal">
+          <div class="coal-chips">${shown.map((p, i) => `<button class="coal-p" data-i="${i}" style="--pc:${p.color}" ${plan.no.includes(p.id) ? "disabled" : ""} aria-pressed="${p.id === plan.req}"><b>${esc(p.name)}</b><small>${p.seats}</small></button>`).join("")}</div>
+          <div class="coal-bar"><i></i><u aria-hidden="true"></u></div>
+          <p class="coal-sum" aria-live="polite"></p>
+          <button class="btn primary" data-ok>Comprova</button>
+        </div>`, (box, finish, isDone) => {
+        const on = new Set([shown.findIndex((p) => p.id === plan.req)]);
+        const paint = () => {
+          const sum = [...on].reduce((t, i) => t + shown[i].seats, 0);
+          $$(".coal-p", box).forEach((b, i) => { b.classList.toggle("on", on.has(i)); b.setAttribute("aria-pressed", on.has(i)); });
+          $(".coal-bar i", box).style.width = `${Math.min(100, (sum / 350) * 100)}%`;
+          $(".coal-sum", box).innerHTML = `<b>${sum}</b> escons · ${on.size} ${on.size === 1 ? "partit" : "partits"} de ${best} com a màxim`;
+          $(".coal-sum", box).classList.toggle("ok", sum >= 176 && on.size <= best);
+        };
+        $$(".coal-p", box).forEach((b, i) => b.addEventListener("click", () => {
+          if (isDone() || shown[i].id === plan.req) return;
+          if (on.has(i)) on.delete(i); else on.add(i);
+          Sfx.play("pick"); paint();
+        }));
+        $("[data-ok]", box).addEventListener("click", () => {
+          if (isDone()) return;
+          const sum = [...on].reduce((t, i) => t + shown[i].seats, 0);
+          const ok = sum >= 176 && on.size <= best;
+          $$("button", box).forEach((x) => { x.disabled = true; });
+          box.insertAdjacentHTML("beforeend", `<p class="gss-res ${ok ? "ok" : "ko"}">${ok ? "Majoria absoluta" : sum < 176 ? `Et falten ${176 - sum} escons` : `Hi arribes, però amb massa partits (${on.size})`}.</p>`);
+          finish(ok);
+        });
+        paint();
+      });
+    },
+  };
+}
+
+// ---------- Parelles: cada sigla amb el seu nom ----------
+function pairsItem(rng, key) {
+  const pool = ACRONYMS.filter((x) => !x.since || x.since <= key);
+  const set = sample(pool, 4, rng);
+  const right = shuffle(set.map((x, i) => ({ t: x.a, i })), rng);
+  return {
+    label: "Parelles", kind: "pairs", waitKo: 2600,
+    prompt: `<div class="q-text">Uneix cada sigla amb el seu nom</div><p class="dmec-hint">Toca una sigla i després el nom que li correspon.</p>`,
+    explain: set.map((x) => `${x.s}: ${x.a}`).join(" · "), recapQ: `Parelles: ${set.map((x) => x.s).join(", ")}`, recapA: set.map((x) => `${x.s} = ${x.a}`).join(" · "),
+    play(ctx, card) {
+      const colors = ["#2f6fe4", "#e8401f", "#12a37f", "#8a4fd6"];
+      return dailyPlay(ctx, card, `<div class="prs">
+          <div class="prs-c">${set.map((x, i) => `<button class="prs-l" data-l="${i}"><b>${esc(x.s)}</b></button>`).join("")}</div>
+          <div class="prs-c">${right.map((x, j) => `<button class="prs-r" data-r="${j}">${esc(x.t)}</button>`).join("")}</div>
+        </div>`, (box, finish, isDone) => {
+        let sel = 0;
+        const link = new Map(); // sigla (esquerra) → nom (dreta)
+        const paint = () => {
+          $$(".prs-l", box).forEach((b, i) => { b.style.setProperty("--pc", link.has(i) || sel === i ? colors[i] : "transparent"); b.classList.toggle("on", sel === i); b.classList.toggle("set", link.has(i)); });
+          $$(".prs-r", box).forEach((b, j) => { const l = [...link].find(([, r]) => r === j); b.style.setProperty("--pc", l ? colors[l[0]] : "transparent"); b.classList.toggle("set", !!l); });
+        };
+        const check = () => {
+          const ok = set.every((_, i) => right[link.get(i)].i === i);
+          $$("button", box).forEach((x) => { x.disabled = true; });
+          $$(".prs-r", box).forEach((b, j) => { const l = [...link].find(([, r]) => r === j); b.classList.add(l && right[j].i === l[0] ? "ok" : "ko"); });
+          finish(ok);
+        };
+        $$(".prs-l", box).forEach((b, i) => b.addEventListener("click", () => { if (isDone()) return; sel = i; Sfx.play("pick"); paint(); }));
+        $$(".prs-r", box).forEach((b, j) => b.addEventListener("click", () => {
+          if (isDone() || sel === null) return;
+          [...link].forEach(([l, r]) => { if (r === j) link.delete(l); });
+          link.set(sel, j);
+          const next = set.findIndex((_, i) => !link.has(i));
+          sel = next < 0 ? null : next;
+          Sfx.play("pick"); paint();
+          if (link.size === set.length) ctx.after(250, check);
+        }));
+        paint();
+      });
+    },
+  };
+}
+
+// ---------- L'intrús ----------
+function oddItem(rng) {
+  if (rng() < 0.6) {
+    // Tres circumscripcions d'una comunitat i una d'una altra
+    const by = {};
+    SIM_PROVS.forEach((p) => { (by[p.ccaa] = by[p.ccaa] || []).push(p); });
+    const big = Object.keys(by).filter((k) => by[k].length >= 3);
+    const cc = big[Math.floor(rng() * big.length)];
+    const ins = sample(by[cc], 3, rng);
+    const out = sample(SIM_PROVS.filter((p) => p.ccaa !== cc && !["CE", "ML"].includes(p.code)), 1, rng)[0];
+    const { options, correctIndex } = prepOptions([out.name, ...ins.map((p) => p.name)], rng);
+    return { label: "L'intrús", columns: 2, prompt: `<div class="q-text">Quina d'aquestes províncies NO és de ${esc(cc)}?</div>`,
+      options, correctIndex, explain: `${out.name} és de ${out.ccaa}.`, recapQ: `L'intrús (${cc}): ${[out, ...ins].map((p) => p.name).join(", ")}`, recapA: out.name };
+  }
+  // Els partits que van votar sí a la investidura de Pedro Sánchez del novembre del 2023
+  const yes = ["PSOE", "Sumar", "ERC", "Junts", "EH Bildu", "PNV", "BNG", "CC"], no = ["PP", "Vox", "UPN"];
+  const ins = sample(yes, 3, rng), out = no[Math.floor(rng() * no.length)];
+  const { options, correctIndex } = prepOptions([out, ...ins], rng);
+  return { label: "L'intrús", columns: 2, prompt: `<div class="q-text">Quin d'aquests partits NO va votar sí a la investidura de Pedro Sánchez del novembre del 2023?</div>`,
+    options, correctIndex, explain: "Van votar sí PSOE, Sumar, ERC, Junts, EH Bildu, PNV, BNG i CC (179 vots). PP, Vox i UPN hi van votar en contra.",
+    recapQ: `Investidura del 2023: ${[out, ...ins].join(", ")}`, recapA: out };
+}
+
+// ---------- Completa la frase ----------
+function fillItem(rng) {
+  const words = (t) => t.match(/[\p{L}·'’-]{5,}/gu) || [];
+  let q, w;
+  for (let k = 0; k < 40 && !w; k++) {
+    q = QUOTES[Math.floor(rng() * QUOTES.length)];
+    const ws = words(q.q).filter((x, i, a) => a.indexOf(x) === i);
+    if (q.q.length <= 140 && ws.length >= 2) w = ws[1 + Math.floor(rng() * (ws.length - 1))];
+  }
+  const pool = [...new Set(QUOTES.filter((x) => x !== q).flatMap((x) => words(x.q)))].filter((x) => x.toLowerCase() !== w.toLowerCase() && Math.abs(x.length - w.length) <= 3);
+  const cap = w[0] === w[0].toUpperCase();
+  const dis = sample(pool, 3, rng).map((x) => (cap ? x.charAt(0).toUpperCase() + x.slice(1) : x.toLowerCase()));
+  const { options, correctIndex } = prepOptions([w, ...dis], rng);
+  const blank = q.q.replace(w, "_____");
+  return { label: "Completa la frase", columns: 2,
+    prompt: `<blockquote class="q-quote">${esc(blank)}</blockquote><p class="dmec-hint">${esc(q.a)}${q.y ? `, ${q.y}` : ""}</p>`,
+    options, correctIndex, explain: `${q.a}: «${q.q}»`, recapQ: blank, recapA: w };
+}
+
+// Proves especials del dia: cinc de les nou, triades amb la data (les mateixes a les tres partides i per a tothom)
+function dailySpecials(key) {
+  const all = [orderItem, mapItem, guessItem, dhondtItem, shapeItem, coalitionItem, (rng) => pairsItem(rng, key), oddItem, fillItem];
+  return sample(all, 5, seededRng(hashString(`daily-mix-${key}`)));
+}

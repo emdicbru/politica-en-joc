@@ -328,7 +328,7 @@ function route() {
 // Des del Laboratori del Centre de control, l'equip pot provar una funció abans que la vegi la gent. Només en aquesta
 // pestanya del navegador, i sense desar res: les partides i els pronòstics de prova no compten.
 const FEAT_PREVIEW_KEY = "r29n-feat-preview";
-const FEAT_NAMES = { diari2: "Reto diario con pruebas nuevas", porra: "Porra de escaños", pron: "Liga de pronósticos" };
+const FEAT_NAMES = { diari3: "Reto diario con dinámicas nuevas", diari2: "Reto diario con pruebas nuevas", porra: "Porra de escaños", pron: "Liga de pronósticos" };
 function featPreviews() {
   try { return JSON.parse(sessionStorage.getItem(FEAT_PREVIEW_KEY) || "{}"); } catch { return {}; }
 }

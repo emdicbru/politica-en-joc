@@ -97,7 +97,18 @@ async function ctlCheckFile() {
   } catch { ctlFile = { missing: true }; }
 }
 
+// Si alguna cosa falla en pintar el control, es mostra l'error (en lloc d'una pàgina en blanc) i es pot tornar a provar
 function renderControl(fromLive = false) {
+  try { renderControlPage(fromLive); } catch (e) {
+    console.error(e);
+    const root = $("#control-page");
+    if (root) {
+      root.innerHTML = `<div class="card ctl-gate"><span class="ctl-gate-i">⚠️</span><h1 class="page-title">El control no s'ha pogut obrir</h1><p class="muted">${esc(String(e?.message || e))}</p><button class="btn primary" type="button" data-ctl-retry>Torna-ho a provar</button></div>`;
+      $("[data-ctl-retry]", root).addEventListener("click", () => { sessionStorage.removeItem("ctl-tab"); renderControl(); });
+    }
+  }
+}
+function renderControlPage(fromLive = false) {
   const root = $("#control-page");
   if (!root) return;
   const O = window.Online;
@@ -164,7 +175,7 @@ function renderControl(fromLive = false) {
   const cur = TABS.find(([k]) => k === tab);
   const panel = (k, inner) => (k === tab ? `<div class="ctl-panel">${inner}</div>` : "");
 
-  if (!ctlRpt.list && !ctlRpt.loading && ctlCan(1)) ctlRptLoad();
+  if (!ctlRpt.list && !ctlRpt.loading && !ctlRpt.failed && ctlCan(1)) ctlRptLoad();
   root.innerHTML = `<div class="ctl">
     <aside class="ctl-side">
       <div class="ctl-me"><span class="ctl-logo" aria-hidden="true">🎛️</span><div><b>Centre de control</b><small>${esc(O.user.email)}</small></div></div>
@@ -178,7 +189,7 @@ function renderControl(fromLive = false) {
 
     ${panel("resum", `
       <section class="ctl-kpis">
-        <button type="button" class="ctl-kpi ${newErr ? "hot" : ""}" data-tab="errors"><small>Errors nous</small><b>${ctlRpt.list ? newErr : "…"}</b><span>${ctlRpt.list ? `de ${ctlRpt.list.length} avisos` : "carregant"}</span></button>
+        <button type="button" class="ctl-kpi ${newErr ? "hot" : ""}" data-tab="errors"><small>Errors nous</small><b>${ctlRpt.list ? newErr : ctlRpt.failed ? "?" : "…"}</b><span>${ctlRpt.list ? `de ${ctlRpt.list.length} avisos` : ctlRpt.failed ? "no s'han pogut llegir" : "carregant"}</span></button>
         <button type="button" class="ctl-kpi" data-tab="lab"><small>Funcions en prova</small><b>${labSoon}</b><span>${labSoon ? "encara no les veu la gent" : "totes ja són públiques"}</span></button>
         <div class="ctl-kpi"><small>Repte diari</small><b>#${dailyNumber()}</b><span>nou cada dia a les 00:00</span></div>
         <div class="ctl-kpi"><small>Fins al 29N</small><b>${Math.max(0, Math.ceil((ESP_T.dia - now) / 864e5))}</b><span>dies</span></div>
@@ -405,8 +416,12 @@ window.renderControl = renderControl;
 // ---------- Laboratori: funcions que la gent encara no pot provar ----------
 // Cada funció diu quan la veurà tothom; abans, l'equip la pot provar en aquesta pestanya (vista prèvia, sense desar res).
 function ctlLabItems() {
+  if (typeof DAILY_V3_FROM === "undefined" || typeof DAILY_V2_FROM === "undefined" || typeof ESP_T === "undefined" || typeof PRON_OPEN === "undefined") return [];
   const [y, m, d] = DAILY_V2_FROM.split("-").map(Number);
+  const [y3, m3, d3] = DAILY_V3_FROM.split("-").map(Number);
   return [
+    { id: "diari3", icon: "🧠", name: "Repte diari amb dinàmiques noves", go: "#joc/diari", from: new Date(y3, m3 - 1, d3).getTime(),
+      desc: "Cada dia, cinc proves especials triades entre nou: siluetes de províncies, aritmètica del Congrés, parelles de sigles, l'intrús, completa la frase, ordena, el mapa, el número i la llei d'Hondt. La partida de prova no compta." },
     { id: "diari2", icon: "🧩", name: "Repte diari amb proves noves", go: "#joc/diari", from: new Date(y, m - 1, d).getTime(),
       desc: "Ordena, el mapa, endevina el número i la llei d'Hondt, amb el rellotge aturat durant la correcció. La partida de prova no compta per al rànquing ni per a la ratxa." },
     { id: "porra", icon: "🎯", name: "Porra d'escons", go: "#nit/porra", from: ESP_T.porra, t: ESP_T.porra + 2 * 864e5,
@@ -653,15 +668,18 @@ function ctlTeamBind(root) {
 }
 
 // ---------- Errors: els avisos que envia la gent («Avisa d'un error», report.js) ----------
-const ctlRpt = { list: null, loading: false, filter: "nou" };
+const ctlRpt = { list: null, loading: false, failed: false, filter: "nou" };
 async function ctlRptLoad() {
   if (ctlRpt.loading) return;
   ctlRpt.loading = true;
   ctlRpt.list = await window.Online.reportList();
+  // Si no es pot llegir, no es torna a provar sol (es repintaria i llegiria sense parar): hi ha un botó per reintentar-ho
+  ctlRpt.failed = !ctlRpt.list;
   ctlRpt.loading = false;
   if (location.hash.startsWith("#control")) renderControl(true);
 }
 function ctlRptHtml() {
+  if (!ctlRpt.list && ctlRpt.failed) return `<div class="card"><p class="muted">No s'han pogut llegir els avisos.</p><button class="btn" type="button" data-rpt-reload>Torna-ho a provar</button></div>`;
   if (!ctlRpt.list) { ctlRptLoad(); return `<div class="card"><p class="muted">Carregant els avisos…</p></div>`; }
   const L = ctlRpt.list;
   const n = (s) => L.filter((r) => r.status === s).length;
@@ -686,7 +704,7 @@ function ctlRptHtml() {
 }
 function ctlRptBind(root) {
   $$("[data-rpt-f]", root).forEach((b) => b.addEventListener("click", () => { ctlRpt.filter = b.dataset.rptF; renderControl(true); }));
-  $("[data-rpt-reload]", root)?.addEventListener("click", () => { ctlRpt.list = null; renderControl(true); });
+  $("[data-rpt-reload]", root)?.addEventListener("click", () => { ctlRpt.list = null; ctlRpt.failed = false; renderControl(true); });
   $$("[data-rpt-set]", root).forEach((b) => b.addEventListener("click", async () => {
     if (await window.Online.reportSet(b.dataset.rptSet, b.dataset.v)) { const r = ctlRpt.list.find((x) => x.id === b.dataset.rptSet); if (r) r.status = b.dataset.v; renderControl(true); }
   }));

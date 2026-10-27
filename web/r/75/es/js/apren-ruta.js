@@ -39,51 +39,113 @@ function aprMissSet(id, wrong) {
 }
 const aprQuestion = (id) => { const [slug, qi] = id.split("#"); const ch = AP_CHAPTERS.find((c) => c.slug === slug); return ch?.quiz[Number(qi)] ? { ch, q: ch.quiz[Number(qi)], id } : null; };
 
-// ---------- Carcassa de les pantalles pas a pas (capítol, essencials, repàs) ----------
-// cfg: { tone, steps, start, exit, render(step, i) → { html, bind?(el), nav? }, next(step, i) → { label, ok }, onShow(i) }
+// ---------- Visor d'històries (capítol, essencials, repàs) ----------
+// Pantalla vertical a tota la pantalla: barres per pas que s'omplen al ritme de lectura, toc a la dreta per avançar
+// i a l'esquerra per tornar, mantenir premut per aturar-ho. Les portades (cover) van a tota pantalla amb el color del capítol.
+// cfg: { tone, steps, start, exit, who: { badge, title, sub }, auto, render(step, i) → { html, bind?(el), nav?, back?, cover?, tone?, who?, timer? },
+//        next(step, i) → { label, ok }, onShow(i) }
+// auto: en acabar la barra passa sol al pas següent (essencials). Si no, el botó «Continua» avisa que ja es pot passar.
 let aprShellNow = null;
+const APR_NOTAP = "a,button,input,select,textarea,label,summary,details,.ap-w,.term,.choice,.ls-key,[contenteditable]";
 function aprShell(root, cfg) {
   const S = { ...cfg, i: -1 };
   aprShellNow = S;
   document.body.classList.add("lesson");
   root.style.setProperty("--tone", cfg.tone);
-  root.innerHTML = `<div class="ls">
-    <header class="ls-top">
-      <a class="ls-x" href="${cfg.exit || "#apren"}" aria-label="Salir">✕</a>
-      <div class="ls-bar" aria-hidden="true">${cfg.steps.map(() => "<i></i>").join("")}</div>
-      <span class="ls-n" aria-live="polite"></span>
-    </header>
-    <div class="ls-stage"></div>
-    <footer class="ls-nav">
-      <button class="btn ghost ls-prev" type="button" data-prev aria-label="Paso anterior">←</button>
-      <button class="btn primary lg ls-next" type="button" data-next>Continúa</button>
-    </footer>
+  const exit = cfg.exit || "#apren";
+  const chev = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+  root.innerHTML = `<div class="ls sv">
+    <button class="sv-arrow" type="button" data-arrow="-1" aria-label="Paso anterior">${chev("M15 5l-7 7 7 7")}</button>
+    <div class="sv-frame">
+      <div class="sv-bars" aria-hidden="true">${cfg.steps.map(() => "<i><b></b></i>").join("")}</div>
+      <header class="sv-top">
+        <span class="sv-av" aria-hidden="true"></span>
+        <span class="sv-who"><b></b><small></small></span>
+        <button class="sv-btn" type="button" data-pause aria-label="Pausa">${chev("M9 6v12M15 6v12")}</button>
+        <a class="sv-btn ls-x" href="${exit}" aria-label="Salir">${chev("M6 6l12 12M18 6L6 18")}</a>
+      </header>
+      <span class="ls-n sr-only" aria-live="polite"></span>
+      <div class="ls-stage"></div>
+      <footer class="ls-nav">
+        <button class="btn ghost ls-prev" type="button" data-prev aria-label="Paso anterior">←</button>
+        <button class="btn primary lg ls-next" type="button" data-next>Continúa</button>
+      </footer>
+    </div>
+    <button class="sv-arrow" type="button" data-arrow="1" aria-label="Paso siguiente">${chev("M9 5l7 7-7 7")}</button>
   </div>`;
-  const stage = $(".ls-stage", root), nav = $(".ls-nav", root), prev = $("[data-prev]", root), next = $("[data-next]", root);
+  const sv = $(".sv", root), frame = $(".sv-frame", root), stage = $(".ls-stage", root), nav = $(".ls-nav", root);
+  const prev = $("[data-prev]", root), next = $("[data-next]", root), pauseBtn = $("[data-pause]", root);
+  const canNext = () => !next.disabled && !nav.hidden;
+  const canPrev = () => !prev.disabled;
   S.go = (i, dir = 1) => {
     if (i < 0 || i >= S.steps.length) return;
     S.i = i;
     const st = S.steps[i];
     const r = S.render(st, i);
     stage.innerHTML = `<div class="ls-step ${dir < 0 ? "back" : ""}">${r.html}</div>`;
+    stage.scrollTop = 0;
     r.bind?.($(".ls-step", stage));
-    $$(".ls-bar i", root).forEach((b, k) => { b.className = k < i ? "done" : k === i ? "on" : ""; });
+    frame.classList.toggle("cover", !!r.cover);
+    frame.classList.remove("ready");
+    frame.style.setProperty("--tone", r.tone || cfg.tone);
+    const who = r.who || cfg.who || {};
+    $(".sv-av", root).innerHTML = who.badge ?? "";
+    $(".sv-who b", root).textContent = who.title || "";
+    $(".sv-who small", root).textContent = who.sub || `${i + 1} de ${S.steps.length}`;
+    // Barra: les anteriors plenes; l'actual s'omple en el temps que costa llegir el pas (o queda plena si no en té)
+    const words = ($(".ls-step", stage).textContent.match(/\S+/g) || []).length;
+    const secs = r.timer === false ? 0 : Math.round(Math.min(45, Math.max(cfg.auto ? 6 : 5, words / 3.2)));
+    $$(".sv-bars i", root).forEach((b, k) => {
+      b.className = k < i ? "done" : k === i ? (secs ? "cur" : "done") : "";
+      b.style.removeProperty("--dur");
+      if (k === i && secs) b.style.setProperty("--dur", `${secs}s`);
+    });
+    // Reinicia l'animació de la barra actual
+    const curB = $(".sv-bars i.cur b", root);
+    if (curB) { curB.style.animation = "none"; void curB.offsetWidth; curB.style.animation = ""; }
     $(".ls-n", root).textContent = `${i + 1}/${S.steps.length}`;
     nav.hidden = r.nav === false;
     prev.disabled = i === 0 || r.back === false;
     S.refresh();
     S.onShow?.(i);
-    // Cada pas comença a dalt de tot
-    const top = root.getBoundingClientRect().top + scrollY - 70;
-    if (scrollY > top) scrollTo(0, Math.max(0, top));
   };
   S.refresh = () => {
     const n = S.next(S.steps[S.i], S.i);
     next.textContent = n.label;
     next.disabled = !n.ok;
+    $$(".sv-arrow", root).forEach((a) => { a.disabled = a.dataset.arrow === "1" ? !canNext() : !canPrev(); });
   };
+  // La barra s'ha omplert
+  $(".sv-bars", root).addEventListener("animationend", () => {
+    if (cfg.auto && canNext() && !sv.classList.contains("paused")) next.click();
+    else frame.classList.add("ready");
+  });
   next.addEventListener("click", () => { Sfx.play("pick"); S.go(S.i + 1); });
   prev.addEventListener("click", () => S.go(S.i - 1, -1));
+  $$(".sv-arrow", root).forEach((a) => a.addEventListener("click", () => (a.dataset.arrow === "1" ? canNext() && next.click() : canPrev() && prev.click())));
+  // Aturar i reprendre (botó, o mantenir premut)
+  S.pause = (on) => {
+    sv.classList.toggle("paused", on);
+    pauseBtn.setAttribute("aria-label", on ? "Continúa" : "Pausa");
+    pauseBtn.innerHTML = on ? chev("M8 5l11 7-11 7z") : chev("M9 6v12M15 6v12");
+  };
+  pauseBtn.addEventListener("click", () => S.pause(!sv.classList.contains("paused")));
+  let holdT = null, held = false;
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.button || e.target.closest(APR_NOTAP)) return;
+    held = false;
+    holdT = setTimeout(() => { held = true; sv.classList.add("hold"); }, 260);
+  });
+  const release = () => { clearTimeout(holdT); sv.classList.remove("hold"); };
+  ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => stage.addEventListener(ev, release));
+  // Tocar: terç esquerre enrere, la resta endavant (fora dels controls, i no si s'està seleccionant text)
+  stage.addEventListener("click", (e) => {
+    if (held) { held = false; return; }
+    if (e.target.closest(APR_NOTAP) || String(getSelection?.() || "").trim()) return;
+    const r = frame.getBoundingClientRect();
+    if (e.clientX - r.left < r.width * 0.3) { if (canPrev()) prev.click(); }
+    else if (canNext()) next.click();
+  });
   // Lliscar amb el dit (fora de botons i controls)
   let x0 = null, y0 = 0;
   stage.addEventListener("touchstart", (e) => { if (e.target.closest("input,button,select,textarea,a,.ap-w")) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
@@ -92,20 +154,27 @@ function aprShell(root, cfg) {
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
     x0 = null;
     if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx)) return;
-    if (dx < 0 && !next.disabled && !nav.hidden) next.click();
-    if (dx > 0 && !prev.disabled && !nav.hidden) prev.click();
+    held = true; // que el toc que acompanya el gest no torni a avançar
+    if (dx < 0 && canNext()) next.click();
+    if (dx > 0 && canPrev()) prev.click();
   });
+  // Clicar fora del visor (al fons fosc) el tanca
+  sv.addEventListener("click", (e) => { if (e.target === sv) location.hash = exit; });
   S.go(cfg.start || 0);
   return S;
 }
-// Teclat: fletxes per avançar i tornar enrere
-document.addEventListener("keydown", (e) => {
+// Pestanya amagada: s'atura la barra
+document.addEventListener("visibilitychange", () => { if (document.hidden && aprShellNow && document.body.classList.contains("lesson")) aprShellNow.pause(true); });
+// Teclat: fletxes per avançar i tornar enrere, espai per aturar, Esc per sortir
+window.addEventListener("keydown", (e) => {
   if (!document.body.classList.contains("lesson") || e.target.closest?.("input,textarea,select") || e.altKey || e.ctrlKey || e.metaKey) return;
   const root = $("#ap-chapter");
-  if (!root || root.hidden) return;
+  if (!root || root.hidden || !$(".sv", root)) return;
+  if (e.key === "Escape") { if (!$(".term-pop")) location.hash = $(".ls-x", root).getAttribute("href"); return; }
+  if (e.key === " " && !e.target.closest?.("button,a")) { e.preventDefault(); aprShellNow?.pause(!$(".sv", root).classList.contains("paused")); return; }
   if (e.key === "ArrowRight") { const b = $("[data-next]", root); if (b && !b.disabled && !$(".ls-nav", root).hidden) { e.preventDefault(); b.click(); } }
   if (e.key === "ArrowLeft") { const b = $("[data-prev]", root); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
-});
+}, true);
 // Fora de l'Aprèn no hi ha pas a pas (dins, renderApren ho decideix a cada pàgina)
 window.addEventListener("hashchange", () => { if (!location.hash.startsWith("#apren")) document.body.classList.remove("lesson"); });
 
@@ -153,8 +222,10 @@ function renderLesson(ch) {
   let finished = false;
   aprShell(root, {
     tone: ch.tone, steps,
+    who: { badge: ch.n, title: ch.title, sub: `Parte ${ch.block.n} · ${ch.block.title}` },
     render(st, i) {
       if (st.kind === "intro") return {
+        cover: true, timer: false,
         html: `<div class="ls-intro">
           <div class="ls-art">${ch.art}</div>
           <p class="kicker">Parte ${ch.block.n} · ${esc(ch.block.title)} · Capítulo ${ch.n} de ${AP_CHAPTERS.length}</p>
@@ -173,6 +244,7 @@ function renderLesson(ch) {
       if (st.kind === "content") {
         const n = i, total = firstQ - 1;
         return {
+          who: { badge: ch.n, title: ch.title, sub: `Paso ${n} de ${total} · ${ch.mins} min` },
           html: `<div class="ls-content">
             <p class="kicker">Paso ${n} de ${total} · ${esc(ch.title)}</p>
             ${st.title ? `<h2 class="ls-h">${esc(st.title)}</h2>` : ""}
@@ -184,6 +256,7 @@ function renderLesson(ch) {
       if (st.kind === "q") {
         const a = (ans[st.qi] ||= { order: shuffle(st.q.opts.map((_, k) => k)) });
         return {
+          timer: false, who: { badge: "?", title: ch.title, sub: `Pregunta ${st.qi + 1} de ${ch.quiz.length}` },
           html: aprQuestionHtml(st.q, a, `Compruébalo · pregunta ${st.qi + 1} de ${ch.quiz.length}`),
           bind(el) { aprBindQuestion(el, st.q, a, (ok) => { aprMissSet(`${ch.slug}#${st.qi}`, !ok); aprShellNow.refresh(); }); },
         };
@@ -202,7 +275,7 @@ function renderLesson(ch) {
         if (passed) setTimeout(() => confetti?.(), 200);
       }
       return {
-        nav: false, back: false,
+        nav: false, back: false, cover: true, timer: false,
         html: `<div class="ls-end ${passed ? "ok" : "ko"}">
           <div class="ls-score"><b>${h}</b><span>/${ch.quiz.length}</span></div>
           <h2>${passed ? (h === ch.quiz.length ? "¡Capítulo superado con pleno!" : "¡Capítulo superado!") : "¡Casi!"}</h2>
@@ -240,17 +313,18 @@ function renderEssencials() {
   const root = $("#ap-chapter");
   const steps = [{ kind: "intro" }, ...AP_CHAPTERS.map((ch) => ({ kind: "card", ch })), { kind: "end" }];
   aprShell(root, {
-    tone: "#3554ff", steps,
+    tone: "#3554ff", steps, auto: true,
+    who: { badge: "⚡", title: "Lo esencial", sub: "En 5 minutos" },
     render(st) {
-      if (st.kind === "intro") return { html: `<div class="ls-intro">
+      if (st.kind === "intro") return { cover: true, html: `<div class="ls-intro">
         <div class="ls-art ls-art-big" aria-hidden="true">⚡</div>
         <p class="kicker">Guía del 29N · ${AP_CHAPTERS.length} tarjetas</p>
         <h1 class="ls-title">Lo esencial en 5 minutos</h1>
-        <p class="ls-lead">Lo más importante de cada capítulo, en tres frases. Desliza o pulsa «Siguiente». Si algo te interesa, entra en el capítulo entero.</p>
+        <p class="ls-lead">Lo más importante de cada capítulo, en tres frases. Pasan solas: toca a la derecha para avanzar, a la izquierda para volver y mantén pulsado para pararlas.</p>
       </div>` };
       if (st.kind === "card") {
         const ch = st.ch;
-        return { html: `<article class="ls-ess" style="--tone:${ch.tone}">
+        return { cover: true, tone: ch.tone, who: { badge: ch.n, title: ch.title, sub: `Lo esencial · capítulo ${ch.n} de ${AP_CHAPTERS.length}` }, html: `<article class="ls-ess" style="--tone:${ch.tone}">
           <div class="ls-ess-art">${ch.art}</div>
           <p class="kicker">Capítulo ${ch.n} · Parte ${ch.block.n}: ${esc(ch.block.title)}</p>
           <h2 class="ls-h">${esc(ch.title)}</h2>
@@ -259,7 +333,7 @@ function renderEssencials() {
         </article>` };
       }
       aprSave({ ess: Date.now() });
-      return { nav: false, html: `<div class="ls-end ok">
+      return { nav: false, cover: true, timer: false, html: `<div class="ls-end ok">
         <div class="ls-score ls-score-ico">✓</div>
         <h2>¡Ya tienes lo más importante!</h2>
         <p>Ahora ya sabes lo básico de las elecciones del 29N. ¿Quieres comprobarlo o profundizar más?</p>
@@ -288,17 +362,19 @@ function renderRepas() {
   const steps = [...pool.map((p) => ({ kind: "q", ...p })), { kind: "end" }];
   aprShell(root, {
     tone: "#0f9d58", steps,
+    who: { badge: "↻", title: "Repaso de los errores" },
     render(st, i) {
       if (st.kind === "q") {
         const a = (ans[i] ||= { order: shuffle(st.q.opts.map((_, k) => k)) });
         return {
+          timer: false,
           html: `${aprQuestionHtml(st.q, a, `Repaso · ${esc(st.ch.title)}`)}<a class="ls-ess-more" href="#apren/${st.ch.slug}">Vuelve al capítulo ${st.ch.n} →</a>`,
           bind(el) { aprBindQuestion(el, st.q, a, (ok) => { aprMissSet(st.id, !ok); aprShellNow.refresh(); }); },
         };
       }
       const h = Object.values(ans).filter((a) => a.k === 0).length, left = aprMiss().length;
       if (h === pool.length) setTimeout(() => confetti?.(), 200);
-      return { nav: false, back: false, html: `<div class="ls-end ${h === pool.length ? "ok" : "ko"}">
+      return { nav: false, back: false, cover: true, timer: false, html: `<div class="ls-end ${h === pool.length ? "ok" : "ko"}">
         <div class="ls-score"><b>${h}</b><span>/${pool.length}</span></div>
         <h2>${h === pool.length ? "¡Repaso perfecto!" : "Buen repaso"}</h2>
         <p>${left ? `Te quedan <b>${left}</b> ${left === 1 ? "pregunta" : "preguntas"} por repasar.` : "Ya no te queda ninguna pregunta por repasar."}</p>
@@ -465,6 +541,17 @@ function renderAprenRoute() {
       </div>
     </header>
 
+    <nav class="apx-stories" aria-label="Capítulos">
+      <a class="apx-st" href="#apren/essencials" style="--tone:#3554ff;--p:1"><span class="apx-st-ring"><span class="apx-st-in apx-st-txt">⚡</span></span><small>Lo esencial</small></a>
+      ${AP_CHAPTERS.map((c) => {
+        const s = aprState(c), n = aprSteps(c).filter((x) => x.kind === "content").length;
+        const p = s === "go" ? Math.max(0.08, aprStepAt(c) / n) : 1;
+        return `<a class="apx-st st-${s} ${c === next ? "is-next" : ""}" href="#apren/${c.slug}" style="--tone:${c.tone};--p:${p.toFixed(3)}" aria-label="Capítulo ${c.n}: ${esc(c.title)}">
+          <span class="apx-st-ring"><span class="apx-st-in">${c.art}</span>${s === "ok" ? `<i class="apx-st-ok" aria-hidden="true">✓</i>` : c === next ? `<i class="apx-st-now" aria-hidden="true">Ahora</i>` : ""}</span>
+          <small>${esc(c.title)}</small></a>`;
+      }).join("")}
+    </nav>
+
     <div class="ap-search apx-search">
       <label class="dict-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" placeholder="Busca en la guía: voto por correo, Hondt, investidura…" aria-label="Busca en la guía"></label>
       <div class="ap-search-res" aria-live="polite"></div>
@@ -543,5 +630,8 @@ function renderAprenRoute() {
       ${AP_FAQ.length > 6 ? `<button class="btn ghost apx-faq-more" type="button" data-faq-more>Muéstralas todas (${AP_FAQ.length})</button>` : ""}
     </section>`;
   mountAprenSearch($(".ap-search", hub));
+  // La fila d'històries comença pel capítol que toca
+  const row = $(".apx-stories", hub), cur = $(".apx-st.is-next", hub);
+  if (row && cur && cur.offsetLeft - row.offsetLeft + cur.offsetWidth > row.clientWidth) row.scrollLeft = Math.max(0, cur.offsetLeft - row.offsetLeft - 90);
   $("[data-faq-more]", hub)?.addEventListener("click", (e) => { $$(".apx-faq-i[hidden]", hub).forEach((d) => { d.hidden = false; }); e.currentTarget.remove(); });
 }

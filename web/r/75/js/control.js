@@ -92,7 +92,7 @@ function ctlChanges() {
 }
 async function ctlCheckFile() {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
     ctlFile = r.ok ? await r.json() : { missing: true };
   } catch { ctlFile = { missing: true }; }
 }
@@ -416,11 +416,14 @@ window.renderControl = renderControl;
 // ---------- Laboratori: funcions que la gent encara no pot provar ----------
 // Cada funció diu quan la veurà tothom; abans, l'equip la pot provar en aquesta pestanya (vista prèvia, sense desar res).
 function ctlLabItems() {
-  if (typeof DAILY_V2_FROM === "undefined" || typeof ESP_T === "undefined" || typeof PRON_OPEN === "undefined") return [];
+  if (typeof DAILY_V3_FROM === "undefined" || typeof DAILY_V2_FROM === "undefined" || typeof ESP_T === "undefined" || typeof PRON_OPEN === "undefined") return [];
   const [y, m, d] = DAILY_V2_FROM.split("-").map(Number);
+  const [y3, m3, d3] = DAILY_V3_FROM.split("-").map(Number);
   return [
+    { id: "diari3", icon: "🧠", name: "Repte diari amb dinàmiques noves", go: "#joc/diari", from: new Date(y3, m3 - 1, d3).getTime(),
+      desc: "Cada dia, cinc proves especials triades entre nou: siluetes de províncies, aritmètica del Congrés, parelles de sigles, l'intrús, completa la frase, ordena, el mapa, el número i dibuixa-ho (encerclar els Països Catalans, Euskal Herria, Galícia… en un mapa sense províncies). La partida de prova no compta." },
     { id: "diari2", icon: "🧩", name: "Repte diari amb proves noves", go: "#joc/diari", from: new Date(y, m - 1, d).getTime(),
-      desc: "Ordena, el mapa, endevina el número i la llei d'Hondt, amb el rellotge aturat durant la correcció. La partida de prova no compta per al rànquing ni per a la ratxa." },
+      desc: "Ordena, el mapa i dibuixa-ho, amb el rellotge aturat durant la correcció. La partida de prova no compta per al rànquing ni per a la ratxa." },
     { id: "porra", icon: "🎯", name: "Porra d'escons", go: "#nit/porra", from: ESP_T.porra, t: ESP_T.porra + 2 * 864e5,
       desc: "Cadascú reparteix els 350 escons entre els partits. En vista prèvia, la porra no es desa." },
     { id: "pron", icon: "🎟️", name: "Lliga de pronòstics", go: "#pronostics", from: PRON_OPEN, t: PRON_OPEN + 864e5,
@@ -500,7 +503,7 @@ function ctlNotifHtml() {
         <label>En tocar-lo, obre <select data-plink>${CTL_LINKS.map(([u, t]) => `<option value="${u}" ${d.url === u ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <input type="hidden" data-paud value="tots">
       </div>
-      <div class="push-prev"><span aria-hidden="true"><img src="../img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>ara</small></div>
+      <div class="push-prev"><span aria-hidden="true"><img src="img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>ara</small></div>
       <div class="row"><button class="btn primary" type="button" data-psend ${d.title.trim() ? "" : "disabled"}>Envia l'avís</button></div>
     </section>
     <section class="card">

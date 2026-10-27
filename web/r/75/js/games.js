@@ -628,8 +628,8 @@ function makeStatement(rng = Math.random, key = null) {
       return { text: `${e.t}: l'any ${y}.`, truth: y === e.y, exp: `Va ser el ${e.y}. ${e.d}` };
     },
     () => {
-      const a = pick(ARTICLES);
-      const other = pick(ARTICLES.filter((x) => x !== a));
+      const a = pick(P(ARTICLES));
+      const other = pick(P(ARTICLES).filter((x) => x !== a));
       return { text: `L'article ${a.n} de la Constitució tracta sobre: «${(t ? a : other).t}».`, truth: t, exp: `L'article ${a.n} tracta sobre: «${a.t}».` };
     },
     () => {

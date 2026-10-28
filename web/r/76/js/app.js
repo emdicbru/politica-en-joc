@@ -323,7 +323,7 @@ const SLOT_LABEL = (label) =>
   /Ordena/.test(label) ? "Ordena" :
   /On és|Dónde está/.test(label) ? "Mapa" :
   /Endevina el número|Adivina el número/.test(label) ? "Número" :
-  /Hondt/.test(label) ? "D'Hondt" :
+  /Dibuixa|Dibuja/.test(label) ? "Dibuixa" :
   /abans|antes|Congrés del 23-J|Congreso del 23-J|Diputats|Diputados/.test(label) ? "Duel" : "Pregunta";
 
 function renderDailyHero() {
@@ -407,25 +407,120 @@ function renderRankingView(arg) {
 
 
 // ---------- Barra inferior de vidre líquid ----------
-// L'indicador és una gota de vidre que segueix el dit: es pot arrossegar d'una pestanya a l'altra.
+// Una càpsula de vidre que flota sobre el contingut, a l'estil del vidre líquid d'iOS:
+// · El vidre: difuminat i saturat a tot arreu. A Chrome/Android, a més, refracta de debò: un filtre SVG de desplaçament
+//   (mapa generat aquí, a la mida de la barra) corba el contingut de sota a les vores, com una lent.
+// · La gota de la pestanya activa es mou amb física de molla: s'estira amb la velocitat, rebota en arribar i, en prémer,
+//   s'infla i fa de lupa. Es pot arrossegar d'una pestanya a l'altra.
+// · S'adapta al que té sota (es torna fosca sobre zones fosques) i s'encongeix en baixar la pàgina.
 const tabbar = $(".tabbar");
 const tabInd = $(".tab-indicator");
+const lgReduce = matchMedia("(prefers-reduced-motion: reduce)");
 
-function setIndicator(x, w, { instant = false } = {}) {
-  tabInd.classList.toggle("instant", instant);
-  tabInd.style.setProperty("--x", `${x}px`);
-  tabInd.style.setProperty("--w", `${w}px`);
+// Refracció amb filtre SVG: només als navegadors Chromium (Safari no accepta url() a backdrop-filter)
+const lgSvg = !!navigator.userAgentData?.brands?.some((b) => /Chromium/.test(b.brand)) && CSS.supports("backdrop-filter", "url(#a)");
+if (tabbar && lgSvg) document.documentElement.classList.add("lg-svg");
+// Mapa de desplaçament d'una càpsula de w×h: a la franja de la vora (band) mostra el contingut de més enfora, cada cop
+// més com més a prop de la vora (R: x, G: y; 128 = sense desplaçament). mode "lens": a més, amplia el centre.
+function lgMap(w, h, band, mode) {
+  const c = document.createElement("canvas");
+  c.width = Math.max(2, Math.round(w)); c.height = Math.max(2, Math.round(h));
+  const x = c.getContext("2d"), img = x.createImageData(c.width, c.height), d = img.data;
+  const r = c.height / 2, cx = c.width / 2, cy = c.height / 2;
+  for (let j = 0; j < c.height; j++) {
+    for (let i = 0; i < c.width; i++) {
+      // Distància a la vora de la càpsula i direcció cap enfora
+      const px = i + 0.5, py = j + 0.5;
+      const qx = Math.min(Math.max(px, r), c.width - r);
+      let nx = px - qx, ny = py - cy;
+      const len = Math.hypot(nx, ny) || 1;
+      const dist = r - len;
+      nx /= len; ny /= len;
+      let t = dist < band ? 1 - Math.max(0, dist) / band : 0;
+      t = t * t * (3 - 2 * t);
+      let dx = nx * t, dy = ny * t;
+      if (mode === "lens") { dx = dx * 0.7 - ((px - cx) / cx) * 0.3; dy = dy * 0.7 - ((py - cy) / cy) * 0.3; }
+      const k = (j * c.width + i) * 4;
+      d[k] = 128 + dx * 127; d[k + 1] = 128 + dy * 127; d[k + 2] = 128; d[k + 3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  return c.toDataURL();
+}
+function lgFilters() {
+  if (!lgSvg || !tabbar) return;
+  let svg = $("#lg-filters");
+  if (!svg) {
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = "lg-filters"; svg.setAttribute("aria-hidden", "true");
+    svg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+    svg.innerHTML = ["lg-refract", "lg-lens"].map((id) => `<filter id="${id}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feImage result="map" preserveAspectRatio="none" x="0" y="0"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${id === "lg-lens" ? 0.3 : 3.2}" result="soft"/>
+      <feDisplacementMap in="soft" in2="map" scale="${id === "lg-lens" ? 24 : 20}" xChannelSelector="R" yChannelSelector="G" result="bent"/>
+      <feColorMatrix in="bent" type="saturate" values="${id === "lg-lens" ? 1.5 : 1.9}"/>
+    </filter>`).join("");
+    document.body.appendChild(svg);
+  }
+  const fit = (id, w, h, band, mode) => {
+    const f = $(`#${id}`, svg), im = $("feImage", f);
+    [f, im].forEach((el) => { el.setAttribute("width", w); el.setAttribute("height", h); });
+    f.setAttribute("x", 0); f.setAttribute("y", 0);
+    im.setAttribute("href", lgMap(w, h, band, mode));
+  };
+  const r = tabbar.getBoundingClientRect(), a = $(".tabbar a");
+  if (!r.width) return;
+  fit("lg-refract", r.width, r.height, Math.min(13, r.height * 0.24));
+  if (a) fit("lg-lens", a.offsetWidth, r.height - 12, 14, "lens");
 }
 
+// ---------- La gota: molla amortida (posició, amplada i elevació) ----------
+const Sp = { x: 0, w: 0, vx: 0, vw: 0, tx: 0, tw: 0, lift: 1, vl: 0, tl: 1, raf: 0, last: 0, ready: false };
+function spPaint() {
+  const st = Math.min(0.32, Math.abs(Sp.vx) / 2800);
+  tabInd.style.setProperty("--w", `${Sp.w.toFixed(2)}px`);
+  tabInd.style.transform = `translate3d(${Sp.x.toFixed(2)}px, 0, 0) scale(${((1 + st) * Sp.lift).toFixed(4)}, ${((1 - st * 0.5) * Sp.lift).toFixed(4)})`;
+}
+function spFrame(t) {
+  const dt = Math.min(1 / 30, (t - (Sp.last || t)) / 1000 || 1 / 60);
+  Sp.last = t;
+  const spring = (p, v, target, k, c) => { const a = k * (target - p) - c * v; v += a * dt; return [p + v * dt, v]; };
+  [Sp.x, Sp.vx] = spring(Sp.x, Sp.vx, Sp.tx, 430, 30);
+  [Sp.w, Sp.vw] = spring(Sp.w, Sp.vw, Sp.tw, 430, 30);
+  [Sp.lift, Sp.vl] = spring(Sp.lift, Sp.vl, Sp.tl, 520, 22);
+  spPaint();
+  const rest = Math.abs(Sp.tx - Sp.x) < 0.2 && Math.abs(Sp.vx) < 2 && Math.abs(Sp.tw - Sp.w) < 0.2 && Math.abs(Sp.vw) < 2 && Math.abs(Sp.tl - Sp.lift) < 0.002 && Math.abs(Sp.vl) < 0.02;
+  if (rest) { Sp.x = Sp.tx; Sp.w = Sp.tw; Sp.lift = Sp.tl; Sp.vx = Sp.vw = Sp.vl = 0; spPaint(); Sp.raf = 0; Sp.last = 0; return; }
+  Sp.raf = requestAnimationFrame(spFrame);
+}
+function spTo(x, w, { instant = false, lift } = {}) {
+  Sp.tx = x; Sp.tw = w;
+  if (lift !== undefined) Sp.tl = lift;
+  if (instant || !Sp.ready || lgReduce.matches) {
+    Sp.x = x; Sp.w = w; Sp.vx = Sp.vw = 0;
+    if (lift !== undefined && (lgReduce.matches || !Sp.ready)) { Sp.lift = lift; Sp.vl = 0; }
+    Sp.ready = true; spPaint();
+    if (lift === undefined || lgReduce.matches) return;
+  }
+  if (!Sp.raf) Sp.raf = requestAnimationFrame(spFrame);
+}
+
+let tabActiveNow = null;
 function updateTabIndicator() {
   if (!tabbar || !tabInd) return;
   const active = $(".tabbar a.active");
-  // Inici té la seva pròpia lent al centre: la gota només acompanya les altres pestanyes
-  if (!active || active.classList.contains("tab-home")) { tabInd.style.opacity = 0; if (active) setIndicator(active.offsetLeft, active.offsetWidth, { instant: true }); return; }
-  tabInd.style.opacity = 1;
-  setIndicator(active.offsetLeft, active.offsetWidth);
+  if (active !== tabActiveNow) {
+    // La icona de la pestanya nova fa un petit salt
+    tabActiveNow = active;
+    if (active && !lgReduce.matches) { active.classList.remove("pop"); void active.offsetWidth; active.classList.add("pop"); }
+  }
+  // Inici té el seu disc: la gota en repòs només acompanya les altres pestanyes
+  tabbar.classList.toggle("on-home", !!active?.classList.contains("tab-home"));
+  if (!active) { tabInd.style.opacity = 0; return; }
+  tabInd.style.opacity = "";
+  spTo(active.offsetLeft, active.offsetWidth);
 }
-window.addEventListener("resize", updateTabIndicator);
+window.addEventListener("resize", () => { updateTabIndicator(); lgFilters(); });
 
 (() => {
   if (!tabbar) return;
@@ -433,62 +528,108 @@ window.addEventListener("resize", updateTabIndicator);
   let drag = null;
 
   const linkAt = (clientX) => {
-    const r = tabbar.getBoundingClientRect();
-    const x = clientX - r.left;
+    const x = clientX - tabbar.getBoundingClientRect().left;
     return links.reduce((best, a) => (Math.abs(a.offsetLeft + a.offsetWidth / 2 - x) < Math.abs(best.offsetLeft + best.offsetWidth / 2 - x) ? a : best), links[0]);
+  };
+  const follow = (clientX) => {
+    const r = tabbar.getBoundingClientRect(), w = links[0].offsetWidth;
+    spTo(Math.min(r.width - w - 4, Math.max(4, clientX - r.left - w / 2)), w);
+    tabbar.style.setProperty("--lx", `${(((clientX - r.left) / r.width) * 100).toFixed(1)}%`);
+    const hover = linkAt(clientX);
+    if (hover !== drag.hover) {
+      links.forEach((a) => a.classList.toggle("hover", a === hover));
+      // Un toc de vibració cada cop que la gota passa a una altra pestanya (Android)
+      if (drag.hover && navigator.vibrate) navigator.vibrate(5);
+      drag.hover = hover;
+    }
   };
 
   tabbar.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
-    const r = tabbar.getBoundingClientRect();
-    drag = { id: e.pointerId, x0: e.clientX, lastX: e.clientX, lastT: performance.now(), moved: false, left: r.left, w: links[0].offsetWidth };
-    tabbar.setPointerCapture(e.pointerId);
+    drag = { id: e.pointerId, x0: e.clientX, moved: false, hover: null };
+    try { tabbar.setPointerCapture(e.pointerId); } catch {}
     tabbar.classList.add("pressing");
-    follow(e.clientX, 0);
+    tabbar.classList.remove("min");
+    Sp.tl = 1.32;
+    follow(e.clientX);
   });
-
   tabbar.addEventListener("pointermove", (e) => {
     if (!drag || e.pointerId !== drag.id) return;
-    if (Math.abs(e.clientX - drag.x0) > 6 && !drag.moved) { drag.moved = true; tabbar.classList.add("dragging"); }
-    const now = performance.now();
-    const v = (e.clientX - drag.lastX) / Math.max(1, now - drag.lastT); // px/ms
-    drag.lastX = e.clientX;
-    drag.lastT = now;
-    follow(e.clientX, v);
+    if (!drag.moved && Math.abs(e.clientX - drag.x0) > 6) { drag.moved = true; tabbar.classList.add("dragging"); }
+    follow(e.clientX);
   });
-
-  function follow(clientX, v) {
-    const r = tabbar.getBoundingClientRect();
-    const w = drag.w;
-    const x = Math.min(r.width - w - 6, Math.max(6, clientX - r.left - w / 2));
-    setIndicator(x, w, { instant: true });
-    // Estirament de gota segons la velocitat
-    const stretch = Math.min(0.35, Math.abs(v) * 0.25);
-    tabInd.style.setProperty("--sx", 1 + stretch);
-    tabInd.style.setProperty("--sy", 1 - stretch * 0.45);
-    tabbar.style.setProperty("--lx", `${((clientX - r.left) / r.width) * 100}%`);
-    const hover = linkAt(clientX);
-    links.forEach((a) => a.classList.toggle("hover", a === hover));
-    tabInd.style.opacity = hover.classList.contains("tab-home") ? 0 : 1;
-  }
-
-  const release = (e) => {
+  const end = (e, go) => {
     if (!drag || e.pointerId !== drag.id) return;
     const target = linkAt(e.clientX);
     drag = null;
     tabbar.classList.remove("pressing", "dragging");
     links.forEach((a) => a.classList.remove("hover"));
-    tabInd.style.setProperty("--sx", 1);
-    tabInd.style.setProperty("--sy", 1);
+    Sp.tl = 1;
+    if (!go) { updateTabIndicator(); return; }
     if (navigator.vibrate) navigator.vibrate(8);
     const href = target.getAttribute("href");
-    if (location.hash !== href) location.hash = href;
+    if (location.hash !== href) { spTo(target.offsetLeft, target.offsetWidth); location.hash = href; }
     else updateTabIndicator();
   };
-  tabbar.addEventListener("pointerup", release);
-  tabbar.addEventListener("pointercancel", (e) => { if (drag && e.pointerId === drag.id) { drag = null; tabbar.classList.remove("pressing", "dragging"); updateTabIndicator(); } });
+  tabbar.addEventListener("pointerup", (e) => end(e, true));
+  tabbar.addEventListener("pointercancel", (e) => end(e, false));
   // La navegació la fa el pointerup; el clic només es deixa passar si ve del teclat
   links.forEach((a) => a.addEventListener("click", (e) => { if (e.detail !== 0) e.preventDefault(); }));
+
+  // ---------- En baixar la pàgina s'encongeix; en pujar, torna ----------
+  let lastY = scrollY, acc = 0, ticking = false;
+  const onScroll = () => {
+    ticking = false;
+    const y = scrollY, dy = y - lastY;
+    lastY = y;
+    // El reflex especular gira una mica amb el desplaçament
+    tabbar.style.setProperty("--la", `${(y * 0.06) % 360}deg`);
+    if (drag) return;
+    acc = Math.sign(dy) === Math.sign(acc) ? acc + dy : dy;
+    if (y < 80 || acc < -18) tabbar.classList.remove("min");
+    else if (acc > 42) tabbar.classList.add("min");
+    lgTone();
+  };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  window.addEventListener("hashchange", () => { tabbar.classList.remove("min"); setTimeout(lgTone, 450); });
+  // En encongir-se o créixer, el mapa de refracció s'ha d'ajustar a la mida nova
+  tabbar.addEventListener("transitionend", (e) => { if (e.target === tabbar && e.propertyName === "height") { lgFilters(); updateTabIndicator(); } });
+
+  // ---------- Vidre clar o fosc segons el que hi ha a sota ----------
+  let toneT = 0;
+  function lgTone() {
+    const now = performance.now();
+    if (now - toneT < 140) return;
+    toneT = now;
+    const r = tabbar.getBoundingClientRect();
+    if (!r.width) return;
+    let dark = 0, seen = 0;
+    for (const fx of [0.15, 0.5, 0.85]) {
+      const els = document.elementsFromPoint(r.left + r.width * fx, r.top + r.height / 2);
+      for (const el of els) {
+        if (el === tabbar || tabbar.contains(el)) continue;
+        // Els elements petits (etiquetes, botons) no decideixen el to
+        const box = el.getBoundingClientRect();
+        if (box.width < 100 || box.height < 30) continue;
+        // rgb(a) va de 0 a 255; color(srgb …), que surt de color-mix(), de 0 a 1
+        const bg = getComputedStyle(el).backgroundColor, m = bg.match(/[\d.]+/g);
+        if (!m) continue;
+        const fn = bg.startsWith("color(");
+        const alpha = fn ? (bg.includes("/") ? Number(m[m.length - 1]) : 1) : m[3] !== undefined ? Number(m[3]) : 1;
+        if (alpha < 0.5) continue;
+        const [R, G, B] = m.slice(0, 3).map((v) => Number(v) * (fn ? 255 : 1));
+        seen++;
+        if (0.2126 * R + 0.7152 * G + 0.0722 * B < 110) dark++;
+        break;
+      }
+    }
+    tabbar.classList.toggle("on-dark", seen > 0 && dark * 2 > seen);
+  }
+  setTimeout(() => { lgFilters(); updateTabIndicator(); lgTone(); }, 60);
+  // El contingut de sota canvia sense desplaçar (pàgines que es pinten més tard, desplegables…): es torna a mirar sovint
+  addEventListener("load", () => setTimeout(lgTone, 200));
+  setInterval(() => { if (!document.hidden && !drag) lgTone(); }, 1000);
+  if (document.fonts?.ready) document.fonts.ready.then(() => { lgFilters(); updateTabIndicator(); });
 })();
 
 // ---------- Comptes i duels (es delega a online.js si està disponible) ----------
@@ -845,12 +986,12 @@ document.addEventListener("contextmenu", (e) => { if (e.target.closest("a, butto
 const ONBOARD_KEY = "r29n-onboard";
 const ONBOARD = [
   { t: "Benvingut/da a Política en Joc", d: "Aprèn com funcionen les eleccions del 29N jugant. Et presentem el que hi trobaràs en un minut.", art: "simulador" },
-  { t: "Inici i repte diari", d: "Cada dia hi ha un repte nou de 10 proves amb cronòmetre. A l'Inici també trobaràs el simulador i una mostra dels minijocs.", art: "diari" },
+  { t: "Inici i repte diari", d: "Cada dia, un repte nou de 10 proves amb cronòmetre: preguntes, ordenar, trobar províncies al mapa, dibuixar territoris com els Països Catalans o Euskal Herria… Fes ratxa (tens un comodí per setmana) i compara't amb tothom.", art: "diari" },
   { t: "Notícies", d: "Els titulars de política dels principals mitjans, al minut: el dia en 1 minut, la mateixa notícia explicada per diversos mitjans, el termòmetre de campanya i un quiz cada setmana.", art: "verificador" },
   { t: "Minijocs", d: "Contrarellotge, Verificador, Fes majoria, Endevina l'any… Partides ràpides que donen XP per pujar de nivell, de Votant fins a President.", art: "contrarellotge" },
   { t: "Simuladors", d: "Funda el teu partit i guanya unes eleccions amb les regles de veritat, o planta cara als candidats en un debat electoral en 3D.", art: "simulador" },
   { t: "Social", d: "Repta els amics a duels 1 vs 1 de preguntes o de campanya, i compara't amb tothom al rànquing del repte diari i a les lligues.", art: "majoria" },
-  { t: "Aprèn", d: "La guia del 29N: com es vota, què hi ha en joc, les ideologies, el comparador de partits, el pactòmetre i el diccionari.", art: "paraula" },
+  { t: "Aprèn", d: "La guia del 29N en capítols curts que es llegeixen pas a pas, a pantalla completa: com es vota, què hi ha en joc, les ideologies… I el comparador de partits, el pactòmetre i el diccionari.", art: "paraula" },
 ];
 function showOnboarding() {
   // Mentre hi hagi l'avís de la Lliga de pronòstics (o estigui oberta), en surt una diapositiva abans de l'última
@@ -866,7 +1007,7 @@ function showOnboarding() {
   </div></div>`);
   document.body.appendChild(box);
   const N = slides.length + 1;
-  const close = () => { box.remove(); store.set(ONBOARD_KEY, 1); if (lliga && typeof espAvisSeen === "function") espAvisSeen(); };
+  const close = () => { box.remove(); store.set(ONBOARD_KEY, 1); store.set(NOVETATS_KEY, NOVETATS_ID); if (lliga && typeof espAvisSeen === "function") espAvisSeen(); };
   const draw = () => {
     const last = k === N - 1, s = slides[k];
     $("[data-art]", box).innerHTML = ART[last ? "match" : s.art] ? ART[last ? "match" : s.art]() : "";
@@ -890,6 +1031,46 @@ if (!store.get(ONBOARD_KEY, null)) {
   const wait = () => (typeof Esp === "undefined" || Esp.ready || Date.now() - t0 > 2500 ? showOnboarding() : setTimeout(wait, 150));
   setTimeout(wait, 600);
 }
+
+// ---------- Novetats (només per a qui ja havia entrat abans) ----------
+// Un sol cop per tanda (NOVETATS_ID). Qui entra per primer cop fa el tutorial, que ja ho explica, i no les veu.
+// No surten enmig d'una partida ni a les pàgines de control i avís legal: s'esperen a la pàgina següent.
+var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-10-28";
+const NOVETATS = [
+  { ico: "🗺️", t: "Dibuixa-ho", d: "Encercla els Països Catalans, Euskal Herria, Galícia o la Catalunya Nord en un mapa sense províncies. Ja surt al repte d'avui." },
+  { ico: "🧩", t: "Proves que canvien cada dia", d: "Siluetes de províncies, arriba a 176 escons amb condicions, parelles de sigles, l'intrús, completa la frase, ordena…" },
+  { ico: "🔥", t: "Ratxa amb comodí", d: "Si un dia no jugues, un comodí per setmana et guarda la ratxa. I un calendari amb tots els dies que has jugat." },
+  { ico: "📊", t: "Compara't i comparteix", d: "Mira en quin percentil quedes i quina pregunta ha fallat més gent, i comparteix el resultat amb una imatge." },
+];
+const NOVETATS_APP = [
+  { ico: "📚", t: "Aprèn, pas a pas", d: "Els capítols de la guia, a pantalla completa: toca per avançar i mantén premut per aturar." },
+  { ico: "🎮", t: "Minijocs amb molt més contingut", d: "Més de 260 preguntes, 113 fets històrics, 53 personatges i 76 sigles." },
+  { ico: "🗳️", t: "Simulador renovat", d: "Enquesta a peu d'urna, nit electoral amb marcador i debats amb la reacció del públic." },
+];
+function novetatsMaybe() {
+  if (store.get(NOVETATS_KEY, null) === NOVETATS_ID) return;
+  if (!store.get(ONBOARD_KEY, null) && !(Progress.data.xp > 0)) return; // primera visita: ja hi ha el tutorial
+  const v = location.hash.slice(1).split("/")[0];
+  if (["joc", "control", "legal", "nit"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .esp-avis, .db-theater")) return;
+  store.set(NOVETATS_KEY, NOVETATS_ID);
+  const li = (x) => `<li><span class="nov-ico" aria-hidden="true">${x.ico}</span><div><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div></li>`;
+  const box = h(`<div class="onb nov" role="dialog" aria-modal="true" aria-label="Novetats"><div class="card nov-card">
+    <header class="nov-head"><div class="nov-art" aria-hidden="true">${ART.diari ? ART.diari() : ""}</div><div><p class="kicker">Novetats</p><h3>El repte diari s'ha renovat</h3></div></header>
+    <ul class="nov-list">${NOVETATS.map(li).join("")}</ul>
+    <p class="nov-sub">I a la resta de l'app</p>
+    <ul class="nov-list sm">${NOVETATS_APP.map(li).join("")}</ul>
+    <div class="row nov-btns"><button class="btn ghost" type="button" data-later>Més tard</button><a class="btn primary" href="#joc/diari" data-go>Juga el repte d'avui</a></div>
+  </div></div>`);
+  document.body.appendChild(box);
+  const close = (go) => { box.remove(); window.Track?.("novetats", { id: NOVETATS_ID, go: go ? 1 : 0 }); };
+  $("[data-later]", box).addEventListener("click", () => close(false));
+  $("[data-go]", box).addEventListener("click", () => close(true));
+  box.addEventListener("click", (e) => { if (e.target === box) close(false); });
+  document.addEventListener("keydown", function onEsc(e) { if (e.key === "Escape") { document.removeEventListener("keydown", onEsc); if (box.isConnected) close(false); } });
+  $("[data-go]", box).focus({ preventScroll: true });
+}
+setTimeout(novetatsMaybe, 900);
+window.addEventListener("hashchange", () => setTimeout(novetatsMaybe, 400));
 
 // ---------- App instal·lable (PWA) ----------
 // Android i Chrome: es desa l'avís d'instal·lació del navegador i s'ofereix amb un botó.

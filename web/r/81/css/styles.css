@@ -6546,3 +6546,120 @@ button.ctl-kpi:hover { transform: translateY(-1px); box-shadow: 3px 3px 0 var(--
   .nt-ring small { font-size: .56rem; }
 }
 @media (max-width: 700px) { .nt-tick { flex-direction: column; gap: 2px; } }
+
+/* Qui pot governar */
+.nt-govern { display: grid; gap: 10px; }
+.nt-govern > h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-family: var(--display); font-weight: 900; letter-spacing: -.03em; font-size: clamp(1.3rem, 3vw, 1.7rem); }
+.nt-govern > h2 small { font-family: var(--sans); font-size: .82rem; font-weight: 800; color: var(--muted); letter-spacing: 0; }
+.nt-gv-g { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nt-gv { --v: #8a8698; display: grid; gap: 8px; align-content: start; padding: 14px 16px; border: var(--bw) solid var(--ink); border-radius: var(--radius); background: var(--card); box-shadow: 5px 5px 0 var(--v); }
+.nt-gv.v-ok { --v: #1d9a5b; } .nt-gv.v-sup { --v: #ffb020; } .nt-gv.v-fil { --v: #ffb020; } .nt-gv.v-no { --v: #d23c2a; }
+.nt-gv header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.nt-gv-p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.nt-gv-p > b { font-weight: 900; color: var(--muted); }
+.nt-gv-p .nt-pc { font-size: .95rem; padding: 4px 11px 4px 8px; }
+.nt-gv header strong { font-family: var(--display); font-weight: 900; font-size: 2.4rem; line-height: 1; letter-spacing: -.03em; }
+.nt-gv-bar { position: relative; height: 18px; margin-top: 14px; border-radius: 99px; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.nt-gv-bar > i { position: absolute; left: 0; top: 0; bottom: 0; display: flex; overflow: hidden; border-radius: 99px; transition: width .8s var(--ease); }
+.nt-gv-bar s { display: block; height: 100%; }
+.nt-gv-bar > i s + s { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .7); }
+.nt-gv-bar u { position: absolute; top: -3px; bottom: -3px; border-radius: 99px; border: 2px dashed var(--ink); opacity: .55; }
+.nt-gv-bar em { position: absolute; top: -6px; bottom: -6px; width: 3px; margin-left: -1.5px; background: var(--ink); }
+.nt-gv-bar em span { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-style: normal; font-family: var(--display); font-weight: 900; font-size: .66rem; }
+.nt-gv-v { margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 800; font-size: 1.05rem; letter-spacing: -.02em; }
+.nt-gv-v span { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%; background: var(--v); color: #fff; font-size: .85rem; }
+.nt-gv > p:not(.nt-gv-v) { margin: 0; font-size: .88rem; line-height: 1.4; color: var(--ink-2); }
+.nt-gv-key, .nt-gv-min { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.nt-gv-key > span:not(.nt-pc), .nt-gv-min > span:not(.nt-pc) { width: 100%; font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.nt-gv-key .nt-pc { background: var(--c); color: #fff; }
+.nt-gv-key .nt-pc i { background: #fff; }
+.nt-gv-min em { font-style: normal; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; font-weight: 800; }
+.nt-gv-min > i { font-style: normal; font-weight: 700; color: var(--muted); margin: 0 4px; }
+.nt-gv-note { margin: 0; font-size: .76rem; color: var(--muted); }
+.nt-share { margin-left: 8px; font: inherit; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .45); background: transparent; color: inherit; cursor: pointer; }
+.nt-share:hover { background: rgba(255, 255, 255, .14); }
+.nt-hero-top .esp-upd + .nt-share { margin-left: 8px; }
+.nt-hero-top > .esp-onair + .nt-share { margin-left: auto; }
+.esp-mini-g { margin: 4px 0 0 !important; font-size: .86rem; }
+.esp-mini-g.v-maj b, .esp-mini-g.v-fil b { color: #7ee2a8; }
+@media (max-width: 760px) {
+  .nt-gv-g { grid-template-columns: 1fr; }
+  .nt-gv header strong { font-size: 2rem; }
+}
+@media (max-width: 700px) { .nt-hero-top .esp-upd { display: none; } .nt-hero-top .nt-share { margin-left: 0; } .nt-kpis { margin-top: 12px; } .nt-kpis > * { padding: 8px 10px; } .nt-govern > h2 { font-size: 1.25rem; } }
+.nt-barrier { font-size: .76rem; font-weight: 800; color: #b06a00; }
+
+/* ---------- Nit electoral: marcador de la portada ---------- */
+.nh { position: relative; overflow: hidden; display: grid; gap: 14px; margin: 0 0 18px; padding: 18px 22px 20px; border: var(--bw) solid var(--ink); border-radius: var(--radius); box-shadow: var(--hard); color: var(--card); background: radial-gradient(120% 140% at 90% 0%, #3b2aa8 0%, #1b1f6a 38%, #0c0d2a 78%); }
+.nh::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 4px); pointer-events: none; }
+.nh > * { position: relative; z-index: 1; }
+.nh-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+.nh-k { margin-left: auto; color: var(--yellow); }
+.nh-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.nh-head h2 { margin: 0; font-family: var(--display); font-weight: 900; letter-spacing: -.035em; font-size: clamp(1.5rem, 4vw, 2.6rem); line-height: 1.02; text-shadow: 3px 3px 0 var(--red); text-wrap: balance; }
+.nh-esc { position: relative; width: 104px; flex: none; }
+.nh-esc > div { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.nh-esc b { font-family: var(--display); font-size: 1.15rem; }
+.nh-esc small { font-size: .62rem; font-weight: 700; opacity: .75; }
+.nh-g { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 20px; align-items: center; }
+.nh-congres { display: grid; gap: 10px; }
+.nh .nt-hemi { max-width: 330px; justify-self: center; width: 100%; }
+.nh .nt-hemi-maj { background: repeating-linear-gradient(#fff 0 4px, transparent 4px 7px); }
+.nh .nt-hemi-c small { color: rgba(255, 250, 240, .7); }
+.nh-leg { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.nh-leg li { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px 4px 7px; border-radius: 99px; background: rgba(255, 255, 255, .09); font-weight: 800; font-size: .84rem; }
+.nh-leg li i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.nh-leg li b { font-family: var(--display); }
+.nh-leg li small { font-size: .7rem; } .nh-leg .up { color: #7ee2a8; } .nh-leg .down { color: #ff9b85; }
+.nh-leg li.more { opacity: .7; }
+.nh-gov { display: grid; gap: 10px; }
+.nh-gov-h { margin: 0; font-family: var(--display); font-weight: 900; font-size: 1.05rem; letter-spacing: -.02em; }
+.nh-gv { --v: #8a8698; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14); border-left: 5px solid var(--v); color: inherit; text-decoration: none; transition: background .2s; }
+.nh-gv:hover { background: rgba(255, 255, 255, .12); }
+.nh-gv.v-ok { --v: #2fc27a; } .nh-gv.v-fil, .nh-gv.v-sup { --v: #ffb020; } .nh-gv.v-no { --v: #ff5a3d; }
+.nh-gv-p { display: flex; align-items: center; gap: 5px; }
+.nh-gv-p > b { opacity: .6; }
+.nh-gv strong { font-family: var(--display); font-weight: 900; font-size: 2rem; line-height: 1; }
+.nh-gv .nt-gv-bar { grid-column: 1 / -1; margin-top: 6px; height: 14px; background: rgba(255, 255, 255, .12); }
+.nh-gv .nt-gv-bar em { background: #fff; }
+.nh-gv .nt-gv-bar em span { color: rgba(255, 250, 240, .8); }
+.nh-gv-v { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: .95rem; }
+.nh-gv-v span { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--v); color: #fff; font-size: .78rem; }
+.nh-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 14px; border-radius: 12px; background: rgba(255, 207, 61, .1); font-size: .9rem; }
+.nh-strip:empty { display: none; }
+.nh-hot { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
+.nh-hot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #ff6b4a; animation: livePulse 1.4s ease-in-out infinite; }
+.nh-hot b { font-family: var(--display); color: var(--yellow); font-size: 1.1rem; }
+.nh-strip b { color: var(--yellow); }
+.nh-go { justify-self: start; }
+.esp-home-msg { margin-bottom: 10px; }
+@media (max-width: 760px) {
+  .nh { padding: 14px; gap: 12px; }
+  .nh-k { display: none; }
+  .nh-head { align-items: flex-start; }
+  .nh-head h2 { font-size: clamp(1.3rem, 6.2vw, 1.7rem); text-shadow: 2px 2px 0 var(--red); }
+  .nh-esc { width: 70px; }
+  .nh-esc b { font-size: .82rem; }
+  .nh-g { grid-template-columns: 1fr; gap: 14px; }
+  .nh-gov { order: -1; }
+  .nh .nt-hemi { max-width: 250px; }
+  .nh-gv strong { font-size: 1.6rem; }
+  .nh-go { justify-self: stretch; justify-content: center; }
+}
+
+/* ---------- Nit electoral: pàgina en pestanyes ---------- */
+.nt-body { display: grid; gap: 16px; max-width: 1060px; width: 100%; margin: 0 auto; }
+.nt-tabs button { flex: none; font: inherit; padding: 8px 15px; border: 0; border-radius: 999px; background: transparent; font-weight: 800; font-size: .88rem; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.nt-tabs button:hover { background: color-mix(in srgb, var(--yellow) 60%, transparent); }
+.nt-tabs button.on { background: var(--ink); color: var(--card); }
+.nt-tabs button b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-left: 4px; border-radius: 99px; background: var(--red); color: #fff; font-size: .72rem; }
+.nt-kpis button { font: inherit; text-align: left; cursor: pointer; }
+.nt-jg { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.nt-jg > div:empty { display: none; }
+.nt-jg .card { margin: 0; }
+.nt-jugues { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.nt-body { max-width: none; }
+.nt-off { margin: 8px 0 0; padding: 8px 10px; border-radius: 10px; background: var(--paper); font-size: .82rem; color: var(--ink-2); line-height: 1.6; }
+.nt-off span { font-weight: 800; color: var(--muted); }
+.nt-off b { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); }
+.nt-off b i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }

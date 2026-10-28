@@ -26,7 +26,7 @@ const NIT_BLOCS = [
 ];
 const nitBloc = (d, b) => b.ids.reduce((a, k) => a + (d.seats[k] || 0), 0);
 // «A i B», «A, B i C»
-const nitAnd = (list) => (list.length < 2 ? list.join("") : `${list.slice(0, -1).join(", ")} i ${list[list.length - 1]}`);
+const nitAnd = (list) => (list.length < 2 ? list.join("") : `${list.slice(0, -1).join(", ")}${typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? " y " : " i "}${list[list.length - 1]}`);
 const nitN = (n) => fmt(Math.round(n));
 const nitPct = (x, d = 1) => espPct(x * 100, d);
 
@@ -35,7 +35,8 @@ const nitPct = (x, d = 1) => espPct(x * 100, d);
 function nitProv(vots, blanc, seats, escrutat = 100) {
   const ids = Object.keys(vots).filter((k) => k !== "altres" && vots[k] > 0);
   const valid = Object.values(vots).reduce((a, b) => a + b, 0) + (blanc || 0);
-  const ok = (k) => valid > 0 && vots[k] / valid >= 0.03;
+  // El 3 % amb enters (100 × vots ≥ 3 × vàlids): amb decimals, a la frontera s'equivocaria per un vot
+  const ok = (k) => valid > 0 && 100 * vots[k] >= 3 * valid;
   const q = [];
   ids.filter(ok).forEach((k) => { for (let d = 1; d <= seats; d++) q.push({ k, d, v: vots[k] / d }); });
   // En cas d'empat, la candidatura amb més vots (art. 163.1 LOREG)
@@ -55,13 +56,37 @@ function nitProv(vots, blanc, seats, escrutat = 100) {
     let n = Math.floor(A / hd) - v + 1;
     if (A % hd === 0 && A / hd > hv) n = A / hd - v; // empat de quocient: guanya qui té més vots totals
     if (!ok(k)) {
-      let t = Math.max(0, Math.ceil((valid * 0.03 - v) / 0.97));
-      while ((v + t) / (valid + t) < 0.03) t++;
+      // 100 × (v + t) ≥ 3 × (vàlids + t)  →  t ≥ (3 × vàlids − 100 × v) / 97
+      const t = Math.max(0, Math.ceil((3 * valid - 100 * v) / 97));
       n = Math.max(n, t);
     }
     if (n > 0) needs[k] = n;
   });
+  // La barrera del 3 %: si un partit amb escó en té just el 3 %, els vots que guanya un altre (que fan créixer els vàlids)
+  // el poden deixar per sota i fer-li perdre els escons. Aleshores es recompta de debò per trobar el mínim exacte.
+  const alloc = (vv) => {
+    const val = Object.values(vv).reduce((a, b) => a + b, 0) + (blanc || 0), qq = [];
+    Object.keys(vv).filter((k) => k !== "altres" && vv[k] > 0 && 100 * vv[k] >= 3 * val).forEach((k) => { for (let d = 1; d <= seats; d++) qq.push({ k, v: vv[k] / d }); });
+    qq.sort((a, b) => b.v - a.v || vv[b.k] - vv[a.k]);
+    const w = {};
+    qq.slice(0, seats).forEach((x) => { w[x.k] = (w[x.k] || 0) + 1; });
+    return { w, val };
+  };
+  const fragile = ids.filter((k) => won[k]).map((k) => ({ k, x: Math.floor((100 * vots[k] - 3 * valid) / 3) + 1 }));
+  Object.keys(needs).forEach((k) => {
+    if (!fragile.some((f) => f.k !== k && f.x < needs[k])) return;
+    let lo = 0, hi = needs[k];
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if ((alloc({ ...vots, [k]: vots[k] + mid }).w[k] || 0) > (won[k] || 0)) hi = mid; else lo = mid; }
+    needs[k] = hi;
+  });
   const ch = Object.entries(needs).sort((a, b) => a[1] - b[1])[0];
+  // Qui perdria l'escó si el rival hi arriba (normalment, qui té l'últim; amb la barrera, qui queda per sota del 3 %)
+  let victim = last?.k || null, barrier = false;
+  if (ch) {
+    const after = alloc({ ...vots, [ch[0]]: vots[ch[0]] + ch[1] });
+    const lost = ids.find((k) => k !== ch[0] && (after.w[k] || 0) < (won[k] || 0));
+    if (lost) { victim = lost; barrier = 100 * vots[lost] < 3 * after.val; }
+  }
   const margin = ch && valid ? ch[1] / valid : null;
   const left = 1 - Math.min(100, Math.max(0, escrutat)) / 100;
   const lvl = margin === null ? null : margin < 0.003 + 0.012 * left ? "fil" : margin < 0.01 + 0.04 * left ? "ajustat" : null;
@@ -70,7 +95,7 @@ function nitProv(vots, blanc, seats, escrutat = 100) {
   const ladder = q.slice(from, seats + 2).map((x, i) => ({ k: x.k, d: x.d, v: x.v, n: from + i + 1, in: from + i < seats }));
   // Fins on pot arribar el rival: el seu quocient següent respecte de l'últim que entra
   const chNext = ch ? vots[ch[0]] / ((won[ch[0]] || 0) + 1) : 0;
-  return { valid, won, holder: last?.k || null, lastQ: last?.v || 0, challenger: ch?.[0] || null, need: ch?.[1] || null, margin, lvl, needs, ladder, ratio: last ? Math.min(1, chNext / last.v) : 0 };
+  return { valid, won, victim, barrier, holder: last?.k || null, lastQ: last?.v || 0, challenger: ch?.[0] || null, need: ch?.[1] || null, margin, lvl, needs, ladder, ratio: last ? Math.min(1, chNext / last.v) : 0 };
 }
 
 // Resultats del motor sobre el format de l'escrutini: { escrutat, participacio, actualitzat, provs: [{ code, escrutat, vots, blanc }] }
@@ -104,7 +129,7 @@ function nitDerive(d) {
   d.range = {};
   Object.keys(d.seats).forEach((k) => { d.range[k] = [d.seats[k], d.seats[k]]; });
   d.ballen.forEach((p) => {
-    const h = p.an.holder, c = p.an.challenger;
+    const h = p.an.victim || p.an.holder, c = p.an.challenger;
     (d.range[h] ||= [d.seats[h] || 0, d.seats[h] || 0])[0]--;
     (d.range[c] ||= [d.seats[c] || 0, d.seats[c] || 0])[1]++;
   });
@@ -125,6 +150,35 @@ function nitSums(d) {
   return out.sort((a, b) => a.ids.length - b.ids.length || b.sum - a.sum);
 }
 const nitTwo = (d) => d.sums.filter((s) => s.ids.length <= 2);
+// Qui pot governar: les dues opcions de govern i els suports que necessitarien. Els suports possibles són els partits
+// que van votar cada investidura el 2023 (un fet, no una opinió): Feijóo, el setembre, i Sánchez, el novembre.
+const NIT_GOV = [
+  { id: "pp", core: ["pp", "vox"], pool: ["upn", "cc"], poolT: "els que van votar Feijóo el 2023" },
+  { id: "psoe", core: ["psoe", "fa"], pool: ["podemos", "erc", "junts", "bildu", "pnv", "bng", "cc"], poolT: "els que van investir Sánchez el 2023" },
+];
+function nitGov(d, g) {
+  const s = (k) => d.seats[k] || 0, lo = (k) => d.range[k]?.[0] ?? s(k), hi = (k) => d.range[k]?.[1] ?? s(k);
+  const sum = g.core.reduce((a, k) => a + s(k), 0);
+  const min = g.core.reduce((a, k) => a + lo(k), 0), max = g.core.reduce((a, k) => a + hi(k), 0);
+  const pool = g.pool.filter((k) => s(k) > 0).sort((a, b) => s(b) - s(a));
+  const all = sum + pool.reduce((a, k) => a + s(k), 0);
+  const out = { ...g, sum, min, max, pool, all, need: Math.max(0, NIT_MAJ - sum) };
+  if (sum >= NIT_MAJ) { out.st = min >= NIT_MAJ ? "maj" : "fil"; return out; }
+  if (all < NIT_MAJ) { out.st = all + pool.reduce((a, k) => a + (hi(k) - s(k)), 0) + (max - sum) >= NIT_MAJ ? "lluny-fil" : "no"; return out; }
+  out.st = "suports";
+  // Imprescindibles: sense ells, ni amb tots els altres suports s'hi arriba
+  out.key = pool.filter((k) => all - s(k) < NIT_MAJ);
+  // Les sumes més curtes (de menys partits) que hi arriben, sense cap partit que hi sobri
+  const combos = [];
+  for (let m = 1; m < 1 << pool.length; m++) {
+    const set = pool.filter((_, i) => m & (1 << i));
+    const t = sum + set.reduce((a, k) => a + s(k), 0);
+    if (t >= NIT_MAJ && set.every((k) => t - s(k) < NIT_MAJ)) combos.push({ ids: set, t });
+  }
+  combos.sort((a, b) => a.ids.length - b.ids.length || b.t - a.t);
+  out.combos = combos.filter((c) => c.ids.length === combos[0].ids.length).slice(0, 2);
+  return out;
+}
 // El titular de la nit, en dues frases (només aritmètica: qui va primer i quines sumes arriben a 176)
 function nitTitular(d) {
   const w = d.ranking[0];
@@ -190,7 +244,6 @@ function espSimulacre(progress) {
 // ---------- Estat de la pàgina ----------
 const Nit = { sel: null, party: null, map: "guanya", filter: null, all: false, coal: new Set() };
 const espCoal = Nit.coal;
-const espGames = () => ["diari", "majoria", "contrarellotge", "verificador"].map((id) => GAMES.find((g) => g.id === id)).filter(Boolean);
 const nitLive = () => ["nit", "despres"].includes(espFase()) && espResultsMode() !== "off";
 
 // ---------- Peces ----------
@@ -204,7 +257,9 @@ function nitHemi(d, ref = null) {
 }
 // Fila de la cursa: escons, forquilla (si n'hi ha), diferència amb el 2023 i vots
 function nitRace(d, { prev = null, open = null, compare = true } = {}) {
-  const rows = d.ranking.filter((k) => d.seats[k] || (d.range[k]?.[1] || 0) > 0 || d.tot[k] / d.valid >= 0.01);
+  // Només els partits amb escons; els altres que compten (1 % o més, o que en poden treure) van en una línia a sota
+  const rows = d.ranking.filter((k) => d.seats[k]);
+  const off = d.ranking.filter((k) => !d.seats[k] && ((d.range[k]?.[1] || 0) > 0 || d.tot[k] / d.valid >= 0.01));
   const top = Math.max(NIT_MAJ + 14, ...rows.map((k) => d.range[k]?.[1] || d.seats[k] || 0));
   const x = (n) => `${(Math.min(n, top) / top) * 100}%`;
   return `<div class="nt-race" style="--maj:${x(NIT_MAJ)}">${rows.map((k) => {
@@ -219,15 +274,15 @@ function nitRace(d, { prev = null, open = null, compare = true } = {}) {
       <span class="nt-row-d ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${diff === null ? "" : diff === 0 ? "=" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)}`}</span>
       <span class="nt-row-v">${d.valid ? espPct((d.tot[k] / d.valid) * 100) : ""}</span>
     </button>${open === k ? nitPartyFocus(d, k) : ""}`;
-  }).join("")}</div>`;
+  }).join("")}${off.length ? `<p class="nt-off"><span>Ara sense escó:</span> ${off.map((k) => `<b style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))}</b> ${espPct((d.tot[k] / d.valid) * 100)}${(d.range[k]?.[1] || 0) > 0 ? ` (en pot treure ${d.range[k][1]})` : ""}`).join(" · ")}</p>` : ""}</div>`;
 }
 // Un partit: on pot guanyar un escó i on en pot perdre un
 function nitPartyFocus(d, k) {
   const gain = d.provs.filter((p) => p.an.needs[k] && p.an.holder !== k).map((p) => ({ p, need: p.an.needs[k] })).sort((a, b) => a.need - b.need).slice(0, 3);
-  const lose = d.provs.filter((p) => p.an.holder === k && p.an.need).sort((a, b) => a.an.need - b.an.need).slice(0, 3);
+  const lose = d.provs.filter((p) => (p.an.victim || p.an.holder) === k && p.an.need).sort((a, b) => a.an.need - b.an.need).slice(0, 3);
   const line = (p, n, who) => `<li><b>${esc(p.name)}</b><span>${who}</span><em>${nitN(n)} vots <small>(${nitPct(n / p.valid)})</small></em></li>`;
   return `<div class="nt-focus" style="--c:${nitParty(k).color}">
-    <div><h4>On pot guanyar un escó</h4>${gain.length ? `<ul>${gain.map(({ p, need }) => line(p, need, `li'l prendria a ${esc(nitSig(p.an.holder))}`)).join("")}</ul>` : `<p class="muted">Enlloc a prop.</p>`}</div>
+    <div><h4>On pot guanyar un escó</h4>${gain.length ? `<ul>${gain.map(({ p, need }) => line(p, need, `li'l prendria a ${esc(nitSig(p.an.victim || p.an.holder))}`)).join("")}</ul>` : `<p class="muted">Enlloc a prop.</p>`}</div>
     <div><h4>On en pot perdre un</h4>${lose.length ? `<ul>${lose.map((p) => line(p, p.an.need, `l'aspira ${esc(nitSig(p.an.challenger))}`)).join("")}</ul>` : `<p class="muted">No té cap últim escó.</p>`}</div>
   </div>`;
 }
@@ -236,9 +291,10 @@ function nitDuel(p, { flip = false, year = "" } = {}) {
   const a = p.an;
   return `<button type="button" class="nt-duel lvl-${a.lvl || "segur"}" data-prov="${p.i}">
     <span class="nt-duel-h"><b>${esc(p.name)}</b><small>${p.seats} ${p.seats === 1 ? "escó" : "escons"}${p.escrutat < 100 ? ` · ${espPct(p.escrutat, 0)} escrutat` : year ? ` · ${esc(year)}` : ""}</small>${a.lvl ? `<em class="nt-badge">${a.lvl === "fil" ? "Al fil" : "Ajustat"}</em>` : ""}</span>
-    <span class="nt-vs">${nitChip(a.holder, "has")}<span class="nt-vs-a" aria-hidden="true">⇄</span>${nitChip(a.challenger)}</span>
+    <span class="nt-vs">${nitChip(a.victim || a.holder, "has")}<span class="nt-vs-a" aria-hidden="true">⇄</span>${nitChip(a.challenger)}</span>
     <span class="nt-need">${year ? `A ${esc(nitSig(a.challenger))} li van faltar` : `A ${esc(nitSig(a.challenger))} li falten`} <b>${nitN(a.need)}</b> vots <small>(${nitPct(a.margin, 2)})</small></span>
     <span class="nt-tug" aria-hidden="true"><i style="width:${(a.ratio * 100).toFixed(1)}%;--c:${nitParty(a.challenger).color}"></i></span>
+    ${a.barrier ? `<span class="nt-barrier">${esc(nitSig(a.victim))} quedaria per sota del 3 % i perdria l'escó</span>` : ""}
     ${flip ? `<span class="nt-flip">↻ Acaba de canviar de mans</span>` : ""}
   </button>`;
 }
@@ -262,25 +318,19 @@ function renderNit(arg) {
   root.innerHTML = `${espPreviewBar()}
     <div class="nt">
       <header class="nt-hero" data-hero></header>
+      <div data-gov></div>
       <nav class="nt-tabs" aria-label="Seccions de la nit electoral" data-tabs></nav>
-      <div class="nt-cols">
+      <div class="nt-body">
         <div class="nt-main" data-main></div>
-        <aside class="nt-rail">
-          <div data-pred-box></div>
-          <div data-pron-box></div>
-          <div data-porra-box></div>
-          <section class="card esp-play">
-            <h2 class="section-title sm">🕹️ Mentre s'escruta</h2>
-            <p class="muted">${f === "nit" ? "Els resultats s'actualitzen sols. Mentrestant, juga:" : "Juga mentre esperes:"}</p>
-            <div class="esp-play-list">${espGames().map((g) => `<a href="#joc/${g.id}" style="--c:${g.color}"><span class="esp-play-i">${g.icon}</span><span><b>${esc(g.title)}</b><small>${esc(g.tagline || g.kicker || "")}</small></span></a>`).join("")}<a href="#simulador" style="--c:#3554ff"><span class="esp-play-i">🗳️</span><span><b>Simuladors</b><small>Guanya unes eleccions o un debat</small></span></a></div>
-            <button class="btn ghost" type="button" data-share>Comparteix la nit electoral</button>
-          </section>
-        </aside>
+        <section class="card nt-sec nt-jugues" id="nt-jugues" hidden>
+          <div class="nt-jg"><div data-pred-box></div><div data-pron-box></div><div data-porra-box></div></div>
+        </section>
       </div>
       <p class="sim-fiction" data-src></p>
     </div>`;
   espBind(root);
-  $("[data-share]", root).addEventListener("click", async () => {
+  root.addEventListener("click", async (e) => {
+    if (!e.target.closest("[data-share]")) return;
     const t = nitLive() && Esp.data ? nitTitular(Esp.data) : null;
     const text = t ? `${t.t1}. ${t.t2} Segueix la nit electoral en directe 🗳️` : "Segueix la nit electoral del 29N en directe a Política en Joc 🗳️";
     const url = `${location.origin}${location.pathname}#nit`;
@@ -288,10 +338,11 @@ function renderNit(arg) {
   });
   // Delegació: tot el que es toca dins de la pàgina
   root.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-party],[data-prov],[data-map],[data-filter],[data-all],[data-coal],[data-coal-clear],[data-sum]");
+    const t = e.target.closest("[data-tab],[data-party],[data-prov],[data-map],[data-filter],[data-all],[data-coal],[data-coal-clear],[data-sum]");
     if (!t || !root.contains(t)) return;
-    if (t.dataset.party) { Nit.party = Nit.party === t.dataset.party ? null : t.dataset.party; espPaint(); }
-    else if (t.dataset.prov) { Nit.sel = Number(t.dataset.prov); espPaint(); $("#nt-mapa", root)?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    if (t.dataset.tab) nitTab(t.dataset.tab);
+    else if (t.dataset.party) { Nit.party = Nit.party === t.dataset.party ? null : t.dataset.party; espPaint(); }
+    else if (t.dataset.prov) { Nit.sel = Number(t.dataset.prov); nitTab("mapa"); }
     else if (t.dataset.map) { Nit.map = t.dataset.map; espPaint(); }
     else if (t.dataset.filter !== undefined) { Nit.filter = t.dataset.filter || null; Nit.all = false; espPaint(); }
     else if (t.dataset.all !== undefined) { Nit.all = !Nit.all; espPaint(); }
@@ -300,11 +351,20 @@ function renderNit(arg) {
     else if (t.dataset.sum) { Nit.coal.clear(); t.dataset.sum.split(",").forEach((k) => Nit.coal.add(k)); espPaint(); }
   });
   Esp.nitArg = arg;
+  // Enllaços directes (#nit/porra, #nit/joc…): obren la pestanya
+  if (arg) Nit.tab = ["porra", "prediccions"].includes(arg) ? "jugues" : arg;
   espPaint(true);
   if (espResultsMode() !== "off" && !Esp.data) espFetchResults().then(() => { if (espView() === "nit") espPaint(); });
   espSchedule();
 }
 
+// Canvia de pestanya i, si la barra de pestanyes ha quedat amunt, hi torna
+function nitTab(id) {
+  Nit.tab = id;
+  espPaint();
+  const bar = $("#nit-page [data-tabs]");
+  if (bar && bar.getBoundingClientRect().top < 60) window.scrollTo({ top: bar.getBoundingClientRect().top + scrollY - 70, behavior: "smooth" });
+}
 function espPaint(first = false) {
   const root = $("#nit-page");
   if (!root || !$("[data-main]", root)) return;
@@ -312,12 +372,21 @@ function espPaint(first = false) {
   const keepScroll = window.scrollY;
   const ref = nit2023();
   $("[data-hero]", root).innerHTML = live ? nitHeroNight(f, d) : nitHeroDay(f);
-  const secs = live && d ? [["nt-congres", "El Congrés"], ["nt-joc", "Escons en joc"], ["nt-mapa", "Mapa"], ["nt-majories", "Majories"], ["nt-hora", "Última hora"]]
-    : [["nt-com", "Com seguir la nit"], ["nt-joc", "Escons a vigilar"], ["nt-mapa", "Mapa"], ["nt-congres", "El Congrés del 2023"]];
-  $("[data-tabs]", root).innerHTML = secs.map(([id, t]) => `<a href="#${id}" data-jump="${id}">${esc(t)}${id === "nt-joc" && d?.ballen.length ? ` <b>${d.ballen.length}</b>` : ""}</a>`).join("");
-  $$("[data-jump]", root).forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); $(`#${a.dataset.jump}`, root)?.scrollIntoView({ behavior: "smooth", block: "start" }); }));
+  $("[data-gov]", root).innerHTML = live && d ? nitGovHtml(d) : "";
+  // Pestanyes: [id, títol, secció]
+  const play = espPorraState() === "oberta" && !live ? "La teva porra" : "Les teves prediccions";
+  const tabs = live && d ? [["resultats", "El Congrés", "nt-congres"], ["joc", "Escons en joc", "nt-joc"], ["mapa", "Mapa", "nt-mapa"], ["majories", "Majories", "nt-majories"], ["hora", "Última hora", "nt-hora"], ["jugues", play, "nt-jugues"]]
+    : live ? [["espera", "Escrutini", "nt-espera"], ["jugues", play, "nt-jugues"]]
+    : [["com", "Com seguir la nit", "nt-com"], ["joc", "Escons a vigilar", "nt-joc"], ["mapa", "Mapa del 2023", "nt-mapa"], ["congres", "El Congrés del 2023", "nt-congres"], ["jugues", play, "nt-jugues"]];
+  if (!tabs.some(([id]) => id === Nit.tab)) Nit.tab = tabs[0][0];
+  const cur = tabs.find(([id]) => id === Nit.tab);
+  const count = (id) => (id === "joc" ? (live ? d?.ballen.length : ref.ballen.length) : id === "hora" ? Esp.feed.length : 0);
+  $("[data-tabs]", root).innerHTML = tabs.map(([id, t]) => `<button type="button" role="tab" aria-selected="${id === Nit.tab}" class="${id === Nit.tab ? "on" : ""}" data-tab="${id}">${esc(t)}${count(id) ? ` <b>${count(id)}</b>` : ""}</button>`).join("");
   const main = $("[data-main]", root);
   main.innerHTML = live ? (d ? nitMainNight(d, ref) : nitWaiting()) : nitMainDay(ref);
+  // Només es veu la secció de la pestanya triada
+  $$(".nt-sec, .esp-wait", main).forEach((s) => { s.hidden = s.id !== cur[2]; });
+  $("#nt-jugues", root).hidden = cur[2] !== "nt-jugues";
   // El mapa
   const svg = $(".nt-map .sim-map", main);
   if (svg) {
@@ -346,33 +415,31 @@ function espPaint(first = false) {
     ? `Dades: ${d?.simulacre ? "simulacre a partir dels vots del 2023, amb canvis inventats, només per provar la pàgina." : "escrutini provisional del Ministeri de l'Interior. Els resultats oficials són els que proclama la Junta Electoral."} Escons en joc: últims escons amb un marge de menys de l'1 % dels vots vàlids (més ample mentre queda per escrutar).`
     : "Dades del 2023: Ministeri de l'Interior. Escons a vigilar: els últims escons que el 2023 es van decidir per menys vots.";
   if (!first) window.scrollTo({ top: keepScroll });
-  if (first && Esp.nitArg) setTimeout(() => $(Esp.nitArg === "porra" ? "#esp-porra" : Esp.nitArg === "prediccions" ? "#esp-pred" : `#nt-${Esp.nitArg}`, root)?.scrollIntoView({ block: "start", behavior: "smooth" }), 150);
+  if (first && Esp.nitArg) setTimeout(() => $(Esp.nitArg === "porra" ? "#esp-porra" : Esp.nitArg === "prediccions" ? "#esp-pred" : "[data-tabs]", root)?.scrollIntoView({ block: "start", behavior: "smooth" }), 150);
 }
 
 // ---------- Marcador ----------
 function nitHeroNight(f, d) {
   const t = d ? nitTitular(d) : null;
   const p23 = 66.6, part = d?.participacio;
-  return `<div class="nt-hero-top"><span class="esp-onair">${f === "nit" ? `<span class="dot-live"></span>En directe` : "Resultats"}</span>${d?.simulacre ? `<span class="esp-simtag">Simulacre · dades inventades</span>` : ""}<span class="esp-upd">${d ? `Actualitzat ${espAgo(d.actualitzat || Esp.fetchedAt)}` : ""}</span></div>
+  return `<div class="nt-hero-top"><span class="esp-onair">${f === "nit" ? `<span class="dot-live"></span>En directe` : "Resultats"}</span>${d?.simulacre ? `<span class="esp-simtag">Simulacre · dades inventades</span>` : ""}<span class="esp-upd">${d ? `Actualitzat ${espAgo(d.actualitzat || Esp.fetchedAt)}` : ""}</span><button type="button" class="nt-share" data-share>Comparteix</button></div>
     <div class="nt-hero-main">
       <div class="nt-hero-t"><p class="nt-k">Eleccions generals · 29 de novembre de 2026</p>
         <h1>${t ? esc(t.t1) : f === "nit" ? "Nit electoral" : "Resultats del 29N"}</h1>
-        ${t ? `<p class="nt-sub">${esc(t.t2)}</p>` : `<p class="nt-sub">${f === "nit" ? "Els primers resultats arribaran en uns minuts." : ""}</p>`}
+        ${t ? "" : `<p class="nt-sub">${f === "nit" ? "Els primers resultats arribaran en uns minuts." : ""}</p>`}
         ${espMsg()}</div>
       ${d ? `<div class="nt-ring">${espRing(d.escrutat)}<div><b>${espPct(d.escrutat)}</b><small>escrutat</small></div></div>` : ""}
     </div>
     ${d ? `<div class="nt-kpis">
       <div><small>Participació</small><b>${part ? espPct(part, 2) : "—"}</b>${part ? `<span class="${part >= p23 ? "up" : "down"}">${part >= p23 ? "+" : "−"}${espPct(Math.abs(part - p23), 2)} vs. 2023</span>` : ""}</div>
-      <a href="#nt-joc" data-jump="nt-joc" class="${d.ballen.length ? "hot" : ""}"><small>Escons en joc</small><b>${d.ballen.length}</b><span>${d.ballen.length ? "poden canviar de mans" : "cap ara mateix"}</span></a>
-      <div><small>Primera força</small><b>${d.ranking[0] && d.seats[d.ranking[0]] ? esc(nitSig(d.ranking[0])) : "—"}</b><span>${d.ranking[0] ? `${d.range[d.ranking[0]]?.[0] ?? 0}–${d.range[d.ranking[0]]?.[1] ?? 0} escons` : ""}</span></div>
-      <div><small>Majoria absoluta</small><b>176</b><span>de 350 escons</span></div>
+      <button type="button" data-tab="joc" class="${d.ballen.length ? "hot" : ""}"><small>Escons en joc</small><b>${d.ballen.length}</b><span>${d.ballen.length ? "poden canviar de mans" : "cap ara mateix"}</span></button>
     </div>
     ${Esp.feed[0] ? `<p class="nt-tick"><span>⚡ Última hora</span>${esc(Esp.feed[0].text)}</p>` : ""}` : ""}`;
 }
 function nitHeroDay(f) {
   const t = espNow(), open = t >= ESP_T.obre, onDay = t >= ESP_T.dia && t < ESP_T.nit;
   const rows = (Esp.cfg.participacio || []).filter((x) => x.v !== null && x.v !== "" && x.v !== undefined);
-  return `<div class="nt-hero-top"><span class="esp-onair">${f === "dia" ? `<span class="dot-live"></span>Jornada electoral` : f === "previa" ? "Jornada de reflexió" : "29N"}</span></div>
+  return `<div class="nt-hero-top"><span class="esp-onair">${f === "dia" ? `<span class="dot-live"></span>Jornada electoral` : f === "previa" ? "Jornada de reflexió" : "29N"}</span><button type="button" class="nt-share" data-share>Comparteix</button></div>
     <div class="nt-hero-main"><div class="nt-hero-t"><p class="nt-k">Eleccions generals · 29 de novembre de 2026</p>
       <h1>${f === "dia" ? "Avui es vota" : f === "previa" ? "Demà es vota" : "La nit electoral, aquí"}</h1>
       <p class="nt-sub">${onDay ? (open ? `Els col·legis tanquen d'aquí a <b>${espCountdown(ESP_T.nit)}</b>. A les 20:00 comença l'escrutini en directe aquí mateix.` : `Els col·legis obren d'aquí a <b>${espCountdown(ESP_T.obre)}</b> i tanquen a les 20:00.`) : "Els col·legis obren a les 9:00 i tanquen a les 20:00. Després, l'escrutini en directe aquí mateix."}</p>
@@ -380,21 +447,94 @@ function nitHeroDay(f) {
     <div class="nt-kpis">
       ${rows.map((x) => { const diff = x.ref ? Number(x.v) - Number(x.ref) : null; return `<div><small>Participació a les ${esc(x.h)}</small><b>${espPct(Number(x.v), 2)}</b>${diff !== null ? `<span class="${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : "−"}${espPct(Math.abs(diff), 2)} vs. 2023</span>` : ""}</div>`; }).join("")}
       <div><small>Tanquen els col·legis</small><b>20:00</b><span>${onDay && open ? `d'aquí a ${espCountdown(ESP_T.nit)}` : "a Canàries, a les 21:00 peninsulars"}</span></div>
-      <a href="#nt-joc" data-jump="nt-joc" class="hot"><small>Escons a vigilar</small><b>${nit2023().ballen.length}</b><span>segons el 2023</span></a>
+      <button type="button" data-tab="joc" class="hot"><small>Escons a vigilar</small><b>${nit2023().ballen.length}</b><span>segons el 2023</span></button>
       <div><small>Majoria absoluta</small><b>176</b><span>de 350 escons</span></div>
     </div>`;
 }
 
+// ---------- Qui pot governar (sempre a dalt) ----------
+function nitGovHtml(d) {
+  const x = (v) => `${(Math.min(v, 260) / 260) * 100}%`;
+  const names = (ids) => nitAnd(ids.map(nitSig));
+  const card = (g) => {
+    const verdict = {
+      maj: ["ok", "✔", "Majoria absoluta"],
+      fil: ["fil", "✔", "Majoria, però al fil"],
+      suports: ["sup", "+", `Poden arribar-hi amb suports: en falten ${g.need}`],
+      "lluny-fil": ["no", "✘", `No hi arriben: en falten ${g.need}`],
+      no: ["no", "✘", `No hi arriben: en falten ${g.need}`],
+    }[g.st];
+    const range = g.max > g.min ? `Entre ${g.min} i ${g.max} segons com acabin els escons en joc.` : "";
+    let detail = "";
+    if (g.st === "fil") detail = `<p>${esc(range)} Si cauen els escons en joc, es quedarien en ${g.min}.</p>`;
+    else if (g.st === "maj") detail = range ? `<p>${esc(range)}</p>` : "";
+    else if (g.st === "suports") detail = `
+      <p class="nt-gv-need">Amb tots ${esc(g.poolT)} sumarien <b>${g.all}</b>.</p>
+      ${g.key.length ? `<p class="nt-gv-key"><span>Imprescindibles</span>${g.key.map((k) => nitChip(k)).join("")}</p>` : ""}
+      ${g.combos.length && !(g.combos.length === 1 && g.combos[0].ids.length === g.key.length) ? `<p class="nt-gv-min"><span>La suma més curta</span>${g.combos.map((c) => `<em>+ ${c.ids.map((k) => nitChip(k)).join(" + ")} = <b>${c.t}</b></em>`).join("<i>o</i>")}</p>` : ""}`;
+    else detail = `<p>Amb tots ${esc(g.poolT)} (${esc(names(g.pool)) || "cap amb escons"}) sumarien ${g.all}: en faltarien ${NIT_MAJ - g.all}.${g.st === "lluny-fil" ? " Només hi podrien arribar si els escons en joc els cauen tots a favor." : ""}</p>`;
+    return `<article class="nt-gv v-${verdict[0]}">
+      <header><span class="nt-gv-p">${g.core.map((k) => nitChip(k, "has")).join("<b>+</b>")}</span><strong>${g.sum}</strong></header>
+      <div class="nt-gv-bar"><i style="width:${x(g.sum)}">${g.core.map((k) => `<s style="flex:${d.seats[k] || 0};background:${nitParty(k).color}"></s>`).join("")}</i>${g.max > g.min ? `<u style="left:${x(g.min)};width:calc(${x(g.max)} - ${x(g.min)})"></u>` : ""}<em style="left:${x(NIT_MAJ)}"><span>176</span></em></div>
+      <p class="nt-gv-v"><span>${verdict[1]}</span>${esc(verdict[2])}</p>
+      ${detail}
+    </article>`;
+  };
+  return `<section class="nt-govern" id="nt-govern" aria-label="Qui pot governar">
+    <h2>Qui pot governar? <small>${d.escrutat < 100 ? `amb el ${espPct(d.escrutat)} escrutat` : "escrutini acabat"}</small></h2>
+    <div class="nt-gv-g">${NIT_GOV.map((g) => card(nitGov(d, g))).join("")}</div>
+    <p class="nt-gv-note">Suports possibles: els partits que van votar cada investidura el 2023. Majoria absoluta: 176 de 350.${d.seats.salf ? ` SALF, que no hi era, en té ${d.seats.salf}.` : ""}</p>
+  </section>`;
+}
+
+// ---------- Portada: el marcador de la nit ----------
+function nitHomeHtml(d, live) {
+  const t = nitTitular(d);
+  const ids = Object.keys(d.seats).filter((k) => d.seats[k]).sort((a, b) => d.seats[b] - d.seats[a]);
+  const top = ids.slice(0, 6), more = ids.length - top.length;
+  const tight = d.ballen[0];
+  const verdict = (g) => ({ maj: ["ok", "✔", "Majoria absoluta"], fil: ["fil", "✔", "Majoria, però al fil"], suports: ["sup", "+", `Amb suports: en falten ${g.need}`] }[g.st] || ["no", "✘", `No hi arriben: en falten ${g.need}`]);
+  const x = (v) => `${(Math.min(v, 260) / 260) * 100}%`;
+  return `<section class="nh" aria-label="Nit electoral">
+    <header class="nh-top">
+      <span class="esp-onair">${live ? `<span class="dot-live"></span>En directe` : "Resultats"}</span>${d.simulacre ? `<span class="esp-simtag">Simulacre</span>` : ""}
+      <span class="nh-k">Nit electoral · 29N</span>
+    </header>
+    <div class="nh-head">
+      <h2>${t ? esc(t.t1) : "Nit electoral"}</h2>
+      <div class="nh-esc">${espRing(d.escrutat)}<div><b>${espPct(d.escrutat)}</b><small>escrutat</small></div></div>
+    </div>
+    <div class="nh-g">
+      <div class="nh-congres">${nitHemi(d)}
+        <ul class="nh-leg">${top.map((k) => { const ref = ESP_2023[k]?.[0], df = ref === undefined ? null : d.seats[k] - ref; return `<li style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))}<b>${d.seats[k]}</b>${df ? `<small class="${df > 0 ? "up" : "down"}">${df > 0 ? "+" : "−"}${Math.abs(df)}</small>` : ""}</li>`; }).join("")}${more > 0 ? `<li class="more">+${more}</li>` : ""}</ul>
+      </div>
+      <div class="nh-gov">
+        <p class="nh-gov-h">Qui pot governar?</p>
+        ${NIT_GOV.map((g0) => { const g = nitGov(d, g0), v = verdict(g); return `<a class="nh-gv v-${v[0]}" href="#nit">
+          <span class="nh-gv-p">${g.core.map((k) => nitChip(k, "has")).join("<b>+</b>")}</span><strong>${g.sum}</strong>
+          <span class="nt-gv-bar"><i style="width:${x(g.sum)}">${g.core.map((k) => `<s style="flex:${d.seats[k] || 0};background:${nitParty(k).color}"></s>`).join("")}</i><em style="left:${x(NIT_MAJ)}"><span>176</span></em></span>
+          <span class="nh-gv-v"><span>${v[1]}</span>${esc(v[2])}</span>
+        </a>`; }).join("")}
+      </div>
+    </div>
+    <div class="nh-strip">
+      ${d.ballen.length ? `<span class="nh-hot"><b>${d.ballen.length}</b> ${d.ballen.length === 1 ? "escó en joc" : "escons en joc"}</span>` : ""}
+      ${tight ? `<span>El més ajustat: <b>${esc(tight.name)}</b>, a ${esc(nitSig(tight.an.challenger))} li falten ${nitN(tight.an.need)} vots</span>` : ""}
+    </div>
+    <a class="btn primary nh-go" href="#nit">${live ? "Segueix la nit en directe" : "Resultats i majories"} →</a>
+  </section>`;
+}
+
 // ---------- Contingut: la nit ----------
 function nitWaiting() {
-  return `<section class="card esp-wait"><h2 class="section-title sm">Esperant les primeres dades</h2><p>Encara no hi ha dades de l'escrutini. Aquesta pàgina s'actualitza sola: no cal que recarreguis.</p><div class="esp-skel"><span></span><span></span><span></span></div></section>`;
+  return `<section class="card esp-wait" id="nt-espera"><h2 class="section-title sm">Esperant les primeres dades</h2><p>Encara no hi ha dades de l'escrutini. Aquesta pàgina s'actualitza sola: no cal que recarreguis.</p><div class="esp-skel"><span></span><span></span><span></span></div></section>`;
 }
 function nitMainNight(d, ref) {
   const prev = Esp.prev;
   // Escons que acaben de canviar de mans (respecte a l'actualització anterior)
   const flipped = new Set(prev ? d.provs.filter((p) => { const o = prev.provs.find((x) => x.code === p.code); return o && o.an.holder && p.an.holder && o.an.holder !== p.an.holder; }).map((p) => p.code) : []);
-  const involved = [...new Set(d.ballen.flatMap((p) => [p.an.holder, p.an.challenger]))].sort((a, b) => (d.seats[b] || 0) - (d.seats[a] || 0));
-  const list = Nit.filter ? d.ballen.filter((p) => p.an.holder === Nit.filter || p.an.challenger === Nit.filter) : d.ballen;
+  const involved = [...new Set(d.ballen.flatMap((p) => [p.an.victim || p.an.holder, p.an.challenger]))].sort((a, b) => (d.seats[b] || 0) - (d.seats[a] || 0));
+  const list = Nit.filter ? d.ballen.filter((p) => (p.an.victim || p.an.holder) === Nit.filter || p.an.challenger === Nit.filter) : d.ballen;
   const shown = Nit.all ? list : list.slice(0, 6);
   const sel = Nit.sel !== null ? d.provs.find((p) => p.i === Nit.sel) : d.ballen[0] || null;
   const coalIds = d.ranking.filter((k) => d.seats[k]);
@@ -431,13 +571,7 @@ function nitMainNight(d, ref) {
 
     <section class="card nt-sec nt-maj" id="nt-majories">
       <div class="nt-sec-h"><h2 class="section-title sm">🤝 La majoria: 176</h2></div>
-      <h3 class="nt-h3">Els blocs de la investidura del 2023</h3>
-      <div class="nt-blocs">${bl.map((b) => `<button type="button" class="nt-bloc ${b.n >= NIT_MAJ ? "maj" : ""}" data-sum="${b.ids.filter((k) => d.seats[k]).join(",")}">
-        <span class="nt-bloc-t">${esc(b.t)}<small>${esc(nitAnd(b.ids.filter((k) => d.seats[k]).map(nitSig)))}</small></span>
-        <b>${b.n}</b>
-        <span class="nt-bloc-bar"><i style="width:${(b.n / 350) * 100}%;${b.id === "si" ? "" : "--bc:#2f6fe4"}"></i>${b.max > b.min ? `<u style="left:${(b.min / 350) * 100}%;width:${((b.max - b.min) / 350) * 100}%"></u>` : ""}<em style="left:${(NIT_MAJ / 350) * 100}%"></em></span>
-        <small class="nt-bloc-s">${b.n >= NIT_MAJ ? (b.min < NIT_MAJ ? `Majoria, però al fil (${b.min}–${b.max})` : "Majoria absoluta") : `A ${NIT_MAJ - b.n} de la majoria${b.max >= NIT_MAJ ? " (hi pot arribar amb escons en joc)" : ""}`}</small>
-      </button>`).join("")}${rest > 0 ? `<p class="muted nt-note">Altres partits (no hi eren el 2023): ${rest} ${rest === 1 ? "escó" : "escons"}.</p>` : ""}</div>
+      <p class="muted">Qui pot governar, amb els suports necessaris, és a dalt de tot. Aquí, les sumes de dos partits i el teu propi càlcul.</p>
       <h3 class="nt-h3">Amb un sol soci</h3>
       ${sums.length ? `<div class="nt-sums">${sums.map((s) => `<button type="button" class="nt-sum st-${s.st}" data-sum="${s.ids.join(",")}"><span class="nt-sum-p">${s.ids.map((k) => nitChip(k)).join("")}</span><b>${s.sum}</b><em>${s.ids.length === 1 ? "Sol" : s.st === "ok" ? "Segura" : `Al fil · ${s.min} si cauen els escons en joc`}</em></button>`).join("")}</div>` : `<p class="nt-empty">Cap partit arriba a 176 amb un sol soci.</p>`}
       <p class="muted nt-note">És aritmètica, no cap pronòstic de pactes.</p>
@@ -495,14 +629,14 @@ espEvents = function (a, b) {
   espEventsBase(a, b);
   const add = (kind, text) => Esp.feed.unshift({ kind, text, t: Date.now() });
   // En entrar a mitja nit: d'on venim
-  if (!a && b?.ballen?.length) { const p = b.ballen[0]; add("fil", `${b.ballen.length} ${b.ballen.length === 1 ? "escó en joc" : "escons en joc"}. El més ajustat, a ${p.name}: a ${nitSig(p.an.challenger)} li falten ${nitN(p.an.need)} vots per prendre'l a ${nitSig(p.an.holder)}.`); }
+  if (!a && b?.ballen?.length) { const p = b.ballen[0]; add("fil", `${b.ballen.length} ${b.ballen.length === 1 ? "escó en joc" : "escons en joc"}. El més ajustat, a ${p.name}: a ${nitSig(p.an.challenger)} li falten ${nitN(p.an.need)} vots per prendre'l a ${nitSig(p.an.victim || p.an.holder)}.`); }
   if (!a || !b) return;
   let n = 0;
   b.provs.forEach((p) => {
     const o = a.provs.find((x) => x.code === p.code);
     if (!o || n >= 3 || p.escrutat < 5) return;
     if (o.an.holder && p.an.holder && o.an.holder !== p.an.holder) { add("gir", `A ${p.name}, ${nitSig(p.an.holder)} pren l'últim escó a ${nitSig(o.an.holder)}.`); n++; }
-    else if (p.an.lvl === "fil" && o.an.lvl !== "fil" && p.an.challenger) { add("fil", `Escó al fil a ${p.name}: a ${nitSig(p.an.challenger)} li falten ${nitN(p.an.need)} vots per prendre'l a ${nitSig(p.an.holder)}.`); n++; }
+    else if (p.an.lvl === "fil" && o.an.lvl !== "fil" && p.an.challenger) { add("fil", `Escó al fil a ${p.name}: a ${nitSig(p.an.challenger)} li falten ${nitN(p.an.need)} vots per prendre'l a ${nitSig(p.an.victim || p.an.holder)}.`); n++; }
   });
   Esp.feed = Esp.feed.slice(0, 30);
 };

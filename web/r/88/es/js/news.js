@@ -41,16 +41,16 @@ const NW_ART = {
 
 // Temes, en ordre de prioritat: un titular es classifica amb el primer que coincideix
 const NW_TOPICS = [
-  { k: "enquestes", label: "Enquestes", c: "#3554ff", icon: `<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>`, re: /encuest|enquest|sondeo|sondeig|\bCIS\b|intención de voto|intenció de vot|barómetro|baròmetre/i },
-  { k: "habitatge", label: "Habitatge", c: "#f59f24", icon: `<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>`, re: /vivienda|habitatge|alquiler|lloguer|hipotec|desahuci|desnonament|okupa|ocupes|inquilin|llogater/i },
-  { k: "immigracio", label: "Immigració", c: "#0f9a83", icon: `<path d="M3 17l2-6h14l2 6"/><path d="M12 11V4l5 5"/><path d="M2 21c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/>`, re: /inmigra|immigra|migrant|frontera|patera|pastera|cayuco|caiuc|regulariza|regularitza|menores no acompañados|menors no acompanyats|\basilo\b|extranjer/i },
-  { k: "justicia", label: "Justícia", c: "#7b3fe4", icon: `<path d="M12 3v18M5 7h14M5 7l-3 7a3.5 3.5 0 006 0zM19 7l-3 7a3.5 3.5 0 006 0z"/>`, re: /\bjuez|\bjueza|\bjutge|tribunal|supremo|\bsuprem|fiscal\b|fiscalía|fiscalia|juicio|judici|condenad|condemnat|imputad|investigad|corrupci|\bUCO\b|querella|Koldo|Ábalos|Abalos|Cerdán|Cerdan|prisión|presó|sentencia|sentència|Constitucional|Audiencia|Audiència|\bTSJ/i },
-  { k: "energia", label: "Energia i clima", c: "#3f8f45", icon: `<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>`, re: /energ|apagón|apagada|nuclear|renovabl|clima|emisiones|emissions|\bdana\b|incendi|sequ[ií]a|sequera/i },
-  { k: "economia", label: "Economia", c: "#00a37a", icon: `<circle cx="12" cy="12" r="9"/><path d="M15 8.5a4 4 0 100 7M7 11h6M7 13.5h6"/>`, re: /econom|impuest|impost|pensi|salari|\bsous?\b|\bparo\b|\batur\b|empleo|\bPIB\b|inflaci|deuda|\bdeute|presupuest|pressupost|empresa|\bbanc|IRPF|\bIVA\b|autónom|autònom|ayudas|\bajuts|precios|preus/i },
-  { k: "territori", label: "Territori", c: "#20b8c8", icon: `<path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2z"/><path d="M9 4v14M15 6v14"/>`, re: /catalu|puigdemont|amnist|independen|procés|generalitat|junqueras|euskadi|país vasco|país basc|galicia|galícia|autonom|financiación|finançament|\bjunts\b|\bERC\b|bildu|\bPNV\b|\bBNG\b|exili/i },
+  { k: "enquestes", label: "Encuestas", c: "#3554ff", icon: `<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>`, re: /encuest|enquest|sondeo|sondeig|\bCIS\b|intención de voto|intenció de vot|barómetro|baròmetre/i },
+  { k: "habitatge", label: "Vivienda", c: "#f59f24", icon: `<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>`, re: /vivienda|habitatge|alquiler|lloguer|hipotec|desahuci|desnonament|okupa|ocupes|inquilin|llogater/i },
+  { k: "immigracio", label: "Inmigración", c: "#0f9a83", icon: `<path d="M3 17l2-6h14l2 6"/><path d="M12 11V4l5 5"/><path d="M2 21c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/>`, re: /inmigra|immigra|migrant|frontera|patera|pastera|cayuco|caiuc|regulariza|regularitza|menores no acompañados|menors no acompanyats|\basilo\b|extranjer/i },
+  { k: "justicia", label: "Justicia", c: "#7b3fe4", icon: `<path d="M12 3v18M5 7h14M5 7l-3 7a3.5 3.5 0 006 0zM19 7l-3 7a3.5 3.5 0 006 0z"/>`, re: /\bjuez|\bjueza|\bjutge|tribunal|supremo|\bsuprem|fiscal\b|fiscalía|fiscalia|juicio|judici|condenad|condemnat|imputad|investigad|corrupci|\bUCO\b|querella|Koldo|Ábalos|Abalos|Cerdán|Cerdan|prisión|presó|sentencia|sentència|Constitucional|Audiencia|Audiència|\bTSJ/i },
+  { k: "energia", label: "Energía y clima", c: "#3f8f45", icon: `<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>`, re: /energ|apagón|apagada|nuclear|renovabl|clima|emisiones|emissions|\bdana\b|incendi|sequ[ií]a|sequera/i },
+  { k: "economia", label: "Economía", c: "#00a37a", icon: `<circle cx="12" cy="12" r="9"/><path d="M15 8.5a4 4 0 100 7M7 11h6M7 13.5h6"/>`, re: /econom|impuest|impost|pensi|salari|\bsous?\b|\bparo\b|\batur\b|empleo|\bPIB\b|inflaci|deuda|\bdeute|presupuest|pressupost|empresa|\bbanc|IRPF|\bIVA\b|autónom|autònom|ayudas|\bajuts|precios|preus/i },
+  { k: "territori", label: "Territorio", c: "#20b8c8", icon: `<path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2z"/><path d="M9 4v14M15 6v14"/>`, re: /catalu|puigdemont|amnist|independen|procés|generalitat|junqueras|euskadi|país vasco|país basc|galicia|galícia|autonom|financiación|finançament|\bjunts\b|\bERC\b|bildu|\bPNV\b|\bBNG\b|exili/i },
   { k: "internacional", label: "Internacional", c: "#1e88d6", icon: `<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>`, re: /milei|trump|netanyahu|israel|gaza|palestin|ucrania|ucraïna|rusia|rússia|putin|\bOTAN\b|\bNATO\b|bruselas|brussel·les|unión europea|unió europea|\bUE\b|argentin|estados unidos|estats units|EEUU|\bEUA\b|china|xina|\biran|irán|marruecos|marroc|europeus|europeos|ciberata/i },
-  { k: "campanya", label: "Campanya", c: "#ff4b2b", icon: `<path d="M4 10h3l9-5v14l-9-5H4z"/><path d="M7 14l1 5h3"/><path d="M19 9a4 4 0 010 6"/>`, re: /campaña|campanya|mitin|míting|presenta(?:r|rà|ran|n)?|presentar-se|presentarse|candidatura|\bacto\b|\bacte\b|\blistas?\b|\bllistes?\b|cabeza de lista|cap de llista|candidat|29-?N|elecciones|eleccions|debate|debat\b|votantes|votants|urnas|urnes|electoral/i },
-  { k: "parlament", label: "Parlament", c: "#c39a5f", icon: `<path d="M3 20h18M5 20V10M10 20V10M14 20V10M19 20V10M2 10l10-6 10 6z"/>`, re: /congreso|congrés|senado|\bsenat\b|\bley\b|\bllei\b|decreto|decret|enmienda|esmena|\bpleno\b|\bple\b|diputad|escaño|\bescó|\bBOE\b/i },
+  { k: "campanya", label: "Campaña", c: "#ff4b2b", icon: `<path d="M4 10h3l9-5v14l-9-5H4z"/><path d="M7 14l1 5h3"/><path d="M19 9a4 4 0 010 6"/>`, re: /campaña|campanya|mitin|míting|\bpresenta(?:r|rà|ran|n)?\b|presentar-se|presentarse|candidatura|\bacto\b|\bacte\b|\blistas?\b|\bllistes?\b|cabeza de lista|cap de llista|candidat|29-?N|elecciones|eleccions|debate|debat\b|votantes|votants|urnas|urnes|electoral/i },
+  { k: "parlament", label: "Parlamento", c: "#c39a5f", icon: `<path d="M3 20h18M5 20V10M10 20V10M14 20V10M19 20V10M2 10l10-6 10 6z"/>`, re: /congreso|congrés|senado|\bsenat\b|\bley\b|\bllei\b|decreto|decret|enmienda|esmena|\bpleno\b|\bple\b|diputad|escaño|\bescó|\bBOE\b/i },
   { k: "politica", label: "Política", c: "#6e6a82", icon: `<path d="M4 5h13a2 2 0 012 2v7a2 2 0 01-2 2H9l-4 4v-4H4a2 2 0 01-2-2V7a2 2 0 012-2z"/>`, re: /./ },
 ];
 const nwTopic = (k) => NW_TOPICS.find((t) => t.k === k) || NW_TOPICS[NW_TOPICS.length - 1];
@@ -114,7 +114,7 @@ async function refreshNews() {
   // El fitxer del propi web (publicat amb l'app) es llegeix un sol cop: aporta l'històric de dies anteriors
   const results = await Promise.all([
     NEWS_REMOTE ? getJson(NEWS_REMOTE) : Promise.resolve(null),
-    newsLocal ? Promise.resolve(null) : getJson(`${window.PEJ_DATA || "data/"}news.json?t=${Math.floor(Date.now() / 120000)}`),
+    newsLocal ? Promise.resolve(null) : getJson(`${window.PEJ_DATA || "../data/"}news.json?t=${Math.floor(Date.now() / 120000)}`),
     ...NEWS_LIVE.map(fetchLiveFeed),
   ]);
   const [snap, local, ...live] = results;
@@ -146,11 +146,11 @@ function newsFor({ party, topic, days = 7, n = 3 } = {}) {
 // ---------- Peces visuals ----------
 const timeAgo = (ms) => {
   const m = Math.max(1, Math.round((Date.now() - ms) / 60000));
-  if (m < 60) return `fa ${m} min`;
+  if (m < 60) return `hace ${m} min`;
   const hh = Math.round(m / 60);
-  if (hh < 24) return `fa ${hh} h`;
+  if (hh < 24) return `hace ${hh} h`;
   const d = Math.round(hh / 24);
-  return `fa ${d} ${d === 1 ? "dia" : "dies"}`;
+  return `hace ${d} ${d === 1 ? "día" : "días"}`;
 };
 const nwIcon = (t) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t.icon}</svg>`;
 const nwOutlet = (s) => `<span class="nw-out" style="--oc:${nwOutletColor(s)}">${esc(s)}</span>`;
@@ -164,7 +164,7 @@ function nwCard(x, cls = "") {
     <span class="nw-body">
       <span class="nw-meta">${nwOutlet(x.s)}${nwWhen(x)}</span>
       <span class="nw-h">${esc(x.t)}</span>
-      <span class="nw-foot"><span class="nw-ps">${nwParties(x)}</span><span class="nw-go">Llegeix-ho ↗</span></span>
+      <span class="nw-foot"><span class="nw-ps">${nwParties(x)}</span><span class="nw-go">Léelo ↗</span></span>
     </span>
   </a>`;
 }
@@ -183,9 +183,9 @@ function fillPartyNews() {
   $$(".cmp-news[data-party]").forEach((box) => {
     const id = box.dataset.party;
     const items = newsFor({ party: id, days: 7, n: 3 });
-    box.innerHTML = newsData ? `<h5>Als titulars</h5>${items.length ? items.map((x) => `
-      <a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer"><span>${esc(x.t)}</span><small>${esc(x.s)} · ${timeAgo(x.d)}</small></a>`).join("") : `<p class="muted">Sense titulars recents.</p>`}
-      <button type="button" class="linklike" data-allnews="${id}">Tots els titulars d'aquest partit →</button>` : "";
+    box.innerHTML = newsData ? `<h5>En los titulares</h5>${items.length ? items.map((x) => `
+      <a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer"><span>${esc(x.t)}</span><small>${esc(x.s)} · ${timeAgo(x.d)}</small></a>`).join("") : `<p class="muted">Sin titulares recientes.</p>`}
+      <button type="button" class="linklike" data-allnews="${id}">Todos los titulares de este partido →</button>` : "";
     $("[data-allnews]", box)?.addEventListener("click", () => {
       Object.assign(newsUI, { party: id, topic: null, outlet: null, q: "", onlyNew: false, shown: 20 });
       location.hash = "#noticies/cerca";

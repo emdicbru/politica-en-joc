@@ -2,7 +2,7 @@
 // Llegeix stats/{dia}_{n} dels darrers 30 dies (com a molt 300 documents per càrrega) i ho suma per dia.
 const CTU = { days: null, totals: null, range: 7, loading: false, at: 0 };
 const CTU_VIEWS = { inici: "Inici", noticies: "Notícies", jocs: "Minijocs", ranking: "Social i rànquing", duel: "Duels", simulador: "Simuladors", apren: "Aprèn", calendari: "Calendari", perfil: "Perfil", legal: "Textos legals", nit: "Nit electoral", control: "Centre de control", pronostics: "Lliga de pronòstics", botiga: "Botiga" };
-const CTU_SRC = { directe: "Directe o app", google: "Google", x: "X (Twitter)", whatsapp: "WhatsApp", instagram: "Instagram", facebook: "Facebook", telegram: "Telegram", tiktok: "TikTok", bluesky: "Bluesky", notificacio: "Notificació", altres: "Altres webs" };
+const CTU_SRC = { directe: "Directe o app", chatgpt: "🤖 ChatGPT", perplexity: "🤖 Perplexity", claude: "🤖 Claude", gemini: "🤖 Gemini", copilot: "🤖 Copilot", google: "Google", x: "X (Twitter)", whatsapp: "WhatsApp", instagram: "Instagram", facebook: "Facebook", telegram: "Telegram", tiktok: "TikTok", bluesky: "Bluesky", notificacio: "Notificació", altres: "Altres webs" };
 const CTU_DISP = { ios: "iPhone o iPad", android: "Android", ordinador: "Ordinador" };
 
 function ctuDayList(n) {

@@ -28,6 +28,8 @@ let roomUnsub = null;
 
 const Online = {
   user: store.get(USER_CACHE_KEY, null),
+  // Per a la píndola de la capçalera: la foto i el nom d'usuari (mai el nom de Google)
+  chipUser: () => (Online.user ? { avatar: avatar(me(), 26), name: me().name } : null),
   accountClick() {
     if (this.user) { location.hash = "#perfil"; return; }
     if (authLoading) return toast("Connectant amb el servidor…");
@@ -431,19 +433,16 @@ async function signOutNow() {
   toast("Sessió tancada. El progrés es queda en aquest dispositiu.");
 }
 
+// Capçalera: amb sessió, el compte és la píndola de nivell (renderLevel, core.js) i «Entra» desapareix
 function renderAccountBtn() {
   const b = $("#account-btn");
   if (!b) return;
-  const u = Online.user;
-  if (u) {
-    b.innerHTML = `${avatar(me(), 28)}<span>${esc(firstName(me().name))}</span>`;
-    b.title = "El teu compte";
-    b.classList.add("in");
-  } else {
+  b.hidden = !!Online.user;
+  if (!Online.user) {
     b.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg><span>Entra</span>`;
     b.title = "Inicia sessió amb Google";
-    b.classList.remove("in");
   }
+  if (typeof renderLevel === "function") renderLevel();
 }
 
 // ---------- Progrés al núvol ----------

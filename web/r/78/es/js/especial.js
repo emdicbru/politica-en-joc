@@ -145,29 +145,7 @@ function espRefresh(full = false) {
 
 // ---------- Resultats ----------
 // Format normalitzat: { escrutat, participacio, actualitzat, provs: [{ code, escrutat, vots: { id: n }, blanc }] }
-function espSimulacre(progress) {
-  // Simulacre amb dades inventades (punt de partida: el 2023), per provar la nit electoral
-  const rnd = (s) => { const x = Math.sin(s * 9301.7) * 49297; return x - Math.floor(x); };
-  const REG = { "Cataluña": { erc: 13, junts: 11 }, "País Vasco": { bildu: 24, pnv: 23 }, Navarra: { bildu: 17 }, "Galicia": { bng: 10 }, "Canarias": { cc: 9 } };
-  const provs = SIM_PROVS.map((p, i) => {
-    const reg = REG[p.ccaa] || {};
-    const sh = {};
-    const rest = 100 - Object.values(reg).reduce((a, b) => a + b, 0);
-    const base = Object.entries(SIM_START_SHARE).filter(([k]) => !["erc", "junts", "bildu", "pnv", "bng", "cc"].includes(k));
-    const bt = base.reduce((a, [, v]) => a + v, 0);
-    base.forEach(([k, v], j) => { sh[k] = (v / bt) * rest * (0.8 + 0.4 * rnd(i * 31 + j)); });
-    Object.assign(sh, reg);
-    const votants = p.pop * 0.78 * 0.66;
-    const esc = Math.max(0, Math.min(100, (progress * (1.08 + 0.25 * rnd(i + 7)) - 0.04 * rnd(i)) * 100));
-    const vots = {};
-    // Els primers vots escrutats es desvien una mica del resultat final
-    Object.entries(sh).forEach(([k, s], j) => { vots[k] = Math.round((votants * s) / 100 * (esc / 100) * (1 + 0.14 * (rnd(i * 13 + j) - 0.5) * (1 - progress))); });
-    return { code: p.code, escrutat: Math.round(esc * 10) / 10, vots, blanc: Math.round(votants * 0.009 * (esc / 100)) };
-  });
-  const totalPop = SIM_PROVS.reduce((a, p) => a + p.pop, 0);
-  const esc = provs.reduce((a, p, i) => a + p.escrutat * SIM_PROVS[i].pop, 0) / totalPop;
-  return { escrutat: Math.round(esc * 10) / 10, participacio: 64.1 + 2.1 * progress, actualitzat: Date.now(), provs, simulacre: true };
-}
+// El simulacre (espSimulacre) i el càlcul d'escons (espCompute) són a nit.js
 async function espFetchResults() {
   const mode = espResultsMode();
   let raw = null;
@@ -188,42 +166,6 @@ async function espFetchResults() {
   Esp.data = d;
   return d;
 }
-// Escons per circumscripció (Llei d'Hondt amb el llindar del 3 % dels vots vàlids) i totals
-function espCompute(raw) {
-  const tot = {}, seats = {}, perProv = [];
-  let valid = 0;
-  raw.provs.forEach((pr) => {
-    const p = SIM_PROVS.find((x) => x.code === pr.code);
-    if (!p) return;
-    const ids = Object.keys(pr.vots);
-    const v = ids.map((k) => pr.vots[k] || 0);
-    const val = v.reduce((a, b) => a + b, 0) + (pr.blanc || 0);
-    valid += val;
-    ids.forEach((k, j) => { tot[k] = (tot[k] || 0) + v[j]; });
-    const ok = v.map((x) => (val && x / val >= 0.03 ? x : 0));
-    const d = val ? dhondt(ok, p.seats) : { won: v.map(() => 0), winners: [], next: null };
-    const won = {};
-    ids.forEach((k, j) => { if (d.won[j]) { won[k] = d.won[j]; seats[k] = (seats[k] || 0) + d.won[j]; } });
-    // Escó a l'aire: l'últim escó i qui el podria prendre
-    let air = null;
-    const last = d.winners[d.winners.length - 1];
-    if (last && val) {
-      let best = null;
-      ids.forEach((k, j) => {
-        if (j === last.pi || !ok[j]) return;
-        const need = Math.floor(last.q * (d.won[j] + 1) - ok[j]) + 1;
-        if (need > 0 && (!best || need < best.need)) best = { k, need };
-      });
-      if (best) air = { holder: ids[last.pi], rival: best.k, need: best.need };
-    }
-    const top = ids.map((k, j) => [k, v[j]]).sort((a, b) => b[1] - a[1])[0];
-    perProv.push({ i: p.i, code: p.code, name: p.name, seats: p.seats, escrutat: pr.escrutat, won, vots: pr.vots, valid: val, winner: top && top[1] ? top[0] : null, air });
-  });
-  const totalSeats = Object.values(seats).reduce((a, b) => a + b, 0);
-  const ranking = Object.keys(tot).sort((a, b) => (seats[b] || 0) - (seats[a] || 0) || tot[b] - tot[a]);
-  return { escrutat: raw.escrutat, participacio: raw.participacio, actualitzat: raw.actualitzat, simulacre: !!raw.simulacre, tot, valid, seats, totalSeats, provs: perProv, ranking };
-}
-
 // ---------- Última hora: què ha canviat respecte a l'actualització anterior ----------
 function espEvents(a, b) {
   const add = (kind, text) => Esp.feed.unshift({ kind, text, t: Date.now() });
@@ -329,14 +271,14 @@ function renderHomeEspecial() {
       <h2>Hoy se vota</h2>
       <p>${!onTime ? "Los colegios abren a las 9:00 y cierran a las 20:00. A partir de las 20:00, la noche electoral en directo aquí mismo." : open ? `Los colegios cierran dentro de <b>${espCountdown(ESP_T.nit)}</b>. A partir de las 20:00, la noche electoral en directo aquí mismo.` : `Los colegios abren dentro de <b>${espCountdown(ESP_T.obre)}</b>.`}</p>
       ${espParticipacioHtml()}
-      <div class="esp-go"><a class="btn primary" href="#apren">Cómo se vota</a>${porra}</div>`;
+      <div class="esp-go"><a class="btn primary" href="#apren">Cómo se vota</a><a class="btn" href="#nit/joc">🎯 Escaños a vigilar</a>${porra}</div>`;
   } else {
     const d = espResultsMode() === "off" ? null : Esp.data;
     const live = f === "nit";
     const lead = d?.ranking?.[0] && d.seats[d.ranking[0]] ? espParty(d.ranking[0]) : null;
     body = `<p class="esp-k">${live ? `<span class="dot-live"></span>En directo` : "Elecciones generales del 29N"}${d?.simulacre ? " · SIMULACRO" : ""}</p>
       <h2>${live ? "Noche electoral" : "Los resultados del 29N"}</h2>
-      ${d ? `<div class="esp-mini">${espHemi(d)}<div><b>${espPct(d.escrutat)}</b><small>escrutado</small>${lead ? `<p class="esp-mini-l"><i style="background:${lead.color}"></i>${esc(lead.sig)} · ${d.seats[lead.id]} escaños</p>` : ""}${Esp.feed[0] ? `<p class="esp-mini-f">⚡ ${esc(Esp.feed[0].text)}</p>` : ""}</div></div>` : `<p>${live ? "Los primeros resultados llegarán en unos minutos." : "Consulta los resultados y haz tu mayoría."}</p>`}
+      ${d ? `${(() => { const t = typeof nitTitular === "function" ? nitTitular(d) : null; return t ? `<p class="esp-tit"><b>${esc(t.t1)}.</b> ${esc(t.t2)}</p>` : ""; })()}<div class="esp-mini">${espHemi(d)}<div><b>${espPct(d.escrutat)}</b><small>escrutado</small>${lead ? `<p class="esp-mini-l"><i style="background:${lead.color}"></i>${esc(lead.sig)} · ${d.seats[lead.id]} escaños</p>` : ""}${d.ballen?.length ? `<p class="esp-mini-j">🎯 <b>${d.ballen.length}</b> ${d.ballen.length === 1 ? "escaño en juego" : "escaños en juego"}</p>` : ""}${Esp.feed[0] ? `<p class="esp-mini-f">⚡ ${esc(Esp.feed[0].text)}</p>` : ""}</div></div>` : `<p>${live ? "Los primeros resultados llegarán en unos minutos." : "Consulta los resultados y haz tu mayoría."}</p>`}
       <div class="esp-go"><a class="btn primary" href="#nit">${live ? "Síguela en directo" : "Resultados y mayorías"}</a>${live ? `<a class="btn" href="#nit/prediccions">🎲 Juega mientras se escruta</a>` : ""}</div>`;
   }
   el.innerHTML = `${espPreviewBar()}<section class="esp-home esp-${f}">${espMsg()}${body}</section>`;
@@ -469,144 +411,7 @@ function espPredBind(root) {
   }));
 }
 
-// ---------- Pàgina de la nit electoral ----------
-let espSel = null;
-const espCoal = new Set();
-const espGames = () => ["diari", "majoria", "contrarellotge", "verificador"].map((id) => GAMES.find((g) => g.id === id)).filter(Boolean);
-function renderNit(arg) {
-  const root = $("#nit-page");
-  if (!root) return;
-  const f = espFase();
-  root.innerHTML = `${espPreviewBar()}
-    <div class="esp-nit">
-      <header class="esp-live" data-hero></header>
-      <div class="esp-cols">
-        <div class="esp-main" data-main></div>
-        <aside class="esp-rail">
-          <div data-pred-box></div>
-          <div data-pron-box></div>
-          <div data-porra-box></div>
-          <section class="card esp-play">
-            <h2 class="section-title sm">🕹️ Mientras se escruta</h2>
-            <p class="muted">${f === "nit" ? "Los resultados se actualizan solos. Mientras tanto, juega:" : "Juega mientras esperas:"}</p>
-            <div class="esp-play-list">${espGames().map((g) => `<a href="#joc/${g.id}" style="--c:${g.color}"><span class="esp-play-i">${g.icon}</span><span><b>${esc(g.title)}</b><small>${esc(g.tagline || g.kicker || "")}</small></span></a>`).join("")}<a href="#simulador" style="--c:#3554ff"><span class="esp-play-i">🗳️</span><span><b>Simuladores</b><small>Gana unas elecciones o un debate</small></span></a></div>
-            <button class="btn ghost" type="button" data-share>Comparte la noche electoral</button>
-          </section>
-        </aside>
-      </div>
-      <p class="sim-fiction" data-src></p>
-    </div>`;
-  espBind(root);
-  $("[data-share]", root).addEventListener("click", async () => {
-    const text = "Sigue la noche electoral del 29N en directo en Política en Joc 🗳️";
-    const url = `${location.origin}${location.pathname}#nit`;
-    try { if (navigator.share) await navigator.share({ title: "Noche electoral", text, url }); else { await navigator.clipboard.writeText(`${text} ${url}`); toast("Enlace copiado"); } } catch { /* cancel·lat */ }
-  });
-  Esp.nitArg = arg;
-  espPaint(true);
-  if (espResultsMode() !== "off" && !Esp.data) espFetchResults().then(() => { if (espView() === "nit") espPaint(); });
-  espSchedule();
-}
-function espPaint(first = false) {
-  const root = $("#nit-page");
-  if (!root || !$("[data-main]", root)) return;
-  const f = espFase(), mode = espResultsMode(), d = mode === "off" ? null : Esp.data;
-  const keepScroll = window.scrollY;
-  // Capçalera en directe
-  const lead = d?.ranking?.[0] && d.seats[d.ranking[0]] ? espParty(d.ranking[0]) : null;
-  $("[data-hero]", root).innerHTML = `
-    <div class="esp-live-top"><span class="esp-onair">${f === "nit" ? `<span class="dot-live"></span>En directo` : f === "despres" ? "Resultados" : "29N"}</span>${d?.simulacre ? `<span class="esp-simtag">Simulacro · datos inventados</span>` : ""}<span class="esp-upd">${d ? `Actualizado ${espAgo(d.actualitzat || Esp.fetchedAt)}` : ""}</span></div>
-    <div class="esp-live-main">
-      <div class="esp-live-t"><p class="esp-k">Elecciones generales · 29 de noviembre de 2026</p><h1>${f === "nit" ? "Noche electoral" : f === "despres" ? "Resultados del 29N" : f === "dia" ? "Hoy se vota" : "El 29N, en directo"}</h1>
-      ${lead ? `<p class="esp-lead"><i style="background:${lead.color}"></i><b>${esc(lead.sig)}</b> es primera fuerza con <b>${d.seats[lead.id]}</b> escaños${d.escrutat < 100 ? " (provisional)" : ""}</p>` : ""}
-      ${espMsg()}</div>
-      ${d ? `<div class="esp-live-ring">${espRing(d.escrutat)}<div><b>${espPct(d.escrutat)}</b><small>escrutado</small></div></div>` : ""}
-    </div>
-    ${d?.participacio ? `<div class="esp-live-strip"><span>Participación <b>${espPct(d.participacio, 2)}</b></span><span>2023: <b>66,60 %</b></span><span>Mayoría absoluta: <b>176</b></span></div>` : ""}`;
-  // Contingut principal
-  const main = $("[data-main]", root);
-  if (!d) {
-    main.innerHTML = `<section class="card esp-wait">
-      ${["dia", "previa", "off"].includes(f) ? `<h2 class="section-title sm">A las 20:00, aquí mismo</h2><p>Cuando cierren los colegios, en esta página estará el escrutinio en directo: el hemiciclo, la carrera de escaños, el mapa de las 52 circunscripciones, los escaños que se deciden por pocos votos, la última hora y las mayorías posibles. Se actualiza solo, sin recargar.</p>` : `<h2 class="section-title sm">Esperando los primeros datos</h2><p>Todavía no hay datos del escrutinio. Esta página se actualiza sola: no hace falta que recargues.</p><div class="esp-skel"><span></span><span></span><span></span></div>`}
-      ${espParticipacioHtml()}
-    </section>`;
-  } else {
-    const rows = d.ranking.filter((k) => d.seats[k] || d.tot[k] / d.valid >= 0.005);
-    const max = Math.max(...rows.map((k) => d.seats[k] || 0), 1);
-    const prev = Esp.prev;
-    const air = d.provs.filter((p) => p.air).sort((a, b) => a.air.need - b.air.need).slice(0, 6);
-    const coalIds = rows.filter((k) => d.seats[k]);
-    const coalSum = [...espCoal].reduce((a, k) => a + (d.seats[k] || 0), 0);
-    const sel = espSel !== null ? d.provs.find((p) => p.i === espSel) : null;
-    main.innerHTML = `
-      <section class="card esp-race">
-        <div class="esp-race-head"><h2 class="section-title sm">🏁 La carrera de escaños</h2><span class="muted">escaños · vs. 2023 · votos</span></div>
-        <div class="esp-race-list">${rows.map((k) => {
-          const p = espParty(k), s = d.seats[k] || 0, ref = ESP_2023[k], diff = ref ? s - ref[0] : null;
-          const moved = prev ? s - (prev.seats[k] || 0) : 0;
-          return `<div class="esp-rr ${moved > 0 ? "flash-up" : moved < 0 ? "flash-down" : ""}" style="--c:${p.color}">
-            <span class="esp-rr-n"><i></i>${esc(p.sig)}</span>
-            <span class="esp-rr-bar"><span style="width:${(s / max) * 100}%"></span></span>
-            <b class="esp-rr-s">${s}${moved ? `<small class="${moved > 0 ? "up" : "down"}">${moved > 0 ? "▲" : "▼"}${Math.abs(moved)}</small>` : ""}</b>
-            <span class="esp-rr-d ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${diff === null ? "—" : `${diff > 0 ? "+" : ""}${diff}`}</span>
-            <span class="esp-rr-v">${espPct((d.tot[k] / d.valid) * 100)}</span>
-          </div>`;
-        }).join("")}</div>
-        <p class="muted esp-note">Frente Amplio se compara con Sumar en 2023. Hasta el 100 % escrutado, los escaños pueden cambiar.</p>
-      </section>
-      <div class="esp-grid">
-        <section class="card esp-hemi">
-          <h2 class="section-title sm">El Congreso</h2>
-          ${espHemi(d)}
-          <p class="esp-maj"><b>${d.totalSeats}</b> de 350 escaños asignados · mayoría absoluta <b>176</b></p>
-        </section>
-        <section class="card esp-feed">
-          <h2 class="section-title sm">⚡ Última hora</h2>
-          <ol>${Esp.feed.length ? Esp.feed.slice(0, 8).map((e) => `<li class="k-${e.kind}"><time>${new Date(e.t).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</time><span>${esc(e.text)}</span></li>`).join("") : `<li class="k-info"><span>Aquí saldrán los cambios del escrutinio a medida que lleguen.</span></li>`}</ol>
-        </section>
-      </div>
-      <section class="card esp-mapbox">
-        <h2 class="section-title sm">🗺️ Quién gana en cada circunscripción</h2>
-        <div class="esp-mapwrap">${simSpainMap("esp-map")}
-        <div class="esp-prov">${sel ? `<h3>${esc(sel.name)}</h3><p class="muted">${sel.seats} ${sel.seats === 1 ? "escaño" : "escaños"} · ${espPct(sel.escrutat)} escrutado</p>
-          <div class="esp-prov-s">${Object.entries(sel.won).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<span style="--c:${espParty(k).color}"><i></i>${esc(espParty(k).sig)} <b>${n}</b></span>`).join("") || "<span>Todavía sin escaños</span>"}</div>
-          ${sel.air ? `<p class="esp-prov-air">El último escaño es para <b>${esc(espParty(sel.air.holder).sig)}</b>. ${esc(espParty(sel.air.rival).sig)} se lo quitaría con <b>${fmt(sel.air.need)}</b> votos más.</p>` : ""}` : `<p class="muted">👆 Toca una circunscripción para ver sus escaños y el último escaño en juego.</p>`}</div></div>
-      </section>
-      <section class="card esp-air">
-        <h2 class="section-title sm">🎯 Escaños en el aire</h2>
-        <p class="muted">El último escaño de cada circunscripción y cuántos votos faltan para que cambie de manos (ley D'Hondt).</p>
-        <div class="esp-air-list">${air.map((p) => { const h = espParty(p.air.holder), r = espParty(p.air.rival); const tight = Math.max(8, Math.min(100, 112 - Math.log10(Math.max(10, p.air.need)) * 24)); return `<div class="esp-ac"><b>${esc(p.name)}</b><span class="esp-ac-vs"><i style="background:${h.color}"></i>${esc(h.sig)} <em>vs</em> <i style="background:${r.color}"></i>${esc(r.sig)}</span><span class="esp-ac-m" title="Qué ajustado está"><span style="width:${tight}%"></span></span><small><b>${fmt(p.air.need)}</b> votos de margen</small></div>`; }).join("")}</div>
-      </section>
-      <section class="card esp-coal">
-        <h2 class="section-title sm">🤝 Haz tu mayoría</h2>
-        <p class="muted">Elige partidos y mira si llegan a los 176 escaños.</p>
-        <div class="esp-coal-chips">${coalIds.map((k) => `<button type="button" class="${espCoal.has(k) ? "on" : ""}" data-coal="${k}" style="--c:${espParty(k).color}">${esc(espParty(k).sig)} · ${d.seats[k]}</button>`).join("")}</div>
-        <div class="esp-coal-bar"><span style="width:${Math.min(100, (coalSum / 350) * 100)}%"></span><i style="left:${(176 / 350) * 100}%"></i></div>
-        <p class="esp-coal-res"><b>${coalSum}</b> escaños · ${coalSum >= 176 ? "<span class='up'>Mayoría absoluta ✔</span>" : `faltan <b>${176 - coalSum}</b>`}${espCoal.size ? ` · <button type="button" class="linklike" data-coal-clear>Borra</button>` : ""}</p>
-        <a class="btn" href="#joc/majoria">Juega a Haz mayoría</a>
-      </section>`;
-    const svg = $(".esp-map", main);
-    simPaintMap(svg, (i) => {
-      const p = d.provs.find((x) => x.i === i);
-      const w = p?.winner ? espParty(p.winner) : null;
-      return { fill: w ? w.color : "var(--card)", ink: w ? "#fff" : "var(--ink)", sel: i === espSel, label: `${p?.name || ""}: ${w ? `gana ${w.sig}` : "sin datos"}` };
-    });
-    simMapPick(svg, (i) => { espSel = espSel === i ? null : i; espPaint(); });
-    $$("[data-coal]", main).forEach((b) => b.addEventListener("click", () => { const k = b.dataset.coal; espCoal.has(k) ? espCoal.delete(k) : espCoal.add(k); espPaint(); }));
-    $("[data-coal-clear]", main)?.addEventListener("click", () => { espCoal.clear(); espPaint(); });
-  }
-  // Columna de joc (la porra oberta no es repinta, perquè no es perdi el que s'està escrivint)
-  $("[data-pred-box]", root).innerHTML = espPredHtml(d);
-  if (typeof pronNitCard === "function") $("[data-pron-box]", root).innerHTML = pronNitCard(d);
-  espPredBind(root);
-  if (first || !$("[data-porra]", root)) {
-    $("[data-porra-box]", root).innerHTML = espPorraHtml(d);
-    espPorraBind(root);
-  }
-  $("[data-src]", root).textContent = `Datos: ${d?.simulacre ? "simulacro con cifras inventadas, solo para probar la página." : "escrutinio provisional del Ministerio del Interior. Los resultados oficiales son los que proclama la Junta Electoral."}`;
-  if (!first) window.scrollTo({ top: keepScroll });
-  if (first && Esp.nitArg) setTimeout(() => $(Esp.nitArg === "porra" ? "#esp-porra" : "#esp-pred", root)?.scrollIntoView({ block: "start", behavior: "smooth" }), 150);
-}
+// La pàgina de la nit electoral (renderNit, espPaint) és a nit.js
 
 espLoadConfig();
 // La fase canvia sola: es revisa cada minut (el compte enrere de l'inici també)

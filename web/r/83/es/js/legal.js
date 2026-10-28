@@ -293,6 +293,7 @@ function legalFooter() {
             <h2>El proyecto</h2>
             <ul>
               <li><a href="#premsa">Sala de prensa</a></li>
+              <li><a href="${stUrl("qui")}">Quiénes somos</a></li>
               <li><a href="#legal/credits">Créditos y fuentes</a></li>
               <li><a href="https://x.com/emdicbru" target="_blank" rel="noopener">Hecha por @emdicbru</a></li>
             </ul>
@@ -301,6 +302,8 @@ function legalFooter() {
             <h2>Ayuda</h2>
             <ul>
               <li><a href="#apren">Guía para votar el 29N</a></li>
+              <li><a href="${stUrl("dicc")}">Diccionario de política</a></li>
+              <li><a href="${stUrl("faq")}">Preguntas frecuentes</a></li>
               <li><button class="linklike" type="button" data-report>Avisa de un error</button></li>
               ${ANALYTICS_ON ? `<li><button class="linklike" type="button" data-open-consent>Configuración de cookies</button></li>` : ""}
             </ul>
@@ -315,6 +318,10 @@ function legalFooter() {
     </div>
   </footer>`;
 }
+
+// Pàgines estàtiques amb adreça pròpia (tools/estatiques.js): les poden llegir els cercadors
+const ST_URLS = { ca: { qui: "/qui-som/", dicc: "/diccionari/", faq: "/preguntes-frequents/" }, es: { qui: "/es/quienes-somos/", dicc: "/es/diccionario/", faq: "/es/preguntas-frecuentes/" } };
+const stUrl = (k) => ST_URLS[typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es" : "ca"][k];
 
 function legalNote() {
   return `<p class="legal-note">El inicio de sesión implica la aceptación de las ${legalLink("termes")} y de la ${legalLink("privacitat")}, y la declaración de tener al menos 14 años.</p>`;

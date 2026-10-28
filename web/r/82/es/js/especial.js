@@ -281,7 +281,10 @@ function renderHomeEspecial() {
       ${d ? `${(() => { const t = typeof nitTitular === "function" ? nitTitular(d) : null; return t ? `<p class="esp-tit"><b>${esc(t.t1)}.</b> ${esc(t.t2)}</p>` : ""; })()}<div class="esp-mini">${espHemi(d)}<div><b>${espPct(d.escrutat)}</b><small>escrutado</small>${lead ? `<p class="esp-mini-l"><i style="background:${lead.color}"></i>${esc(lead.sig)} · ${d.seats[lead.id]} escaños</p>` : ""}${typeof nitGov === "function" ? NIT_GOV.map((g) => { const x = nitGov(d, g); return `<p class="esp-mini-g v-${x.st}"><b>${esc(nitAnd(x.core.map(nitSig)))}: ${x.sum}</b> ${x.st === "maj" ? "✔ mayoría" : x.st === "fil" ? "✔ al filo" : x.st === "suports" ? `· con apoyos (faltan ${x.need})` : `✘ faltan ${x.need}`}</p>`; }).join("") : ""}${d.ballen?.length ? `<p class="esp-mini-j">🎯 <b>${d.ballen.length}</b> ${d.ballen.length === 1 ? "escaño en juego" : "escaños en juego"}</p>` : ""}${Esp.feed[0] ? `<p class="esp-mini-f">⚡ ${esc(Esp.feed[0].text)}</p>` : ""}</div></div>` : `<p>${live ? "Los primeros resultados llegarán en unos minutos." : "Consulta los resultados y haz tu mayoría."}</p>`}
       <div class="esp-go"><a class="btn primary" href="#nit">${live ? "Síguela en directo" : "Resultados y mayorías"}</a></div>`;
   }
-  el.innerHTML = `${espPreviewBar()}<section class="esp-home esp-${f}">${espMsg()}${body}</section>`;
+  const dn = ["nit", "despres"].includes(f) && espResultsMode() !== "off" ? Esp.data : null;
+  el.innerHTML = dn && typeof nitHomeHtml === "function"
+    ? `${espPreviewBar()}${espMsg() ? `<div class="esp-home-msg">${espMsg()}</div>` : ""}${nitHomeHtml(dn, f === "nit")}`
+    : `${espPreviewBar()}<section class="esp-home esp-${f}">${espMsg()}${body}</section>`;
   espBind(el);
   if (["nit", "despres"].includes(f) && !Esp.data && espResultsMode() !== "off") espFetchResults().then((d) => { if (d && espView() === "inici") renderHomeEspecial(); });
   espSchedule();

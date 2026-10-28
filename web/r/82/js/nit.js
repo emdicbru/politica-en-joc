@@ -257,7 +257,9 @@ function nitHemi(d, ref = null) {
 }
 // Fila de la cursa: escons, forquilla (si n'hi ha), diferència amb el 2023 i vots
 function nitRace(d, { prev = null, open = null, compare = true } = {}) {
-  const rows = d.ranking.filter((k) => d.seats[k] || (d.range[k]?.[1] || 0) > 0 || d.tot[k] / d.valid >= 0.01);
+  // Només els partits amb escons; els altres que compten (1 % o més, o que en poden treure) van en una línia a sota
+  const rows = d.ranking.filter((k) => d.seats[k]);
+  const off = d.ranking.filter((k) => !d.seats[k] && ((d.range[k]?.[1] || 0) > 0 || d.tot[k] / d.valid >= 0.01));
   const top = Math.max(NIT_MAJ + 14, ...rows.map((k) => d.range[k]?.[1] || d.seats[k] || 0));
   const x = (n) => `${(Math.min(n, top) / top) * 100}%`;
   return `<div class="nt-race" style="--maj:${x(NIT_MAJ)}">${rows.map((k) => {
@@ -272,7 +274,7 @@ function nitRace(d, { prev = null, open = null, compare = true } = {}) {
       <span class="nt-row-d ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${diff === null ? "" : diff === 0 ? "=" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)}`}</span>
       <span class="nt-row-v">${d.valid ? espPct((d.tot[k] / d.valid) * 100) : ""}</span>
     </button>${open === k ? nitPartyFocus(d, k) : ""}`;
-  }).join("")}</div>`;
+  }).join("")}${off.length ? `<p class="nt-off"><span>Ara sense escó:</span> ${off.map((k) => `<b style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))}</b> ${espPct((d.tot[k] / d.valid) * 100)}${(d.range[k]?.[1] || 0) > 0 ? ` (en pot treure ${d.range[k][1]})` : ""}`).join(" · ")}</p>` : ""}</div>`;
 }
 // Un partit: on pot guanyar un escó i on en pot perdre un
 function nitPartyFocus(d, k) {
@@ -318,13 +320,11 @@ function renderNit(arg) {
       <header class="nt-hero" data-hero></header>
       <div data-gov></div>
       <nav class="nt-tabs" aria-label="Seccions de la nit electoral" data-tabs></nav>
-      <div class="nt-cols">
+      <div class="nt-body">
         <div class="nt-main" data-main></div>
-        <aside class="nt-rail">
-          <div data-pred-box></div>
-          <div data-pron-box></div>
-          <div data-porra-box></div>
-        </aside>
+        <section class="card nt-sec nt-jugues" id="nt-jugues" hidden>
+          <div class="nt-jg"><div data-pred-box></div><div data-pron-box></div><div data-porra-box></div></div>
+        </section>
       </div>
       <p class="sim-fiction" data-src></p>
     </div>`;
@@ -338,10 +338,11 @@ function renderNit(arg) {
   });
   // Delegació: tot el que es toca dins de la pàgina
   root.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-party],[data-prov],[data-map],[data-filter],[data-all],[data-coal],[data-coal-clear],[data-sum]");
+    const t = e.target.closest("[data-tab],[data-party],[data-prov],[data-map],[data-filter],[data-all],[data-coal],[data-coal-clear],[data-sum]");
     if (!t || !root.contains(t)) return;
-    if (t.dataset.party) { Nit.party = Nit.party === t.dataset.party ? null : t.dataset.party; espPaint(); }
-    else if (t.dataset.prov) { Nit.sel = Number(t.dataset.prov); espPaint(); $("#nt-mapa", root)?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    if (t.dataset.tab) nitTab(t.dataset.tab);
+    else if (t.dataset.party) { Nit.party = Nit.party === t.dataset.party ? null : t.dataset.party; espPaint(); }
+    else if (t.dataset.prov) { Nit.sel = Number(t.dataset.prov); nitTab("mapa"); }
     else if (t.dataset.map) { Nit.map = t.dataset.map; espPaint(); }
     else if (t.dataset.filter !== undefined) { Nit.filter = t.dataset.filter || null; Nit.all = false; espPaint(); }
     else if (t.dataset.all !== undefined) { Nit.all = !Nit.all; espPaint(); }
@@ -350,11 +351,20 @@ function renderNit(arg) {
     else if (t.dataset.sum) { Nit.coal.clear(); t.dataset.sum.split(",").forEach((k) => Nit.coal.add(k)); espPaint(); }
   });
   Esp.nitArg = arg;
+  // Enllaços directes (#nit/porra, #nit/joc…): obren la pestanya
+  if (arg) Nit.tab = ["porra", "prediccions"].includes(arg) ? "jugues" : arg;
   espPaint(true);
   if (espResultsMode() !== "off" && !Esp.data) espFetchResults().then(() => { if (espView() === "nit") espPaint(); });
   espSchedule();
 }
 
+// Canvia de pestanya i, si la barra de pestanyes ha quedat amunt, hi torna
+function nitTab(id) {
+  Nit.tab = id;
+  espPaint();
+  const bar = $("#nit-page [data-tabs]");
+  if (bar && bar.getBoundingClientRect().top < 60) window.scrollTo({ top: bar.getBoundingClientRect().top + scrollY - 70, behavior: "smooth" });
+}
 function espPaint(first = false) {
   const root = $("#nit-page");
   if (!root || !$("[data-main]", root)) return;
@@ -363,12 +373,20 @@ function espPaint(first = false) {
   const ref = nit2023();
   $("[data-hero]", root).innerHTML = live ? nitHeroNight(f, d) : nitHeroDay(f);
   $("[data-gov]", root).innerHTML = live && d ? nitGovHtml(d) : "";
-  const secs = live && d ? [["nt-congres", "El Congrés"], ["nt-joc", "Escons en joc"], ["nt-mapa", "Mapa"], ["nt-majories", "Majories"], ["nt-hora", "Última hora"]]
-    : [["nt-com", "Com seguir la nit"], ["nt-joc", "Escons a vigilar"], ["nt-mapa", "Mapa"], ["nt-congres", "El Congrés del 2023"]];
-  $("[data-tabs]", root).innerHTML = secs.map(([id, t]) => `<a href="#${id}" data-jump="${id}">${esc(t)}${id === "nt-joc" && d?.ballen.length ? ` <b>${d.ballen.length}</b>` : ""}</a>`).join("");
-  $$("[data-jump]", root).forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); $(`#${a.dataset.jump}`, root)?.scrollIntoView({ behavior: "smooth", block: "start" }); }));
+  // Pestanyes: [id, títol, secció]
+  const play = espPorraState() === "oberta" && !live ? "La teva porra" : "Les teves prediccions";
+  const tabs = live && d ? [["resultats", "El Congrés", "nt-congres"], ["joc", "Escons en joc", "nt-joc"], ["mapa", "Mapa", "nt-mapa"], ["majories", "Majories", "nt-majories"], ["hora", "Última hora", "nt-hora"], ["jugues", play, "nt-jugues"]]
+    : live ? [["espera", "Escrutini", "nt-espera"], ["jugues", play, "nt-jugues"]]
+    : [["com", "Com seguir la nit", "nt-com"], ["joc", "Escons a vigilar", "nt-joc"], ["mapa", "Mapa del 2023", "nt-mapa"], ["congres", "El Congrés del 2023", "nt-congres"], ["jugues", play, "nt-jugues"]];
+  if (!tabs.some(([id]) => id === Nit.tab)) Nit.tab = tabs[0][0];
+  const cur = tabs.find(([id]) => id === Nit.tab);
+  const count = (id) => (id === "joc" ? (live ? d?.ballen.length : ref.ballen.length) : id === "hora" ? Esp.feed.length : 0);
+  $("[data-tabs]", root).innerHTML = tabs.map(([id, t]) => `<button type="button" role="tab" aria-selected="${id === Nit.tab}" class="${id === Nit.tab ? "on" : ""}" data-tab="${id}">${esc(t)}${count(id) ? ` <b>${count(id)}</b>` : ""}</button>`).join("");
   const main = $("[data-main]", root);
   main.innerHTML = live ? (d ? nitMainNight(d, ref) : nitWaiting()) : nitMainDay(ref);
+  // Només es veu la secció de la pestanya triada
+  $$(".nt-sec, .esp-wait", main).forEach((s) => { s.hidden = s.id !== cur[2]; });
+  $("#nt-jugues", root).hidden = cur[2] !== "nt-jugues";
   // El mapa
   const svg = $(".nt-map .sim-map", main);
   if (svg) {
@@ -397,7 +415,7 @@ function espPaint(first = false) {
     ? `Dades: ${d?.simulacre ? "simulacre a partir dels vots del 2023, amb canvis inventats, només per provar la pàgina." : "escrutini provisional del Ministeri de l'Interior. Els resultats oficials són els que proclama la Junta Electoral."} Escons en joc: últims escons amb un marge de menys de l'1 % dels vots vàlids (més ample mentre queda per escrutar).`
     : "Dades del 2023: Ministeri de l'Interior. Escons a vigilar: els últims escons que el 2023 es van decidir per menys vots.";
   if (!first) window.scrollTo({ top: keepScroll });
-  if (first && Esp.nitArg) setTimeout(() => $(Esp.nitArg === "porra" ? "#esp-porra" : Esp.nitArg === "prediccions" ? "#esp-pred" : `#nt-${Esp.nitArg}`, root)?.scrollIntoView({ block: "start", behavior: "smooth" }), 150);
+  if (first && Esp.nitArg) setTimeout(() => $(Esp.nitArg === "porra" ? "#esp-porra" : Esp.nitArg === "prediccions" ? "#esp-pred" : "[data-tabs]", root)?.scrollIntoView({ block: "start", behavior: "smooth" }), 150);
 }
 
 // ---------- Marcador ----------
@@ -414,7 +432,7 @@ function nitHeroNight(f, d) {
     </div>
     ${d ? `<div class="nt-kpis">
       <div><small>Participació</small><b>${part ? espPct(part, 2) : "—"}</b>${part ? `<span class="${part >= p23 ? "up" : "down"}">${part >= p23 ? "+" : "−"}${espPct(Math.abs(part - p23), 2)} vs. 2023</span>` : ""}</div>
-      <a href="#nt-joc" data-jump="nt-joc" class="${d.ballen.length ? "hot" : ""}"><small>Escons en joc</small><b>${d.ballen.length}</b><span>${d.ballen.length ? "poden canviar de mans" : "cap ara mateix"}</span></a>
+      <button type="button" data-tab="joc" class="${d.ballen.length ? "hot" : ""}"><small>Escons en joc</small><b>${d.ballen.length}</b><span>${d.ballen.length ? "poden canviar de mans" : "cap ara mateix"}</span></button>
     </div>
     ${Esp.feed[0] ? `<p class="nt-tick"><span>⚡ Última hora</span>${esc(Esp.feed[0].text)}</p>` : ""}` : ""}`;
 }
@@ -429,7 +447,7 @@ function nitHeroDay(f) {
     <div class="nt-kpis">
       ${rows.map((x) => { const diff = x.ref ? Number(x.v) - Number(x.ref) : null; return `<div><small>Participació a les ${esc(x.h)}</small><b>${espPct(Number(x.v), 2)}</b>${diff !== null ? `<span class="${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : "−"}${espPct(Math.abs(diff), 2)} vs. 2023</span>` : ""}</div>`; }).join("")}
       <div><small>Tanquen els col·legis</small><b>20:00</b><span>${onDay && open ? `d'aquí a ${espCountdown(ESP_T.nit)}` : "a Canàries, a les 21:00 peninsulars"}</span></div>
-      <a href="#nt-joc" data-jump="nt-joc" class="hot"><small>Escons a vigilar</small><b>${nit2023().ballen.length}</b><span>segons el 2023</span></a>
+      <button type="button" data-tab="joc" class="hot"><small>Escons a vigilar</small><b>${nit2023().ballen.length}</b><span>segons el 2023</span></button>
       <div><small>Majoria absoluta</small><b>176</b><span>de 350 escons</span></div>
     </div>`;
 }
@@ -469,9 +487,47 @@ function nitGovHtml(d) {
   </section>`;
 }
 
+// ---------- Portada: el marcador de la nit ----------
+function nitHomeHtml(d, live) {
+  const t = nitTitular(d);
+  const ids = Object.keys(d.seats).filter((k) => d.seats[k]).sort((a, b) => d.seats[b] - d.seats[a]);
+  const top = ids.slice(0, 6), more = ids.length - top.length;
+  const tight = d.ballen[0];
+  const verdict = (g) => ({ maj: ["ok", "✔", "Majoria absoluta"], fil: ["fil", "✔", "Majoria, però al fil"], suports: ["sup", "+", `Amb suports: en falten ${g.need}`] }[g.st] || ["no", "✘", `No hi arriben: en falten ${g.need}`]);
+  const x = (v) => `${(Math.min(v, 260) / 260) * 100}%`;
+  return `<section class="nh" aria-label="Nit electoral">
+    <header class="nh-top">
+      <span class="esp-onair">${live ? `<span class="dot-live"></span>En directe` : "Resultats"}</span>${d.simulacre ? `<span class="esp-simtag">Simulacre</span>` : ""}
+      <span class="nh-k">Nit electoral · 29N</span>
+    </header>
+    <div class="nh-head">
+      <h2>${t ? esc(t.t1) : "Nit electoral"}</h2>
+      <div class="nh-esc">${espRing(d.escrutat)}<div><b>${espPct(d.escrutat)}</b><small>escrutat</small></div></div>
+    </div>
+    <div class="nh-g">
+      <div class="nh-congres">${nitHemi(d)}
+        <ul class="nh-leg">${top.map((k) => { const ref = ESP_2023[k]?.[0], df = ref === undefined ? null : d.seats[k] - ref; return `<li style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))}<b>${d.seats[k]}</b>${df ? `<small class="${df > 0 ? "up" : "down"}">${df > 0 ? "+" : "−"}${Math.abs(df)}</small>` : ""}</li>`; }).join("")}${more > 0 ? `<li class="more">+${more}</li>` : ""}</ul>
+      </div>
+      <div class="nh-gov">
+        <p class="nh-gov-h">Qui pot governar?</p>
+        ${NIT_GOV.map((g0) => { const g = nitGov(d, g0), v = verdict(g); return `<a class="nh-gv v-${v[0]}" href="#nit">
+          <span class="nh-gv-p">${g.core.map((k) => nitChip(k, "has")).join("<b>+</b>")}</span><strong>${g.sum}</strong>
+          <span class="nt-gv-bar"><i style="width:${x(g.sum)}">${g.core.map((k) => `<s style="flex:${d.seats[k] || 0};background:${nitParty(k).color}"></s>`).join("")}</i><em style="left:${x(NIT_MAJ)}"><span>176</span></em></span>
+          <span class="nh-gv-v"><span>${v[1]}</span>${esc(v[2])}</span>
+        </a>`; }).join("")}
+      </div>
+    </div>
+    <div class="nh-strip">
+      ${d.ballen.length ? `<span class="nh-hot"><b>${d.ballen.length}</b> ${d.ballen.length === 1 ? "escó en joc" : "escons en joc"}</span>` : ""}
+      ${tight ? `<span>El més ajustat: <b>${esc(tight.name)}</b>, a ${esc(nitSig(tight.an.challenger))} li falten ${nitN(tight.an.need)} vots</span>` : ""}
+    </div>
+    <a class="btn primary nh-go" href="#nit">${live ? "Segueix la nit en directe" : "Resultats i majories"} →</a>
+  </section>`;
+}
+
 // ---------- Contingut: la nit ----------
 function nitWaiting() {
-  return `<section class="card esp-wait"><h2 class="section-title sm">Esperant les primeres dades</h2><p>Encara no hi ha dades de l'escrutini. Aquesta pàgina s'actualitza sola: no cal que recarreguis.</p><div class="esp-skel"><span></span><span></span><span></span></div></section>`;
+  return `<section class="card esp-wait" id="nt-espera"><h2 class="section-title sm">Esperant les primeres dades</h2><p>Encara no hi ha dades de l'escrutini. Aquesta pàgina s'actualitza sola: no cal que recarreguis.</p><div class="esp-skel"><span></span><span></span><span></span></div></section>`;
 }
 function nitMainNight(d, ref) {
   const prev = Esp.prev;

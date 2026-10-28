@@ -2,7 +2,7 @@
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-const fmt = (n) => Math.round(n).toLocaleString("ca-ES");
+const fmt = (n) => Math.round(n).toLocaleString("es-ES");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -112,36 +112,37 @@ const Sfx = {
 
 // ---------- Progrés i assoliments ----------
 const LEVELS = [
-  { xp: 0, name: "Votant" },
+  { xp: 0, name: "Votante" },
   { xp: 150, name: "Interventor" },
-  { xp: 400, name: "Apoderat" },
-  { xp: 800, name: "Regidor" },
-  { xp: 1400, name: "Diputat" },
-  { xp: 2200, name: "Portaveu" },
-  { xp: 3300, name: "Ministre" },
-  { xp: 5000, name: "President" },
+  { xp: 400, name: "Apoderado" },
+  { xp: 800, name: "Concejal" },
+  { xp: 1400, name: "Diputado" },
+  { xp: 2200, name: "Portavoz" },
+  { xp: 3300, name: "Ministro" },
+  { xp: 5000, name: "Presidente" },
 ];
 
 const ACHIEVEMENTS = [
-  { id: "primer", name: "Primer vot", desc: "Juga la teva primera partida." },
-  { id: "explorador", name: "Campanya completa", desc: "Juga tots els minijocs almenys una vegada." },
-  { id: "perfecte", name: "Ple al 100 %", desc: "Fes una partida perfecta en qualsevol joc." },
-  { id: "ratxa10", name: "Imparable", desc: "Encadena 10 encerts seguits al Contrarellotge." },
-  { id: "majoria", name: "Arquitecte de pactes", desc: "Resol totes les missions de Fes majoria a la primera." },
-  { id: "historiador", name: "Historiador", desc: "Encerta un any exacte a Endevina l'any." },
-  { id: "detectiu", name: "Detectiu", desc: "Encerta un personatge amb una sola pista." },
-  { id: "verificador", name: "Fact-checker", desc: "Fes 20 encerts en una partida del Verificador." },
-  { id: "lexic", name: "Diccionari parlamentari", desc: "Resol totes les paraules de Paraula clau sense errors." },
-  { id: "match", name: "Ànima bessona", desc: "Fes un perfil perfecte al Match ideològic." },
-  { id: "comodins", name: "Sense xuleta", desc: "Acaba un joc de preguntes amb 8 encerts o més sense fer servir comodins." },
-  { id: "diari3", name: "Constància", desc: "Fes el repte diari tres dies seguits." },
-  { id: "diari7", name: "Una setmana sencera", desc: "Fes el repte diari set dies seguits." },
-  { id: "diari30", name: "Un mes de repte", desc: "Fes el repte diari trenta dies seguits." },
-  { id: "diari29n", name: "Fins al 29N", desc: "Fes el repte diari el dia de les eleccions amb una ratxa de set dies o més." },
-  { id: "duelista", name: "Duelista", desc: "Guanya un duel 1 vs 1 contra un amic." },
-  { id: "diputat", name: "Escó propi", desc: "Arriba al nivell Diputat." },
-  { id: "president", name: "La Moncloa", desc: "Arriba al nivell President." },
-  { id: "informat", name: "Votant informat", desc: "Supera tots els capítols de la guia de l'Aprèn." },
+  { id: "primer", name: "Primer voto", desc: "Juega tu primera partida." },
+  { id: "explorador", name: "Campaña completa", desc: "Juega a todos los minijuegos al menos una vez." },
+  { id: "perfecte", name: "Pleno al 100 %", desc: "Haz una partida perfecta en cualquier juego." },
+  { id: "ratxa10", name: "Imparable", desc: "Encadena 10 aciertos seguidos en Contrarreloj." },
+  { id: "majoria", name: "Arquitecto de pactos", desc: "Resuelve todas las misiones de Haz mayoría a la primera." },
+  { id: "dibuixa", name: "Cartógrafo", desc: "Aprueba los cinco dibujos de Dibuja el mapa con más del 85 % de precisión." },
+  { id: "historiador", name: "Historiador", desc: "Acierta un año exacto en Adivina el año." },
+  { id: "detectiu", name: "Detective", desc: "Acierta un personaje con una sola pista." },
+  { id: "verificador", name: "Fact-checker", desc: "Haz 20 aciertos en una partida del Verificador." },
+  { id: "lexic", name: "Diccionario parlamentario", desc: "Resuelve todas las palabras de Palabra clave sin errores." },
+  { id: "match", name: "Alma gemela", desc: "Haz un perfil perfecto en el Match ideológico." },
+  { id: "comodins", name: "Sin chuleta", desc: "Acaba un juego de preguntas con 8 aciertos o más sin usar comodines." },
+  { id: "diari3", name: "Constancia", desc: "Haz el reto diario tres días seguidos." },
+  { id: "diari7", name: "Una semana entera", desc: "Haz el reto diario siete días seguidos." },
+  { id: "diari30", name: "Un mes de reto", desc: "Haz el reto diario treinta días seguidos." },
+  { id: "diari29n", name: "Hasta el 29N", desc: "Haz el reto diario el día de las elecciones con una racha de siete días o más." },
+  { id: "duelista", name: "Duelista", desc: "Gana un duelo 1 vs 1 contra un amigo." },
+  { id: "diputat", name: "Escaño propio", desc: "Llega al nivel Diputado." },
+  { id: "president", name: "La Moncloa", desc: "Llega al nivel Presidente." },
+  { id: "informat", name: "Votante informado", desc: "Supera todos los capítulos de la guía de Aprende." },
 ];
 
 const Progress = {
@@ -160,7 +161,7 @@ const Progress = {
     this.data.ach[id] = Date.now();
     this.save();
     Sfx.play("unlock");
-    toast(`Assoliment: ${a.name}`, "ach");
+    toast(`Logro: ${a.name}`, "ach");
     return true;
   },
   record(gameId, score, xp) {
@@ -200,7 +201,7 @@ function renderLevel() {
   $("#level-chip").classList.toggle("in", !!who);
   $("#level-name").textContent = who ? `${cur.name} · ${fmt(xp)} XP` : cur.name;
   $("#level-xp").textContent = who ? who.name : `${fmt(xp)} XP`;
-  $("#level-chip").title = next ? `${cur.name} · ${fmt(next.xp - xp)} XP per a ${next.name}` : `${cur.name} · nivell màxim`;
+  $("#level-chip").title = next ? `${cur.name} · ${fmt(next.xp - xp)} XP para ${next.name}` : `${cur.name} · nivel máximo`;
   if (typeof renderCoins === "function") renderCoins();
 }
 
@@ -331,7 +332,7 @@ function route() {
 // Des del Laboratori del Centre de control, l'equip pot provar una funció abans que la vegi la gent. Només en aquesta
 // pestanya del navegador, i sense desar res: les partides i els pronòstics de prova no compten.
 const FEAT_PREVIEW_KEY = "r29n-feat-preview";
-const FEAT_NAMES = { diari3: "Repte diari amb dinàmiques noves", diari2: "Repte diari amb proves noves", porra: "Porra d'escons", pron: "Lliga de pronòstics" };
+const FEAT_NAMES = { diari3: "Reto diario con dinámicas nuevas", diari2: "Reto diario con pruebas nuevas", porra: "Porra de escaños", pron: "Liga de pronósticos" };
 function featPreviews() {
   try { return JSON.parse(sessionStorage.getItem(FEAT_PREVIEW_KEY) || "{}"); } catch { return {}; }
 }
@@ -353,11 +354,11 @@ function featPill() {
       if (!e.target.closest("[data-feat-off]")) return;
       featPreviewOff();
       el.remove();
-      toast("Vista prèvia tancada");
+      toast("Vista previa cerrada");
       location.hash = "#control";
     });
   }
-  el.innerHTML = `<span aria-hidden="true">🧪</span><div><b>Vista prèvia</b><small>${ids.map((k) => esc(FEAT_NAMES[k] || k)).join(" · ")} · no es desa res</small></div><button type="button" data-feat-off>Surt</button>`;
+  el.innerHTML = `<span aria-hidden="true">🧪</span><div><b>Vista previa</b><small>${ids.map((k) => esc(FEAT_NAMES[k] || k)).join(" · ")} · no se guarda nada</small></div><button type="button" data-feat-off>Salir</button>`;
 }
 
 // ---------- Sessió de joc ----------
@@ -398,8 +399,8 @@ function showIntro(game) {
       <p>${game.desc}</p>
       <div class="rules">${game.rules.map((r) => `<span>${r}</span>`).join("")}</div>
       ${extra}
-      <button class="btn primary lg" data-start>Comença</button>
-      ${best !== undefined ? `<p class="intro-best">El teu rècord: <b>${fmt(best)}</b></p>` : ""}
+      <button class="btn primary lg" data-start>Empieza</button>
+      ${best !== undefined ? `<p class="intro-best">Tu récord: <b>${fmt(best)}</b></p>` : ""}
     </div>`);
   body.appendChild(el);
   const startBtn = $("[data-start]", el);
@@ -495,15 +496,15 @@ function showResult(game, result) {
   }
   const verdict = result.verdict ?? (
     ratio === null ? "" :
-    ratio >= 1 ? "Ple absolut. Ningú et tosseix." :
-    ratio >= .75 ? "Brillant. Domines la matèria." :
-    ratio >= .5 ? "Aprovat amb nota. Encara hi ha marge." :
-    ratio >= .25 ? "Cal estudiar una mica més abans del 29N." :
-    "Toca passar per la secció Aprèn.");
+    ratio >= 1 ? "Pleno absoluto. Nadie te tose." :
+    ratio >= .75 ? "Brillante. Dominas la materia." :
+    ratio >= .5 ? "Aprobado con nota. Aún hay margen." :
+    ratio >= .25 ? "Hay que estudiar un poco más antes del 29N." :
+    "Toca pasar por la sección Aprende.");
 
   const recap = result.recap?.length ? `
     <div class="recap">
-      <h4>Per repassar</h4>
+      <h4>Para repasar</h4>
       ${result.recap.map((r) => `<div class="recap-item"><b>${esc(r.q)}</b><span class="ans">${esc(r.a)}</span>${r.note ? ` · <span class="muted">${esc(r.note)}</span>` : ""}</div>`).join("")}
     </div>` : "";
 
@@ -511,20 +512,20 @@ function showResult(game, result) {
   body.innerHTML = "";
   body.appendChild(h(`
     <div class="card result">
-      <div class="stamp-result" aria-hidden="true">${ratio === null ? "29N" : ratio >= .75 ? "APROVAT" : ratio >= .5 ? "ESCRUTAT" : "RECOMPTE"}</div>
-      <p class="kicker">Resultat final</p>
+      <div class="stamp-result" aria-hidden="true">${ratio === null ? "29N" : ratio >= .75 ? "APROBADO" : ratio >= .5 ? "ESCRUTADO" : "RECUENTO"}</div>
+      <p class="kicker">Resultado final</p>
       <div class="result-score">${result.display ? esc(result.display) : "0"}</div>
-      <p class="result-sub">${result.max ? `de ${fmt(result.max)} punts possibles` : result.unit || "punts"}</p>
+      <p class="result-sub">${result.max ? `de ${fmt(result.max)} puntos posibles` : result.unit || "puntos"}</p>
       <p class="result-verdict">${verdict}</p>
       <div class="result-badges">
         ${result.xp ? `<span class="rbadge xp">+${fmt(result.xp)} XP</span>` : ""}
-        ${coinsWon ? `<a class="rbadge coin" href="#botiga">+${fmt(coinsWon)} monedes</a>` : ""}
-        ${result.display ? "" : isRecord ? `<span class="rbadge record">${prevBest === undefined ? "Primer rècord" : "Nou rècord!"}</span>` : prevBest !== undefined ? `<span class="rbadge">Rècord: ${fmt(Math.max(prevBest, result.score))}</span>` : ""}
-        ${levelUp ? `<span class="rbadge level">Nou nivell: ${levelUp}</span>` : ""}
+        ${coinsWon ? `<a class="rbadge coin" href="#botiga">+${fmt(coinsWon)} monedas</a>` : ""}
+        ${result.display ? "" : isRecord ? `<span class="rbadge record">${prevBest === undefined ? "Primer récord" : "¡Nuevo récord!"}</span>` : prevBest !== undefined ? `<span class="rbadge">Récord: ${fmt(Math.max(prevBest, result.score))}</span>` : ""}
+        ${levelUp ? `<span class="rbadge level">Nuevo nivel: ${levelUp}</span>` : ""}
       </div>
       <div class="row center">
-        ${game.noReplay ? "" : `<button class="btn primary lg" data-again>Torna-hi</button>`}
-        <a class="btn lg ${game.noReplay ? "primary" : ""}" href="${game.backHref || "#jocs"}">${game.backLabel || "Altres jocs"}</a>
+        ${game.noReplay ? "" : `<button class="btn primary lg" data-again>Otra vez</button>`}
+        <a class="btn lg ${game.noReplay ? "primary" : ""}" href="${game.backHref || "#jocs"}">${game.backLabel || "Otros juegos"}</a>
       </div>
       ${window.Online?.guestNote?.() || ""}
       ${result.extraHtml || ""}
@@ -549,7 +550,7 @@ function showResult(game, result) {
   const great = levelUp || (ratio !== null ? ratio >= .75 : isRecord && prevBest !== undefined);
   Sfx.play(great || (ratio !== null && ratio >= .5) ? "win" : "lose");
   if (great) confetti();
-  if (levelUp) toast(`Has pujat de nivell: ${levelUp}`, "level");
+  if (levelUp) toast(`Has subido de nivel: ${levelUp}`, "level");
 }
 
 // ---------- Components compartits ----------
@@ -622,7 +623,7 @@ function progressDots(total, results, current) {
     `<i class="${results[i] === true ? "ok" : results[i] === false ? "ko" : i === current ? "cur" : ""}"></i>`).join("")}</div>`;
 }
 
-function nextButton(container, label = "Següent") {
+function nextButton(container, label = "Siguiente") {
   return new Promise((resolve) => {
     const row = h(`<div class="next-row"><button class="btn primary">${label} →</button></div>`);
     const btn = $("button", row);
@@ -634,7 +635,7 @@ function nextButton(container, label = "Següent") {
 
 function explain(container, ok, text, prefix) {
   const el = h(`<div class="explain ${ok ? "is-ok" : "is-ko"}"><strong></strong><span></span></div>`);
-  el.firstChild.textContent = prefix ?? (ok ? "Correcte!" : "No és correcte.");
+  el.firstChild.textContent = prefix ?? (ok ? "¡Correcto!" : "No es correcto.");
   el.lastChild.textContent = text;
   container.appendChild(el);
 }

@@ -194,9 +194,10 @@ const Online = {
     try { await F.setDoc(F.doc(db, "press_unsub", tok), { t: F.serverTimestamp() }); return true; } catch (e) { console.warn(e); return false; }
   },
   // Equip del Centre de control (staff/{correu}: { role, t, by }). Només el propietari el pot canviar.
+  // null: encara no es pot saber (sessió de Google no restaurada o error); "": no és de l'equip
   async staffRole() {
-    if (!ready || !Online.user?.email) return "";
-    try { const s = await F.getDoc(F.doc(db, "staff", Online.user.email.toLowerCase())); return s.exists() ? s.data().role || "" : ""; } catch (e) { console.warn(e); return ""; }
+    if (!ready || !Online.user?.email || !auth?.currentUser) return null;
+    try { const s = await F.getDoc(F.doc(db, "staff", auth.currentUser.email.toLowerCase())); return s.exists() ? s.data().role || "" : ""; } catch (e) { console.warn(e); return null; }
   },
   async staffList() {
     try { return (await F.getDocs(F.collection(db, "staff"))).docs.map((d) => ({ email: d.id, ...d.data() })); } catch (e) { console.warn(e); return null; }
@@ -1777,6 +1778,8 @@ if (ready) {
     Online.user = user;
     cacheUser(user);
     renderAccountBtn();
+    // El grau al Centre de control es torna a mirar ara que la sessió és vàlida
+    window.ctlRoleReset?.();
     if (user) {
       synced = false;
       const okSync = await syncDown();

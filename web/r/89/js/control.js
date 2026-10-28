@@ -21,6 +21,8 @@ function ctlRole() {
   if (ctlRoleCache.role === undefined && !ctlRoleCache.loading && window.Online?.staffRole) {
     ctlRoleCache.loading = true;
     window.Online.staffRole().then((role) => {
+      // Encara no se sap (la sessió s'està restaurant o hi ha hagut un error): es torna a provar
+      if (role === null) { ctlRoleCache.loading = false; setTimeout(() => { if (ctlRoleCache.role === undefined) { const v = location.hash.slice(1).split("/")[0]; if (v === "control") renderControl(true); else ctlRole(); } }, 2000); return; }
       ctlRoleCache = { email, role: role || "", loading: false };
       const v = location.hash.slice(1).split("/")[0];
       if (v === "control") renderControl(true);
@@ -29,6 +31,11 @@ function ctlRole() {
   }
   return ctlRoleCache.role;
 }
+window.ctlRoleReset = () => {
+  ctlRoleCache = { email: null, role: undefined, loading: false };
+  const v = location.hash.slice(1).split("/")[0];
+  if (v === "control") renderControl(true); else ctlRole();
+};
 const ctlLevel = () => CTL_ROLES[ctlRole()]?.n || 0;
 const ctlCan = (n) => ctlLevel() >= n;
 // Hi té accés (qualsevol grau): el fa servir el Perfil per ensenyar l'enllaç al Centre de control
@@ -610,15 +617,17 @@ function ctlLock(root) {
 }
 
 // ---------- Equip: qui pot entrar al Centre de control (només el propietari) ----------
-const ctlTeam = { list: null, loading: false };
+const ctlTeam = { list: null, loading: false, failed: false };
 async function ctlTeamLoad() {
   if (ctlTeam.loading) return;
   ctlTeam.loading = true;
   ctlTeam.list = await window.Online.staffList();
+  ctlTeam.failed = !ctlTeam.list;
   ctlTeam.loading = false;
   if (sessionStorage.getItem("ctl-tab") === "equip") renderControl(true);
 }
 function ctlTeamHtml() {
+  if (ctlTeam.failed) return `<div class="card"><p class="ctl-alert">No s'ha pogut carregar l'equip. Comprova la connexió i que hagis entrat amb el compte de propietari.</p><button class="btn" type="button" data-team-retry>Torna-ho a provar</button></div>`;
   if (!ctlTeam.list) { ctlTeamLoad(); return `<div class="card"><p class="muted">Carregant l'equip…</p></div>`; }
   const roles = ["observador", "editor", "admin"];
   const opts = (cur) => roles.map((k) => `<option value="${k}" ${k === cur ? "selected" : ""}>${CTL_ROLES[k].name}</option>`).join("");
@@ -650,6 +659,7 @@ function ctlTeamHtml() {
 }
 function ctlTeamBind(root) {
   const O = window.Online;
+  $("[data-team-retry]", root)?.addEventListener("click", () => { ctlTeam.failed = false; ctlTeam.list = null; renderControl(true); });
   $("[data-team-add]", root)?.addEventListener("click", async () => {
     const email = $("[data-team-email]", root).value.trim().toLowerCase();
     const role = $("[data-team-role]", root).value;

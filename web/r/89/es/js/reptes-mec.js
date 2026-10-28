@@ -9,7 +9,7 @@ const dkFmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, 
 const dkAdd = (key, n) => { const [y, m, d] = key.split("-").map(Number); return dkFmt(new Date(y, m - 1, d + n)); };
 // Dilluns de la setmana d'un dia
 const dkWeek = (key) => { const [y, m, d] = key.split("-").map(Number); const t = new Date(y, m - 1, d); return dkAdd(key, -((t.getDay() + 6) % 7)); };
-const fmtVotes = (n) => n.toLocaleString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "ca-ES");
+const fmtVotes = (n) => n.toLocaleString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "es-ES");
 
 // Resposta de les proves amb interacció pròpia: cada prova pinta la seva interfície dins la targeta i resol amb { correct }
 function dailyPlay(ctx, card, body, onReady) {
@@ -31,19 +31,19 @@ function orderItem(rng) {
     for (let k = 0; k < 40; k++) { list = sample(pool, 4, rng); if (new Set(list.map((p) => p.seats)).size === 4) break; }
     list = list.map((p) => ({ t: p.name, v: p.seats, c: p.color }));
     list.sort((a, b) => b.v - a.v);
-    prompt = "De més a menys escons al Congrés del 23-J";
+    prompt = "De más a menos escaños en el Congreso del 23-J";
     how = list.map((x) => `${x.t}: ${x.v}`).join(" · ");
   } else {
     for (let k = 0; k < 60; k++) { list = sample(EVENTS, 4, rng); if (new Set(list.map((e) => e.y)).size === 4) break; }
     list = list.map((e) => ({ t: e.t, v: e.y }));
     list.sort((a, b) => a.v - b.v);
-    prompt = "Del més antic al més recent";
+    prompt = "Del más antiguo al más reciente";
     how = list.map((x) => `${x.v}: ${x.t}`).join(" · ");
   }
   const shown = shuffle(list.map((x, rank) => ({ ...x, rank })), rng);
   return {
     label: "Ordena", kind: "order", waitKo: 2600,
-    prompt: `<div class="q-text">${esc(prompt)}</div><p class="dmec-hint">Toca'ls per ordre. Si t'equivoques, torna a tocar-ne un per desfer.</p>`,
+    prompt: `<div class="q-text">${esc(prompt)}</div><p class="dmec-hint">Tócalos por orden. Si te equivocas, vuelve a tocar uno para deshacer.</p>`,
     explain: how, recapQ: `${prompt}: ${shown.map((x) => x.t).join(", ")}`, recapA: list.map((x) => x.t).join(" → "),
     play(ctx, card) {
       return dailyPlay(ctx, card, `<div class="ord">${shown.map((x, i) => `<button class="ord-i" data-i="${i}" ${x.c ? `style="--pc:${x.c}"` : ""}><em></em><span>${esc(x.t)}</span><small></small></button>`).join("")}</div>`, (box, finish, isDone) => {
@@ -56,7 +56,7 @@ function orderItem(rng) {
             b.disabled = true;
             const good = picks.indexOf(i) === shown[i].rank;
             b.classList.add(good ? "ok" : "ko");
-            $("small", b).textContent = shown[i].c ? `${shown[i].v} escons` : String(shown[i].v);
+            $("small", b).textContent = shown[i].c ? `${shown[i].v} escaños` : String(shown[i].v);
             if (!good) $("em", b).textContent = `${picks.indexOf(i) + 1}→${shown[i].rank + 1}`;
           });
           finish(ok);
@@ -85,10 +85,10 @@ function mapItem(rng) {
   const pool = SIM_PROVS.filter((p) => p.seats < 30);
   const target = pool[Math.floor(rng() * pool.length)];
   return {
-    label: "On és?", kind: "map", waitKo: 2200,
-    prompt: `<div class="q-text">Toca <b>${esc(target.name)}</b> al mapa</div>`,
-    explain: `${target.name} (${target.ccaa}): ${target.seats} ${target.seats === 1 ? "escó" : "escons"}.`,
-    recapQ: `On és ${target.name}?`, recapA: target.ccaa,
+    label: "¿Dónde está?", kind: "map", waitKo: 2200,
+    prompt: `<div class="q-text">Toca <b>${esc(target.name)}</b> en el mapa</div>`,
+    explain: `${target.name} (${target.ccaa}): ${target.seats} ${target.seats === 1 ? "escaño" : "escaños"}.`,
+    recapQ: `¿Dónde está ${target.name}?`, recapA: target.ccaa,
     play(ctx, card) {
       return dailyPlay(ctx, card, `<div class="sim-mapbox dmap">${simSpainMap("dmap-svg")}</div>`, (box, finish, isDone) => {
         const svg = $(".sim-map", box);
@@ -111,22 +111,22 @@ function guessItem(rng) {
   if (rng() < 0.5) {
     const pool = CONGRESS[2023].parties.filter((p) => p.seats >= 5);
     const p = pool[Math.floor(rng() * pool.length)];
-    q = `Quants escons va treure ${p.name} al Congrés el 23-J?`; v = p.seats; min = 0; max = 180; tol = Math.max(1, Math.round(v * 0.08)); unit = "escons";
+    q = `¿Cuántos escaños sacó ${p.name} en el Congreso el 23-J?`; v = p.seats; min = 0; max = 180; tol = Math.max(1, Math.round(v * 0.08)); unit = "escons";
   } else {
     const p = SIM_PROVS[Math.floor(rng() * SIM_PROVS.length)];
-    q = `Quants diputats elegeix ${p.name} el 29N?`; v = p.seats; min = 1; max = 40; tol = 1; unit = "diputats";
+    q = `¿Cuántos diputados elige ${p.name} el 29N?`; v = p.seats; min = 1; max = 40; tol = 1; unit = "diputats";
   }
   const start = Math.round((min + max) / 2);
   return {
-    label: "Endevina el número", kind: "guess", waitKo: 2200,
-    prompt: `<div class="q-text">${esc(q)}</div><p class="dmec-hint">Val la resposta exacta o a ${tol === 1 ? "1 de distància" : `${tol} de distància`}.</p>`,
+    label: "Adivina el número", kind: "guess", waitKo: 2200,
+    prompt: `<div class="q-text">${esc(q)}</div><p class="dmec-hint">Vale la respuesta exacta o a ${tol === 1 ? "1 de distancia" : `${tol} de distancia`}.</p>`,
     explain: `${q} ${v}.`, recapQ: q, recapA: String(v),
     play(ctx, card) {
       return dailyPlay(ctx, card, `<div class="gss">
           <output class="gss-n" aria-live="polite">${start}</output>
-          <input class="gss-r" type="range" min="${min}" max="${max}" value="${start}" aria-label="La teva resposta">
+          <input class="gss-r" type="range" min="${min}" max="${max}" value="${start}" aria-label="Tu respuesta">
           <div class="gss-b">${[-10, -1, 1, 10].map((d) => `<button class="btn sm" data-d="${d}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("")}</div>
-          <button class="btn primary" data-ok>Respon</button>
+          <button class="btn primary" data-ok>Responde</button>
         </div>`, (box, finish, isDone) => {
         const r = $(".gss-r", box), out = $(".gss-n", box);
         const set = (x) => { r.value = String(Math.max(min, Math.min(max, x))); out.textContent = r.value; };
@@ -136,7 +136,7 @@ function guessItem(rng) {
           if (isDone()) return;
           const g = Number(r.value), ok = Math.abs(g - v) <= tol;
           $$("button, input", box).forEach((x) => { x.disabled = true; });
-          box.insertAdjacentHTML("beforeend", `<p class="gss-res ${ok ? "ok" : "ko"}">${ok ? "Correcte" : "Massa lluny"}: són <b>${v}</b> ${unit}${g !== v ? ` (has dit ${g})` : ""}.</p>`);
+          box.insertAdjacentHTML("beforeend", `<p class="gss-res ${ok ? "ok" : "ko"}">${ok ? "Correcto" : "Demasiado lejos"}: son <b>${v}</b> ${unit}${g !== v ? ` (has dicho ${g})` : ""}.</p>`);
           finish(ok);
         };
         $("[data-ok]", box).addEventListener("click", answer);
@@ -151,20 +151,20 @@ function guessItem(rng) {
 // Es puntua per la superfície que coincideix (només terra ferma) en un llenç petit fora de pantalla.
 // La Franja i Iparralde surten de retallar Aragó i els Pirineus Atlàntics pel límit lingüístic aproximat (reptes-mapa.js).
 const DRAW_TARGETS = [
-  { id: "pcat", name: "els Països Catalans", provs: ["B", "GI", "L", "T", "CS", "V", "A", "PM"], extra: ["fr66", "and", "franja"], view: [-2.2, 4.6, 37.5, 43.95],
-    explain: "Catalunya, el País Valencià, les Illes Balears, la Franja de Ponent, Andorra i la Catalunya Nord. També l'Alguer, a Sardenya, que no surt al mapa." },
+  { id: "pcat", name: "los Países Catalanes", provs: ["B", "GI", "L", "T", "CS", "V", "A", "PM"], extra: ["fr66", "and", "franja"], view: [-2.2, 4.6, 37.5, 43.95],
+    explain: "Cataluña, el País Valenciano, las Islas Baleares, la Franja de Poniente, Andorra y la Cataluña Norte. También el Alguer, en Cerdeña, que no sale en el mapa." },
   { id: "eh", name: "Euskal Herria", provs: ["VI", "BI", "SS", "NA"], extra: ["ipar"], view: [-5.5, 1.5, 40.8, 43.95],
-    explain: "Àlaba, Biscaia i Guipúscoa (la comunitat autònoma d'Euskadi), Navarra i Iparralde, el País Basc del nord, a França." },
-  { id: "gal", name: "Galícia", provs: ["C", "LU", "OR", "PO"], extra: [], view: [-9.6, -3.5, 40.8, 43.95],
-    explain: "Les quatre províncies gallegues: la Corunya, Lugo, Ourense i Pontevedra." },
-  { id: "cnord", name: "la Catalunya Nord", provs: [], extra: ["fr66"], view: [-1, 4.6, 40.6, 43.95], thr: 0.4,
-    explain: "El Rosselló, el Conflent, el Vallespir, el Capcir i l'Alta Cerdanya, que el tractat dels Pirineus (1659) va passar a França. Avui és el departament dels Pirineus Orientals." },
-  { id: "cat", name: "Catalunya", provs: ["B", "GI", "L", "T"], extra: [], view: [-1.5, 4.6, 39.8, 43.95],
-    explain: "Barcelona, Girona, Lleida i Tarragona: les quatre províncies del Principat." },
-  { id: "pv", name: "el País Valencià", provs: ["CS", "V", "A"], extra: [], view: [-3.2, 1.6, 37.5, 41.2],
-    explain: "Castelló, València i Alacant." },
-  { id: "andal", name: "Andalusia", provs: ["AL", "CA", "CO", "GR", "H", "J", "MA", "SE"], extra: [], view: [-9.6, -0.5, 35.1, 39.5],
-    explain: "Les vuit províncies andaluses: Almeria, Cadis, Còrdova, Granada, Huelva, Jaén, Màlaga i Sevilla. El seu Estatut la defineix com a nacionalitat històrica." },
+    explain: "Álava, Vizcaya y Guipúzcoa (la comunidad autónoma de Euskadi), Navarra e Iparralde, el País Vasco del norte, en Francia." },
+  { id: "gal", name: "Galicia", provs: ["C", "LU", "OR", "PO"], extra: [], view: [-9.6, -3.5, 40.8, 43.95],
+    explain: "Las cuatro provincias gallegas: A Coruña, Lugo, Ourense y Pontevedra." },
+  { id: "cnord", name: "la Cataluña Norte", provs: [], extra: ["fr66"], view: [-1, 4.6, 40.6, 43.95],
+    explain: "El Rosellón, el Conflent, el Vallespir, el Capcir y la Alta Cerdaña, que el tratado de los Pirineos (1659) pasó a Francia. Hoy es el departamento de Pirineos Orientales." },
+  { id: "cat", name: "Cataluña", provs: ["B", "GI", "L", "T"], extra: [], view: [-1.5, 4.6, 39.8, 43.95],
+    explain: "Barcelona, Girona, Lleida y Tarragona: las cuatro provincias de Cataluña." },
+  { id: "pv", name: "el País Valenciano", provs: ["CS", "V", "A"], extra: [], view: [-3.2, 1.6, 37.5, 41.2],
+    explain: "Castellón, Valencia y Alicante." },
+  { id: "andal", name: "Andalucía", provs: ["AL", "CA", "CO", "GR", "H", "J", "MA", "SE"], extra: [], view: [-9.6, -0.5, 35.1, 39.5],
+    explain: "Las ocho provincias andaluzas: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga y Sevilla. Su Estatuto la define como nacionalidad histórica." },
 ];
 // Mateixa projecció que el mapa (js/sim/sim-map.js): equirectangular centrada a 40° N
 const drawProj = (lon, lat) => [(lon + 9.6) * Math.cos((40 * Math.PI) / 180) * 70, (43.95 - lat) * 70];
@@ -206,76 +206,138 @@ function drawScore(t, shapes) {
   }
   return uni ? inter / uni : 0;
 }
+// Tauler de dibuix (repte diari i minijoc «Dibuixa el mapa»)
+function drawBoardHtml(t) {
+  const [x0, y0] = drawProj(t.view[0], t.view[3]), [x1, y1] = drawProj(t.view[1], t.view[2]);
+  return `<div class="ddraw">
+      <svg class="ddraw-map" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1 - x0).toFixed(1)} ${(y1 - y0).toFixed(1)}" role="img" aria-label="Mapa sin división provincial para dibujar en él">
+        <defs><clipPath id="ddraw-franja"><path d="${DRAW_MAP.franja}"/></clipPath><clipPath id="ddraw-ipar"><path d="${DRAW_MAP.ipar}"/></clipPath></defs>
+        <path class="ddraw-bg" d="${SIM_MAP.bg}"/>
+        <path class="ddraw-es" d="${drawSpain()}"/>
+        <g class="ddraw-t" hidden>${drawPieces(t).map((p) => `<path d="${p.d}"${p.clip ? ` clip-path="url(#ddraw-${p.clip})"` : ""}/>`).join("")}</g>
+        <g class="ddraw-u"></g>
+        <path class="ddraw-live"/>
+      </svg>
+      <div class="ddraw-b"><button class="btn sm" type="button" data-undo disabled>Deshaz</button><button class="btn primary" type="button" data-ok disabled>Comprueba</button></div>
+    </div>`;
+}
+// Traços amb el dit o el ratolí; en comprovar, mostra el territori i crida onCheck(coincidència de 0 a 1)
+function drawBind(ctx, box, t, isDone, onCheck) {
+  const svg = $("svg", box), live = $(".ddraw-live", box), user = $(".ddraw-u", box);
+  const undo = $("[data-undo]", box), ok = $("[data-ok]", box);
+  const shapes = [];
+  let cur = null, checked = false;
+  const off = () => isDone() || checked;
+  const pt = (e) => { const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse()); return [p.x, p.y]; };
+  const paint = () => {
+    user.innerHTML = shapes.map((s) => `<path d="${drawPath(s)}"/>`).join("");
+    undo.disabled = !shapes.length; ok.disabled = !shapes.length;
+  };
+  svg.addEventListener("pointerdown", (e) => {
+    if (off() || e.button) return;
+    e.preventDefault();
+    try { svg.setPointerCapture(e.pointerId); } catch {}
+    cur = [pt(e)];
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (!cur) return;
+    const p = pt(e), l = cur[cur.length - 1];
+    if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 2) return;
+    cur.push(p);
+    live.setAttribute("d", `M${cur.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L")}`);
+  });
+  const end = () => {
+    if (!cur) return;
+    // Un toc o un traç minúscul no compten
+    let a = 0;
+    for (let i = 0, j = cur.length - 1; i < cur.length; j = i++) a += (cur[j][0] + cur[i][0]) * (cur[j][1] - cur[i][1]);
+    if (cur.length >= 4 && Math.abs(a / 2) > 12) { shapes.push(cur); Sfx.play("pick"); }
+    cur = null; live.removeAttribute("d");
+    paint();
+  };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+  undo.addEventListener("click", () => { if (off()) return; shapes.pop(); paint(); });
+  const check = () => {
+    if (off() || !shapes.length) return;
+    checked = true;
+    const score = drawScore(t, shapes);
+    undo.disabled = ok.disabled = true;
+    $(".ddraw-t", box).removeAttribute("hidden");
+    box.classList.add("done");
+    onCheck(score);
+  };
+  ok.addEventListener("click", check);
+  ctx.onKey((e) => { if (e.key === "Enter") check(); });
+}
+// Al repte diari només s'aprova si la precisió supera el 85 %
+const DRAW_PASS = 0.85;
+const drawPct = (score) => Math.floor(score * 1000) / 10;
 function drawItem(rng) {
   const t = DRAW_TARGETS[Math.floor(rng() * DRAW_TARGETS.length)];
-  const thr = t.thr || 0.5;
-  const [x0, y0] = drawProj(t.view[0], t.view[3]), [x1, y1] = drawProj(t.view[1], t.view[2]);
-  const pieces = drawPieces(t);
   return {
-    label: "Dibuixa-ho", kind: "draw", waitKo: 3400,
-    prompt: `<div class="q-text">Dibuixa <b>${esc(t.name)}</b> al mapa</div><p class="dmec-hint">Encercla el territori amb el dit o el ratolí. Pots fer-hi més d'un traç (per les illes, per exemple).</p>`,
-    explain: t.explain, recapQ: `Dibuixa ${t.name}`, recapA: t.explain,
+    label: "Dibújalo", kind: "draw", waitKo: 3400,
+    prompt: `<div class="q-text">Dibuja <b>${esc(t.name)}</b> en el mapa</div><p class="dmec-hint">Repasa el territorio con el dedo o el ratón (puedes hacer más de un trazo, para las islas). Para aprobar, necesitas una precisión de más del 85 %.</p>`,
+    explain: t.explain, recapQ: `Dibuja ${t.name}`, recapA: t.explain,
     play(ctx, card) {
-      return dailyPlay(ctx, card, `<div class="ddraw">
-          <svg class="ddraw-map" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1 - x0).toFixed(1)} ${(y1 - y0).toFixed(1)}" role="img" aria-label="Mapa sense divisió provincial per dibuixar-hi">
-            <defs><clipPath id="ddraw-franja"><path d="${DRAW_MAP.franja}"/></clipPath><clipPath id="ddraw-ipar"><path d="${DRAW_MAP.ipar}"/></clipPath></defs>
-            <path class="ddraw-bg" d="${SIM_MAP.bg}"/>
-            <path class="ddraw-es" d="${drawSpain()}"/>
-            <g class="ddraw-t" hidden>${pieces.map((p) => `<path d="${p.d}"${p.clip ? ` clip-path="url(#ddraw-${p.clip})"` : ""}/>`).join("")}</g>
-            <g class="ddraw-u"></g>
-            <path class="ddraw-live"/>
-          </svg>
-          <div class="ddraw-b"><button class="btn sm" type="button" data-undo disabled>Desfés</button><button class="btn primary" type="button" data-ok disabled>Comprova</button></div>
-        </div>`, (box, finish, isDone) => {
-        const svg = $("svg", box), live = $(".ddraw-live", box), user = $(".ddraw-u", box);
-        const undo = $("[data-undo]", box), ok = $("[data-ok]", box);
-        const shapes = [];
-        let cur = null;
-        const pt = (e) => { const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse()); return [p.x, p.y]; };
-        const paint = () => {
-          user.innerHTML = shapes.map((s) => `<path d="${drawPath(s)}"/>`).join("");
-          undo.disabled = !shapes.length; ok.disabled = !shapes.length;
-        };
-        svg.addEventListener("pointerdown", (e) => {
-          if (isDone() || e.button) return;
-          e.preventDefault();
-          try { svg.setPointerCapture(e.pointerId); } catch {}
-          cur = [pt(e)];
-        });
-        svg.addEventListener("pointermove", (e) => {
-          if (!cur) return;
-          const p = pt(e), l = cur[cur.length - 1];
-          if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 2) return;
-          cur.push(p);
-          live.setAttribute("d", `M${cur.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L")}`);
-        });
-        const end = () => {
-          if (!cur) return;
-          // Un toc o un traç minúscul no compten
-          let a = 0;
-          for (let i = 0, j = cur.length - 1; i < cur.length; j = i++) a += (cur[j][0] + cur[i][0]) * (cur[j][1] - cur[i][1]);
-          if (cur.length >= 4 && Math.abs(a / 2) > 12) { shapes.push(cur); Sfx.play("pick"); }
-          cur = null; live.removeAttribute("d");
-          paint();
-        };
-        svg.addEventListener("pointerup", end);
-        svg.addEventListener("pointercancel", end);
-        undo.addEventListener("click", () => { if (isDone()) return; shapes.pop(); paint(); });
-        const check = () => {
-          if (isDone() || !shapes.length) return;
-          const score = drawScore(t, shapes), good = score >= thr;
-          undo.disabled = ok.disabled = true;
-          $(".ddraw-t", box).removeAttribute("hidden");
-          box.classList.add("done");
-          box.insertAdjacentHTML("beforeend", `<p class="gss-res ${good ? "ok" : "ko"}">Coincidència: <b>${Math.round(score * 100)} %</b>${good ? "" : ` (calia un ${Math.round(thr * 100)} %)`}. En verd, ${esc(t.name)}.</p>`);
-          finish(good);
-        };
-        ok.addEventListener("click", check);
-        ctx.onKey((e) => { if (e.key === "Enter") check(); });
-      });
+      return dailyPlay(ctx, card, drawBoardHtml(t), (box, finish, isDone) => drawBind(ctx, box, t, isDone, (score) => {
+        const good = score > DRAW_PASS;
+        box.insertAdjacentHTML("beforeend", `<p class="gss-res ${good ? "ok" : "ko"}">Precisión: <b>${drawPct(score).toLocaleString("es")} %</b>${good ? "" : " (hacía falta más de un 85 %)"}. En verde, ${esc(t.name)}.</p>`);
+        finish(good);
+      }));
     },
   };
 }
+
+// ---------- Minijoc: Dibuixa el mapa ----------
+// Cinc territoris; cada dibuix puntua la seva precisió (superfície encertada / unió del dibuix i el territori)
+registerGame({
+  id: "dibuixa",
+  cat: "rapid",
+  tagline: "Dibuja territorios a mano alzada: ¿qué precisión sacas?",
+  kicker: "Mapa en blanco",
+  title: "Dibuja el mapa",
+  color: "#00a37a",
+  level: 3,
+  meta: "5 territorios",
+  icon: icon(`<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/>`),
+  desc: "Un mapa sin fronteras provinciales y un territorio: los Países Catalanes, Euskal Herria, Galicia, Andalucía… Repasa sus límites y descubre la precisión de tu dibujo.",
+  rules: ["5 territorios", "Puntúa la precisión de cada dibujo", "Más del 85 %: dibujo aprobado", "Puedes hacer más de un trazo"],
+  start(ctx) {
+    const list = sample(DRAW_TARGETS, 5), N = list.length, results = [], pcts = [];
+    const avg = () => pcts.reduce((a, b) => a + b, 0) / pcts.length;
+    let m = 0;
+    ctx.hud([["m", "Territorio", `1/${N}`], ["p", "Precisión media", "–"]]);
+    run();
+    function run() {
+      if (m >= N) {
+        if (results.every(Boolean)) ctx.achieve("dibuixa");
+        return ctx.finish({ score: Math.round(avg() * 10), max: 1000, xp: Math.round(avg() / 2) });
+      }
+      const t = list[m];
+      ctx.setHud("m", `${m + 1}/${N}`);
+      ctx.body.innerHTML = "";
+      const card = h(`<div class="card qcard">
+        ${progressDots(N, results, m)}
+        <div class="q-text">Dibuja <b>${esc(t.name)}</b></div>
+        <p class="dmec-hint">Repasa los límites con el dedo o el ratón. Puedes hacer más de un trazo (para las islas, por ejemplo).</p>
+        ${drawBoardHtml(t)}
+      </div>`);
+      ctx.body.appendChild(card);
+      drawBind(ctx, card, t, () => !ctx.alive(), async (score) => {
+        const pct = drawPct(score), good = score > DRAW_PASS;
+        pcts.push(pct); results.push(good);
+        Sfx.play(good ? "ok" : "ko");
+        ctx.setHud("p", `${avg().toLocaleString("es", { maximumFractionDigits: 1 })} %`, { bump: true });
+        card.insertAdjacentHTML("beforeend", `<p class="gss-res ${good ? "ok" : "ko"}">Precisión: <b>${pct.toLocaleString("es")} %</b>. En verde, ${esc(t.name)}.</p><p class="muted">${esc(t.explain)}</p>`);
+        await nextButton(card, m + 1 < N ? "Siguiente" : "Resultados");
+        if (!ctx.alive()) return;
+        m++;
+        run();
+      });
+    }
+  },
+});
 
 // ---------- Ratxa i comodí setmanal ----------
 // Un dia sense jugar no trenca la ratxa si encara no s'ha fet servir el comodí d'aquella setmana (de dilluns a diumenge).
@@ -301,22 +363,22 @@ function dailyNextMilestone(streak) {
   if (!m) return "";
   const a = ACHIEVEMENTS.find((x) => x.id === m[1]);
   const left = m[0] - streak;
-  return `${left === 1 ? "Et falta 1 dia" : `Et falten ${left} dies`} per a l'assoliment «${a?.name || ""}».`;
+  return `${left === 1 ? "Te falta 1 día" : `Te faltan ${left} días`} para el logro «${a?.name || ""}».`;
 }
 function dailyStreakHtml(key = todayKey()) {
   const d = Progress.data.daily, s = dailyStreakNow(d, key);
   const free = dailyFreezeFree(d, key);
-  const line = s.risk ? "Ahir no vas jugar: si fas el repte avui, el comodí d'aquesta setmana salva la ratxa."
-    : s.lost ? `Has perdut la ratxa de ${s.lost} ${s.lost === 1 ? "dia" : "dies"}. Avui en comença una de nova!`
-      : s.streak ? dailyNextMilestone(s.streak) : "Fes el repte cada dia per fer créixer la ratxa.";
+  const line = s.risk ? "Ayer no jugaste: si haces el reto hoy, el comodín de esta semana salva la racha."
+    : s.lost ? `Has perdido la racha de ${s.lost} ${s.lost === 1 ? "día" : "días"}. ¡Hoy empieza una nueva!`
+      : s.streak ? dailyNextMilestone(s.streak) : "Haz el reto cada día para que crezca la racha.";
   return `<div class="dstreak ${s.risk ? "risk" : ""}">
-      <span class="dstreak-f" aria-hidden="true">🔥</span><div><b>${s.streak} ${s.streak === 1 ? "dia" : "dies"} de ratxa</b><small>${line}</small></div>
-      <span class="dstreak-ice ${free ? "" : "used"}" title="${free ? "Comodí disponible aquesta setmana" : "Comodí ja fet servir aquesta setmana"}">🧊 ${free ? "Comodí disponible" : "Comodí gastat"}</span>
+      <span class="dstreak-f" aria-hidden="true">🔥</span><div><b>${s.streak} ${s.streak === 1 ? "día" : "días"} de racha</b><small>${line}</small></div>
+      <span class="dstreak-ice ${free ? "" : "used"}" title="${free ? "Comodín disponible esta semana" : "Comodín ya usado esta semana"}">🧊 ${free ? "Comodín disponible" : "Comodín gastado"}</span>
     </div>`;
 }
 
 // ---------- Calendari del mes ----------
-const DAILY_WEEKDAYS = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
+const DAILY_WEEKDAYS = ["L", "M", "X", "J", "V", "S", "D"];
 const DAILY_VOTE_DAY = "2026-11-29";
 function dailyCalendar(offset = 0) {
   const now = new Date();
@@ -324,7 +386,7 @@ function dailyCalendar(offset = 0) {
   const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
   const lead = (first.getDay() + 6) % 7;
   const d = Progress.data.daily, frozen = new Set(d.frozen || []), today = todayKey();
-  const title0 = first.toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "ca-ES", { month: "long", year: "numeric" });
+  const title0 = first.toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "es-ES", { month: "long", year: "numeric" });
   const title = title0.charAt(0).toUpperCase() + title0.slice(1);
   let cells = "";
   for (let k = 0; k < lead; k++) cells += `<i></i>`;
@@ -332,13 +394,13 @@ function dailyCalendar(offset = 0) {
     const key = dkFmt(new Date(first.getFullYear(), first.getMonth(), n));
     const r = d.scores?.[key] && typeof d.scores[key] === "object" ? d.scores[key] : null;
     const cls = [r ? (r.hits >= 8 ? "on" : "mid") : frozen.has(key) ? "ice" : "", key === today ? "today" : "", key > today ? "fut" : "", key === DAILY_VOTE_DAY ? "vote" : ""].filter(Boolean).join(" ");
-    const tip = r ? `${fmtSecs(r.ms)} · ${r.hits}/10` : frozen.has(key) ? "Comodí" : key === DAILY_VOTE_DAY ? "Eleccions" : "";
+    const tip = r ? `${fmtSecs(r.ms)} · ${r.hits}/10` : frozen.has(key) ? "Comodín" : key === DAILY_VOTE_DAY ? "Elecciones" : "";
     cells += `<i class="${cls}" ${tip ? `title="${tip}"` : ""}>${key === DAILY_VOTE_DAY && !r ? "🗳️" : frozen.has(key) && !r ? "🧊" : n}</i>`;
   }
   return `<div class="dcal" data-off="${offset}">
-    <div class="dcal-h"><button type="button" data-cal="-1" aria-label="Mes anterior" ${offset <= -12 ? "disabled" : ""}>‹</button><b>${esc(title)}</b><button type="button" data-cal="1" aria-label="Mes següent" ${offset >= 1 ? "disabled" : ""}>›</button></div>
+    <div class="dcal-h"><button type="button" data-cal="-1" aria-label="Mes anterior" ${offset <= -12 ? "disabled" : ""}>‹</button><b>${esc(title)}</b><button type="button" data-cal="1" aria-label="Mes siguiente" ${offset >= 1 ? "disabled" : ""}>›</button></div>
     <div class="dcal-g">${DAILY_WEEKDAYS.map((w) => `<b>${w}</b>`).join("")}${cells}</div>
-    <p class="dcal-l"><span class="on"></span>8 o més encerts <span class="mid"></span>menys de 8 <span class="ice"></span>comodí</p>
+    <p class="dcal-l"><span class="on"></span>8 o más aciertos <span class="mid"></span>menos de 8 <span class="ice"></span>comodín</p>
   </div>`;
 }
 // Navegació entre mesos (delegada: el calendari es pot tornar a pintar sencer)
@@ -363,27 +425,27 @@ function dailyShareCanvas(key, r, extra = {}) {
   c.fillStyle = "rgba(23,23,61,.08)";
   for (let x = 6; x < W; x += 18) for (let y = 6; y < H; y += 18) { c.beginPath(); c.arc(x, y, 1.6, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = INK; c.fillRect(0, 0, W, 150);
-  c.fillStyle = YEL; c.font = display(46); c.textAlign = "left"; c.fillText(`REPTE DIARI #${dailyNumber(key)}`, 60, 95);
+  c.fillStyle = YEL; c.font = display(46); c.textAlign = "left"; c.fillText(`RETO DIARIO #${dailyNumber(key)}`, 60, 95);
   const [y, m, dd] = key.split("-").map(Number);
   c.fillStyle = CARD; c.font = sans(30, 700); c.textAlign = "right";
-  c.fillText(new Date(y, m - 1, dd).toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "ca-ES", { day: "numeric", month: "long" }), W - 60, 93);
+  c.fillText(new Date(y, m - 1, dd).toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "es-ES", { day: "numeric", month: "long" }), W - 60, 93);
   // Targeta
   c.fillStyle = INK; round(72, 222, W - 132, 900, 40); c.fill();
   c.fillStyle = CARD; round(60, 210, W - 132, 900, 40); c.fill();
   c.strokeStyle = INK; c.lineWidth = 6; c.stroke();
-  c.textAlign = "center"; c.fillStyle = "#6e6a82"; c.font = sans(34, 700); c.fillText("Temps", W / 2 - 6, 320);
+  c.textAlign = "center"; c.fillStyle = "#6e6a82"; c.font = sans(34, 700); c.fillText("Tiempo", W / 2 - 6, 320);
   c.fillStyle = INK; c.font = display(170); c.fillText(fmtTime(r.ms), W / 2 - 6, 500);
   c.font = sans(40, 700); c.fillStyle = "#3a3a63";
-  c.fillText(`${r.hits}/10 encerts · ${r.errors} ${r.errors === 1 ? "error" : "errors"}`, W / 2 - 6, 580);
+  c.fillText(`${r.hits}/10 aciertos · ${r.errors} ${r.errors === 1 ? "error" : "errores"}`, W / 2 - 6, 580);
   // Quadres de la graella
   const cells = (r.grid || "").match(/🟩|🟥/g) || [];
   const sz = 70, gap = 14, x0 = W / 2 - 6 - (cells.length * (sz + gap) - gap) / 2;
   cells.forEach((g, i) => { c.fillStyle = g === "🟩" ? "#45d483" : "#ff6b4a"; round(x0 + i * (sz + gap), 640, sz, sz, 14); c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke(); });
   // Ratxa i percentil
   c.font = display(54); c.fillStyle = INK;
-  if (extra.streak) c.fillText(`🔥 ${extra.streak} ${extra.streak === 1 ? "dia" : "dies"} de ratxa`, W / 2 - 6, 850);
-  if (extra.pct !== null && extra.pct !== undefined) { c.font = sans(40, 700); c.fillStyle = "#3a3a63"; c.fillText(`Més ràpid que el ${extra.pct} % de la gent`, W / 2 - 6, 930); }
-  c.font = sans(34, 600); c.fillStyle = "#6e6a82"; c.fillText("I tu, quant hi tardes?", W / 2 - 6, 1040);
+  if (extra.streak) c.fillText(`🔥 ${extra.streak} ${extra.streak === 1 ? "día" : "días"} de racha`, W / 2 - 6, 850);
+  if (extra.pct !== null && extra.pct !== undefined) { c.font = sans(40, 700); c.fillStyle = "#3a3a63"; c.fillText(`Más rápido que el ${extra.pct} % de la gente`, W / 2 - 6, 930); }
+  c.font = sans(34, 600); c.fillStyle = "#6e6a82"; c.fillText("¿Y tú, cuánto tardas?", W / 2 - 6, 1040);
   // Peu
   c.fillStyle = INK; c.font = display(40); c.fillText("Política en Joc", W / 2, 1230);
   c.font = sans(30, 600); c.fillStyle = "#3a3a63"; c.fillText(location.host || "politicaenjoc.cat", W / 2, 1280);
@@ -407,7 +469,7 @@ async function shareDailyImage(key) {
   a.download = `repte-${dailyNumber(key)}.png`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  toast("Imatge descarregada");
+  toast("Imagen descargada");
 }
 
 // =========================================================
@@ -430,9 +492,9 @@ function shapeItem(rng) {
   const pad = Math.max(w, hh) * 0.08;
   return {
     label: "Silueta", columns: 2,
-    prompt: `<div class="q-text">Quina província té aquesta forma?</div><div class="dshape"><svg viewBox="${x0 - pad} ${y0 - pad} ${w + pad * 2} ${hh + pad * 2}" role="img" aria-label="Contorn d'una província"><path d="${d}"/></svg></div>`,
+    prompt: `<div class="q-text">¿Qué provincia tiene esta forma?</div><div class="dshape"><svg viewBox="${x0 - pad} ${y0 - pad} ${w + pad * 2} ${hh + pad * 2}" role="img" aria-label="Contorno de una provincia"><path d="${d}"/></svg></div>`,
     options, correctIndex,
-    explain: `És ${target.name} (${target.ccaa}).`, recapQ: `Silueta de ${target.name}`, recapA: target.name,
+    explain: `Es ${target.name} (${target.ccaa}).`, recapQ: `Silueta de ${target.name}`, recapA: target.name,
   };
 }
 
@@ -459,23 +521,23 @@ function coalitionItem(rng) {
   const shown = shuffle(parties.map((p) => ({ ...p })), rng);
   const names = (ids) => ids.map((id) => by(id).name).join(" ni ");
   return {
-    label: "Aritmètica del Congrés", kind: "coalition", waitKo: 2600,
-    prompt: `<div class="q-text">Arriba a 176 escons amb ${by(plan.req).name}, sense ${names(plan.no)} i amb ${best} partits com a màxim</div><p class="dmec-hint">Escons del Congrés del 23-J. Toca els partits per sumar-los.</p>`,
-    explain: `Hi ha combinacions de ${best} partits que hi arriben. És només aritmètica: no diu res de quins pactes són possibles.`,
-    recapQ: `176 amb ${by(plan.req).name}, sense ${names(plan.no)}, màxim ${best} partits`, recapA: `${best} partits`,
+    label: "Aritmética del Congreso", kind: "coalition", waitKo: 2600,
+    prompt: `<div class="q-text">Llega a 176 escaños con ${by(plan.req).name}, sin ${names(plan.no)} y con ${best} partidos como máximo</div><p class="dmec-hint">Escaños del Congreso del 23-J. Toca los partidos para sumarlos.</p>`,
+    explain: `Hay combinaciones de ${best} partidos que llegan. Es solo aritmética: no dice nada de qué pactos son posibles.`,
+    recapQ: `176 con ${by(plan.req).name}, sin ${names(plan.no)}, máximo ${best} partidos`, recapA: `${best} partidos`,
     play(ctx, card) {
       return dailyPlay(ctx, card, `<div class="coal">
           <div class="coal-chips">${shown.map((p, i) => `<button class="coal-p" data-i="${i}" style="--pc:${p.color}" ${plan.no.includes(p.id) ? "disabled" : ""} aria-pressed="${p.id === plan.req}"><b>${esc(p.name)}</b><small>${p.seats}</small></button>`).join("")}</div>
           <div class="coal-bar"><i></i><u aria-hidden="true"></u></div>
           <p class="coal-sum" aria-live="polite"></p>
-          <button class="btn primary" data-ok>Comprova</button>
+          <button class="btn primary" data-ok>Comprueba</button>
         </div>`, (box, finish, isDone) => {
         const on = new Set([shown.findIndex((p) => p.id === plan.req)]);
         const paint = () => {
           const sum = [...on].reduce((t, i) => t + shown[i].seats, 0);
           $$(".coal-p", box).forEach((b, i) => { b.classList.toggle("on", on.has(i)); b.setAttribute("aria-pressed", on.has(i)); });
           $(".coal-bar i", box).style.width = `${Math.min(100, (sum / 350) * 100)}%`;
-          $(".coal-sum", box).innerHTML = `<b>${sum}</b> escons · ${on.size} ${on.size === 1 ? "partit" : "partits"} de ${best} com a màxim`;
+          $(".coal-sum", box).innerHTML = `<b>${sum}</b> escaños · ${on.size} ${on.size === 1 ? "partido" : "partits"} de ${best} como máximo`;
           $(".coal-sum", box).classList.toggle("ok", sum >= 176 && on.size <= best);
         };
         $$(".coal-p", box).forEach((b, i) => b.addEventListener("click", () => {
@@ -488,7 +550,7 @@ function coalitionItem(rng) {
           const sum = [...on].reduce((t, i) => t + shown[i].seats, 0);
           const ok = sum >= 176 && on.size <= best;
           $$("button", box).forEach((x) => { x.disabled = true; });
-          box.insertAdjacentHTML("beforeend", `<p class="gss-res ${ok ? "ok" : "ko"}">${ok ? "Majoria absoluta" : sum < 176 ? `Et falten ${176 - sum} escons` : `Hi arribes, però amb massa partits (${on.size})`}.</p>`);
+          box.insertAdjacentHTML("beforeend", `<p class="gss-res ${ok ? "ok" : "ko"}">${ok ? "Mayoría absoluta" : sum < 176 ? `Te faltan ${176 - sum} escaños` : `Llegas, pero con demasiados partidos (${on.size})`}.</p>`);
           finish(ok);
         });
         paint();
@@ -503,9 +565,9 @@ function pairsItem(rng, key) {
   const set = sample(pool, 4, rng);
   const right = shuffle(set.map((x, i) => ({ t: x.a, i })), rng);
   return {
-    label: "Parelles", kind: "pairs", waitKo: 2600,
-    prompt: `<div class="q-text">Uneix cada sigla amb el seu nom</div><p class="dmec-hint">Toca una sigla i després el nom que li correspon.</p>`,
-    explain: set.map((x) => `${x.s}: ${x.a}`).join(" · "), recapQ: `Parelles: ${set.map((x) => x.s).join(", ")}`, recapA: set.map((x) => `${x.s} = ${x.a}`).join(" · "),
+    label: "Parejas", kind: "pairs", waitKo: 2600,
+    prompt: `<div class="q-text">Une cada sigla con su nombre</div><p class="dmec-hint">Toca una sigla y después el nombre que le corresponde.</p>`,
+    explain: set.map((x) => `${x.s}: ${x.a}`).join(" · "), recapQ: `Parejas: ${set.map((x) => x.s).join(", ")}`, recapA: set.map((x) => `${x.s} = ${x.a}`).join(" · "),
     play(ctx, card) {
       const colors = ["#2f6fe4", "#e8401f", "#12a37f", "#8a4fd6"];
       return dailyPlay(ctx, card, `<div class="prs">
@@ -551,16 +613,16 @@ function oddItem(rng) {
     const ins = sample(by[cc], 3, rng);
     const out = sample(SIM_PROVS.filter((p) => p.ccaa !== cc && !["CE", "ML"].includes(p.code)), 1, rng)[0];
     const { options, correctIndex } = prepOptions([out.name, ...ins.map((p) => p.name)], rng);
-    return { label: "L'intrús", columns: 2, prompt: `<div class="q-text">Quina d'aquestes províncies NO és de ${esc(cc)}?</div>`,
-      options, correctIndex, explain: `${out.name} és de ${out.ccaa}.`, recapQ: `L'intrús (${cc}): ${[out, ...ins].map((p) => p.name).join(", ")}`, recapA: out.name };
+    return { label: "El intruso", columns: 2, prompt: `<div class="q-text">¿Cuál de estas provincias NO es de ${esc(cc)}?</div>`,
+      options, correctIndex, explain: `${out.name} es de ${out.ccaa}.`, recapQ: `El intruso (${cc}): ${[out, ...ins].map((p) => p.name).join(", ")}`, recapA: out.name };
   }
   // Els partits que van votar sí a la investidura de Pedro Sánchez del novembre del 2023
   const yes = ["PSOE", "Sumar", "ERC", "Junts", "EH Bildu", "PNV", "BNG", "CC"], no = ["PP", "Vox", "UPN"];
   const ins = sample(yes, 3, rng), out = no[Math.floor(rng() * no.length)];
   const { options, correctIndex } = prepOptions([out, ...ins], rng);
-  return { label: "L'intrús", columns: 2, prompt: `<div class="q-text">Quin d'aquests partits NO va votar sí a la investidura de Pedro Sánchez del novembre del 2023?</div>`,
-    options, correctIndex, explain: "Van votar sí PSOE, Sumar, ERC, Junts, EH Bildu, PNV, BNG i CC (179 vots). PP, Vox i UPN hi van votar en contra.",
-    recapQ: `Investidura del 2023: ${[out, ...ins].join(", ")}`, recapA: out };
+  return { label: "El intruso", columns: 2, prompt: `<div class="q-text">¿Cuál de estos partidos NO votó sí a la investidura de Pedro Sánchez de noviembre de 2023?</div>`,
+    options, correctIndex, explain: "Votaron sí PSOE, Sumar, ERC, Junts, EH Bildu, PNV, BNG y CC (179 votos). PP, Vox y UPN votaron en contra.",
+    recapQ: `Investidura de 2023: ${[out, ...ins].join(", ")}`, recapA: out };
 }
 
 // ---------- Completa la frase ----------

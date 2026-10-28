@@ -6,7 +6,9 @@
 // un sol document. Només l'equip els pot llegir. Es poden aturar per a tothom des del Centre de control (statsOff).
 const STATS_KEY = "r29n-stats";
 const STATS_SHARDS = 10;
-const STATS_REF = [["google", /google\./], ["x", /(^|\.)(t\.co|x\.com|twitter\.com)$/], ["whatsapp", /whatsapp/], ["instagram", /instagram/], ["facebook", /facebook|fb\.com/], ["telegram", /telegram|t\.me/], ["tiktok", /tiktok/], ["bluesky", /bsky/]];
+// Les IA van primer (gemini.google.com no ha de comptar com a Google)
+const STATS_AI = [["chatgpt", /(^|\.)(chatgpt\.com|openai\.com)$/], ["perplexity", /perplexity\./], ["claude", /(^|\.)claude\.ai$/], ["gemini", /gemini\.google\./], ["copilot", /copilot\.(microsoft|cloud)/]];
+const STATS_REF = [...STATS_AI, ["google", /google\./], ["x", /(^|\.)(t\.co|x\.com|twitter\.com)$/], ["whatsapp", /whatsapp/], ["instagram", /instagram/], ["facebook", /facebook|fb\.com/], ["telegram", /telegram|t\.me/], ["tiktok", /tiktok/], ["bluesky", /bsky/]];
 
 const Stats = (() => {
   const madridDay = (d = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(d);
@@ -104,7 +106,11 @@ const Stats = (() => {
       const host = document.referrer ? new URL(document.referrer).hostname : "";
       if (host && host !== location.hostname) src = STATS_REF.find(([, re]) => re.test(host))?.[0] || "altres";
     } catch { /* sense origen */ }
-    if (/[?&]utm_source=push/.test(location.search)) src = "notificacio";
+    if (/[?&]utm_source=push\b/.test(location.search)) src = "notificacio";
+    // Els assistents d'IA sovint no envien l'origen, però afegeixen utm_source a l'enllaç (p. ex. utm_source=chatgpt.com)
+    const utm = decodeURIComponent((location.search.match(/[?&]utm_source=([^&]+)/) || [])[1] || "");
+    const ai = utm && STATS_AI.find(([k, re]) => re.test(utm) || utm.toLowerCase().includes(k));
+    if (ai) src = ai[0];
     add("src", 1, src);
   }
 
@@ -136,8 +142,8 @@ document.addEventListener("click", (e) => {
   if (!b) return;
   const off = !Stats.off();
   Stats.setOff(off);
-  b.textContent = off ? "Vuelve a contar mis visitas" : "No cuentes mis visitas";
-  toast(off ? "Tus visitas ya no se cuentan" : "Tus visitas vuelven a contar");
+  b.textContent = off ? "Torna a comptar les meves visites" : "No comptis les meves visites";
+  toast(off ? "Les teves visites ja no es compten" : "Les teves visites tornen a comptar");
 });
 // Arrenca quan ja hi ha la resta de l'app
 setTimeout(() => Stats.start(), 1200);

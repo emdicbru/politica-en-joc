@@ -357,6 +357,7 @@ async function saveProfile(handle, key, photo) {
     if (ok === null) return false;
     if (oldKey) await F.deleteDoc(F.doc(db, "usernames", oldKey)).catch(() => {});
   }
+  await cleanUsernames(uid, key);
   Online.profile = { handle, photo: photo || "" };
   await pushProfile();
   return true;
@@ -425,6 +426,7 @@ async function signOutNow() {
     await pushProfile();
   }
   cacheUser(null);
+  synced = false;
   Online.user = null;
   Online.profile = null;
   renderAccountBtn();
@@ -492,8 +494,11 @@ function flushPush() {
 window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushPush(); });
 window.addEventListener("pagehide", flushPush);
 
+// Fins que no s'ha llegit el perfil del núvol no s'hi escriu res: si la lectura falla (sense connexió en obrir l'app),
+// desar-hi el progrés local esborraria el nom d'usuari i el progrés del compte.
+let synced = false;
 async function pushProfile() {
-  if (!ready || !Online.user) return;
+  if (!ready || !Online.user || !synced) return;
   const d = Progress.data;
   await safe(() => F.setDoc(F.doc(db, "users", Online.user.uid), {
     name: me().name, photo: me().photo, handle: Online.profile?.handle || null,
@@ -504,18 +509,54 @@ async function pushProfile() {
   }), "No se ha podido guardar el progreso en la nube");
 }
 
+// Allibera les reserves de nom d'usuari del compte que no són la de debò (duplicats d'abans)
+async function cleanUsernames(uid, keep) {
+  const olds = await safe(() => F.getDocs(F.query(F.collection(db, "usernames"), F.where("uid", "==", uid), F.limit(20))));
+  for (const d of olds?.docs || []) if (d.id !== keep) await F.deleteDoc(d.ref).catch(() => {});
+}
+// Llegeix el perfil del núvol (amb reintents). Torna true si s'ha pogut llegir, existeixi o no.
 async function syncDown() {
-  const snap = await safe(() => F.getDoc(F.doc(db, "users", Online.user.uid)));
-  if (snap?.exists()) {
-    const u = snap.data();
-    if (u.handle) Online.profile = { handle: u.handle, photo: u.photo || "" };
+  const uid = Online.user.uid;
+  let snap = null;
+  for (let i = 0; i < 4 && !snap; i++) {
+    if (i) await new Promise((r) => setTimeout(r, 1500 * i));
+    try { snap = await F.getDoc(F.doc(db, "users", uid)); } catch (e) { console.warn(e); }
+  }
+  if (!snap) { toast("No s'ha pogut carregar el teu perfil. Es tornarà a provar quan hi hagi connexió."); return false; }
+  const u = snap.exists() ? snap.data() : null;
+  if (u?.handle) Online.profile = { handle: u.handle, photo: u.photo || "" };
+  // Sense nom al perfil: si ja n'havia reservat un (una sessió anterior que va fallar), es recupera
+  if (!Online.profile) {
+    const mine = await safe(() => F.getDocs(F.query(F.collection(db, "usernames"), F.where("uid", "==", uid), F.limit(5))));
+    const first = mine?.docs?.[0]?.data();
+    if (first?.handle) Online.profile = { handle: first.handle, photo: u?.photo ?? Online.user.photoURL ?? "" };
+  }
+  if (u) {
     Progress.data = mergeProgress(Progress.data, u);
     store.set("r29n", Progress.data);
     renderLevel();
   }
+  synced = true;
+  if (Online.profile?.handle) cleanUsernames(uid, handleKey(Online.profile.handle));
   await pushProfile();
+  return true;
 }
 
+
+// Si en entrar no s'ha pogut llegir el perfil, es torna a provar quan torni la connexió o la pestanya
+function retrySync() {
+  const again = async () => {
+    if (synced || !Online.user || !navigator.onLine) return;
+    if (await syncDown()) {
+      window.removeEventListener("online", again); document.removeEventListener("visibilitychange", again);
+      renderAccountBtn(); refreshView();
+      if (!Online.profile) openProfileEditor(true);
+    }
+  };
+  window.addEventListener("online", again);
+  document.addEventListener("visibilitychange", again);
+  setTimeout(again, 8000);
+}
 
 // ---------- Perfil: compte i rànquing ----------
 function renderAccountBox() {
@@ -622,6 +663,7 @@ async function deleteMyAccount() {
     return;
   }
   cacheUser(null);
+  synced = false;
   Online.user = null;
   Online.profile = null;
   renderAccountBtn();
@@ -1736,12 +1778,14 @@ if (ready) {
     cacheUser(user);
     renderAccountBtn();
     if (user) {
-      await syncDown();
+      synced = false;
+      const okSync = await syncDown();
       Progress.onSave = schedulePush;
       // Si ha fet el repte d'avui sense sessió, el publiquem ara (només compta si encara no hi és).
       // Sense usuari triat encara, es publica quan el desi.
       const today = dailyResult(todayKey());
-      if (!Online.profile) openProfileEditor(true);
+      if (okSync && !Online.profile) openProfileEditor(true);
+      else if (!okSync) retrySync();
       else if (today) Online.submitDaily(todayKey(), today);
       const pending = sessionStorage.getItem("pendingDuel");
       if (pending) {

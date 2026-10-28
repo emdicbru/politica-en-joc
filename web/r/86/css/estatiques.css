@@ -80,3 +80,16 @@ body.st { padding-bottom: 0; }
 }
 .st-l-short { display: none; }
 @media (max-width: 560px) { .st-l-long { display: none; } .st-l-short { display: inline; } .st .brand-name { font-size: .74rem; } .st-acts { gap: 6px; } }
+
+/* Pàgines de dades */
+.st-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 0 0 18px; }
+.st-facts > div { display: grid; gap: 2px; padding: 14px; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--card); box-shadow: 3px 3px 0 var(--ink); }
+.st-facts b { font-family: var(--display); font-weight: 900; font-size: 1.35rem; letter-spacing: -.02em; }
+.st-facts span { font-size: .9rem; color: var(--ink-2); line-height: 1.4; }
+.st-tablewrap { overflow-x: auto; }
+.st-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; background: var(--card); border: 2px solid var(--ink); border-radius: 10px; font-size: .92rem; }
+.st-table th, .st-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); white-space: nowrap; }
+.st-table th { background: var(--ink); color: var(--card); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+.st-table td:nth-child(n+3), .st-table th:nth-child(n+3) { text-align: right; }
+.st-table small.up { color: #1d9a5b; font-weight: 800; } .st-table small.down { color: #d23c2a; font-weight: 800; }
+.st-table tfoot td { border-top: 2px solid var(--ink); }

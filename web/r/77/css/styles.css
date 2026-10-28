@@ -131,7 +131,6 @@ button { font: inherit; color: inherit; }
   .lang-btn svg { display: none; }
   .account-btn span { display: none; }
   .account-btn { padding: 0 9px; }
-  .account-btn.in { padding: 0 2px; }
   .level-text { display: none; }
   .level-chip { padding: 4px; }
   .nav { margin-left: 4px; }
@@ -151,10 +150,8 @@ button { font: inherit; color: inherit; }
 }
 .account-btn:hover { background: rgba(255, 250, 240, .1); }
 .account-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.account-btn.in { padding-left: 4px; border-color: var(--yellow); }
 .avatar { border-radius: 50%; border: 2px solid var(--ink); object-fit: cover; flex: none; background: var(--paper-2); }
 .avatar.ph { display: inline-grid; place-items: center; font-family: var(--display); font-weight: 800; background: var(--yellow); color: var(--ink); }
-.account-btn .avatar { border-color: var(--card); }
 .level-chip {
   display: flex; align-items: center; gap: 10px; text-decoration: none;
   background: var(--card); color: var(--ink); border-radius: 999px; padding: 4px 14px 4px 4px;
@@ -173,6 +170,21 @@ button { font: inherit; color: inherit; }
 .level-text { display: grid; line-height: 1.1; }
 .level-text small { font-size: .66rem; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .level-text strong { font-family: var(--display); font-weight: 800; font-size: .82rem; }
+/* Píndola del perfil: l'única entrada al perfil des de la capçalera */
+.level-chip.active { box-shadow: 0 0 0 3px var(--yellow); }
+.level-chip.in { padding-left: 3px; }
+.level-chip.in .level-ring { width: 36px; height: 36px; }
+.level-chip.in .level-ring::before { inset: 3px; }
+.level-ring .avatar { position: relative; width: 28px !important; height: 28px !important; border: 0; }
+.level-n { position: absolute; right: -4px; bottom: -3px; min-width: 16px; height: 16px; padding: 0 3px; box-sizing: border-box; border-radius: 99px; display: grid; place-items: center; background: var(--red); color: #fff; border: 1.5px solid var(--card); font-style: normal; font-family: var(--display); font-weight: 900; font-size: .56rem; line-height: 1; }
+.level-chip.in .level-text strong { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.level-chip.in .level-text small { letter-spacing: .04em; }
+/* «Entra»: només sense sessió, com a crida a crear l'usuari */
+.account-btn { border-color: var(--yellow); color: var(--yellow); }
+.account-btn:hover { background: var(--yellow); color: var(--ink); }
+.account-btn[hidden] { display: none; }
+/* Mòbil: les monedes ja ocupen el racó de la dreta de la píndola */
+@media (max-width: 560px) { .level-n { right: auto; left: -5px; } }
 
 /* ---------- Layout ---------- */
 main { max-width: 1180px; margin: 0 auto; padding: 36px 20px 120px; }
@@ -987,7 +999,6 @@ input:focus { outline: none; background: #fff; box-shadow: 3px 3px 0 var(--ink);
   .count-in span { font-size: 7rem; }
   .account-btn span { display: none; }
   .account-btn { padding: 0 9px; }
-  .account-btn.in { padding: 0 2px; }
   .duel-steps, .duel-grid { grid-template-columns: 1fr; }
   .sb-players { grid-template-columns: 1fr; }
   .sb-vs { justify-self: center; }
@@ -1156,20 +1167,20 @@ input:focus { outline: none; background: #fff; box-shadow: 3px 3px 0 var(--ink);
 .gss-res { margin: 0; padding: 10px 14px; border-radius: 12px; font-weight: 700; font-size: .92rem; text-align: center; }
 .gss-res.ok { background: var(--ok-soft); }
 .gss-res.ko { background: var(--ko-soft); }
-.dh { display: grid; gap: 10px; }
-.dh-row { --pc: var(--ink); display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 44px auto; align-items: center; gap: 10px; padding: 10px 12px; border: var(--bw) solid var(--ink); border-radius: var(--radius-sm); background: var(--card); }
-.dh-n { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--pc); color: #fff; font-family: var(--display); font-weight: 900; }
-.dh-v { font-weight: 800; font-variant-numeric: tabular-nums; }
-.dh-row output { text-align: center; font-family: var(--display); font-weight: 900; font-size: 1.3rem; font-variant-numeric: tabular-nums; border-radius: 8px; }
-.dh-row output.ok { background: var(--ok-soft); }
-.dh-row output.ko { background: var(--ko-soft); font-size: .95rem; }
-.dh-row .btn { min-width: 44px; padding: 6px 0; justify-content: center; }
-.dh-left { margin: 0; text-align: center; font-weight: 800; font-size: .88rem; color: var(--ink-2); }
-.dh > [data-ok] { justify-self: center; min-width: 200px; }
+/* Dibuixa-ho: mapa sense províncies per encerclar-hi un territori */
+.ddraw { display: grid; gap: 10px; justify-items: center; }
+.ddraw-map { width: 100%; max-width: 560px; max-height: min(62vh, 520px); border: var(--bw) solid var(--ink); border-radius: var(--radius-sm); background: #cfe6f2; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.ddraw-bg { fill: #e6dcc6; stroke: #c9bc9f; stroke-width: 1; }
+.ddraw-es { fill: #fffaf0; stroke: #fffaf0; stroke-width: 1.2; stroke-linejoin: round; }
+.ddraw-t { opacity: .72; }
+.ddraw-t path { fill: #22b866; stroke: #22b866; stroke-width: 1.2; stroke-linejoin: round; }
+.ddraw-u path { fill: var(--red); fill-opacity: .28; stroke: var(--red); stroke-width: 2.4; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.done .ddraw-u path { fill: none; stroke-dasharray: 5 4; }
+.ddraw-live { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ddraw-b { display: flex; gap: 10px; justify-content: center; }
+.ddraw-b [data-ok] { min-width: 180px; }
+.ddraw .gss-res { max-width: 560px; }
 @media (max-width: 480px) {
-  .dh-row { grid-template-columns: 36px minmax(0, 1fr) 40px 36px 40px; gap: 6px; padding: 8px; }
-  .dh-n { width: 34px; height: 34px; }
-  .dh-v { font-size: .86rem; }
   .gss-n { font-size: 2.6rem; }
 }
 
@@ -1314,98 +1325,9 @@ input:focus { outline: none; background: #fff; box-shadow: 3px 3px 0 var(--ink);
 .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* =========================================================
-   Barra inferior: vidre líquid
+   Portada en pantalles estretes
    ========================================================= */
 @media (max-width: 900px) {
-  /* Vidre líquid a l'estil d'iOS. El contenidor no filtra res: el vidre, l'anell de refracció
-     i la lupa són capes germanes amb backdrop-filter (funciona a Safari i a Chrome). */
-  .tabbar {
-    --lx: 22%;
-    display: flex; position: fixed; left: 50%; transform: translateX(-50%);
-    bottom: calc(12px + env(safe-area-inset-bottom));
-    width: min(440px, calc(100% - 28px)); height: 64px;
-    z-index: 40; padding: 6px; border-radius: 32px;
-    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
-    background: transparent; border: 0; overflow: visible;
-    box-shadow: 0 14px 34px -12px rgba(23, 23, 61, .34), 0 3px 10px rgba(23, 23, 61, .08);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-    transition: transform .45s cubic-bezier(.3, 1.4, .5, 1);
-  }
-  .tabbar.pressing { transform: translateX(-50%) scale(1.025); }
-  /* Cos del vidre: difuminat, saturat i lleugerament lluminós */
-  .lg-glass {
-    position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .34) 0%, rgba(255, 255, 255, .18) 100%);
-    -webkit-backdrop-filter: blur(12px) saturate(1.9) brightness(1.06);
-    backdrop-filter: blur(12px) saturate(1.9) brightness(1.06);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .95),
-      inset 0 -1px 0 rgba(255, 255, 255, .4),
-      inset 0 10px 18px -12px rgba(255, 255, 255, .95),
-      inset 0 -12px 20px -14px rgba(23, 23, 61, .22);
-  }
-  /* Anell de refracció: a les vores el vidre concentra la llum i el color */
-  .lg-edge {
-    position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; padding: 5px;
-    -webkit-backdrop-filter: blur(3px) saturate(2.4) brightness(1.2) contrast(1.08);
-    backdrop-filter: blur(3px) saturate(2.4) brightness(1.2) contrast(1.08);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude;
-  }
-  /* Vora especular, més intensa on hi ha el reflex */
-  .tabbar::before {
-    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.2px; pointer-events: none; z-index: 3;
-    background:
-      radial-gradient(60% 140% at var(--lx) 0%, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0) 70%),
-      linear-gradient(115deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .1) 40%, rgba(255, 255, 255, .05) 60%, rgba(255, 255, 255, .55));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude;
-    transition: background-position .3s;
-  }
-  /* Reflex de llum que es desplaça amb el dit */
-  .tabbar::after {
-    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
-    background: radial-gradient(38% 70% at var(--lx) -10%, rgba(255, 255, 255, .4), rgba(255, 255, 255, 0) 70%);
-    /* sense mix-blend-mode: anul·laria el backdrop-filter del vidre */
-  }
-  /* Càpsula de la pestanya activa; en prémer s'aixeca i fa de lupa */
-  .tab-indicator {
-    --x: 0px; --w: 0px; --sx: 1; --sy: 1; --lift: 1;
-    position: absolute; z-index: 1; top: 6px; bottom: 6px; left: var(--x); width: var(--w);
-    transform: scale(calc(var(--sx) * var(--lift)), calc(var(--sy) * var(--lift)));
-    border-radius: 26px;
-    background: rgba(23, 23, 61, .08);
-    box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6);
-    transition: left .6s cubic-bezier(.3, 1.45, .45, 1), transform .45s cubic-bezier(.3, 1.45, .45, 1), width .5s cubic-bezier(.3, 1.45, .45, 1), opacity .2s, background .25s, box-shadow .25s;
-  }
-  .tab-indicator::after { display: none; }
-  .tab-indicator.instant { transition: transform .2s, width .2s, opacity .2s, background .25s, box-shadow .25s; }
-  .tabbar.pressing .tab-indicator {
-    --lift: 1.24;
-    background: radial-gradient(120% 100% at 35% 15%, rgba(255, 255, 255, .45), rgba(255, 255, 255, .08) 60%);
-    -webkit-backdrop-filter: blur(.8px) saturate(2.1) brightness(1.12) contrast(1.05);
-    backdrop-filter: blur(.8px) saturate(2.1) brightness(1.12) contrast(1.05);
-    box-shadow:
-      0 12px 26px -8px rgba(23, 23, 61, .36),
-      inset 0 1.5px 1px rgba(255, 255, 255, 1),
-      inset 0 -1.5px 1px rgba(255, 255, 255, .55),
-      inset 3px 0 3px -2px rgba(255, 70, 90, .55),
-      inset -3px 0 3px -2px rgba(60, 130, 255, .55),
-      inset 0 0 16px rgba(255, 255, 255, .45);
-  }
-  .tabbar a {
-    position: relative; z-index: 2; flex: 1; display: grid; place-items: center; align-content: center; gap: 2px;
-    text-decoration: none; color: rgba(23, 23, 61, .82); font-size: 10.5px; font-weight: 600; letter-spacing: -.01em; border-radius: 26px;
-    transition: color .25s, transform .3s var(--ease);
-  }
-  .tabbar svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linejoin: round; stroke-linecap: round; transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); }
-  .tabbar a.active { color: var(--red); }
-  .tabbar a.active svg { stroke: var(--red); }
-  .tabbar.dragging a.active:not(.hover) { color: rgba(23, 23, 61, .82); }
-  .tabbar.dragging a.active:not(.hover) svg { stroke: currentColor; }
-  .tabbar a.hover { color: var(--red); }
-  .tabbar a.hover svg { transform: scale(1.2); }
-
   .home-hero { grid-template-columns: 1fr; gap: 18px; padding-bottom: 28px; }
   .congress-band { grid-template-columns: 1fr; gap: 14px; }
   .hero-art { max-width: 520px; width: 100%; justify-self: center; }
@@ -1425,7 +1347,6 @@ input:focus { outline: none; background: #fff; box-shadow: 3px 3px 0 var(--ink);
   .dh-slots li { padding: 7px 2px 6px; }
   .dh-slots span { font-size: .52rem; }
   .actor-ini.lg, .actor-photo img { width: 58px; height: 58px; }
-  .tabbar a span { font-size: .6rem; }
 }
 
 .join-form .name-input { font-family: var(--sans); font-size: 1rem; font-weight: 600; letter-spacing: 0; text-transform: none; text-align: left; }
@@ -3400,12 +3321,6 @@ em.v.no { background: var(--ko); color: #fff; }
 @media (max-width: 900px) {
   .sim-howto { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-links { grid-template-columns: 1fr; }
-  /* Barra inferior de 7 seccions: Inici al centre, destacat */
-  .tabbar { width: min(520px, calc(100% - 20px)); }
-  .tabbar a { font-size: 9.5px; min-width: 0; }
-  .tabbar a span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .tabbar a.tab-home svg { width: 30px; height: 30px; padding: 4px; border-radius: 50%; background: var(--ink); stroke: var(--yellow); box-shadow: 0 3px 0 var(--red); }
-  .tabbar a.tab-home.active svg { background: var(--red); stroke: #fff; box-shadow: 0 3px 0 var(--ink); }
 }
 @media (max-width: 640px) {
   .home-sim { grid-template-columns: 1fr; }
@@ -3416,12 +3331,6 @@ em.v.no { background: var(--ko); color: #fff; }
   .sim-hero-art { max-width: 260px; }
   .sim-howto { grid-template-columns: 1fr; }
   .home-games-row { grid-auto-columns: 72%; }
-}
-@media (max-width: 400px) {
-  .tabbar { padding: 5px 3px; }
-  .tabbar svg { width: 21px; height: 21px; }
-  .tabbar a span { font-size: 8.5px; letter-spacing: -.02em; }
-  .tabbar a.tab-home svg { width: 28px; height: 28px; }
 }
 .sim-pcard-h b small.cand, .sim-partner-h b small.cand { display: block; font-family: var(--sans); font-size: .74rem; font-weight: 600; color: var(--ink-2); }
 .sim-govbox p em { font-style: normal; color: var(--muted); }
@@ -3490,6 +3399,37 @@ em.v.no { background: var(--ko); color: #fff; }
 .onb-dots i.on { background: var(--red); width: 22px; border-radius: 99px; }
 .onb-body .row { justify-content: space-between; margin-top: 6px; }
 .onb-note { display: block; margin-top: 6px; color: var(--muted); font-size: .8rem; }
+/* Novetats */
+.nov-card { width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; display: grid; gap: 12px; padding: 0 0 18px; }
+.nov-head { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; padding: 16px 20px; background: var(--dots) 0 0 / 10px 10px, color-mix(in srgb, var(--yellow) 55%, var(--card)); border-bottom: var(--bw) solid var(--ink); }
+.nov-art svg { width: 100%; height: auto; display: block; }
+.nov-head h3 { margin: 2px 0 0; font-family: var(--display); font-weight: 900; font-size: 1.4rem; letter-spacing: -.03em; line-height: 1.1; }
+.nov-list { list-style: none; margin: 0; padding: 0 20px; display: grid; gap: 10px; }
+.nov-list li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+.nov-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 2px solid var(--ink); background: var(--card); font-size: 1.25rem; box-shadow: 2px 2px 0 var(--ink); }
+.nov-list b { display: block; font-family: var(--display); font-weight: 800; letter-spacing: -.02em; font-size: .98rem; }
+.nov-list li span:not(.nov-ico) { display: block; font-size: .88rem; line-height: 1.4; color: var(--ink-2); }
+.nov-list.sm li { grid-template-columns: 32px 1fr; gap: 10px; }
+.nov-list.sm .nov-ico { width: 32px; height: 32px; font-size: 1rem; border-radius: 10px; box-shadow: none; }
+.nov-list.sm b { font-size: .9rem; }
+.nov-list.sm li span:not(.nov-ico) { font-size: .82rem; }
+.nov-sub { margin: 6px 20px 0; padding-top: 12px; border-top: 2px dashed color-mix(in srgb, var(--ink) 18%, transparent); font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.nov-btns { justify-content: space-between; padding: 6px 20px 0; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 520px) {
+  .nov-head { grid-template-columns: 70px 1fr; padding: 14px 16px; }
+  .nov-list, .nov-sub { padding-inline: 16px; margin-inline: 0; }
+  .nov-sub { margin-inline: 16px; padding-inline: 0; }
+  .nov-btns { padding-inline: 16px; }
+  .nov-btns .btn { flex: 1; justify-content: center; }
+  .nov-card { gap: 10px; }
+  .nov-head h3 { font-size: 1.2rem; }
+  .nov-list { gap: 8px; }
+  .nov-list li { grid-template-columns: 34px 1fr; gap: 10px; }
+  .nov-ico { width: 34px; height: 34px; font-size: 1.05rem; border-radius: 10px; }
+  .nov-list b { font-size: .92rem; }
+  .nov-list li span:not(.nov-ico) { font-size: .82rem; line-height: 1.35; }
+  .nov-list.sm li span:not(.nov-ico) { font-size: .78rem; }
+}
 @media (max-width: 600px) {
   .onb-card { grid-template-columns: 1fr; }
   .onb-art { border-right: 0; border-bottom: var(--bw) solid var(--ink); max-height: 150px; }
@@ -4204,122 +4144,165 @@ body.nx-lock { overflow: hidden; }
 }
 
 /* =========================================================
-   Barra inferior (v3): vidre líquid simètric, amb Inici com a lent central
+   Barra inferior: vidre líquid (mòbil i tauleta)
+   Capes, de baix a dalt: el vidre (.lg-body: difuminat, saturat i, a Chrome, refracció SVG), la gota de la pestanya
+   activa (.tab-indicator), les pestanyes, i el reflex especular de la vora (.lg-rim). Clara o fosca (.on-dark)
+   segons el que hi ha a sota; més petita en baixar la pàgina (.min). La física de la gota és a app.js.
    ========================================================= */
 @media (max-width: 900px) {
   .tabbar {
-    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end;
-    width: min(500px, calc(100% - 20px)); height: 68px; padding: 6px 6px 7px;
-    bottom: max(10px, calc(env(safe-area-inset-bottom) - 12px)); border-radius: 34px; overflow: visible;
-    box-shadow: 0 22px 46px -18px rgba(23, 23, 61, .5), 0 6px 18px -10px rgba(23, 23, 61, .25), 0 0 0 .5px rgba(23, 23, 61, .1);
+    --lx: 50%; --la: 0deg;
+    --g-tint: rgba(255, 255, 255, .5); --g-tint2: rgba(255, 255, 255, .3);
+    --g-ink: rgba(23, 23, 61, .74); --g-on: var(--red); --g-pill: rgba(23, 23, 61, .075);
+    --g-rim: rgba(255, 255, 255, .95); --g-rim2: rgba(255, 255, 255, .28);
+    --tb-h: 66px;
+    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: stretch;
+    position: fixed; z-index: 40; left: 50%; transform: translateX(-50%) translateZ(0);
+    bottom: max(10px, calc(env(safe-area-inset-bottom) - 12px));
+    width: min(500px, calc(100% - 20px)); height: var(--tb-h); padding: 6px; box-sizing: border-box;
+    border-radius: 999px; border: 0; background: transparent; overflow: visible;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "DM Sans", system-ui, sans-serif;
+    box-shadow: 0 18px 40px -16px rgba(12, 12, 40, .42), 0 4px 14px -6px rgba(12, 12, 40, .16);
+    transition: height .5s cubic-bezier(.32, 1.25, .5, 1), width .5s cubic-bezier(.32, 1.25, .5, 1), transform .45s cubic-bezier(.3, 1.5, .5, 1), box-shadow .4s;
   }
-  /* Cos del vidre: molt difuminat i saturat, més clar a dalt, amb profunditat a baix */
-  .lg-glass {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .6) 0%, rgba(255, 255, 255, .24) 46%, rgba(255, 255, 255, .34) 100%);
-    -webkit-backdrop-filter: blur(22px) saturate(2) brightness(1.04);
-    backdrop-filter: blur(22px) saturate(2) brightness(1.04);
+  .tabbar.pressing { transform: translateX(-50%) translateZ(0) scale(1.03, 1.06); }
+  .tabbar.min { --tb-h: 52px; width: min(400px, calc(100% - 44px)); }
+  .tabbar.on-dark {
+    --g-tint: rgba(30, 30, 58, .5); --g-tint2: rgba(30, 30, 58, .36);
+    --g-ink: rgba(255, 255, 255, .86); --g-on: #ff8a6b; --g-pill: rgba(255, 255, 255, .16);
+    --g-rim: rgba(255, 255, 255, .7); --g-rim2: rgba(255, 255, 255, .12);
+    box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .6), 0 4px 14px -6px rgba(0, 0, 0, .3);
+  }
+
+  /* El vidre */
+  .lg-body {
+    position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(180deg, var(--g-tint), var(--g-tint2));
+    -webkit-backdrop-filter: blur(14px) saturate(1.9) brightness(1.06);
+    backdrop-filter: blur(14px) saturate(1.9) brightness(1.06);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 1),
-      inset 0 -1px 0 rgba(255, 255, 255, .55),
-      inset 0 0 0 .5px rgba(255, 255, 255, .7),
-      inset 0 14px 20px -16px rgba(255, 255, 255, 1),
-      inset 0 -18px 26px -20px rgba(23, 23, 61, .3);
+      inset 0 1px 1px rgba(255, 255, 255, .55),
+      inset 0 -1px 1px rgba(255, 255, 255, .22),
+      inset 0 0 14px rgba(255, 255, 255, .16),
+      inset 0 -12px 22px -18px rgba(12, 12, 40, .35);
+    transition: background .45s;
   }
-  /* Anell de refracció a la vora */
-  .lg-edge {
-    padding: 4px;
-    -webkit-backdrop-filter: blur(1.5px) saturate(2.8) brightness(1.2) contrast(1.12);
-    backdrop-filter: blur(1.5px) saturate(2.8) brightness(1.2) contrast(1.12);
-  }
-  /* Reflex que segueix el dit */
-  .lg-shine {
-    position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none; opacity: .7;
-    background: radial-gradient(40% 130% at var(--lx, 28%) -10%, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 62%);
-    transition: opacity .3s;
-  }
-  .tabbar.pressing .lg-shine { opacity: 1; }
-  /* Vora especular */
-  .tabbar::before {
-    padding: 1px; z-index: 4;
-    background: linear-gradient(165deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, .2) 30%, rgba(23, 23, 61, .14) 62%, rgba(255, 255, 255, .85) 100%);
-  }
-  .tabbar::after { display: none; }
+  .on-dark .lg-body { -webkit-backdrop-filter: blur(14px) saturate(1.7) brightness(.9); backdrop-filter: blur(14px) saturate(1.7) brightness(.9); }
+  /* Chrome/Android: refracció de debò a les vores (mapa de desplaçament generat a app.js) */
+  .lg-svg .lg-body { backdrop-filter: url(#lg-refract) brightness(1.06); }
+  .lg-svg .on-dark .lg-body { backdrop-filter: url(#lg-refract) brightness(.92); }
 
-  .tabbar a {
-    height: 55px; align-self: end; display: grid; place-items: center; align-content: center; gap: 3px; min-width: 0;
-    font-size: 10px; font-weight: 650; letter-spacing: -.01em; color: rgba(23, 23, 61, .66);
+  /* Reflex especular de la vora: dos punts de llum oposats que giren amb el desplaçament */
+  .lg-rim {
+    position: absolute; inset: 0; z-index: 4; border-radius: inherit; pointer-events: none; padding: 1px;
+    background: conic-gradient(from calc(var(--la) + 200deg), var(--g-rim) 0deg, var(--g-rim2) 55deg, var(--g-rim2) 125deg, var(--g-rim) 180deg, var(--g-rim2) 235deg, var(--g-rim2) 305deg, var(--g-rim) 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
   }
-  .tabbar a span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .tabbar svg { width: 23px; height: 23px; stroke-width: 1.85; }
-  .tabbar a.active:not(.tab-home) { color: var(--ink); }
-  .tabbar a.active:not(.tab-home) svg { stroke: var(--red); transform: translateY(-1px) scale(1.06); }
+  .lg-rim::after {
+    /* Reflex suau que segueix el dit */
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; opacity: 0; transition: opacity .3s;
+    background: radial-gradient(34% 120% at var(--lx) 0%, rgba(255, 255, 255, .55), transparent 70%);
+  }
+  .pressing .lg-rim::after { opacity: 1; }
 
-  /* Gota de vidre de la pestanya activa */
+  /* La gota de la pestanya activa */
   .tab-indicator {
-    top: 6px; bottom: 7px; border-radius: 27px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .78), rgba(255, 255, 255, .36));
-    box-shadow: 0 8px 16px -10px rgba(23, 23, 61, .45), inset 0 1px 0 #fff, inset 0 -1px 1px rgba(23, 23, 61, .1), 0 0 0 .5px rgba(23, 23, 61, .1);
+    --w: 0px;
+    position: absolute; z-index: 1; left: 0; top: 6px; bottom: 6px; width: var(--w);
+    border-radius: 999px; pointer-events: none; transform-origin: 50% 50%; will-change: transform;
+    background: var(--g-pill);
+    transition: opacity .25s, background .3s, box-shadow .3s;
   }
+  .tabbar.on-home:not(.pressing) .tab-indicator { opacity: 0; }
+  /* En prémer: lupa de vidre clar, elevada */
+  .tabbar.pressing .tab-indicator {
+    background: radial-gradient(120% 90% at 30% 10%, rgba(255, 255, 255, .5), rgba(255, 255, 255, .06) 55%, rgba(255, 255, 255, .14));
+    -webkit-backdrop-filter: blur(.5px) saturate(1.6) brightness(1.1);
+    backdrop-filter: blur(.5px) saturate(1.6) brightness(1.1);
+    box-shadow:
+      0 10px 24px -8px rgba(12, 12, 40, .4),
+      inset 0 1.5px 1px rgba(255, 255, 255, .95),
+      inset 0 -1.5px 1px rgba(255, 255, 255, .45),
+      inset 2px 0 3px -2px rgba(255, 90, 110, .6),
+      inset -2px 0 3px -2px rgba(80, 140, 255, .6),
+      inset 0 0 12px rgba(255, 255, 255, .35);
+  }
+  .lg-svg .tabbar.pressing .tab-indicator { backdrop-filter: url(#lg-lens) brightness(1.08); }
 
-  /* Inici: lent de vidre elevada al centre */
-  .tabbar a.tab-home { position: relative; align-content: end; padding-bottom: 5px; color: var(--ink); overflow: visible; }
-  .tabbar a.tab-home .tab-lens {
-    position: absolute; left: 50%; top: -24px; width: 58px; height: 58px; border-radius: 50%; transform: translateX(-50%);
-    background:
-      radial-gradient(110% 80% at 32% 12%, rgba(255, 255, 255, .75), rgba(255, 255, 255, 0) 46%),
-      radial-gradient(90% 60% at 50% 110%, rgba(255, 207, 61, .35), rgba(255, 207, 61, 0) 60%),
-      linear-gradient(165deg, #34347a, var(--ink) 72%);
-    box-shadow:
-      0 14px 24px -12px rgba(23, 23, 61, .8),
-      0 0 0 4px rgba(255, 255, 255, .6),
-      0 0 0 4.5px rgba(23, 23, 61, .08),
-      inset 0 2px 1px rgba(255, 255, 255, .55),
-      inset 0 -5px 10px rgba(0, 0, 0, .35);
-    transition: background .35s, box-shadow .35s, transform .4s cubic-bezier(.3, 1.6, .5, 1);
+  /* Pestanyes */
+  .tabbar a {
+    position: relative; z-index: 2; min-width: 0; display: grid; place-items: center; align-content: center; gap: 3px;
+    text-decoration: none; color: var(--g-ink); font-size: 10px; font-weight: 600; letter-spacing: -.01em; border-radius: 999px;
+    transition: color .3s;
   }
-  .tabbar a.tab-home svg {
-    position: absolute; left: 50%; top: -8px; z-index: 1; width: 26px; height: 26px; transform: translateX(-50%);
-    padding: 0; margin: 0; border-radius: 0; background: none; box-shadow: none; stroke: var(--yellow); stroke-width: 2.1;
+  .tabbar a > span:last-child {
+    max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1;
+    transition: opacity .25s, max-height .4s cubic-bezier(.32, 1.25, .5, 1), transform .4s cubic-bezier(.32, 1.25, .5, 1); max-height: 14px;
   }
-  .tabbar a.tab-home.active .tab-lens {
+  .tabbar svg {
+    width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linejoin: round; stroke-linecap: round;
+    transition: transform .45s cubic-bezier(.3, 1.6, .5, 1), stroke .3s;
+  }
+  .tabbar a.active { color: var(--g-on); font-weight: 700; }
+  .tabbar a.active svg { stroke-width: 2.15; }
+  .tabbar.dragging a.active:not(.hover) { color: var(--g-ink); font-weight: 600; }
+  .tabbar a.hover { color: var(--g-on); }
+  .tabbar a.hover svg { transform: scale(1.16); }
+  .tabbar a:active svg { transform: scale(.9); }
+  .tabbar a.pop svg { animation: tbPop .55s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes tbPop { 0% { transform: scale(.82); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+  .tabbar a:focus-visible { outline: 2px solid var(--g-on); outline-offset: -3px; }
+
+  /* Inici: disc de vidre tenyit al centre */
+  .tabbar a.tab-home { color: var(--g-ink); }
+  .tab-orb {
+    position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -26px 0 0 -18px; border-radius: 50%; z-index: -1;
     background:
-      radial-gradient(110% 80% at 32% 12%, rgba(255, 255, 255, .8), rgba(255, 255, 255, 0) 46%),
-      radial-gradient(90% 60% at 50% 110%, rgba(255, 207, 61, .55), rgba(255, 207, 61, 0) 60%),
-      linear-gradient(165deg, #ff7a5c, var(--red) 55%, #d6341a);
-    box-shadow:
-      0 14px 26px -10px rgba(255, 75, 43, .75),
-      0 0 0 4px rgba(255, 255, 255, .75),
-      0 0 0 4.5px rgba(23, 23, 61, .08),
-      inset 0 2px 1px rgba(255, 255, 255, .6),
-      inset 0 -5px 10px rgba(120, 20, 0, .35);
+      radial-gradient(90% 70% at 32% 18%, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 50%),
+      radial-gradient(80% 60% at 50% 115%, rgba(255, 207, 61, .45), rgba(255, 207, 61, 0) 60%),
+      linear-gradient(165deg, #3a3a86, var(--ink) 75%);
+    box-shadow: 0 8px 16px -8px rgba(12, 12, 40, .7), inset 0 1.5px 1px rgba(255, 255, 255, .55), inset 0 -4px 8px rgba(0, 0, 0, .35), 0 0 0 .5px rgba(255, 255, 255, .4);
+    transition: background .35s, box-shadow .35s, transform .45s cubic-bezier(.3, 1.6, .5, 1), width .45s cubic-bezier(.32, 1.25, .5, 1), height .45s cubic-bezier(.32, 1.25, .5, 1), margin .45s cubic-bezier(.32, 1.25, .5, 1);
+  }
+  .tabbar a.tab-home svg { position: relative; top: -2px; stroke: var(--yellow); stroke-width: 2.1; width: 19px; height: 19px; margin-bottom: 2px; }
+  .tabbar a.tab-home > span:last-child { transform: translateY(3px); }
+  .tabbar a.tab-home.active .tab-orb {
+    background:
+      radial-gradient(90% 70% at 32% 18%, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 50%),
+      radial-gradient(80% 60% at 50% 115%, rgba(255, 207, 61, .55), rgba(255, 207, 61, 0) 60%),
+      linear-gradient(165deg, #ff7d5e, var(--red) 55%, #d4321a);
+    box-shadow: 0 8px 18px -6px rgba(255, 75, 43, .7), inset 0 1.5px 1px rgba(255, 255, 255, .6), inset 0 -4px 8px rgba(120, 20, 0, .35), 0 0 0 .5px rgba(255, 255, 255, .5);
   }
   .tabbar a.tab-home.active svg { stroke: #fff; }
-  .tabbar a.tab-home.active span:last-child { color: var(--red); font-weight: 750; }
-  .tabbar a.tab-home.hover .tab-lens, .tabbar a.tab-home:active .tab-lens { transform: translateX(-50%) scale(1.08) translateY(-2px); }
-  .tabbar a.tab-home.hover svg { transform: translateX(-50%) scale(1.08); }
-  .tabbar a.hover:not(.tab-home) svg { transform: scale(1.18); }
+  .tabbar a.tab-home.hover .tab-orb, .tabbar a.tab-home:active .tab-orb { transform: scale(1.1); }
+  .tabbar a.tab-home.hover svg { transform: scale(1.1); }
+
+  /* Encongida: només icones */
+  .tabbar.min a > span:last-child { opacity: 0; max-height: 0; transform: scale(.6); }
+  .tabbar.min a { gap: 0; }
+  .tabbar.min svg { width: 22px; height: 22px; }
+  .tabbar.min .tab-orb { width: 36px; height: 36px; margin: -18px 0 0 -18px; }
+  .tabbar.min a.tab-home svg { top: 0; width: 19px; height: 19px; margin: 0; }
+
+  .tabbar a.has-new::after { top: 6px; left: calc(50% + 6px); box-shadow: 0 0 0 2px rgba(255, 255, 255, .9); }
 }
 @media (max-width: 380px) {
-  .tabbar { padding: 6px 4px 7px; }
+  .tabbar { padding: 5px; --tb-h: 62px; }
   .tabbar a { font-size: 9px; gap: 2px; }
-  .tabbar svg { width: 21px; height: 21px; }
-  .tabbar a.tab-home .tab-lens { width: 52px; height: 52px; top: -22px; }
-  .tabbar a.tab-home svg { width: 23px; height: 23px; top: -7px; }
+  .tabbar svg { width: 22px; height: 22px; }
+  .tab-orb { width: 34px; height: 34px; margin: -25px 0 0 -17px; }
 }
-@media (max-width: 340px) {
-  .tabbar a { font-size: 8px; letter-spacing: -.03em; }
-}
+@media (max-width: 340px) { .tabbar a { font-size: 8px; letter-spacing: -.03em; } }
 @media (prefers-reduced-transparency: reduce) {
-  .lg-glass { background: rgba(255, 250, 240, .97); }
+  .lg-body, .lg-svg .lg-body { background: rgba(255, 250, 240, .97); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .on-dark .lg-body { background: rgba(23, 23, 61, .96); }
 }
-@media (max-width: 900px) {
-  .tabbar a { align-content: end; padding-bottom: 7px; }
-  .tabbar a.tab-home { padding-bottom: 7px; }
-  .tabbar a span.tab-lens { max-width: none; overflow: visible; }
-  .tabbar a.tab-home.active svg, .tabbar a.tab-home svg { background: none; box-shadow: none; padding: 0; border-radius: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .tabbar, .tabbar a, .tabbar svg, .tab-orb, .tabbar a > span:last-child { transition: none; }
+  .tabbar a.pop svg { animation: none; }
 }
-@media (max-width: 900px) { .tabbar a.tab-home { z-index: 5; } }
 
 /* =========================================================
    Simulador de debat electoral

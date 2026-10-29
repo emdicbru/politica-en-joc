@@ -86,6 +86,8 @@ function dbmHome(G) {
     <div class="db-actions"><button class="btn ghost" data-back>← Canvia el candidat</button></div>
   </div></div>`;
   $("[data-back]", ctx.body).addEventListener("click", () => dbSetup(G));
+  // Hi venies amb un codi (Reptes o un enllaç): s'hi entra directament
+  if (DbOpts.amics?.code && !lab) { const c = DbOpts.amics.code; DbOpts.amics.code = null; setTimeout(() => { const f = $("[data-join]", ctx.body); if (!f) return; $("[data-code]", f).value = c; f.requestSubmit(); }, 0); }
   $("[data-new]", ctx.body).addEventListener("click", async (e) => { e.target.disabled = true; const code = await dbmApi().create(G.me); if (code) dbmOpen(G, code); else e.target.disabled = false; });
   $("[data-join]", ctx.body)?.addEventListener("submit", async (e) => {
     e.preventDefault();

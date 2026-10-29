@@ -790,73 +790,80 @@ function duelIcon() {
   return icon(`<path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/>`);
 }
 
+// ---------- Reptes (pestanya Amics → Reptes): les teves partides i els reptes nous ----------
 function renderLobby() {
   const root = $("#duel-root");
-  root.innerHTML = `
-    <div class="duel-steps">
-      <div><b>1</b><span>Crea un duel i envia l'enllaç o el codi a un amic.</span></div>
-      <div><b>2</b><span>Trieu 5 parelles de preguntes: una te la quedes per a tu i l'altra l'envies al rival!</span></div>
-      <div><b>3</b><span>Xateja, envia icones i segueix el marcador en directe. Guanya qui en faci més!</span></div>
-    </div>
-    <div class="duel-grid">
-      <div class="card duel-card">
-        <p class="kicker">Nou repte</p>
-        <h3>Crea un duel</h3>
-        <p class="muted">5 preguntes triades per tu + 5 enviades pel rival · Xat i icones en viu.</p>
-        <button class="btn primary lg" data-create>Crea el duel</button>
-      </div>
-      <div class="card duel-card sim-duelcard">
-        <p class="kicker">Simulador del 29N</p>
-        <h3>Duel de campanya</h3>
-        <p class="muted">El mateix partit i el mateix país per als dos. Cadascú fa la seva campanya i guanya qui tregui més escons.</p>
-        <button class="btn primary lg" data-create-sim>Crea el duel de campanya</button>
-      </div>
-      <div class="card duel-card">
-        <p class="kicker">T'han passat un codi?</p>
-        <h3>Uneix-te</h3>
-        <form class="join-form" data-join>
-          <input type="text" maxlength="6" placeholder="CODI" autocomplete="off" spellcheck="false" aria-label="Codi del duel">
-          <button class="btn lg" type="submit">Entra</button>
-        </form>
-      </div>
-    </div>
-    <h2 class="section-title sm">Els teus duels</h2>
-    <div class="duel-list"><p class="muted">Carregant…</p></div>`;
+  const camp = typeof simAmicsOn === "function" && simAmicsOn(), deb = typeof dbmOn === "function" && dbmOn();
+  const opt = (attr, ico, t, d) => `<${attr.startsWith("href") ? "a" : "button type=\"button\""} class="rp-opt" ${attr}><span class="rp-ico" aria-hidden="true">${ico}</span><span><b>${t}</b><small>${d}</small></span><i aria-hidden="true">›</i></${attr.startsWith("href") ? "a" : "button"}>`;
+  root.innerHTML = `<div class="rp">
+    <section class="card rp-games"><h2 class="amx-h">Les teves partides</h2><ul class="rp-list" data-games><li class="rp-empty">Carregant…</li></ul></section>
+    <aside class="rp-side">
+      <section class="card rp-new"><h2 class="amx-h">Nou repte</h2>
+        ${opt("data-create", "⚔️", "Duel de preguntes", "1 contra 1: 10 preguntes en directe, amb xat i icones")}
+        ${opt("data-create-sim", "🗳️", "Duel de campanya", "El mateix partit per als dos: guanya qui tregui més escons")}
+        ${camp ? opt("href=\"#simulador/amics\"", "👥", "Campanya contra amics", "De 2 a 4 jugadors, amb pactes i legislatura") : ""}
+        ${deb ? opt("href=\"#simulador/debat-amics\"", "🎙️", "Debat entre amics", "Al plató en 3D, de 2 a 4 candidats") : ""}
+        <p class="amx-tip">💡 Per reptar un amic concret, fes-ho des de <a href="#amics">Xats</a>: li arriba la invitació al xat.</p>
+      </section>
+      <section class="card rp-join"><h2 class="amx-h">Tens un codi?</h2>
+        <form class="join-form" data-join><input type="text" maxlength="6" placeholder="CODI" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Codi del repte"><button class="btn" type="submit">Entra</button></form>
+        <small class="amx-tip">Serveix per a duels, campanyes i debats.</small>
+      </section>
+    </aside>
+  </div>`;
   $("[data-create]", root).addEventListener("click", () => createDuel());
   $("[data-create-sim]", root).addEventListener("click", () => createDuel(null, null, "sim"));
   $("[data-join]", root).addEventListener("submit", (e) => {
     e.preventDefault();
     const c = $("input", e.target).value.trim().toUpperCase();
-    if (c.length === 6) joinDuel(c);
+    if (c.length === 6) joinAnyCode(c);
     else toast("El codi té 6 caràcters");
   });
-  loadMyDuels();
+  loadMyGames();
 }
-
-async function loadMyDuels() {
-  const list = $(".duel-list");
-  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", Online.user.uid), F.limit(30))));
-  if (!snap || !list) return;
+// Un codi qualsevol: duel, campanya contra amics o debat entre amics
+async function joinAnyCode(c) {
+  const ex = async (col) => (await safe(() => F.getDoc(F.doc(db, col, c))))?.exists();
+  if (await ex("duels")) return joinDuel(c);
+  if (await ex("campanyes")) { location.hash = `#simulador/amics-${c}`; return; }
+  if (await ex("debats")) { location.hash = `#simulador/debat-amics-${c}`; return; }
+  toast("No hi ha cap repte amb aquest codi");
+}
+// Les teves partides: duels, campanyes i debats que encara no s'han acabat primer, i després els acabats
+async function loadMyGames() {
+  const list = $("[data-games]");
   const uid = Online.user.uid;
-  const duels = snap.docs.map((d) => d.data()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 12);
-  if (!duels.length) { list.innerHTML = `<p class="muted">Encara no has jugat cap duel. Crea'n un i repta algú!</p>`; return; }
-  list.innerHTML = duels.map((d) => {
+  const q = (col) => safe(() => F.getDocs(F.query(F.collection(db, col), F.where("players", "array-contains", uid), F.limit(30))));
+  const [ds, cs, bs] = await Promise.all([q("duels"), q("campanyes"), q("debats")]);
+  if (!list?.isConnected) return;
+  const t = (x) => x.createdAt?.seconds || 0;
+  const rows = [];
+  (ds?.docs || []).map((d) => d.data()).forEach((d) => {
     const rival = d.host?.uid === uid ? d.guest : d.host;
     const mine = d[`p_${uid}`] || fresh(), theirs = rival ? d[`p_${rival.uid}`] || fresh() : null;
-    let label = "Esperant rival", cls = "wait";
+    let label = "Esperant rival", cls = "wait", live = true;
     if (d.status !== "waiting") {
       if (mine.done && theirs?.done) {
+        live = false;
         label = mine.score > theirs.score ? "Victòria" : mine.score < theirs.score ? "Derrota" : "Empat";
         cls = mine.score > theirs.score ? "win" : mine.score < theirs.score ? "lose" : "tie";
-      } else { label = "En joc"; cls = "live"; }
+      } else { label = mine.done ? "Esperant el rival" : "Et toca"; cls = mine.done ? "wait" : "live"; }
     }
-    return `<a class="duel-row" href="#duel/${d.code}">
-      ${avatar(rival || { name: "?" }, 36)}
-      <span class="dr-name">${rival ? esc(rival.name) : "Sense rival"}<small>Codi ${d.code}</small></span>
-      ${theirs ? `<span class="dr-score">${fmt(mine.score)} – ${fmt(theirs.score)}</span>` : ""}
-      <span class="dr-tag ${cls}">${label}</span>
-    </a>`;
-  }).join("");
+    rows.push({ t: t(d), live, html: `<li><a class="rp-row" href="#duel/${d.code}">${avatar(rival || { name: "?" }, 40)}<span class="amx-mid"><b>${d.kind === "sim" ? "🗳️ Duel de campanya" : "⚔️ Duel"} · ${rival ? esc(rival.name) : "sense rival encara"}</b><small>${theirs ? `${fmt(mine.score)} – ${fmt(theirs.score)} · ` : ""}Codi ${d.code}</small></span><span class="dr-tag ${cls}">${label}</span></a></li>` });
+  });
+  (cs?.docs || []).map((d) => d.data()).forEach((d) => {
+    const live = d.status !== "done", names = d.players.filter((u) => u !== uid).map((u) => d.seats?.[u]?.name).filter(Boolean);
+    const st = d.status === "lobby" ? "A la sala" : !live ? "Acabada" : d.leg && !d.leg.end ? "Legislatura" : d.neg && !d.neg.result ? "Negociació" : `Dia ${Math.min(d.day, 6)}`;
+    rows.push({ t: t(d), live, html: `<li><a class="rp-row" href="#simulador/amics-${d.code}"><span class="rp-big" aria-hidden="true">👥</span><span class="amx-mid"><b>Campanya · ${esc(names.join(", ") || "esperant jugadors")}</b><small>Codi ${d.code}</small></span><span class="dr-tag ${live ? "live" : "tie"}">${st}</span></a></li>` });
+  });
+  (bs?.docs || []).map((d) => d.data()).forEach((d) => {
+    const live = d.status !== "done", names = d.players.filter((u) => u !== uid).map((u) => d.seats?.[u]?.name).filter(Boolean);
+    rows.push({ t: t(d), live, html: `<li><a class="rp-row" href="#simulador/debat-amics-${d.code}"><span class="rp-big" aria-hidden="true">🎙️</span><span class="amx-mid"><b>Debat · ${esc(names.join(", ") || "esperant candidats")}</b><small>Codi ${d.code}</small></span><span class="dr-tag ${live ? "live" : "tie"}">${d.status === "lobby" ? "A la sala" : live ? "En joc" : "Acabat"}</span></a></li>` });
+  });
+  rows.sort((a, b) => (b.live - a.live) || b.t - a.t);
+  const n = rows.filter((r) => r.live).length;
+  $$("[data-rp-tab]").forEach((tb) => { tb.dataset.n = n || ""; });
+  list.innerHTML = rows.length ? rows.slice(0, 20).map((r) => r.html).join("") : `<li class="rp-empty">Encara no tens cap partida. Crea un repte o, des de <a href="#amics">Xats</a>, repta un amic.</li>`;
 }
 
 async function createDuel(fromCode = null, prevData = null, kind = prevData?.kind || "quiz", go = true) {
@@ -1933,15 +1940,47 @@ Online.renderRanking = (root, arg) => {
   root.innerHTML = `
     <div class="rank-tabs">
       <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
-      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amics</button>
+      <button class="rank-tab ${rankTab === "amics" ? "active" : ""}" data-tab="amics">Entre amics</button>
+      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Lligues</button>
       <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiència</button>
     </div>
     <div id="rank-body"><p class="muted">Carregant…</p></div>`;
   $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
   if (rankTab === "world") renderWorld($("#rank-body"), key);
+  else if (rankTab === "amics") renderFriendsRank($("#rank-body"), key);
   else if (rankTab === "xp") renderLeaderboard($("#rank-body"), true);
   else renderLeagues($("#rank-body"), key);
 };
+
+// Entre amics: tu i els teus amics, al repte d'avui (qui l'ha fet i en quin temps) i per experiència.
+// Llegeix les amistats acceptades, el perfil i el temps d'avui de cadascú (2 lectures per amic, fins a 40 amics).
+async function renderFriendsRank(box, key) {
+  const uid = Online.user.uid;
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "amistats"), F.where("users", "array-contains", uid), F.limit(200))));
+  if (!snap || !box.isConnected) return;
+  const ids = [uid, ...snap.docs.map((d) => d.data()).filter((f) => f.status === "ok").map((f) => f.users.find((u) => u !== uid))].slice(0, 41);
+  if (ids.length === 1) {
+    box.innerHTML = `<div class="card rk-empty"><p><b>Encara no tens amics per comparar-t'hi.</b></p><p class="muted">Afegeix-ne a <a href="#amics">Xats</a> i aquí veureu qui fa el repte diari més ràpid i qui té més experiència.</p></div>`;
+    return;
+  }
+  const rows = await Promise.all(ids.map(async (u) => {
+    const [p, d] = await Promise.all([safe(() => F.getDoc(F.doc(db, "users", u))), safe(() => F.getDoc(F.doc(db, "dailies", key, "entries", u)))]);
+    const P = p?.exists() ? p.data() : {};
+    return { uid: u, name: P.name || "Jugador", photo: P.photo || "", xp: P.xp || 0, level: P.level || 1, day: d?.exists() ? d.data() : null };
+  }));
+  if (!box.isConnected) return;
+  const done = rows.filter((r) => r.day).sort((a, b) => a.day.ms - b.day.ms);
+  const pending = rows.filter((r) => !r.day);
+  const byXp = [...rows].sort((a, b) => b.xp - a.xp);
+  const row = (r, i, right) => `<div class="lb-row ${r.uid === uid ? "me" : ""}" data-user="${esc(r.uid)}" tabindex="0"><b class="lb-pos">${i + 1}</b>${avatar(r, 34)}<span class="lb-name">${esc(r.name)}${r.uid === uid ? " · tu" : ""}</span><strong>${right}</strong></div>`;
+  box.innerHTML = `<div class="rk-amics">
+    <section class="card"><h2 class="amx-h">Repte d'avui <small class="muted">#${dailyNumber(key)}</small></h2>
+      ${done.length ? `<div class="lb">${done.map((r, i) => row(r, i, `${fmtSecs(r.day.ms)}<small>${r.day.hits}/10</small>`)).join("")}</div>` : `<p class="muted">Ningú no l'ha fet encara. <a href="#joc/diari">Sigues el primer</a>!</p>`}
+      ${pending.length ? `<p class="rk-pending">Encara no l'han fet: ${pending.map((r) => `<span data-user="${esc(r.uid)}" tabindex="0">${esc(r.uid === uid ? "tu" : r.name)}</span>`).join(", ")}${pending.some((r) => r.uid === uid) ? ` · <a href="#joc/diari">Juga ara</a>` : ""}</p>` : ""}
+    </section>
+    <section class="card"><h2 class="amx-h">Experiència</h2><div class="lb">${byXp.map((r, i) => row(r, i, `${fmt(r.xp)} XP`)).join("")}</div></section>
+  </div>`;
+}
 
 async function renderWorld(box, key) {
   const top = await worldTop(key, 50);

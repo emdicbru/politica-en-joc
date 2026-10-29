@@ -130,40 +130,147 @@ async function renderAmics() {
   const handle = window.Online.profile?.handle;
   const rec = AMI.list.filter((f) => f.status === "pendent" && f.from !== me);
   const sent = AMI.list.filter((f) => f.status === "pendent" && f.from === me);
-  const friends = AMI.list.filter((f) => f.status === "ok").sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0));
-  const row = (f, actions) => { const o = amiOther(f), p = f.u?.[o] || {}; return `<li data-user="${esc(o)}" tabindex="0">${amiAv(p, 40)}<span class="ami-n"><b>${esc(p.name || "Jugador")}</b>${actions.sub ? `<small>${actions.sub}</small>` : ""}</span>${actions.html || ""}</li>`; };
+  const friends = AMI.list.filter((f) => f.status === "ok").sort((a, b) => amiLastTs(b) - amiLastTs(a));
   const ns = typeof notifState === "function" ? notifState() : "unsupported";
-  root.innerHTML = `
-    ${ns === "off" ? `<section class="card ami-notif"><span aria-hidden="true">🔔</span><div><b>Que no se te escape nada</b><small>Activa los avisos para saber cuándo un amigo te escribe o te llama, aunque tengas la app cerrada.</small></div><button class="btn primary sm" data-ami-notif>Actívalo</button></section>`
-      : ns === "ios-install" ? `<section class="card ami-notif"><span aria-hidden="true">🔔</span><div><b>Avisos de mensajes y llamadas</b><small>En el iPhone, añade la app a la pantalla de inicio (Compartir → Añadir a pantalla de inicio) para recibirlos.</small></div></section>` : ""}
-    <section class="card ami-invite">
-      <h2 class="section-title sm">👋 Invita a tus amigos</h2>
-      ${handle ? `<p>Envíales tu enlace: al abrirlo, te podrán añadir como amigo.</p>
-        <div class="ami-link"><code>${esc(amiLink(handle))}</code></div>
-        <div class="row ami-share"><a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`¡Hagámonos amigos en Política en Joc y juguemos a las elecciones del 29N! 🗳️ ${amiLink(handle)}`)}" data-wa>WhatsApp</a><button class="btn" type="button" data-copy>Copia el enlace</button>${navigator.share ? `<button class="btn" type="button" data-share>Comparte</button>` : ""}</div>`
-      : `<p>Para tener un enlace de amistad, primero elige tu nombre de usuario.</p><button class="btn primary" type="button" data-handle>Elige el nombre de usuario</button>`}
-      <form class="ami-search" data-search><input data-q placeholder="O busca un nombre de usuario" autocomplete="off" aria-label="Busca un nombre de usuario"><button class="btn" type="submit">Busca</button></form>
-    </section>
-    ${rec.length ? `<section class="card"><h2 class="section-title sm">Solicitudes recibidas</h2><ul class="ami-list">${rec.map((f) => row(f, { sub: "Quiere ser tu amigo", html: `<span class="ami-btns"><button class="btn primary sm" data-acc="${f.id}">Acepta</button><button class="btn ghost sm" data-del="${f.id}">Rechaza</button></span>` })).join("")}</ul></section>` : ""}
-    <section class="card"><h2 class="section-title sm">Tus amigos${friends.length ? ` (${friends.length})` : ""}</h2>
-      ${friends.length ? `<ul class="ami-list">${friends.map((f) => row(f, { sub: f.last ? `${f.last.from === me ? "Tú: " : ""}${esc(f.last.t)}` : "Todavía no habéis chateado", html: `<a class="btn sm ${amiUnread(f) ? "primary" : ""}" href="#amics/xat/${esc(amiOther(f))}">${amiUnread(f) ? "💬 Nuevo" : "💬 Chat"}</a>` })).join("")}</ul>`
-        : `<p class="muted">Todavía no tienes amigos. Envía tu enlace por WhatsApp o toca el nombre de cualquier jugador (en el ranking, en los duelos…) para añadirlo.</p>`}
-    </section>
-    ${sent.length ? `<section class="card"><h2 class="section-title sm">Solicitudes enviadas</h2><ul class="ami-list">${sent.map((f) => row(f, { sub: "Pendiente", html: `<button class="btn ghost sm" data-del="${f.id}">Cancela</button>` })).join("")}</ul></section>` : ""}`;
+  const notifNo = store.get("r29n-ami-notif-no", 0) > Date.now() - 14 * 864e5; // «Ara no»: no ho tornem a dir en 2 setmanes
+  const q = (AMI.filter || "").trim().toLowerCase();
+  const shown = q ? friends.filter((f) => (f.u?.[amiOther(f)]?.name || "").toLowerCase().includes(q)) : friends;
+  const avBtn = (o, p, size) => `<span class="amx-av" data-user="${esc(o)}" tabindex="0" role="button" aria-label="Perfil de ${esc(p.name || "Jugador")}">${amiAv(p, size)}</span>`;
+  // Afegir amics: cercador i enllaç d'amistat (a la columna de la dreta; si encara no tens amics, és el protagonista)
+  const add = `<section class="card amx-add ${friends.length ? "" : "hero"}">
+    <h2 class="amx-h">${friends.length ? "Añade amigos" : "Empieza añadiendo a tus amigos"}</h2>
+    ${friends.length ? "" : `<p class="amx-lead">Chatea, llámalos y rétalos a duelos y campañas electorales.</p>`}
+    <form class="amx-search" data-search role="search"><span aria-hidden="true">🔎</span><input data-q placeholder="Busca un nombre de usuario" autocomplete="off" autocapitalize="off" aria-label="Busca un nombre de usuario"><button class="btn sm" type="submit">Busca</button></form>
+    ${handle ? `<div class="amx-link">
+        <p>O envíales tu enlace de amistad:</p>
+        <code>${esc(amiLink(handle).replace(/^https?:\/\//, ""))}</code>
+        <div class="amx-share"><a class="btn sm amx-wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`¡Hagámonos amigos en Política en Joc y juguemos a las elecciones del 29N! 🗳️ ${amiLink(handle)}`)}" data-wa>WhatsApp</a><button class="btn sm" type="button" data-copy>Copiar</button>${navigator.share ? `<button class="btn sm" type="button" data-share>Comparte</button>` : ""}</div>
+      </div>`
+      : `<div class="amx-link"><p>Para tener un enlace de amistad, primero elige tu nombre de usuario.</p><button class="btn sm primary" type="button" data-handle>Elige el nombre de usuario</button></div>`}
+    <p class="amx-tip">💡 También puedes tocar el nombre de cualquier jugador (en el ranking, en los duelos…) para añadirlo.</p>
+  </section>`;
+  // Cada xat: qui, el darrer que ha passat (missatge, «escrivint…», trucada) i quan
+  const chatRow = (f) => {
+    const o = amiOther(f), p = f.u?.[o] || {}, c = f.call, read = f.read?.[me] || 0, now = Date.now();
+    const ringing = c && c.from !== me && c.st === "ring" && now - c.ts < 45000;
+    const missed = c && c.from !== me && ["perduda", "fi"].includes(c.st) && c.ts > read;
+    const typing = (f.typing?.[o] || 0) > now - 7000;
+    const unread = amiUnread(f) || missed;
+    const sub = ringing ? `<em class="ok">📞 Te llama…</em>` : typing ? `<em class="ok">escribiendo…</em>` : missed && !(f.last && f.last.ts > c.ts) ? `<em class="ko">📞 Llamada perdida</em>`
+      : f.last ? `${f.last.from === me ? "Tú: " : ""}${esc(f.last.t)}` : `<span class="amx-new">Saluda a ${esc(p.name || "")} 👋</span>`;
+    return `<li class="amx-row ${unread ? "unread" : ""}">
+      ${avBtn(o, p, 46)}
+      <a class="amx-go" href="#amics/xat/${esc(o)}"><span class="amx-mid"><b>${esc(p.name || "Jugador")}</b><small>${sub}</small></span>
+        <span class="amx-meta">${amiLastTs(f) ? `<time>${esc(amiWhen(amiLastTs(f)))}</time>` : ""}${unread ? `<i class="amx-dot" aria-label="Nuevo"></i>` : ""}</span></a>
+    </li>`;
+  };
+  root.innerHTML = `<div class="amx ${friends.length ? "" : "empty"}">
+    <div class="amx-main">
+      ${rec.length ? `<section class="card amx-req"><h2 class="amx-h">Solicitudes de amistad <span class="amx-n">${rec.length}</span></h2>
+        <ul class="amx-list">${rec.map((f) => { const o = amiOther(f), p = f.u?.[o] || {}; return `<li class="amx-row">${avBtn(o, p, 42)}<span class="amx-mid"><b>${esc(p.name || "Jugador")}</b><small>Quiere ser tu amigo</small></span><span class="amx-btns"><button class="btn primary sm" data-acc="${f.id}">Acepta</button><button class="btn ghost sm" data-del="${f.id}" aria-label="Rechaza la solicitud de ${esc(p.name || "")}">Rechaza</button></span></li>`; }).join("")}</ul>
+      </section>` : ""}
+      ${ns === "off" && !notifNo ? `<section class="amx-notif"><span aria-hidden="true">🔔</span><div><b>Que no se te escape ningún mensaje</b><small>Avisos cuando un amigo te escribe o te llama, aunque tengas la app cerrada.</small></div><button class="btn primary sm" data-ami-notif>Actívalo</button><button class="amx-x" data-notif-no aria-label="Ahora no">✕</button></section>`
+        : ns === "ios-install" && !notifNo ? `<section class="amx-notif"><span aria-hidden="true">🔔</span><div><b>Avisos de mensajes y llamadas</b><small>En el iPhone, añade la app a la pantalla de inicio (Compartir → Añadir a pantalla de inicio) para recibirlos.</small></div><button class="amx-x" data-notif-no aria-label="Ahora no">✕</button></section>` : ""}
+      ${friends.length ? `<section class="amx-play" aria-label="Juega con un amigo"><b>Juega con un amigo</b><div class="amx-play-btns">
+          <button type="button" data-play="duel"><span aria-hidden="true">⚔️</span>Duelo</button>
+          ${typeof simAmicsOn === "function" && simAmicsOn() ? `<button type="button" data-play="camp"><span aria-hidden="true">👥</span>Campaña</button>` : ""}
+          ${typeof dbmOn === "function" && dbmOn() ? `<a href="#simulador/debat-amics"><span aria-hidden="true">🎙️</span>Debate</a>` : ""}
+          <button type="button" data-play="call"><span aria-hidden="true">📞</span>Llama</button>
+        </div></section>` : ""}
+      ${friends.length ? `<section class="card amx-chats">
+        <header class="amx-head"><h2 class="amx-h">Tus amigos <span class="amx-n soft">${friends.length}</span></h2><a class="btn sm amx-addbtn" href="#amics" data-goadd>+ Añadir</a></header>
+        ${friends.length > 6 ? `<input class="amx-filter" data-filter value="${esc(AMI.filter || "")}" placeholder="Busca entre tus amigos" aria-label="Busca entre tus amigos">` : ""}
+        <ul class="amx-list ami-list">${shown.map(chatRow).join("") || `<li class="amx-none">Ningún amigo con este nombre.</li>`}</ul>
+      </section>` : add}
+    </div>
+    <aside class="amx-side">
+      ${friends.length ? add : ""}
+      ${sent.length ? `<details class="card amx-sent"><summary>Esperando respuesta <span class="amx-n soft">${sent.length}</span></summary>
+        <ul class="amx-list">${sent.map((f) => { const o = amiOther(f), p = f.u?.[o] || {}; return `<li class="amx-row">${avBtn(o, p, 36)}<span class="amx-mid"><b>${esc(p.name || "Jugador")}</b><small>Solicitud enviada</small></span><button class="btn ghost sm" data-del="${f.id}">Cancela</button></li>`; }).join("")}</ul>
+      </details>` : ""}
+    </aside>
+  </div>`;
   $("[data-copy]", root)?.addEventListener("click", async () => { try { await navigator.clipboard.writeText(amiLink(handle)); toast("Enlace copiado"); } catch { toast(amiLink(handle)); } });
   $("[data-share]", root)?.addEventListener("click", () => navigator.share({ title: "Política en Joc", text: "¡Hagámonos amigos en Política en Joc y juguemos a las elecciones del 29N! 🗳️", url: amiLink(handle) }).catch(() => {}));
   $("[data-handle]", root)?.addEventListener("click", () => window.Online?.editProfile?.());
   $("[data-wa]", root)?.addEventListener("click", () => window.Track?.("amics_whatsapp"));
   $("[data-search]", root).addEventListener("submit", async (e) => {
     e.preventDefault();
-    const q = $("[data-q]", root).value.trim().replace(/^@/, "");
-    if (q.length < 3) return toast("Escribe el nombre de usuario completo (mínimo 3 caracteres)");
-    const u = await window.Online.amics.byHandle(q);
+    const v = $("[data-q]", root).value.trim().replace(/^@/, "");
+    if (v.length < 3) return toast("Escribe el nombre de usuario completo (mínimo 3 caracteres)");
+    const u = await window.Online.amics.byHandle(v);
     if (u) amiCard(u.uid, u); else toast("No hay ningún usuario con este nombre");
   });
+  // «+ Afegeix»: porta al cercador (a la dreta o, en mòbil, més avall)
+  $("[data-goadd]", root)?.addEventListener("click", (e) => { e.preventDefault(); const i = $("[data-q]", root); i.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => i.focus({ preventScroll: true }), 350); });
+  const fl = $("[data-filter]", root);
+  fl?.addEventListener("input", () => { AMI.filter = fl.value; const pos = fl.selectionStart; renderAmics(); const n = $("[data-filter]", root); n?.focus(); n?.setSelectionRange(pos, pos); });
   $("[data-ami-notif]", root)?.addEventListener("click", async () => { await notifEnable(); renderAmics(); });
+  $$("[data-play]", root).forEach((b) => b.addEventListener("click", () => amiPick(b.dataset.play)));
+  $("[data-notif-no]", root)?.addEventListener("click", () => { store.set("r29n-ami-notif-no", Date.now()); renderAmics(); });
   $$("[data-acc]", root).forEach((b) => b.addEventListener("click", async (e) => { e.stopPropagation(); await window.Online.amics.accept(b.dataset.acc); Sfx.play("win"); }));
   $$("[data-del]", root).forEach((b) => b.addEventListener("click", async (e) => { e.stopPropagation(); await window.Online.amics.remove(b.dataset.del); }));
+}
+// Quan va passar el darrer d'una amistat (missatge o trucada) i com dir-ho: «ara», «14:05», «ahir», «dl.», «12/10»
+const amiLastTs = (f) => Math.max(f.last?.ts || 0, f.call?.ts || 0);
+function amiWhen(ts) {
+  const d = new Date(ts), now = new Date(), diff = now - d;
+  const loc = document.documentElement.lang === "es" ? "es-ES" : "es-ES";
+  if (diff < 60000) return "ara";
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+  if (new Date(now - 864e5).toDateString() === d.toDateString()) return "ayer";
+  if (diff < 6 * 864e5) return d.toLocaleDateString(loc, { weekday: "long" });
+  return d.toLocaleDateString(loc, { day: "numeric", month: "numeric" });
+}
+
+// Invitar un amic: trucada, videotrucada, duel o campanya (des del xat o des de «Juga amb un amic»)
+async function amiInvite(f, k) {
+  const uid = amiOther(f), p = f.u?.[uid] || {}, name = p.name || "Jugador";
+  if (k === "call" || k === "video") {
+    const code = await window.Online.call.create();
+    if (!code) return;
+    await window.Online.amics.send(f.id, k === "video" ? "📹 Te he hecho una videollamada" : "📞 Te he llamado", { card: { k: "call", code } });
+    await window.Online.amics.ring(f.id, code, k === "video");
+    amiRingOut(f.id, name);
+    return amiCallGo(code, p, uid, k === "video", f.id);
+  }
+  if (k === "duel") {
+    const code = await window.Online.amics.newDuel();
+    if (!code) return;
+    await window.Online.amics.send(f.id, "⚔️ ¡Te reto a un duelo!", { card: { k: "duel", code } });
+    location.hash = `#duel/${code}`;
+  }
+  if (k === "camp") {
+    const code = await window.Online.camp.create();
+    if (!code) return;
+    await window.Online.amics.send(f.id, "👥 ¿Jugamos una campaña electoral?", { card: { k: "camp", code } });
+    location.hash = `#simulador/amics-${code}`;
+  }
+}
+// «Juga amb un amic» (pestanya Xats): tria a qui i li arriba la invitació al xat
+function amiPick(k) {
+  const friends = (AMI.list || []).filter((f) => f.status === "ok").sort((a, b) => amiLastTs(b) - amiLastTs(a));
+  const T = { duel: "⚔️ ¿A quién quieres retar a un duelo?", camp: "👥 ¿Con quién quieres jugar una campaña?", call: "📞 ¿A quién quieres llamar?" }[k];
+  $(".xat-sheet-bg")?.remove();
+  const bg = h(`<div class="xat-sheet-bg"><div class="xat-sheet amx-pick" role="dialog" aria-modal="true" aria-label="${esc(T)}">
+    <p class="amx-pick-t">${esc(T)}</p>
+    <ul class="amx-pick-list">${friends.map((f) => { const o = amiOther(f), p = f.u?.[o] || {}; return `<li><button type="button" data-pick="${esc(f.id)}">${amiAv(p, 40)}<b>${esc(p.name || "Jugador")}</b><i aria-hidden="true">›</i></button></li>`; }).join("")}</ul>
+    ${k === "camp" ? `<p class="amx-tip">En la sala podrás invitar a más amigos, hasta 4 jugadores.</p>` : ""}
+    <button type="button" class="btn ghost" data-pick-x>Cancela</button>
+  </div></div>`);
+  document.body.appendChild(bg);
+  bg.addEventListener("click", async (e) => {
+    if (e.target === bg || e.target.closest("[data-pick-x]")) { bg.remove(); return; }
+    const b = e.target.closest("[data-pick]");
+    if (!b) return;
+    const f = friends.find((x) => x.id === b.dataset.pick);
+    bg.remove();
+    if (!f) return;
+    // La trucada es fa des del xat (allà es veu i es penja)
+    if (k === "call") location.hash = `#amics/xat/${encodeURIComponent(amiOther(f))}`;
+    await amiInvite(f, k);
+  });
+  $("[data-pick]", bg)?.focus({ preventScroll: true });
 }
 
 // ---------- El xat privat ----------
@@ -262,29 +369,7 @@ function amiChat(root, uid) {
     typing: () => window.Online.amics.typing(f.id),
   });
   // Invitacions: trucada, videotrucada, duel i campanya
-  const invite = async (k) => {
-    $(".xat-menu")?.remove();
-    if (k === "call" || k === "video") {
-      const code = await window.Online.call.create();
-      if (!code) return;
-      await window.Online.amics.send(f.id, k === "video" ? "📹 Te he hecho una videollamada" : "📞 Te he llamado", { card: { k: "call", code } });
-      await window.Online.amics.ring(f.id, code, k === "video");
-      amiRingOut(f.id, name);
-      return amiCallGo(code, p, uid, k === "video", f.id);
-    }
-    if (k === "duel") {
-      const code = await window.Online.amics.newDuel();
-      if (!code) return;
-      await window.Online.amics.send(f.id, "⚔️ ¡Te reto a un duelo!", { card: { k: "duel", code } });
-      location.hash = `#duel/${code}`;
-    }
-    if (k === "camp") {
-      const code = await window.Online.camp.create();
-      if (!code) return;
-      await window.Online.amics.send(f.id, "👥 ¿Jugamos una campaña electoral?", { card: { k: "camp", code } });
-      location.hash = `#simulador/amics-${code}`;
-    }
-  };
+  const invite = (k) => { $(".xat-menu")?.remove(); return amiInvite(f, k); };
   $$("[data-inv]", sec).forEach((b) => b.addEventListener("click", () => invite(b.dataset.inv)));
   $("[data-more]", sec).addEventListener("click", (e) => {
     if ($(".xat-menu")) { $(".xat-menu").remove(); return; }

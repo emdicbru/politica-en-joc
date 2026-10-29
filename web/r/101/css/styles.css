@@ -7194,3 +7194,176 @@ body:has(.simchat) .call-ui { right: calc(min(400px, 100vw - 32px) + 30px); }
 .xat-card.st-ring .xat-card-i { animation: ringBounce 1.2s ease-in-out infinite; }
 .xat-card.st-no .xat-card-i, .xat-card.st-perduda .xat-card-i, .xat-card.st-fi .xat-card-i { background: #ffb4ad; }
 .xat-card.st-perduda small, .xat-card.st-fi small { color: #c62828; font-weight: 800; }
+
+/* ---------- Pestanya Amics (amistat.js): xats a l'esquerra, afegir amics a la dreta ---------- */
+.amx { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.amx.empty { grid-template-columns: minmax(0, 640px); justify-content: center; }
+.amx-main, .amx-side { display: grid; gap: 14px; min-width: 0; }
+.amx-side { position: sticky; top: 84px; }
+.amx .card { padding: 16px; margin: 0; }
+.amx-h { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--display); font-weight: 900; font-size: 1.15rem; letter-spacing: -.01em; text-transform: none; }
+.amx-n { min-width: 22px; padding: 1px 7px; border-radius: 99px; background: var(--red); color: #fff; font: 900 .74rem var(--sans); text-align: center; }
+.amx-n.soft { background: var(--paper); color: var(--ink-2); border: 1.5px solid rgba(23, 23, 61, .2); }
+.amx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.amx-addbtn { display: none; }
+.amx-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.amx-list .amx-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; }
+.amx-chats .amx-row { grid-template-columns: auto minmax(0, 1fr); }
+.amx-chats .amx-row:hover, .amx-chats .amx-row:focus-within { background: var(--paper); }
+.amx-av { display: inline-grid; border-radius: 50%; cursor: pointer; }
+.amx-av:focus-visible { outline: 3px solid #4d7cfe; outline-offset: 2px; }
+.amx-go { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; color: var(--ink); text-decoration: none; }
+.amx-mid { display: grid; gap: 1px; min-width: 0; }
+.amx-mid b { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amx-mid small { font-size: .84rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amx-mid em { font-style: normal; font-weight: 800; }
+.amx-mid em.ok { color: #1f8f4e; }
+.amx-mid em.ko { color: #c62828; }
+.amx-new { color: var(--ink-2); font-style: italic; }
+.amx-meta { display: grid; justify-items: end; gap: 4px; }
+.amx-meta time { font-size: .74rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.amx-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 2px var(--card); }
+.amx-row.unread .amx-mid b { font-weight: 900; }
+.amx-row.unread .amx-mid small { color: var(--ink); font-weight: 700; }
+.amx-row.unread .amx-meta time { color: var(--red); }
+.amx-filter { width: 100%; margin: 0 0 8px; padding: 9px 12px; border: 2px solid var(--ink); border-radius: 12px; font: 600 .92rem var(--sans); background: var(--paper); color: var(--ink); }
+.amx-none { padding: 12px 8px; color: var(--ink-2); }
+.amx-btns { display: flex; gap: 6px; }
+
+/* Sol·licituds rebudes: el primer que es veu */
+.amx-req { background: #fff3c4; }
+.amx-req .amx-h { margin-bottom: 6px; }
+
+/* Avís per activar les notificacions: discret i es pot treure */
+.amx-notif { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 2px dashed rgba(23, 23, 61, .35); border-radius: 14px; background: #eef3ff; }
+.amx-notif > span { font-size: 1.4rem; }
+.amx-notif > div { flex: 1; display: grid; min-width: 0; }
+.amx-notif b { font-size: .92rem; }
+.amx-notif small { font-size: .8rem; color: var(--ink-2); }
+.amx-x { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-2); cursor: pointer; }
+.amx-x:hover { background: rgba(23, 23, 61, .08); }
+
+/* Afegir amics */
+.amx-add { display: grid; gap: 12px; }
+.amx-lead { margin: -4px 0 0; color: var(--ink-2); }
+.amx-search { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px; border: 2px solid var(--ink); border-radius: 14px; background: var(--card); }
+.amx-search:focus-within { box-shadow: 0 0 0 3px rgba(77, 124, 254, .35); }
+.amx-search input { flex: 1; min-width: 0; padding: 7px 0; border: 0; outline: none; background: none; font: 600 .95rem var(--sans); color: var(--ink); }
+.amx-link { display: grid; gap: 8px; padding-top: 12px; border-top: 1.5px dashed rgba(23, 23, 61, .25); }
+.amx-link p { margin: 0; font-size: .86rem; font-weight: 700; }
+.amx-link code { display: block; padding: 7px 10px; border-radius: 10px; background: var(--paper); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amx-share { display: flex; flex-wrap: wrap; gap: 6px; }
+.amx-wa { background: #25d366; color: #0b3d1e; }
+.amx-tip { margin: 0; font-size: .78rem; color: var(--ink-2); }
+.amx-add.hero { padding: 24px; gap: 14px; }
+.amx-add.hero .amx-h { font-size: 1.5rem; }
+.amx-add.hero .amx-search { padding: 6px 6px 6px 14px; }
+
+/* Sol·licituds enviades: plegades */
+.amx-sent summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 800; list-style: none; }
+.amx-sent summary::-webkit-details-marker { display: none; }
+.amx-sent summary::after { content: "▾"; margin-left: auto; transition: transform .15s; }
+.amx-sent[open] summary::after { transform: rotate(180deg); }
+.amx-sent[open] .amx-list { margin-top: 8px; }
+
+@media (max-width: 860px) {
+  .amx { grid-template-columns: minmax(0, 1fr); }
+  .amx-side { position: static; }
+  .amx-addbtn { display: inline-flex; }
+}
+@media (max-width: 480px) {
+  .amx .card { padding: 12px; }
+  .amx-list .amx-row { gap: 10px; padding: 7px 4px; }
+  .amx-btns .btn { padding-inline: 10px; }
+}
+
+/* ---------- Secció Amics: pestanyes, «Juga amb un amic», Reptes i rànquing entre amics ---------- */
+.social-tabs a[data-rp-tab][data-n]:not([data-n=""])::after { content: attr(data-n); display: inline-grid; place-items: center; min-width: 17px; height: 17px; margin-left: 6px; padding: 0 4px; border-radius: 99px; background: #2a4fd6; color: #fff; font: 900 .66rem/1 var(--sans); }
+.social-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.social-tabs a { white-space: nowrap; }
+
+/* Juga amb un amic */
+.amx-play { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 2px solid var(--ink); border-radius: 18px; background: #17173d; color: #fff; box-shadow: 4px 4px 0 var(--ink); }
+.amx-play > b { font-family: var(--display); font-weight: 900; font-size: 1.05rem; }
+.amx-play-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.amx-play-btns > * { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 2px solid #fff; border-radius: 99px; background: transparent; color: #fff; font: 800 .9rem var(--sans); text-decoration: none; cursor: pointer; }
+.amx-play-btns > *:hover { background: var(--yellow); color: #17173d; border-color: var(--yellow); }
+.amx-play-btns span { font-size: 1.05rem; }
+@media (max-width: 560px) {
+  .amx-play { padding: 12px; }
+  .amx-play-btns { margin-left: 0; width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); }
+  .amx-play-btns > * { flex-direction: column; justify-content: center; gap: 2px; padding: 8px 4px; border-radius: 14px; font-size: .78rem; }
+  .amx-play-btns span { font-size: 1.35rem; }
+}
+/* A qui? */
+.amx-pick-t { margin: 0; font-family: var(--display); font-weight: 900; font-size: 1.1rem; }
+.amx-pick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: min(52vh, 420px); overflow-y: auto; }
+.amx-pick-list button { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 8px; border: 0; border-radius: 12px; background: none; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.amx-pick-list button:hover, .amx-pick-list button:focus-visible { background: var(--paper); }
+.amx-pick-list i { font-style: normal; font-size: 1.3rem; color: var(--ink-2); }
+
+/* Reptes */
+.rp { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.rp .card { padding: 16px; margin: 0; }
+.rp-side { display: grid; gap: 14px; position: sticky; top: 84px; }
+.rp-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
+.rp-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; color: var(--ink); text-decoration: none; }
+.rp-row:hover, .rp-row:focus-visible { background: var(--paper); }
+.rp-big { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink); font-size: 1.2rem; }
+.rp-empty { padding: 14px 8px; color: var(--ink-2); }
+.rp-new { display: grid; gap: 6px; }
+.rp-new .amx-h { margin-bottom: 4px; }
+.rp-opt { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 10px; border: 2px solid var(--ink); border-radius: 14px; background: var(--card); color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
+.rp-opt:hover { background: #fff8dc; }
+.rp-opt:active { transform: translate(2px, 2px); box-shadow: none; }
+.rp-opt > span:nth-child(2) { display: grid; min-width: 0; }
+.rp-opt b { font-size: .95rem; }
+.rp-opt small { font-size: .78rem; color: var(--ink-2); }
+.rp-opt i { font-style: normal; font-size: 1.3rem; color: var(--ink-2); }
+.rp-ico { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: var(--yellow); border: 2px solid var(--ink); font-size: 1.15rem; }
+.rp-new .amx-tip { margin-top: 4px; }
+.rp-join { display: grid; gap: 8px; }
+.rp-join .join-form { display: flex; gap: 8px; }
+.rp-join .join-form input { flex: 1; min-width: 0; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); font: 900 1.1rem var(--display); letter-spacing: .2em; text-align: center; text-transform: uppercase; color: var(--ink); }
+@media (max-width: 860px) {
+  .rp { grid-template-columns: minmax(0, 1fr); }
+  .rp-side { position: static; }
+}
+
+/* Rànquing entre amics */
+.rk-amics { display: grid; gap: 14px; }
+.rk-amics .card { padding: 16px; margin: 0; }
+.rk-amics .amx-h { margin-bottom: 8px; }
+.rk-amics .amx-h small { font: 700 .8rem var(--sans); }
+.rk-amics .lb-row strong small { margin-left: 6px; font-size: .74rem; color: var(--ink-2); }
+.rk-pending { margin: 10px 0 0; font-size: .86rem; color: var(--ink-2); }
+.rk-pending span { font-weight: 800; color: var(--ink); cursor: pointer; }
+.rk-empty { padding: 18px; }
+.rank-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.rank-tabs button { white-space: nowrap; }
+
+/* ---------- Instal·lar l'app (app.js): finestra des de baix i pantalla del tutorial ---------- */
+.ins-bg { position: fixed; inset: 0; z-index: 115; display: grid; place-items: end center; padding: 16px; background: rgba(10, 10, 30, .5); animation: nxsFade .2s ease; }
+.ins { position: relative; width: min(440px, 100%); display: grid; gap: 14px; padding: 22px 20px 18px; border-radius: 22px; animation: xatUp .25s ease; }
+.ins-x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: none; font-size: 1rem; color: var(--ink-2); cursor: pointer; }
+.ins-x:hover { background: var(--paper); }
+.ins-head { display: flex; align-items: center; gap: 14px; }
+.ins-head img { width: 64px; height: 64px; border-radius: 16px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.ins-head h3 { margin: 0; font-family: var(--display); font-weight: 900; font-size: 1.3rem; line-height: 1.1; }
+.ins-head p { margin: 2px 0 0; font-size: .82rem; color: var(--ink-2); font-weight: 700; }
+.ins-why { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ins-why li { display: flex; align-items: center; gap: 10px; font-size: .92rem; font-weight: 600; }
+.ins-why span { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 10px; background: var(--paper); font-size: 1rem; }
+.ins-go { width: 100%; justify-content: center; }
+.ins-small { margin: 0; font-size: .84rem; color: var(--ink-2); text-align: center; }
+.ins-steps { list-style: none; margin: 0; padding: 12px; display: grid; gap: 10px; border: 2px dashed rgba(23, 23, 61, .3); border-radius: 14px; background: #fff8dc; }
+.ins-steps li { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; font-size: .92rem; line-height: 1.35; }
+.ins-steps li > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 900; font-size: .8rem; }
+.ins-svg { width: 20px; height: 20px; vertical-align: -4px; color: #2a7cf6; }
+.ins .btn.ghost { justify-self: center; }
+@media (min-width: 641px) { .ins-bg { place-items: center; } }
+/* Dins del tutorial de la primera visita */
+.ins-onb { display: grid; gap: 12px; margin-top: 10px; text-align: left; }
+
+.ins-steps li p { margin: 0; }
+.ins-head { padding-right: 30px; }

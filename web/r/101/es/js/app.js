@@ -990,7 +990,7 @@ const ONBOARD = [
   { t: "Noticias", d: "Los titulares de política de los principales medios, al minuto: el día en 1 minuto, la misma noticia explicada por varios medios, el termómetro de campaña y un quiz cada semana.", art: "verificador" },
   { t: "Minijuegos", d: "Contrarreloj, Verificador, Haz mayoría, Adivina el año… Partidas rápidas que dan XP para subir de nivel, de Votante a Presidente.", art: "contrarellotge" },
   { t: "Simuladores", d: "Funda tu partido y gana unas elecciones con las reglas de verdad, o plántales cara a los candidatos en un debate electoral en 3D.", art: "simulador" },
-  { t: "Social", d: "Reta a tus amigos a duelos 1 vs 1 de preguntas o de campaña, y compárate con todo el mundo en el ranking del reto diario y en las ligas.", art: "majoria" },
+  { t: "Amigos", d: "Añade a tus amigos, chatea y llámalos, y rétalos a duelos, campañas y debates. Y compárate con ellos y con todo el mundo en el ranking del reto diario.", art: "majoria" },
   { t: "Aprende", d: "La guía del 29N en capítulos cortos que se leen paso a paso, a pantalla completa: cómo se vota, qué está en juego, las ideologías… Y el comparador de partidos, el pactómetro y el diccionario.", art: "paraula" },
 ];
 function showOnboarding() {
@@ -998,6 +998,9 @@ function showOnboarding() {
   const slides = [...ONBOARD];
   const lliga = typeof espAvisSlide === "function" ? espAvisSlide() : null;
   if (lliga) slides.push(lliga);
+  // Al mòbil (o si el navegador ja ofereix instal·lar-la): una pantalla per tenir-la a la pantalla d'inici
+  const ik = insKind();
+  if (ik && (insMobile() || ik === "prompt")) slides.push({ install: true, t: "Tenla a mano", d: "Instala Política en Joc en la pantalla de inicio: es gratis y no hace falta pasar por ninguna tienda de apps.", art: "simulador" });
   let k = 0;
   const box = h(`<div class="onb" role="dialog" aria-modal="true" aria-label="Qué hay en Política en Joc"><div class="onb-card card">
     <div class="onb-art" data-art></div>
@@ -1014,9 +1017,10 @@ function showOnboarding() {
     $("[data-n]", box).textContent = `${k + 1} de ${N}`;
     $("[data-t]", box).textContent = last ? "Tu usuario" : s.t;
     $("[data-d]", box).textContent = last ? "Puedes empezar a jugar ahora mismo. Cuando te crees el usuario con Google, lo tendrás todo guardado y podrás jugar con los demás." : s.d;
-    $("[data-extra]", box).innerHTML = !last && s.steps ? `<ol class="esp-avis-steps">${s.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>` : last && window.Online?.isGuest?.() ? `<ul class="pitch-list compact">${["Progreso y logros guardados en todos los dispositivos", "Ranking, ligas y duelos con amigos", "Nombre de usuario y foto de perfil"].map((x) => `<li><span aria-hidden="true">✓</span><div><b>${x}</b></div></li>`).join("")}</ul><button class="btn google-btn" data-signin-cta>${googleIconSvg()} Crea el usuario con Google</button><small class="onb-note">Sin usuario puedes hacer 3 partidas de prueba.</small>` : "";
+    $("[data-extra]", box).innerHTML = !last && s.install ? `<div class="ins-onb">${INS_WHY}${insHow(insKind() || ik)}</div>` : !last && s.steps ? `<ol class="esp-avis-steps">${s.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>` : last && window.Online?.isGuest?.() ? `<ul class="pitch-list compact">${["Progreso y logros guardados en todos los dispositivos", "Ranking, ligas y duelos con amigos", "Nombre de usuario y foto de perfil"].map((x) => `<li><span aria-hidden="true">✓</span><div><b>${x}</b></div></li>`).join("")}</ul><button class="btn google-btn" data-signin-cta>${googleIconSvg()} Crea el usuario con Google</button><small class="onb-note">Sin usuario puedes hacer 3 partidas de prueba.</small>` : "";
     $("[data-dots]", box).innerHTML = Array.from({ length: N }, (_, i) => `<i class="${i === k ? "on" : ""}"></i>`).join("");
-    $("[data-next]", box).textContent = last ? "Empieza a jugar" : "Siguiente";
+    $("[data-next]", box).textContent = last ? "Empieza a jugar" : s.install && isStandalone() ? "Siguiente" : s.install ? "Ahora no, después" : "Siguiente";
+    if (!last && s.install) insBind(box, () => { if (++k >= N) close(); else draw(); });
   };
   draw();
   $("[data-next]", box).focus();
@@ -1103,19 +1107,82 @@ async function doInstall() {
   $("[data-ok]", box).addEventListener("click", () => box.remove());
   box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
 }
-// Targeta a Perfil i franja discreta a l'inici (només a partir de la segona visita, i fins que es tanca)
+// Targeta a Perfil (la franja de l'inici ja no hi és: ara hi ha la finestra d'instal·lació, a sota)
 function renderInstall() {
   if (!INSTALL_KEY) return;
-  const st = store.get(INSTALL_KEY, {});
   const card = $("#install-card");
   if (card) card.innerHTML = canInstall() ? `<div class="card install-card"><span aria-hidden="true">📲</span><div><b>Instala Política en Joc</b><p>Tendrás la app en la pantalla de inicio, a pantalla completa y más rápida.</p></div><button class="btn primary" type="button" data-install>Instala</button></div>` : "";
   const bar = $("#install-bar");
-  if (bar) bar.innerHTML = canInstall() && !st.no && !st.done && (st.visits || 0) >= 2 ? `<div class="install-bar"><span aria-hidden="true">📲</span><p><b>¿Tienes Política en Joc a mano?</b> Instálala en el móvil.</p><button class="btn primary" type="button" data-install>Instala</button><button class="install-x" type="button" data-install-no aria-label="Ahora no">✕</button></div>` : "";
+  if (bar) bar.innerHTML = "";
   $$("[data-install]").forEach((b) => { b.onclick = doInstall; });
-  $$("[data-install-no]").forEach((b) => { b.onclick = () => { store.set(INSTALL_KEY, { ...store.get(INSTALL_KEY, {}), no: 1 }); renderInstall(); }; });
 }
 {
   const st = store.get(INSTALL_KEY, {});
   const today = new Date().toDateString();
   if (st.day !== today) store.set(INSTALL_KEY, { ...st, day: today, visits: (st.visits || 0) + 1 });
+  // Cada vegada que s'obre l'app (no cada pàgina): la finestra d'instal·lar surt a partir de la segona
+  try { if (!sessionStorage.getItem("r29n-ses")) { sessionStorage.setItem("r29n-ses", "1"); const s = store.get(INSTALL_KEY, {}); store.set(INSTALL_KEY, { ...s, ses: (s.ses || 0) + 1 }); } } catch { /* sense emmagatzematge */ }
+  if (isStandalone() && !st.done) store.set(INSTALL_KEY, { ...store.get(INSTALL_KEY, {}), done: 1 });
 }
+
+// ---------- Que la instal·lin: a la primera visita (dins del tutorial) i a les següents (finestra des de baix) ----------
+// Android i ordinador (Chrome, Edge): un toc i el navegador la instal·la. iPhone: els passos de Safari amb les icones.
+// Android sense l'avís del navegador (Firefox, Samsung): el menú. Navegadors dins d'apps (Instagram…): obrir-la al navegador.
+const insMobile = () => /android|iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const insInApp = () => /FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|; wv\)/i.test(navigator.userAgent);
+function insKind() {
+  if (isStandalone()) return null;
+  if (insInApp()) return "inapp";
+  if (installEvt) return "prompt";
+  if (isIOS()) return "ios";
+  if (/android/i.test(navigator.userAgent)) return "android";
+  return null; // ordinador sense l'avís del navegador: res
+}
+const insShareSvg = `<svg class="ins-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 11H5a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1v-8a1 1 0 00-1-1h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+const insAddSvg = `<svg class="ins-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+// Els passos (o el botó) segons el mòbil i el navegador
+function insHow(kind) {
+  if (kind === "prompt") return `<button class="btn primary lg ins-go" type="button" data-ins-go>📲 Instálala ahora</button><p class="ins-small">Un toque y ya la tendrás en la pantalla de inicio.</p>`;
+  if (kind === "ios") return `<ol class="ins-steps">
+      <li><span>1</span><p>Toca el botón <b>Comparte</b> ${insShareSvg} ${/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent) ? "(arriba, en la barra de la dirección)" : "(en la barra de Safari)"}.</p></li>
+      <li><span>2</span><p>Baja un poco y elige <b>Añadir a pantalla de inicio</b> ${insAddSvg}.</p></li>
+      <li><span>3</span><p>Toca <b>Añadir</b>, arriba a la derecha. ¡Ya la tienes!</p></li></ol>`;
+  if (kind === "android") return `<ol class="ins-steps"><li><span>1</span><p>Toca el menú <b>⋮</b> del navegador (arriba o abajo).</p></li><li><span>2</span><p>Elige <b>Instala la app</b> o <b>Añadir a pantalla de inicio</b>.</p></li></ol>`;
+  if (kind === "inapp") return `<p class="ins-small">Ahora la estás viendo dentro de otra app. Toca el menú <b>⋯</b> y elige <b>Abrir en el navegador</b> (Chrome o Safari): desde allí podrás instalarla.</p>`;
+  return "";
+}
+const INS_WHY = `<ul class="ins-why"><li><span aria-hidden="true">⚡</span>Se abre al instante y a pantalla completa</li><li><span aria-hidden="true">🔔</span>Avisos cuando un amigo te escribe o te llama</li><li><span aria-hidden="true">📲</span>En la pantalla de inicio, como cualquier app (casi no ocupa nada)</li></ul>`;
+function insBind(root, onDone) {
+  $("[data-ins-go]", root)?.addEventListener("click", async () => { window.Track?.("install_go"); await doInstall(); if (isStandalone() || store.get(INSTALL_KEY, {}).done) onDone?.(); });
+}
+// La finestra (segona visita en endavant): com a molt un cop al dia; si la tanques 3 cops, cada 3 dies
+function installMaybe() {
+  const kind = insKind();
+  if (!kind || $(".ins-bg")) return;
+  const st = store.get(INSTALL_KEY, {});
+  if (st.done || Math.max(st.ses || 0, st.visits || 0) < 2 || Date.now() < (st.next || 0)) return;
+  if (!insMobile() && kind !== "prompt") return;
+  const v = location.hash.slice(1).split("/")[0];
+  if (["joc", "control", "legal", "nit"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .nov, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .ring, .call-ui.dock, .xat-sheet-bg")) return;
+  const box = h(`<div class="ins-bg" role="dialog" aria-modal="true" aria-labelledby="ins-t"><div class="ins card">
+    <button class="ins-x" type="button" data-ins-no aria-label="Ahora no">✕</button>
+    <div class="ins-head"><img src="img/icon-192.png" alt="" width="64" height="64"><div><h3 id="ins-t">Instala Política en Joc</h3><p>Gratis · sin tienda de apps</p></div></div>
+    ${INS_WHY}
+    ${insHow(kind)}
+    <button class="btn ghost" type="button" data-ins-no>Ahora no</button>
+  </div></div>`);
+  document.body.appendChild(box);
+  window.Track?.("install_sheet", { kind });
+  const close = (no) => {
+    box.remove();
+    if (no) { const s = store.get(INSTALL_KEY, {}); const n = (s.dismiss || 0) + 1; store.set(INSTALL_KEY, { ...s, dismiss: n, next: Date.now() + (n >= 3 ? 3 : 1) * 864e5 - 3 * 3600e3 }); }
+  };
+  // Un cop al dia: encara que no la toqui
+  store.set(INSTALL_KEY, { ...st, next: Math.max(st.next || 0, Date.now() + 20 * 3600e3) });
+  $$("[data-ins-no]", box).forEach((b) => b.addEventListener("click", () => close(true)));
+  box.addEventListener("click", (e) => { if (e.target === box) close(true); });
+  insBind(box, () => close(false));
+}
+setTimeout(installMaybe, 4000);
+window.addEventListener("hashchange", () => setTimeout(installMaybe, 1200));
+window.addEventListener("beforeinstallprompt", () => setTimeout(installMaybe, 1500));

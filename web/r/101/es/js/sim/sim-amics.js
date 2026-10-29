@@ -202,6 +202,7 @@ function simMpLobby(G, d) {
 
 // ---------- La partida ----------
 function simMpPlaying(G, d) {
+  if (!d.world) return; // una sala sense el món de la partida (no hauria de passar): no es pot jugar
   const uid = simMpUid();
   const hid = `h${d.players.indexOf(uid)}`;
   simMpStrip(G, d);

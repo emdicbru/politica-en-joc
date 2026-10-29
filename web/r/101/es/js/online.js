@@ -790,73 +790,80 @@ function duelIcon() {
   return icon(`<path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/>`);
 }
 
+// ---------- Reptes (pestanya Amics → Reptes): les teves partides i els reptes nous ----------
 function renderLobby() {
   const root = $("#duel-root");
-  root.innerHTML = `
-    <div class="duel-steps">
-      <div><b>1</b><span>Crea un duelo y envía el enlace o el código a un amigo.</span></div>
-      <div><b>2</b><span>Elegid 5 parejas de preguntas: ¡una te la quedas para ti y la otra se la envías al rival!</span></div>
-      <div><b>3</b><span>Chatea, envía iconos y sigue el marcador en directo. ¡Gana quien acierte más!</span></div>
-    </div>
-    <div class="duel-grid">
-      <div class="card duel-card">
-        <p class="kicker">Nuevo reto</p>
-        <h3>Crea un duelo</h3>
-        <p class="muted">5 preguntas elegidas por ti + 5 enviadas por el rival · Chat e iconos en vivo.</p>
-        <button class="btn primary lg" data-create>Crea el duelo</button>
-      </div>
-      <div class="card duel-card sim-duelcard">
-        <p class="kicker">Simulador del 29N</p>
-        <h3>Duelo de campaña</h3>
-        <p class="muted">El mismo partido y el mismo país para los dos. Cada uno hace su campaña y gana quien saque más escaños.</p>
-        <button class="btn primary lg" data-create-sim>Crea el duelo de campaña</button>
-      </div>
-      <div class="card duel-card">
-        <p class="kicker">¿Te han pasado un código?</p>
-        <h3>Únete</h3>
-        <form class="join-form" data-join>
-          <input type="text" maxlength="6" placeholder="CÓDIGO" autocomplete="off" spellcheck="false" aria-label="Código del duelo">
-          <button class="btn lg" type="submit">Entra</button>
-        </form>
-      </div>
-    </div>
-    <h2 class="section-title sm">Tus duelos</h2>
-    <div class="duel-list"><p class="muted">Cargando…</p></div>`;
+  const camp = typeof simAmicsOn === "function" && simAmicsOn(), deb = typeof dbmOn === "function" && dbmOn();
+  const opt = (attr, ico, t, d) => `<${attr.startsWith("href") ? "a" : "button type=\"button\""} class="rp-opt" ${attr}><span class="rp-ico" aria-hidden="true">${ico}</span><span><b>${t}</b><small>${d}</small></span><i aria-hidden="true">›</i></${attr.startsWith("href") ? "a" : "button"}>`;
+  root.innerHTML = `<div class="rp">
+    <section class="card rp-games"><h2 class="amx-h">Tus partidas</h2><ul class="rp-list" data-games><li class="rp-empty">Cargando…</li></ul></section>
+    <aside class="rp-side">
+      <section class="card rp-new"><h2 class="amx-h">Nuevo reto</h2>
+        ${opt("data-create", "⚔️", "Duelo de preguntas", "1 contra 1: 10 preguntas en directo, con chat e iconos")}
+        ${opt("data-create-sim", "🗳️", "Duelo de campaña", "El mismo partido para los dos: gana quien saque más escaños")}
+        ${camp ? opt("href=\"#simulador/amics\"", "👥", "Campaña contra amigos", "De 2 a 4 jugadores, con pactos y legislatura") : ""}
+        ${deb ? opt("href=\"#simulador/debat-amics\"", "🎙️", "Debate entre amigos", "En el plató en 3D, de 2 a 4 candidatos") : ""}
+        <p class="amx-tip">💡 Para retar a un amigo concreto, hazlo desde <a href="#amics">Chats</a>: le llega la invitación al chat.</p>
+      </section>
+      <section class="card rp-join"><h2 class="amx-h">¿Tienes un código?</h2>
+        <form class="join-form" data-join><input type="text" maxlength="6" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código del reto"><button class="btn" type="submit">Entra</button></form>
+        <small class="amx-tip">Sirve para duelos, campañas y debates.</small>
+      </section>
+    </aside>
+  </div>`;
   $("[data-create]", root).addEventListener("click", () => createDuel());
   $("[data-create-sim]", root).addEventListener("click", () => createDuel(null, null, "sim"));
   $("[data-join]", root).addEventListener("submit", (e) => {
     e.preventDefault();
     const c = $("input", e.target).value.trim().toUpperCase();
-    if (c.length === 6) joinDuel(c);
+    if (c.length === 6) joinAnyCode(c);
     else toast("El código tiene 6 caracteres");
   });
-  loadMyDuels();
+  loadMyGames();
 }
-
-async function loadMyDuels() {
-  const list = $(".duel-list");
-  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", Online.user.uid), F.limit(30))));
-  if (!snap || !list) return;
+// Un codi qualsevol: duel, campanya contra amics o debat entre amics
+async function joinAnyCode(c) {
+  const ex = async (col) => (await safe(() => F.getDoc(F.doc(db, col, c))))?.exists();
+  if (await ex("duels")) return joinDuel(c);
+  if (await ex("campanyes")) { location.hash = `#simulador/amics-${c}`; return; }
+  if (await ex("debats")) { location.hash = `#simulador/debat-amics-${c}`; return; }
+  toast("No hay ningún reto con este código");
+}
+// Les teves partides: duels, campanyes i debats que encara no s'han acabat primer, i després els acabats
+async function loadMyGames() {
+  const list = $("[data-games]");
   const uid = Online.user.uid;
-  const duels = snap.docs.map((d) => d.data()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 12);
-  if (!duels.length) { list.innerHTML = `<p class="muted">Todavía no has jugado ningún duelo. ¡Crea uno y reta a alguien!</p>`; return; }
-  list.innerHTML = duels.map((d) => {
+  const q = (col) => safe(() => F.getDocs(F.query(F.collection(db, col), F.where("players", "array-contains", uid), F.limit(30))));
+  const [ds, cs, bs] = await Promise.all([q("duels"), q("campanyes"), q("debats")]);
+  if (!list?.isConnected) return;
+  const t = (x) => x.createdAt?.seconds || 0;
+  const rows = [];
+  (ds?.docs || []).map((d) => d.data()).forEach((d) => {
     const rival = d.host?.uid === uid ? d.guest : d.host;
     const mine = d[`p_${uid}`] || fresh(), theirs = rival ? d[`p_${rival.uid}`] || fresh() : null;
-    let label = "Esperando rival", cls = "wait";
+    let label = "Esperando rival", cls = "wait", live = true;
     if (d.status !== "waiting") {
       if (mine.done && theirs?.done) {
+        live = false;
         label = mine.score > theirs.score ? "Victoria" : mine.score < theirs.score ? "Derrota" : "Empate";
         cls = mine.score > theirs.score ? "win" : mine.score < theirs.score ? "lose" : "tie";
-      } else { label = "En juego"; cls = "live"; }
+      } else { label = mine.done ? "Esperando al rival" : "Te toca"; cls = mine.done ? "wait" : "live"; }
     }
-    return `<a class="duel-row" href="#duel/${d.code}">
-      ${avatar(rival || { name: "?" }, 36)}
-      <span class="dr-name">${rival ? esc(rival.name) : "Sin rival"}<small>Código ${d.code}</small></span>
-      ${theirs ? `<span class="dr-score">${fmt(mine.score)} – ${fmt(theirs.score)}</span>` : ""}
-      <span class="dr-tag ${cls}">${label}</span>
-    </a>`;
-  }).join("");
+    rows.push({ t: t(d), live, html: `<li><a class="rp-row" href="#duel/${d.code}">${avatar(rival || { name: "?" }, 40)}<span class="amx-mid"><b>${d.kind === "sim" ? "🗳️ Duelo de campaña" : "⚔️ Duelo"} · ${rival ? esc(rival.name) : "sin rival todavía"}</b><small>${theirs ? `${fmt(mine.score)} – ${fmt(theirs.score)} · ` : ""}Codi ${d.code}</small></span><span class="dr-tag ${cls}">${label}</span></a></li>` });
+  });
+  (cs?.docs || []).map((d) => d.data()).forEach((d) => {
+    const live = d.status !== "done", names = d.players.filter((u) => u !== uid).map((u) => d.seats?.[u]?.name).filter(Boolean);
+    const st = d.status === "lobby" ? "En la sala" : !live ? "Terminada" : d.leg && !d.leg.end ? "Legislatura" : d.neg && !d.neg.result ? "Negociación" : `Día ${Math.min(d.day, 6)}`;
+    rows.push({ t: t(d), live, html: `<li><a class="rp-row" href="#simulador/amics-${d.code}"><span class="rp-big" aria-hidden="true">👥</span><span class="amx-mid"><b>Campaña · ${esc(names.join(", ") || "esperando jugadores")}</b><small>Código ${d.code}</small></span><span class="dr-tag ${live ? "live" : "tie"}">${st}</span></a></li>` });
+  });
+  (bs?.docs || []).map((d) => d.data()).forEach((d) => {
+    const live = d.status !== "done", names = d.players.filter((u) => u !== uid).map((u) => d.seats?.[u]?.name).filter(Boolean);
+    rows.push({ t: t(d), live, html: `<li><a class="rp-row" href="#simulador/debat-amics-${d.code}"><span class="rp-big" aria-hidden="true">🎙️</span><span class="amx-mid"><b>Debate · ${esc(names.join(", ") || "esperando candidatos")}</b><small>Código ${d.code}</small></span><span class="dr-tag ${live ? "live" : "tie"}">${d.status === "lobby" ? "En la sala" : live ? "En juego" : "Terminado"}</span></a></li>` });
+  });
+  rows.sort((a, b) => (b.live - a.live) || b.t - a.t);
+  const n = rows.filter((r) => r.live).length;
+  $$("[data-rp-tab]").forEach((tb) => { tb.dataset.n = n || ""; });
+  list.innerHTML = rows.length ? rows.slice(0, 20).map((r) => r.html).join("") : `<li class="rp-empty">Todavía no tienes ninguna partida. Crea un reto o, desde <a href="#amics">Chats</a>, reta a un amigo.</li>`;
 }
 
 async function createDuel(fromCode = null, prevData = null, kind = prevData?.kind || "quiz", go = true) {
@@ -1933,15 +1940,47 @@ Online.renderRanking = (root, arg) => {
   root.innerHTML = `
     <div class="rank-tabs">
       <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
-      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amigos</button>
+      <button class="rank-tab ${rankTab === "amics" ? "active" : ""}" data-tab="amics">Entre amigos</button>
+      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Ligas</button>
       <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiencia</button>
     </div>
     <div id="rank-body"><p class="muted">Cargando…</p></div>`;
   $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
   if (rankTab === "world") renderWorld($("#rank-body"), key);
+  else if (rankTab === "amics") renderFriendsRank($("#rank-body"), key);
   else if (rankTab === "xp") renderLeaderboard($("#rank-body"), true);
   else renderLeagues($("#rank-body"), key);
 };
+
+// Entre amics: tu i els teus amics, al repte d'avui (qui l'ha fet i en quin temps) i per experiència.
+// Llegeix les amistats acceptades, el perfil i el temps d'avui de cadascú (2 lectures per amic, fins a 40 amics).
+async function renderFriendsRank(box, key) {
+  const uid = Online.user.uid;
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "amistats"), F.where("users", "array-contains", uid), F.limit(200))));
+  if (!snap || !box.isConnected) return;
+  const ids = [uid, ...snap.docs.map((d) => d.data()).filter((f) => f.status === "ok").map((f) => f.users.find((u) => u !== uid))].slice(0, 41);
+  if (ids.length === 1) {
+    box.innerHTML = `<div class="card rk-empty"><p><b>Todavía no tienes amigos con los que compararte.</b></p><p class="muted">Añade alguno en <a href="#amics">Chats</a> y aquí veréis quién hace el reto diario más rápido y quién tiene más experiencia.</p></div>`;
+    return;
+  }
+  const rows = await Promise.all(ids.map(async (u) => {
+    const [p, d] = await Promise.all([safe(() => F.getDoc(F.doc(db, "users", u))), safe(() => F.getDoc(F.doc(db, "dailies", key, "entries", u)))]);
+    const P = p?.exists() ? p.data() : {};
+    return { uid: u, name: P.name || "Jugador", photo: P.photo || "", xp: P.xp || 0, level: P.level || 1, day: d?.exists() ? d.data() : null };
+  }));
+  if (!box.isConnected) return;
+  const done = rows.filter((r) => r.day).sort((a, b) => a.day.ms - b.day.ms);
+  const pending = rows.filter((r) => !r.day);
+  const byXp = [...rows].sort((a, b) => b.xp - a.xp);
+  const row = (r, i, right) => `<div class="lb-row ${r.uid === uid ? "me" : ""}" data-user="${esc(r.uid)}" tabindex="0"><b class="lb-pos">${i + 1}</b>${avatar(r, 34)}<span class="lb-name">${esc(r.name)}${r.uid === uid ? " · tú" : ""}</span><strong>${right}</strong></div>`;
+  box.innerHTML = `<div class="rk-amics">
+    <section class="card"><h2 class="amx-h">Reto de hoy <small class="muted">#${dailyNumber(key)}</small></h2>
+      ${done.length ? `<div class="lb">${done.map((r, i) => row(r, i, `${fmtSecs(r.day.ms)}<small>${r.day.hits}/10</small>`)).join("")}</div>` : `<p class="muted">Nadie lo ha hecho todavía. <a href="#joc/diari">Sé el primero</a>!</p>`}
+      ${pending.length ? `<p class="rk-pending">Todavía no lo han hecho: ${pending.map((r) => `<span data-user="${esc(r.uid)}" tabindex="0">${esc(r.uid === uid ? "ti" : r.name)}</span>`).join(", ")}${pending.some((r) => r.uid === uid) ? ` · <a href="#joc/diari">Juega ahora</a>` : ""}</p>` : ""}
+    </section>
+    <section class="card"><h2 class="amx-h">Experiencia</h2><div class="lb">${byXp.map((r, i) => row(r, i, `${fmt(r.xp)} XP`)).join("")}</div></section>
+  </div>`;
+}
 
 async function renderWorld(box, key) {
   const top = await worldTop(key, 50);

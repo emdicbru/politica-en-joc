@@ -194,6 +194,60 @@ async function pushCron(env) {
   await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/push.yml/dispatches`, { method: "POST", headers: { Authorization: `Bearer ${env.GH_DISPATCH}`, Accept: "application/vnd.github+json", "User-Agent": "pej-avisos", "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main" }) });
 }
 
+// ---------- Trucades: servidors TURN de Cloudflare (POST /turn) ----------
+// Amb dades mòbils (o xarxes d'empresa) els dos navegadors sovint no es poden connectar directament i la trucada es queda
+// «connectant». El TURN retransmet l'àudio i el vídeo xifrats (DTLS-SRTP: Cloudflare no els pot llegir). Les credencials
+// només se'n donen a qui té la sessió iniciada. Tres maneres, segons els secrets que hi hagi (la primera que hi sigui):
+//  · TURN_KEY_ID i TURN_KEY_TOKEN: Cloudflare (Realtime → TURN), credencials temporals.
+//  · TURN_API_URL: un servei que torna la llista de servidors en JSON (p. ex. Metered / Open Relay:
+//    https://<app>.metered.live/api/v1/turn/credentials?apiKey=<clau>).
+//  · TURN_URLS (separades per comes), TURN_USER i TURN_PASS: un usuari fix (p. ex. ExpressTURN).
+// Sense cap, l'app es queda amb el STUN de Google.
+// Fre de despesa: cada credencial dura 2 hores i se'n donen com a molt TURN_MAX_MES al mes (per defecte 500) i 12 al dia
+// per persona. En arribar-hi, /turn respon 429 i les trucades fan servir només STUN fins al mes següent. El comptador és a
+// Firestore (config/turn, un camp per mes: n202611…). No limita els GB exactes, però sí el que pot durar qualsevol abús.
+const TURN_TTL = 2 * 3600;
+const TURN_MAX_MES = 500, TURN_MAX_DIA = 12;
+const turnMonth = (d = new Date()) => `n${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+export async function turnBudget(env) {
+  const field = turnMonth(), max = Number(env.TURN_MAX_MES) || TURN_MAX_MES;
+  const cur = (await fsGet(env, "config/turn"))?.[field] || 0;
+  if (cur >= max) return false;
+  await fetch(`${FS.replace(/\/documents$/, "/documents:commit")}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ writes: [{ transform: { document: `projects/${PROJECT}/databases/(default)/documents/config/turn`, fieldTransforms: [{ fieldPath: field, increment: { integerValue: "1" } }] } }] }),
+  });
+  return true;
+}
+const turnDay = new Map(); // uid → { day, n }
+const turnOn = (env) => !!((env.TURN_KEY_ID && env.TURN_KEY_TOKEN) || env.TURN_API_URL || (env.TURN_URLS && env.TURN_USER && env.TURN_PASS));
+// Treu el port 53: els navegadors no hi poden connectar i allarga la cerca de camins
+export function turnServers(data) {
+  const list = Array.isArray(data) ? data : Array.isArray(data?.iceServers) ? data.iceServers : data?.iceServers ? [data.iceServers] : [];
+  return list
+    .map((s) => ({ ...s, urls: (Array.isArray(s.urls) ? s.urls : [s.urls]).filter((u) => typeof u === "string" && !/:53(\?|$)/.test(u)) }))
+    .filter((s) => s.urls.length);
+}
+export async function turnFor(env) {
+  if (!(env.TURN_KEY_ID && env.TURN_KEY_TOKEN)) {
+    if (env.TURN_API_URL) {
+      const r = await fetch(env.TURN_API_URL);
+      if (!r.ok) throw new Error(`TURN ${r.status}`);
+      return turnServers(await r.json());
+    }
+    return turnServers({ iceServers: { urls: String(env.TURN_URLS).split(",").map((u) => u.trim()).filter(Boolean), username: env.TURN_USER, credential: env.TURN_PASS } });
+  }
+  const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${env.TURN_KEY_ID}/credentials/generate-ice-servers`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.TURN_KEY_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ ttl: TURN_TTL }),
+  });
+  if (!r.ok) throw new Error(`TURN ${r.status}`);
+  return turnServers(await r.json());
+}
+const turnCalls = new Map();
+
 function cors(req) {
   const o = req.headers.get("Origin") || "";
   const ok = ORIGINS.includes(o) || /^http:\/\/localhost(:\d+)?$/.test(o);
@@ -206,11 +260,27 @@ export default {
   async fetch(req, env) {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc" });
-    if (req.method !== "POST" || url.pathname !== "/avisa") return json(req, 404, { error: "no existeix" });
+    if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc", turn: turnOn(env) });
+    if (req.method !== "POST" || (url.pathname !== "/avisa" && url.pathname !== "/turn")) return json(req, 404, { error: "no existeix" });
     let caller;
     try { caller = await verifyIdToken((req.headers.get("Authorization") || "").replace(/^Bearer /, "")); } catch (e) { return json(req, 401, { error: `sessió: ${e.message}` }); }
     const now = Date.now();
+    if (url.pathname === "/turn") {
+      if (!turnOn(env)) return json(req, 503, { error: "sense TURN" });
+      const recentT = (turnCalls.get(caller) || []).filter((t) => now - t < 60000);
+      if (recentT.length >= 10) return json(req, 429, { error: "massa peticions" });
+      turnCalls.set(caller, [...recentT, now]);
+      if (turnCalls.size > 5000) turnCalls.clear();
+      const day = new Date(now).toISOString().slice(0, 10), mine = turnDay.get(caller);
+      const used = mine?.day === day ? mine.n : 0;
+      if (used >= TURN_MAX_DIA) return json(req, 429, { error: "límit diari" });
+      try {
+        if (env.TURN_KEY_ID && !(await turnBudget(env))) return json(req, 429, { error: "límit mensual" });
+        turnDay.set(caller, { day, n: used + 1 });
+        if (turnDay.size > 5000) turnDay.clear();
+        return json(req, 200, { iceServers: await turnFor(env), ttl: TURN_TTL });
+      } catch (e) { return json(req, 502, { error: e.message }); }
+    }
     const recent = (calls.get(caller) || []).filter((t) => now - t < 60000);
     if (recent.length >= 30) return json(req, 429, { error: "massa avisos" });
     calls.set(caller, [...recent, now]);

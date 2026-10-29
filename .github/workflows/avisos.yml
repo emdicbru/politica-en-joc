@@ -26,9 +26,16 @@ jobs:
       - name: Comprova els secrets
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "Falten CLOUDFLARE_API_TOKEN i CLOUDFLARE_ACCOUNT_ID"; exit 1; fi
+      - name: Comprova el token de Cloudflare
+        working-directory: worker
+        run: |
+          npx --yes wrangler@3.90.0 whoami > whoami.txt 2>&1 || { echo "::error title=Token de Cloudflare::$(grep -v '^\s*$' whoami.txt | tail -6 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
       - name: Desplega el Worker
         working-directory: worker
-        run: npx --yes wrangler@3.90.0 deploy
+        # Si falla, l'error surt com a anotació (es pot llegir sense entrar al registre)
+        run: |
+          npx --yes wrangler@3.90.0 deploy > deploy.txt 2>&1 || { echo "::error title=Desplegament::$(grep -v '^\s*$' deploy.txt | tail -8 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+          grep -o 'https://[a-z0-9.-]*workers.dev' deploy.txt | head -1 | sed 's/^/::notice title=Adreça del servei::/'
       - name: Posa els secrets al Worker
         working-directory: worker
         env:

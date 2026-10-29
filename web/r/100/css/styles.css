@@ -7159,3 +7159,120 @@ body:has(.db-theater) .call-ask { order: 1; }
 /* Amb el xat dels equips obert, la trucada al costat (ordinador) o amagada si no hi ets (mòbil, xat a pantalla completa) */
 body:has(.simchat) .call-ui { right: calc(min(400px, 100vw - 32px) + 30px); }
 @media (max-width: 640px) { body:has(.simchat) .call-ui { right: 12px; } body:has(.simchat) .call-ui.pill, body:has(.ami-chat.xat) .call-ui.pill { display: none; } }
+
+/* ---------- Trucada entrant (amistat.js): a pantalla completa, com al mòbil ---------- */
+.ring { position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom)); background: radial-gradient(circle at 50% 30%, #2d2d6b 0%, #17173d 55%, #0c0c26 100%); color: #fff; animation: ringIn .25s ease; }
+@keyframes ringIn { from { opacity: 0; transform: scale(1.04); } }
+.ring-in { width: min(420px, 100%); height: 100%; max-height: 720px; display: grid; grid-template-rows: auto 1fr auto auto auto; justify-items: center; text-align: center; gap: 10px; }
+.ring-k { margin: 0; font-size: .84rem; font-weight: 800; letter-spacing: .04em; opacity: .8; }
+.ring-av { align-self: center; position: relative; border-radius: 50%; }
+.ring-av .avatar { width: 128px !important; height: 128px !important; border: 4px solid #fff; font-size: 3.4rem; }
+.ring-av::before, .ring-av::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid rgba(61, 220, 132, .7); animation: ringWave 2s ease-out infinite; }
+.ring-av::after { animation-delay: 1s; }
+@keyframes ringWave { from { transform: scale(1); opacity: .9; } to { transform: scale(1.7); opacity: 0; } }
+.ring h2 { margin: 6px 0 0; font-family: var(--display); font-weight: 900; font-size: clamp(1.8rem, 7vw, 2.4rem); color: #fff; }
+.ring-s { margin: 0; font-size: 1.05rem; opacity: .85; }
+.ring-s i { display: inline-block; width: 5px; height: 5px; margin-left: 3px; border-radius: 50%; background: currentColor; animation: xatDot 1.2s infinite; }
+.ring-s i:nth-child(2) { animation-delay: .2s; } .ring-s i:nth-child(3) { animation-delay: .4s; }
+.ring-btns { display: flex; justify-content: center; gap: clamp(20px, 9vw, 48px); margin-top: 28px; }
+.ring-b { display: grid; justify-items: center; gap: 8px; padding: 0; border: 0; background: none; color: #fff; font: 800 .86rem var(--sans); cursor: pointer; }
+.ring-b span { display: grid; place-items: center; width: 70px; height: 70px; border-radius: 50%; font-size: 1.9rem; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); transition: transform .12s; }
+.ring-b:hover span, .ring-b:focus-visible span { transform: scale(1.08); }
+.ring-b.no span { background: #e0302a; }
+.ring-b.ok span { background: #1fbf5b; animation: ringBounce 1.2s ease-in-out infinite; }
+.ring-b.vid span { background: #2d7cf0; }
+@keyframes ringBounce { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } 50% { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .ring-av::before, .ring-av::after, .ring-b.ok span { animation: none; } }
+
+/* Avís per activar les notificacions (pestanya Amics) */
+.ami-notif { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff8dc; }
+.ami-notif > span { font-size: 1.6rem; }
+.ami-notif > div { flex: 1; display: grid; min-width: 0; }
+.ami-notif small { color: var(--ink-2); font-size: .82rem; }
+
+/* Estat de la trucada a la targeta del xat */
+.xat-card.st-ring .xat-card-i { animation: ringBounce 1.2s ease-in-out infinite; }
+.xat-card.st-no .xat-card-i, .xat-card.st-perduda .xat-card-i, .xat-card.st-fi .xat-card-i { background: #ffb4ad; }
+.xat-card.st-perduda small, .xat-card.st-fi small { color: #c62828; font-weight: 800; }
+
+/* ---------- Pestanya Amics (amistat.js): xats a l'esquerra, afegir amics a la dreta ---------- */
+.amx { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.amx.empty { grid-template-columns: minmax(0, 640px); justify-content: center; }
+.amx-main, .amx-side { display: grid; gap: 14px; min-width: 0; }
+.amx-side { position: sticky; top: 84px; }
+.amx .card { padding: 16px; margin: 0; }
+.amx-h { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--display); font-weight: 900; font-size: 1.15rem; letter-spacing: -.01em; text-transform: none; }
+.amx-n { min-width: 22px; padding: 1px 7px; border-radius: 99px; background: var(--red); color: #fff; font: 900 .74rem var(--sans); text-align: center; }
+.amx-n.soft { background: var(--paper); color: var(--ink-2); border: 1.5px solid rgba(23, 23, 61, .2); }
+.amx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.amx-addbtn { display: none; }
+.amx-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.amx-list .amx-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; }
+.amx-chats .amx-row { grid-template-columns: auto minmax(0, 1fr); }
+.amx-chats .amx-row:hover, .amx-chats .amx-row:focus-within { background: var(--paper); }
+.amx-av { display: inline-grid; border-radius: 50%; cursor: pointer; }
+.amx-av:focus-visible { outline: 3px solid #4d7cfe; outline-offset: 2px; }
+.amx-go { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; color: var(--ink); text-decoration: none; }
+.amx-mid { display: grid; gap: 1px; min-width: 0; }
+.amx-mid b { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amx-mid small { font-size: .84rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amx-mid em { font-style: normal; font-weight: 800; }
+.amx-mid em.ok { color: #1f8f4e; }
+.amx-mid em.ko { color: #c62828; }
+.amx-new { color: var(--ink-2); font-style: italic; }
+.amx-meta { display: grid; justify-items: end; gap: 4px; }
+.amx-meta time { font-size: .74rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.amx-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 2px var(--card); }
+.amx-row.unread .amx-mid b { font-weight: 900; }
+.amx-row.unread .amx-mid small { color: var(--ink); font-weight: 700; }
+.amx-row.unread .amx-meta time { color: var(--red); }
+.amx-filter { width: 100%; margin: 0 0 8px; padding: 9px 12px; border: 2px solid var(--ink); border-radius: 12px; font: 600 .92rem var(--sans); background: var(--paper); color: var(--ink); }
+.amx-none { padding: 12px 8px; color: var(--ink-2); }
+.amx-btns { display: flex; gap: 6px; }
+
+/* Sol·licituds rebudes: el primer que es veu */
+.amx-req { background: #fff3c4; }
+.amx-req .amx-h { margin-bottom: 6px; }
+
+/* Avís per activar les notificacions: discret i es pot treure */
+.amx-notif { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 2px dashed rgba(23, 23, 61, .35); border-radius: 14px; background: #eef3ff; }
+.amx-notif > span { font-size: 1.4rem; }
+.amx-notif > div { flex: 1; display: grid; min-width: 0; }
+.amx-notif b { font-size: .92rem; }
+.amx-notif small { font-size: .8rem; color: var(--ink-2); }
+.amx-x { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-2); cursor: pointer; }
+.amx-x:hover { background: rgba(23, 23, 61, .08); }
+
+/* Afegir amics */
+.amx-add { display: grid; gap: 12px; }
+.amx-lead { margin: -4px 0 0; color: var(--ink-2); }
+.amx-search { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px; border: 2px solid var(--ink); border-radius: 14px; background: var(--card); }
+.amx-search:focus-within { box-shadow: 0 0 0 3px rgba(77, 124, 254, .35); }
+.amx-search input { flex: 1; min-width: 0; padding: 7px 0; border: 0; outline: none; background: none; font: 600 .95rem var(--sans); color: var(--ink); }
+.amx-link { display: grid; gap: 8px; padding-top: 12px; border-top: 1.5px dashed rgba(23, 23, 61, .25); }
+.amx-link p { margin: 0; font-size: .86rem; font-weight: 700; }
+.amx-link code { display: block; padding: 7px 10px; border-radius: 10px; background: var(--paper); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amx-share { display: flex; flex-wrap: wrap; gap: 6px; }
+.amx-wa { background: #25d366; color: #0b3d1e; }
+.amx-tip { margin: 0; font-size: .78rem; color: var(--ink-2); }
+.amx-add.hero { padding: 24px; gap: 14px; }
+.amx-add.hero .amx-h { font-size: 1.5rem; }
+.amx-add.hero .amx-search { padding: 6px 6px 6px 14px; }
+
+/* Sol·licituds enviades: plegades */
+.amx-sent summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 800; list-style: none; }
+.amx-sent summary::-webkit-details-marker { display: none; }
+.amx-sent summary::after { content: "▾"; margin-left: auto; transition: transform .15s; }
+.amx-sent[open] summary::after { transform: rotate(180deg); }
+.amx-sent[open] .amx-list { margin-top: 8px; }
+
+@media (max-width: 860px) {
+  .amx { grid-template-columns: minmax(0, 1fr); }
+  .amx-side { position: static; }
+  .amx-addbtn { display: inline-flex; }
+}
+@media (max-width: 480px) {
+  .amx .card { padding: 12px; }
+  .amx-list .amx-row { gap: 10px; padding: 7px 4px; }
+  .amx-btns .btn { padding-inline: 10px; }
+}

@@ -16,4 +16,6 @@ window.FIREBASE_CONFIG = {
   // Clau pública (VAPID) de les notificacions push. És pública; la privada és un secret de GitHub (VAPID_PRIVATE).
   // La posa tools/push-setup.js. Mentre estigui buida, les notificacions no es poden activar.
   vapidKey: "BJczW68D4U462IgTUb3G-LuT2HJgLvypJSLAZ9WTrNbtrj02xNvU-2lT2DE_joPCv6SNnYJTzTvUKWSbK5LOr-A",
+  // Servei d'avisos de missatges i trucades entre amics (worker/avisos.js, a Cloudflare). No és cap secret.
+  avisosUrl: "https://pej-avisos.brudomingosola.workers.dev",
 };

@@ -158,6 +158,42 @@ export function avisFor(kind, fid, caller, ami, callerName, now = Date.now()) {
   return "tipus desconegut";
 }
 
+// ---------- Al minut just: desperta l'enviador de notificacions (tools/push.js, a GitHub Actions) ----------
+// Cada minut (cron del Worker) es mira si toca alguna notificació: el repte diari o el recordatori de ratxa a la seva hora,
+// un avís a la cua o un de programat. Si en toca alguna, es demana a GitHub que engegui push.yml ara (cal el secret
+// GH_DISPATCH: un token de GitHub amb permís d'Actions sobre el repositori). Sense, push.yml ja surt sol cada 5 minuts.
+const GH_REPO = "emdicbru/politica-en-joc";
+const madridNow = (d = new Date()) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d).map((x) => [x.type, x.value]));
+  return { day: `${p.year}-${p.month}-${p.day}`, min: (Number(p.hour) % 24) * 60 + Number(p.minute) };
+};
+const hmMin = (x) => { if (typeof x === "number") return x * 60; const m = String(x || "").match(/^(\d{1,2}):(\d{2})$/); return m ? Number(m[1]) * 60 + Number(m[2]) : 9 * 60; };
+// Toca enviar alguna cosa? cfg: config/push; docs: els avisos «pending» i «scheduled»
+export function pushDue(cfg, docs, now = Date.now()) {
+  const t = madridNow(new Date(now));
+  cfg = cfg || {};
+  if (cfg.diariOn !== false && t.min >= hmMin(cfg.diariHora ?? 9) && cfg.diariLast !== t.day) return "diari";
+  if (cfg.ratxaOn && t.min >= hmMin(cfg.ratxaHora ?? "20:30") && cfg.ratxaLast !== t.day) return "ratxa";
+  const d = (docs || []).find((x) => x.status === "pending" || (x.status === "scheduled" && (x.at || 0) <= now));
+  return d ? "avis" : null;
+}
+async function pushCron(env) {
+  if (!env.GH_DISPATCH || !env.FIREBASE_SA) return;
+  const now = Date.now();
+  const [cfg, lock] = await Promise.all([fsGet(env, "config/push"), fsGet(env, "config/pushcron")]);
+  if (lock?.at && now - lock.at < 3 * 60e3) return; // ja s'ha engegat fa poc: que acabi
+  const r = await fetch(`${FS}:runQuery`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "pushes" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "IN", value: { arrayValue: { values: [{ stringValue: "pending" }, { stringValue: "scheduled" }] } } } }, limit: 100 } }),
+  });
+  const docs = (await r.json()).filter((x) => x.document).map((x) => fsVal({ mapValue: { fields: x.document.fields } }));
+  const why = pushDue(cfg, docs, now);
+  if (!why) return;
+  await fetch(`${FS}/config/pushcron?updateMask.fieldPaths=at&updateMask.fieldPaths=why`, { method: "PATCH", headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields: { at: { integerValue: String(now) }, why: { stringValue: why } } }) });
+  await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/push.yml/dispatches`, { method: "POST", headers: { Authorization: `Bearer ${env.GH_DISPATCH}`, Accept: "application/vnd.github+json", "User-Agent": "pej-avisos", "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main" }) });
+}
+
 function cors(req) {
   const o = req.headers.get("Origin") || "";
   const ok = ORIGINS.includes(o) || /^http:\/\/localhost(:\d+)?$/.test(o);
@@ -166,6 +202,7 @@ function cors(req) {
 const json = (req, status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...cors(req) } });
 
 export default {
+  async scheduled(event, env, ctx) { ctx.waitUntil(pushCron(env).catch((e) => console.warn(e))); },
   async fetch(req, env) {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url);

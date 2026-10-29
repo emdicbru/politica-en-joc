@@ -1,6 +1,11 @@
 # Servei d'avisos de Política en Joc (Cloudflare Workers). El desplega GitHub Actions (.github/workflows/avisos.yml);
-# els secrets (FIREBASE_SA, VAPID_PUBLIC, VAPID_PRIVATE) també hi arriben des de GitHub i no són mai al repositori.
+# els secrets (FIREBASE_SA, VAPID_PUBLIC, VAPID_PRIVATE i, opcional, GH_DISPATCH) també hi arriben des de GitHub i no són
+# mai al repositori.
 name = "pej-avisos"
 main = "avisos.js"
 compatibility_date = "2024-09-23"
 workers_dev = true
+
+# Cada minut: si toca enviar alguna notificació (repte diari, ratxa, avisos programats), desperta push.yml a GitHub
+[triggers]
+crons = ["* * * * *"]

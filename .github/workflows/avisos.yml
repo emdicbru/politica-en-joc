@@ -46,3 +46,9 @@ jobs:
           printf '%s' "$FIREBASE_SA" | npx --yes wrangler@3.90.0 secret put FIREBASE_SA
           printf '%s' "$VAPID_PUBLIC" | npx --yes wrangler@3.90.0 secret put VAPID_PUBLIC
           printf '%s' "$VAPID_PRIVATE" | npx --yes wrangler@3.90.0 secret put VAPID_PRIVATE
+      - name: Token per despertar les notificacions al minut (opcional)
+        working-directory: worker
+        env:
+          GH_DISPATCH: ${{ secrets.GH_DISPATCH }}
+        run: |
+          if [ -n "$GH_DISPATCH" ]; then printf '%s' "$GH_DISPATCH" | npx --yes wrangler@3.90.0 secret put GH_DISPATCH; else echo "Sense GH_DISPATCH: les notificacions surten cada 5 minuts (push.yml)"; fi

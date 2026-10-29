@@ -1035,15 +1035,16 @@ if (!store.get(ONBOARD_KEY, null)) {
 // ---------- Novetats (només per a qui ja havia entrat abans) ----------
 // Un sol cop per tanda (NOVETATS_ID). Qui entra per primer cop fa el tutorial, que ja ho explica, i no les veu.
 // No surten enmig d'una partida ni a les pàgines de control i avís legal: s'esperen a la pàgina següent.
-var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-10-29";
-const NOVETATS_HEAD = { t: "Un debat electoral més real", art: "simulador", cta: "Entra al plató", href: "#joc/debat" };
+var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-10-29b";
+const NOVETATS_HEAD = { t: "Juga contra els teus amics", art: "simulador", cta: "Crea una campanya", href: "#simulador/amics" };
 const NOVETATS = [
-  { ico: "🎙️", t: "Rellotges, ordre sortejat i rèpliques", d: "Rellotges de tots els candidats, ordre sortejat, rivals que et contesten, medidor en directe i les portades de l'endemà." },
-  { ico: "✏️", t: "Dibuixa el mapa", d: "Un minijoc nou: resegueix els límits dels territoris i descobreix la precisió del teu dibuix." },
+  { ico: "👥", t: "Campanya contra amics", d: "De 2 a 4 jugadors, les mateixes eleccions i només els vostres partits. Xat entre els equips, pactes i investidura." },
+  { ico: "🏛️", t: "Una legislatura sencera", d: "Qui governa porta projectes de llei i pressupostos; l'oposició, proposicions de llei, mocions de censura i molta negociació." },
+  { ico: "📞", t: "Truca'ls mentre jugueu", d: "Trucada o videotrucada amb el botó 📞, cadascú des de casa. Va directament entre els vostres dispositius i no es grava." },
 ];
 const NOVETATS_APP = [
-  { ico: "🗺️", t: "Repte diari més exigent", d: "A la prova de dibuixar, ara cal més d'un 85 % de precisió per aprovar." },
-  { ico: "🔥", t: "Ratxa amb comodí", d: "Si un dia no jugues, un comodí per setmana et guarda la ratxa." },
+  { ico: "🎙️", t: "Debat entre amics", d: "Al plató en 3D, de 2 a 4 candidats trien les respostes alhora, amb rèpliques i enquesta flash. Simulador de debat → «Contra amics»." },
+  { ico: "🤝", t: "Amics i xat privat", d: "Toca el nom de qualsevol jugador per afegir-lo com a amic, o envia-li el teu enllaç per WhatsApp des de Social → Amics." },
 ];
 function novetatsMaybe() {
   if (store.get(NOVETATS_KEY, null) === NOVETATS_ID) return;

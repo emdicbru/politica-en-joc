@@ -99,7 +99,7 @@ function ctlChanges() {
 }
 async function ctlCheckFile() {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
     ctlFile = r.ok ? await r.json() : { missing: true };
   } catch { ctlFile = { missing: true }; }
 }
@@ -437,6 +437,8 @@ function ctlLabItems() {
       desc: "Cadascú reparteix els 350 escons entre els partits. En vista prèvia, la porra no es desa." },
     { id: "amics", icon: "👥", name: "Campanya contra amics", go: "#simulador/amics-lab", from: typeof SIM_AMICS_FROM === "undefined" ? Infinity : SIM_AMICS_FROM,
       desc: "De 2 a 4 jugadors competeixen per les mateixes eleccions, amb xat entre els equips i, després de la nit electoral, pactes per formar govern i votació d'investidura. Amb govern, la legislatura: projectes i proposicions de llei, pressupostos, moció de censura i qüestió de confiança. Al laboratori hi jugues amb amics ficticis que fan campanya, xategen, pacten, porten lleis i voten. No es desa res al núvol." },
+    { id: "trucada", icon: "📞", name: "Trucades entre amics", go: "#amics/trucada", from: Infinity,
+      desc: "Trucada i videotrucada de fins a 4 persones mentre juguen (campanya i debat entre amics, amb el botó 📞). La veu i la imatge van directament entre els dispositius (WebRTC); Firestore només els posa en contacte i s'esborra en penjar. Aquí: una sala de prova per trucar amb un amic de debò, o entre dues pestanyes." },
     { id: "debatamics", icon: "🎙️", name: "Debat entre amics", go: "#simulador/debat-amics", from: typeof DBM_FROM === "undefined" ? Infinity : DBM_FROM,
       desc: "Al simulador de debat en 3D, de 2 a 4 candidats debaten en directe: cadascú tria la resposta des del seu dispositiu, el plató reprodueix les intervencions per l'ordre sortejat i qui rep un atac té torn de rèplica. Al laboratori hi debats amb candidats ficticis. No es desa res al núvol." },
     { id: "pron", icon: "🎟️", name: "Lliga de pronòstics", go: "#pronostics", from: PRON_OPEN, t: PRON_OPEN + 864e5,
@@ -516,7 +518,7 @@ function ctlNotifHtml() {
         <label>En tocar-lo, obre <select data-plink>${CTL_LINKS.map(([u, t]) => `<option value="${u}" ${d.url === u ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <input type="hidden" data-paud value="tots">
       </div>
-      <div class="push-prev"><span aria-hidden="true"><img src="../img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>ara</small></div>
+      <div class="push-prev"><span aria-hidden="true"><img src="img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>ara</small></div>
       <div class="row"><button class="btn primary" type="button" data-psend ${d.title.trim() ? "" : "disabled"}>Envia l'avís</button></div>
     </section>
     <section class="card">

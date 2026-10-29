@@ -496,8 +496,8 @@ function renderSimHome(arg) {
   if (/^amics-[A-Za-z0-9]{6}$/.test(arg || "") && simAmicsOn()) { SimOpts.duel = null; SimOpts.amics = { code: arg.slice(6).toUpperCase() }; simLaunch(); }
   // Des del Laboratori: el debat entre amics de prova
   if (arg === "debat-amics" && typeof dbmOn === "function" && dbmOn()) { DbOpts.amics = {}; location.hash = "#joc/debat"; }
-  // Des del Laboratori: directament a la campanya de prova
-  if (arg === "amics-lab" && simAmicsOn()) { SimOpts.duel = null; SimOpts.amics = {}; simLaunch(); }
+  // Des de les novetats (#simulador/amics) o del Laboratori: directament a l'entrada de la campanya contra amics
+  if ((arg === "amics" || arg === "amics-lab") && simAmicsOn()) { SimOpts.duel = null; SimOpts.amics = {}; simLaunch(); }
 }
 function simDuelIntro(G) {
   const D = SimOpts.duel;

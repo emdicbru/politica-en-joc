@@ -5,7 +5,7 @@
 
 // Quan la veurà tothom. Fins llavors, només es pot provar des del Laboratori del Centre de control, amb una sala local
 // i amics ficticis (sim-lab.js), sense escriure res a Firestore.
-const SIM_AMICS_FROM = Infinity;
+const SIM_AMICS_FROM = Date.UTC(2026, 9, 29, 16, 0); // pública des del 29-10-2026 (v96)
 const simAmicsPublic = () => Date.now() >= SIM_AMICS_FROM;
 const simAmicsOn = () => simAmicsPublic() || (typeof featPreview === "function" && featPreview("amics"));
 const simMpIsLab = () => !simAmicsPublic() && typeof featPreview === "function" && featPreview("amics");
@@ -130,6 +130,10 @@ function simMpOnDoc(G, d) {
   G.mpDoc = d;
   const uid = simMpUid();
   if (!d.players.includes(uid)) { G.mpUnsub?.(); G.mp = null; SimOpts.amics = {}; return simMpHome(G); }
+  // Trucada amb els altres equips (trucada.js)
+  window.Call?.attach({ parent: "campanyes", code: d.code, title: "Equips de campanya", lab: simMpIsLab(), alive: () => G.ctx.alive(),
+    names: Object.fromEntries(d.players.filter((u) => !u.startsWith("bot-")).map((u) => [u, d.seats[u]?.name || "Jugador"])),
+    bots: d.players.filter((u) => u.startsWith("bot-")).map((u) => d.seats[u]?.name || "Amic fictici") });
   if (d.status === "lobby") { if (!G.mpCreating) simMpLobby(G, d); return; }
   simMpPlaying(G, d);
 }

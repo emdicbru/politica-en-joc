@@ -1035,15 +1035,16 @@ if (!store.get(ONBOARD_KEY, null)) {
 // ---------- Novetats (només per a qui ja havia entrat abans) ----------
 // Un sol cop per tanda (NOVETATS_ID). Qui entra per primer cop fa el tutorial, que ja ho explica, i no les veu.
 // No surten enmig d'una partida ni a les pàgines de control i avís legal: s'esperen a la pàgina següent.
-var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-10-29";
-const NOVETATS_HEAD = { t: "Un debate electoral más real", art: "simulador", cta: "Entra en el plató", href: "#joc/debat" };
+var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-10-29b";
+const NOVETATS_HEAD = { t: "Juega contra tus amigos", art: "simulador", cta: "Crea una campaña", href: "#simulador/amics" };
 const NOVETATS = [
-  { ico: "🎙️", t: "Relojes, orden sorteado y réplicas", d: "Relojes de todos los candidatos, orden sorteado, rivales que te contestan, medidor en directo y las portadas del día siguiente." },
-  { ico: "✏️", t: "Dibuja el mapa", d: "Un minijuego nuevo: repasa los límites de los territorios y descubre la precisión de tu dibujo." },
+  { ico: "👥", t: "Campaña contra amigos", d: "De 2 a 4 jugadores, las mismas elecciones y solo vuestros partidos. Chat entre los equipos, pactos e investidura." },
+  { ico: "🏛️", t: "Una legislatura entera", d: "Quien gobierna presenta proyectos de ley y presupuestos; la oposición, proposiciones de ley, mociones de censura y mucha negociación." },
+  { ico: "📞", t: "Llámalos mientras jugáis", d: "Llamada o videollamada con el botón 📞, cada uno desde casa. Va directamente entre vuestros dispositivos y no se graba." },
 ];
 const NOVETATS_APP = [
-  { ico: "🗺️", t: "Reto diario más exigente", d: "En la prueba de dibujar, ahora hace falta más de un 85 % de precisión para aprobar." },
-  { ico: "🔥", t: "Racha con comodín", d: "Si un día no juegas, un comodín por semana te guarda la racha." },
+  { ico: "🎙️", t: "Debate entre amigos", d: "En el plató en 3D, de 2 a 4 candidatos eligen las respuestas a la vez, con réplicas y encuesta flash. Simulador de debate → «Contra amigos»." },
+  { ico: "🤝", t: "Amigos y chat privado", d: "Toca el nombre de cualquier jugador para añadirlo como amigo, o envíale tu enlace por WhatsApp desde Social → Amigos." },
 ];
 function novetatsMaybe() {
   if (store.get(NOVETATS_KEY, null) === NOVETATS_ID) return;

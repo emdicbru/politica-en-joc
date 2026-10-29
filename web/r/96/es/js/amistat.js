@@ -101,6 +101,7 @@ async function renderAmics() {
   if (!root) return;
   const parts = location.hash.slice(1).split("/");
   if (parts[1] === "xat" && parts[2]) return amiChat(root, decodeURIComponent(parts[2]));
+  if (parts[1] === "trucada") return amiCallRoom(root, parts[2] ? decodeURIComponent(parts[2]).toUpperCase() : null);
   amiChatClose();
   const invite = parts[1] ? decodeURIComponent(parts[1]) : null;
   if (!amiOn()) {
@@ -195,6 +196,49 @@ function amiChat(root, uid) {
   });
   $("[data-msg]", root).focus({ preventScroll: true });
 }
+// ---------- Sala de trucada de prova (Laboratori): #amics/trucada, #amics/trucada/CODI, #amics/trucada/LOCAL ----------
+// Es crea des del Laboratori; qualsevol persona amb sessió hi entra amb l'enllaç. LOCAL: entre pestanyes d'aquest navegador.
+const amiCallAlive = (code) => () => location.hash.toUpperCase().startsWith(`#AMICS/TRUCADA/${code}`);
+async function amiCallRoom(root, code) {
+  AMI.callUnsub?.();
+  AMI.callUnsub = null;
+  if (code === "LOCAL") {
+    root.innerHTML = `<section class="card ami-call"><p class="simmp-lab">🧪 Laboratorio: llamada entre pestañas de este navegador. No pasa nada por internet.</p>
+      <h3>Prueba local de llamada</h3><p class="muted">Abre esta misma dirección en otra pestaña (o ventana) y entra en la llamada desde las dos con el botón 📞.</p>
+      <a class="btn ghost" href="#amics">← Volver</a></section>`;
+    window.Call?.attach({ parent: "trucades", code: "LOCAL", title: "Prueba local", lab: true, names: {}, alive: amiCallAlive("LOCAL") });
+    return;
+  }
+  if (!amiOn()) {
+    root.innerHTML = `<div class="card online-off">${window.Online?.pitchHtml ? window.Online.pitchHtml("Te han invitado a una llamada", "Entra con Google para hablar con tus amigos.") : ""}</div>`;
+    return;
+  }
+  if (!code) {
+    if (!(typeof featPreview === "function" && featPreview("trucada"))) { location.hash = "#amics"; return; }
+    root.innerHTML = `<section class="card ami-call"><p class="simmp-lab">🧪 Laboratorio: sala de llamada de prueba.</p>
+      <h3>Llamada de prueba</h3><p class="muted">Crea una sala y envía el enlace a un amigo: podéis estar hasta cuatro personas, cada una desde su dispositivo. También puedes probarlo entre dos pestañas de este navegador.</p>
+      <div class="call-ask-btns"><button class="btn primary" data-call-new>Crea una sala</button><a class="btn" href="#amics/trucada/local">Prueba entre pestañas</a></div></section>`;
+    $("[data-call-new]", root).addEventListener("click", async () => { const c = await window.Online.call.create(); if (c) location.hash = `#amics/trucada/${c}`; });
+    return;
+  }
+  root.innerHTML = `<p class="muted">Entrando en la sala…</p>`;
+  const r = await window.Online.call.join(code);
+  if (r.err) { root.innerHTML = `<div class="card"><p>${esc(r.err === "connexio" ? "No se ha podido conectar. Vuelve a intentarlo." : r.err)}</p><a class="btn" href="#amics">Vuelve a los amigos</a></div>`; return; }
+  const link = `${location.origin}${location.pathname.replace(/index.html$/, "")}#amics/trucada/${code}`;
+  AMI.callUnsub = window.Online.call.watchRoom(code, (d) => {
+    if (!amiCallAlive(code)()) return;
+    if (!d || !d.players.includes(amiMe())) { root.innerHTML = `<div class="card"><p>Esta sala ya no existe.</p><a class="btn" href="#amics">Vuelve a los amigos</a></div>`; window.Call?.detach(); return; }
+    root.innerHTML = `<section class="card ami-call"><p class="kicker">Llamada de prueba · sala ${esc(code)}</p>
+      <h3>${d.players.length} ${d.players.length === 1 ? "persona" : "personas"} en la sala</h3>
+      <ul class="ami-call-who">${d.players.map((u) => `<li>${esc(d.names?.[u] || "Jugador")}${u === amiMe() ? " (tú)" : ""}</li>`).join("")}</ul>
+      <p class="muted">Entra en la llamada con el botón 📞. Invita a alguien con el enlace (hasta cuatro personas).</p>
+      <div class="call-ask-btns"><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`¿Hablamos en Política en Joc? 📞 ${link}`)}">WhatsApp</a><button class="btn" data-copy>Copia el enlace</button><button class="btn ghost" data-leave>Sal de la sala</button></div></section>`;
+    $("[data-copy]", root).addEventListener("click", () => navigator.clipboard?.writeText(link).then(() => toast("Enlace copiado")));
+    $("[data-leave]", root).addEventListener("click", async () => { window.Call?.detach(); AMI.callUnsub?.(); await window.Online.call.leaveRoom(code); location.hash = "#amics"; });
+    window.Call?.attach({ parent: "trucades", code, title: "Llamada de prueba", lab: false, names: d.names || {}, alive: amiCallAlive(code) });
+  });
+}
+
 // Denunciar un missatge (xat privat o de la campanya): arriba a l'equip com un avís al Centre de control
 const amiFlagBtn = (name, uid, t) => `<button type="button" class="ami-flag" data-flag data-flag-who="${esc(name || "Jugador")}" data-flag-uid="${esc(uid || "")}" data-flag-t="${esc(t || "")}" aria-label="Denuncia este mensaje" title="Denuncia este mensaje">⚑</button>`;
 async function amiReport(b) {

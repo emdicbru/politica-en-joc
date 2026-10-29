@@ -32,8 +32,8 @@ const Online = {
   chipUser: () => (Online.user ? { avatar: avatar(me(), 26), name: me().name } : null),
   accountClick() {
     if (this.user) { location.hash = "#perfil"; return; }
-    if (authLoading) return toast("Connectant amb el servidor…");
-    if (!ready) return toast(configured ? "No s'ha pogut connectar amb el servidor" : "Els comptes s'activaran aviat");
+    if (authLoading) return toast("Conectando con el servidor…");
+    if (!ready) return toast(configured ? "No se ha podido conectar con el servidor" : "Las cuentas se activarán pronto");
     signIn();
   },
   renderAccountBox,
@@ -71,7 +71,7 @@ const Online = {
   },
   // Centre de control: cua d'enviaments (pushes/), historial i nombre de dispositius
   async pushQueue(msg) {
-    try { const r = await F.addDoc(F.collection(db, "pushes"), { ...msg, status: "pending", created: Date.now(), by: Online.user?.email || "" }); return r.id; } catch (e) { console.warn(e); toast("No s'ha pogut posar a la cua (permisos?)"); return null; }
+    try { const r = await F.addDoc(F.collection(db, "pushes"), { ...msg, status: "pending", created: Date.now(), by: Online.user?.email || "" }); return r.id; } catch (e) { console.warn(e); toast("No se ha podido poner en la cola (¿permisos?)"); return null; }
   },
   async pushHistory(n = 12) {
     try { const s = await F.getDocs(F.query(F.collection(db, "pushes"), F.orderBy("created", "desc"), F.limit(n))); return s.docs.map((d) => ({ id: d.id, ...d.data() })); } catch (e) { console.warn(e); return []; }
@@ -90,7 +90,7 @@ const Online = {
   async pronSave(bets) {
     if (!ready || !Online.user) return false;
     const m = me();
-    try { await F.setDoc(F.doc(db, 'pron', m.uid), { uid: m.uid, name: m.name, photo: m.photo || '', t: F.serverTimestamp(), ...bets }); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (potser ja està tancat)"); return false; }
+    try { await F.setDoc(F.doc(db, 'pron', m.uid), { uid: m.uid, name: m.name, photo: m.photo || '', t: F.serverTimestamp(), ...bets }); return true; } catch (e) { console.warn(e); toast("No se ha podido guardar (quizá ya está cerrado)"); return false; }
   },
   async pronLeagues() { return ready && Online.user ? myLeagues() : []; },
   async pronMembers(uids) {
@@ -101,7 +101,7 @@ const Online = {
     return out;
   },
   async pronAll() {
-    try { const s = await F.getDocs(F.collection(db, 'pron')); return s.docs.map((d) => d.data()); } catch (e) { console.warn(e); toast("No s'han pogut llegir els pronòstics"); return null; }
+    try { const s = await F.getDocs(F.collection(db, 'pron')); return s.docs.map((d) => d.data()); } catch (e) { console.warn(e); toast("No se han podido leer los pronósticos"); return null; }
   },
   async pronPayout(uid, data) {
     try { await F.updateDoc(F.doc(db, 'pron', uid), data); return true; } catch (e) { console.warn(e); return false; }
@@ -167,10 +167,10 @@ const Online = {
     try { return (await F.getDocs(F.query(F.collection(db, "reports"), F.orderBy("t", "desc"), F.limit(n)))).docs.map((d) => ({ id: d.id, ...d.data(), t: d.data().t?.toMillis?.() || 0 })); } catch (e) { console.warn(e); return null; }
   },
   async reportSet(id, status) {
-    try { await F.updateDoc(F.doc(db, "reports", id), { status }); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
+    try { await F.updateDoc(F.doc(db, "reports", id), { status }); return true; } catch (e) { console.warn(e); toast("No se ha podido guardar (¿permisos?)"); return false; }
   },
   async reportDel(id) {
-    try { await F.deleteDoc(F.doc(db, "reports", id)); return true; } catch (e) { console.warn(e); toast("No s'ha pogut esborrar (permisos?)"); return false; }
+    try { await F.deleteDoc(F.doc(db, "reports", id)); return true; } catch (e) { console.warn(e); toast("No se ha podido borrar (¿permisos?)"); return false; }
   },
   // Premsa (Centre de control, administradors): contactes (press_contacts/{correu}), notes (press_notes), fotos
   // (press_media/{nota}) i configuració (press_cfg/main). Els correus els envia GitHub Actions (tools/premsa.js).
@@ -184,10 +184,10 @@ const Online = {
     try {
       if (id) { await F.setDoc(F.doc(db, col, id), data, { merge: true }); return id; }
       return (await F.addDoc(F.collection(db, col), data)).id;
-    } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return null; }
+    } catch (e) { console.warn(e); toast("No se ha podido guardar (¿permisos?)"); return null; }
   },
   async pressDel(col, id) {
-    try { await F.deleteDoc(F.doc(db, col, id)); return true; } catch (e) { console.warn(e); toast("No s'ha pogut esborrar (permisos?)"); return false; }
+    try { await F.deleteDoc(F.doc(db, col, id)); return true; } catch (e) { console.warn(e); toast("No se ha podido borrar (¿permisos?)"); return false; }
   },
   async pressImport(list) {
     try {
@@ -197,7 +197,7 @@ const Online = {
         await b.commit();
       }
       return true;
-    } catch (e) { console.warn(e); toast("No s'ha pogut importar (permisos?)"); return false; }
+    } catch (e) { console.warn(e); toast("No se ha podido importar (¿permisos?)"); return false; }
   },
   async pressSends(id) {
     try { return (await F.getDocs(F.collection(db, "press_notes", id, "sends"))).docs.map((d) => ({ id: d.id, ...d.data() })); } catch (e) { console.warn(e); return null; }
@@ -217,14 +217,14 @@ const Online = {
     try { return (await F.getDocs(F.collection(db, "staff"))).docs.map((d) => ({ email: d.id, ...d.data() })); } catch (e) { console.warn(e); return null; }
   },
   async staffSet(email, role) {
-    try { await F.setDoc(F.doc(db, "staff", email.toLowerCase()), { role, t: Date.now(), by: Online.user?.email || "" }); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
+    try { await F.setDoc(F.doc(db, "staff", email.toLowerCase()), { role, t: Date.now(), by: Online.user?.email || "" }); return true; } catch (e) { console.warn(e); toast("No se ha podido guardar (¿permisos?)"); return false; }
   },
   async staffRemove(email) {
-    try { await F.deleteDoc(F.doc(db, "staff", email.toLowerCase())); return true; } catch (e) { console.warn(e); toast("No s'ha pogut treure (permisos?)"); return false; }
+    try { await F.deleteDoc(F.doc(db, "staff", email.toLowerCase())); return true; } catch (e) { console.warn(e); toast("No se ha podido quitar (¿permisos?)"); return false; }
   },
   async setConfig(id, data) {
-    if (!ready || !Online.user) { toast("Cal entrar amb el compte"); return false; }
-    try { await F.setDoc(F.doc(db, "config", id), data); return true; } catch (e) { console.warn(e); toast("No s'ha pogut desar (permisos?)"); return false; }
+    if (!ready || !Online.user) { toast("Hay que entrar con la cuenta"); return false; }
+    try { await F.setDoc(F.doc(db, "config", id), data); return true; } catch (e) { console.warn(e); toast("No se ha podido guardar (¿permisos?)"); return false; }
   },
 };
 window.Online = Online;
@@ -245,7 +245,7 @@ const currentView = () => location.hash.slice(1).split("/")[0] || "jocs";
 function refreshView() {
   if (["perfil", "duel", "jocs", "ranking", "inici", "joc", "control", "pronostics", "amics"].includes(currentView())) route();
 }
-async function safe(fn, msg = "Hi ha hagut un problema de connexió") {
+async function safe(fn, msg = "Ha habido un problema de conexión") {
   try { return await fn(); } catch (e) { console.warn(e); toast(msg); return null; }
 }
 
@@ -290,7 +290,7 @@ function shrinkPhoto(file) {
 }
 
 // Exemple neutre: no parteix mai del nom real de la persona
-const suggestHandle = () => `votant${Math.floor(100 + Math.random() * 900)}`;
+const suggestHandle = () => `votante${Math.floor(100 + Math.random() * 900)}`;
 
 let profileModal = null;
 function openProfileEditor(first = false) {
@@ -300,23 +300,23 @@ function openProfileEditor(first = false) {
   let photo = cur.photo ?? google;
   const el = h(`<div class="pf-modal" role="dialog" aria-modal="true" aria-labelledby="pf-title">
     <div class="card pf-card">
-      <p class="kicker">${first ? "Ja gairebé hi ets" : "El teu perfil"}</p>
-      <h3 id="pf-title">${first ? "Crea el teu usuari" : "Edita el perfil"}</h3>
-      <div class="pf-top"><img class="pf-preview" alt="La teva foto de perfil" referrerpolicy="no-referrer"><div class="pf-name">
-        <label class="sim-field"><span>Nom d'usuari</span><input data-handle maxlength="20" autocomplete="off" spellcheck="false" value="${esc(cur.handle || "")}" placeholder="p. ex. ${suggestHandle()}"></label>
-        <small>De 3 a 20 caràcters: lletres, números, punt i guió baix. És l'únic nom que veuran els altres (rànquings, duels i lligues): el teu nom real no surt enlloc.</small>
+      <p class="kicker">${first ? "Ya casi estás" : "Tu perfil"}</p>
+      <h3 id="pf-title">${first ? "Crea tu usuario" : "Edita el perfil"}</h3>
+      <div class="pf-top"><img class="pf-preview" alt="Tu foto de perfil" referrerpolicy="no-referrer"><div class="pf-name">
+        <label class="sim-field"><span>Nombre de usuario</span><input data-handle maxlength="20" autocomplete="off" spellcheck="false" value="${esc(cur.handle || "")}" placeholder="p. ej. ${suggestHandle()}"></label>
+        <small>De 3 a 20 caracteres: letras, números, punto y guion bajo. Es el único nombre que verán los demás (rankings, duelos y ligas): tu nombre real no aparece en ningún sitio.</small>
       </div></div>
       <p class="pf-label">Foto de perfil</p>
       <div class="pf-photos">
-        ${google ? `<button type="button" class="pf-ph" data-ph="google" aria-label="La foto del compte de Google"><img src="${esc(google)}" alt="" referrerpolicy="no-referrer"></button>` : ""}
+        ${google ? `<button type="button" class="pf-ph" data-ph="google" aria-label="La foto de la cuenta de Google"><img src="${esc(google)}" alt="" referrerpolicy="no-referrer"></button>` : ""}
         ${AVATAR_ART.map((_, k) => `<button type="button" class="pf-ph" data-ph="${k}" aria-label="Avatar ${k + 1}"><img src="${avatarPreset(k)}" alt=""></button>`).join("")}
         ${typeof SHOP !== "undefined" ? SHOP.filter((x) => x.cat === "av" && Coins.owns(x.id)).map((x) => `<button type="button" class="pf-ph" data-ph="s:${x.id}" aria-label="${esc(x.name)}"><img src="${x.art}" alt=""></button>`).join("") : ""}
-        ${first ? "" : `<a class="pf-ph pf-shop" href="#botiga" title="Més avatars a la botiga"><span>🪙</span><small>Botiga</small></a>`}
-        <label class="pf-ph pf-up" title="Puja una foto"><input type="file" accept="image/*" data-up hidden><span>＋</span><small>Puja-la</small></label>
+        ${first ? "" : `<a class="pf-ph pf-shop" href="#botiga" title="Más avatares en la tienda"><span>🪙</span><small>Tienda</small></a>`}
+        <label class="pf-ph pf-up" title="Sube una foto"><input type="file" accept="image/*" data-up hidden><span>＋</span><small>Súbela</small></label>
       </div>
       <p class="pf-err" data-err role="alert"></p>
-      <div class="row">${first ? "" : `<button class="btn ghost" data-cancel>Cancel·la</button>`}<button class="btn primary lg" data-save>${first ? "Comença a jugar" : "Desa el perfil"}</button></div>
-      <p class="muted pf-note">La foto que pugis es redueix al teu dispositiu abans de desar-la. Pots canviar el nom i la foto quan vulguis des del Perfil.</p>
+      <div class="row">${first ? "" : `<button class="btn ghost" data-cancel>Cancela</button>`}<button class="btn primary lg" data-save>${first ? "Empieza a jugar" : "Guarda el perfil"}</button></div>
+      <p class="muted pf-note">La foto que subas se reduce en tu dispositivo antes de guardarla. Puedes cambiar el nombre y la foto cuando quieras desde el Perfil.</p>
     </div>
   </div>`);
   document.body.appendChild(el);
@@ -334,26 +334,26 @@ function openProfileEditor(first = false) {
   $(".pf-shop", el)?.addEventListener("click", () => closeProfileEditor());
   $("[data-up]", el).addEventListener("change", async (e) => {
     try { photo = await shrinkPhoto(e.target.files[0]); err.textContent = ""; sync(); }
-    catch { err.textContent = "No s'ha pogut llegir la imatge. Prova'n una altra."; }
+    catch { err.textContent = "No se ha podido leer la imagen. Prueba con otra."; }
   });
   input.addEventListener("input", () => { err.textContent = ""; });
   $("[data-cancel]", el)?.addEventListener("click", closeProfileEditor);
   $("[data-save]", el).addEventListener("click", async () => {
     const handle = input.value.trim();
     const key = handleKey(handle);
-    if (!HANDLE_RE.test(handle) || key.length < 3) { err.textContent = "El nom ha de tenir de 3 a 20 caràcters: lletres, números, punt i guió baix."; return input.focus(); }
-    if (typeof simBadWord === "function" && simBadWord(handle)) { err.textContent = "Tria un nom sense paraules ofensives."; return input.focus(); }
+    if (!HANDLE_RE.test(handle) || key.length < 3) { err.textContent = "El nombre debe tener de 3 a 20 caracteres: letras, números, punto y guion bajo."; return input.focus(); }
+    if (typeof simBadWord === "function" && simBadWord(handle)) { err.textContent = "Elige un nombre sin palabras ofensivas."; return input.focus(); }
     const btn = $("[data-save]", el);
     btn.disabled = true;
     const ok = await saveProfile(handle, key, photo);
     btn.disabled = false;
-    if (ok === "taken") { err.textContent = "Aquest nom d'usuari ja és d'algú altre. Prova'n un altre."; return input.focus(); }
-    if (!ok) { err.textContent = "No s'ha pogut desar. Comprova la connexió i torna-ho a provar."; return; }
+    if (ok === "taken") { err.textContent = "Este nombre de usuario ya es de otra persona. Prueba con otro."; return input.focus(); }
+    if (!ok) { err.textContent = "No se ha podido guardar. Comprueba la conexión y vuelve a intentarlo."; return; }
     closeProfileEditor();
     // El repte d'avui fet abans de tenir usuari es publica ara, ja amb el nom d'usuari
     if (first) { const today = dailyResult(todayKey()); if (today) Online.submitDaily(todayKey(), today); }
     Sfx.play("win");
-    toast(first ? `Benvingut/da, ${handle}!` : "Perfil desat");
+    toast(first ? `¡Bienvenido/a, ${handle}!` : "Perfil guardado");
     renderAccountBtn();
     refreshView();
   });
@@ -365,10 +365,10 @@ async function saveProfile(handle, key, photo) {
   const oldKey = Online.profile?.handle ? handleKey(Online.profile.handle) : null;
   if (key !== oldKey) {
     const ref = F.doc(db, "usernames", key);
-    const snap = await safe(() => F.getDoc(ref), "No s'ha pogut comprovar el nom d'usuari");
+    const snap = await safe(() => F.getDoc(ref), "No se ha podido comprobar el nombre de usuario");
     if (!snap) return false;
     if (snap.exists() && snap.data().uid !== uid) return "taken";
-    const ok = await safe(() => F.setDoc(ref, { uid, handle }), "No s'ha pogut reservar el nom d'usuari");
+    const ok = await safe(() => F.setDoc(ref, { uid, handle }), "No se ha podido reservar el nombre de usuario");
     if (ok === null) return false;
     if (oldKey) await F.deleteDoc(F.doc(db, "usernames", oldKey)).catch(() => {});
   }
@@ -390,32 +390,32 @@ Online.signIn = signIn;
 
 // Per què val la pena crear-se l'usuari
 const PITCH = [
-  ["☁", "El teu progrés, a tot arreu", "Nivell, XP, rècords i assoliments desats per sempre, al mòbil i a l'ordinador."],
-  ["🏆", "Rànquing i lligues", "Compara el teu temps del repte diari amb tothom i crea lligues amb la colla."],
-  ["⚔", "Duels 1 vs 1", "Repta els teus amics a duels de preguntes o de campanya, amb xat i revenja."],
-  ["🪪", "El teu perfil", "Tria un nom d'usuari i una foto: és com et veuran als rànquings i als duels."],
+  ["☁", "Tu progreso, en todas partes", "Nivel, XP, récords y logros guardados para siempre, en el móvil y en el ordenador."],
+  ["🏆", "Ranking y ligas", "Compara tu tiempo del reto diario con todo el mundo y crea ligas con tu grupo."],
+  ["⚔", "Duelos 1 vs 1", "Reta a tus amigos a duelos de preguntas o de campaña, con chat y revancha."],
+  ["🪪", "Tu perfil", "Elige un nombre de usuario y una foto: así te verán en los rankings y en los duelos."],
 ];
-Online.pitchHtml = (title = "Crea el teu usuari en 10 segons", sub = "") => `<div class="pitch">
-  <p class="kicker">Gratis · amb el teu compte de Google</p>
+Online.pitchHtml = (title = "Crea tu usuario en 10 segundos", sub = "") => `<div class="pitch">
+  <p class="kicker">Gratis · con tu cuenta de Google</p>
   <h3>${title}</h3>
   ${sub ? `<p class="pitch-sub">${sub}</p>` : ""}
   <ul class="pitch-list">${PITCH.map(([i, t, d]) => `<li><span aria-hidden="true">${i}</span><div><b>${t}</b><small>${d}</small></div></li>`).join("")}</ul>
-  <button class="btn google-btn lg" data-signin-cta>${googleIcon()} Continua amb Google</button>
-  <p class="pitch-fine">Només fem servir el compte de Google per identificar-te: no publiquem res en nom teu.</p>
+  <button class="btn google-btn lg" data-signin-cta>${googleIcon()} Continúa con Google</button>
+  <p class="pitch-fine">Solo usamos la cuenta de Google para identificarte: no publicamos nada en tu nombre.</p>
   ${legalNote()}
 </div>`;
-Online.gateHtml = () => `<div class="card gate">${Online.pitchHtml("Has gastat les partides de prova", `Ja has jugat ${GUEST_FREE} partides sense usuari. Crea't l'usuari amb Google per continuar jugant: només és un clic.`)}
-  <a class="btn ghost" href="#inici">Torna a l'inici</a></div>`;
+Online.gateHtml = () => `<div class="card gate">${Online.pitchHtml("Has gastado las partidas de prueba", `Ya has jugado ${GUEST_FREE} partidas sin usuario. Créate el usuario con Google para seguir jugando: solo es un clic.`)}
+  <a class="btn ghost" href="#inici">Vuelve al inicio</a></div>`;
 // Recordatori suau després de cada partida, mentre encara en queden de prova
 Online.guestNote = () => {
   if (!Online.isGuest()) return "";
   const left = Online.guestLeft();
-  return `<div class="guest-note"><div><b>${left ? `Et ${left === 1 ? "queda 1 partida" : `queden ${left} partides`} sense usuari` : "Has gastat les partides de prova"}</b><small>Crea't l'usuari per desar el progrés i sortir al rànquing.</small></div><button class="btn google-btn" data-signin-cta>${googleIcon()} Crea l'usuari</button></div>`;
+  return `<div class="guest-note"><div><b>${left ? `Te ${left === 1 ? "queda 1 partida" : `quedan ${left} partidas`} sin usuario` : "Has gastado las partidas de prueba"}</b><small>Créate el usuario para guardar el progreso y salir en el ranking.</small></div><button class="btn google-btn" data-signin-cta>${googleIcon()} Crea el usuario</button></div>`;
 };
 document.addEventListener("click", (e) => {
   if (!e.target.closest?.("[data-signin-cta]")) return;
   e.preventDefault();
-  if (!ready) return toast(configured ? "No s'ha pogut connectar amb el servidor" : "Els comptes s'activaran aviat");
+  if (!ready) return toast(configured ? "No se ha podido conectar con el servidor" : "Las cuentas se activarán pronto");
   signIn();
 });
 
@@ -428,7 +428,7 @@ async function signIn() {
     if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) {
       return A.signInWithRedirect(auth, provider);
     }
-    if (!["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) toast("No s'ha pogut iniciar la sessió");
+    if (!["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) toast("No se ha podido iniciar la sesión");
   }
 }
 
@@ -447,7 +447,7 @@ async function signOutNow() {
   renderAccountBtn();
   refreshView();
   if (auth && A) await A.signOut(auth).catch(() => {});
-  toast("Sessió tancada. El progrés es queda en aquest dispositiu.");
+  toast("Sesión cerrada. El progreso se queda en este dispositivo.");
 }
 
 // Capçalera: amb sessió, el compte és la píndola de nivell (renderLevel, core.js) i «Entra» desapareix
@@ -457,7 +457,7 @@ function renderAccountBtn() {
   b.hidden = !!Online.user;
   if (!Online.user) {
     b.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg><span>Entra</span>`;
-    b.title = "Inicia sessió amb Google";
+    b.title = "Inicia sesión con Google";
   }
   if (typeof renderLevel === "function") renderLevel();
 }
@@ -528,7 +528,7 @@ async function pushProfile() {
     frame: me().frame || null, title: me().title || null, shop: d.shop || {},
     best: d.best, plays: d.plays, ach: d.ach, learn: d.learn || {}, daily: d.daily, act: d.act || {},
     updatedAt: F.serverTimestamp(),
-  }), "No s'ha pogut desar el progrés al núvol");
+  }), "No se ha podido guardar el progreso en la nube");
 }
 
 // Allibera les reserves de nom d'usuari del compte que no són la de debò (duplicats d'abans)
@@ -544,7 +544,7 @@ async function syncDown() {
     if (i) await new Promise((r) => setTimeout(r, 1500 * i));
     try { snap = await F.getDoc(F.doc(db, "users", uid)); } catch (e) { console.warn(e); }
   }
-  if (!snap) { toast("No s'ha pogut carregar el teu perfil. Es tornarà a provar quan hi hagi connexió."); return false; }
+  if (!snap) { toast("No se ha podido cargar tu perfil. Se volverá a intentar cuando haya conexión."); return false; }
   const u = snap.exists() ? snap.data() : null;
   if (u?.handle) Online.profile = { handle: u.handle, photo: u.photo || "" };
   // Sense nom al perfil: si ja n'havia reservat un (una sessió anterior que va fallar), es recupera
@@ -588,16 +588,16 @@ function renderAccountBox() {
   if (u) {
     box.innerHTML = `<div class="card account-card in">
       ${avatar(me(), 56)}
-      <div class="ac-body"><b>${esc(me().name)}</b>${typeof shopTitle === "function" && shopTitle(me().title) ? `<span class="shop-ti sm">${esc(shopTitle(me().title))}</span>` : ""}<p>${esc(u.email || "")}${u.email ? " · " : ""}<span class="synced">${ready ? "Progrés sincronitzat" : authLoading ? "Connectant…" : "Mode sense connexió"}</span></p></div>
-      <div class="ac-btns">${ready ? `<button class="btn" data-editprof>Edita el perfil</button>` : ""}<button class="btn ghost" data-signout>Tanca la sessió</button></div>
+      <div class="ac-body"><b>${esc(me().name)}</b>${typeof shopTitle === "function" && shopTitle(me().title) ? `<span class="shop-ti sm">${esc(shopTitle(me().title))}</span>` : ""}<p>${esc(u.email || "")}${u.email ? " · " : ""}<span class="synced">${ready ? "Progreso sincronizado" : authLoading ? "Conectando…" : "Modo sin conexión"}</span></p></div>
+      <div class="ac-btns">${ready ? `<button class="btn" data-editprof>Edita el perfil</button>` : ""}<button class="btn ghost" data-signout>Cierra la sesión</button></div>
     </div>`;
     $("[data-signout]", box).addEventListener("click", signOutNow);
     $("[data-editprof]", box)?.addEventListener("click", () => openProfileEditor(false));
     if (ready) {
       box.insertAdjacentHTML("beforeend", `<div class="account-tools">
-        <p class="muted">Dades personals: es pot descarregar una còpia de les dades del compte o suprimir-lo. Més informació a la <a href="#legal/privacitat">Política de privadesa</a>.</p>
-        <button class="btn ghost" data-export>Descarregar les meves dades</button>
-        <button class="btn ghost danger" data-delete>Suprimir el compte</button>
+        <p class="muted">Datos personales: se puede descargar una copia de los datos de la cuenta o eliminarla. Más información en la <a href="#legal/privacitat">Política de privacidad</a>.</p>
+        <button class="btn ghost" data-export>Descargar mis datos</button>
+        <button class="btn ghost danger" data-delete>Eliminar la cuenta</button>
       </div>`);
       $("[data-export]", box).addEventListener("click", exportMyData);
       $("[data-delete]", box).addEventListener("click", deleteMyAccount);
@@ -605,17 +605,17 @@ function renderAccountBox() {
     return;
   }
   if (authLoading) {
-    box.innerHTML = `<div class="card account-card"><div class="ac-body"><p class="muted">Comprovant la sessió…</p></div></div>`;
+    box.innerHTML = `<div class="card account-card"><div class="ac-body"><p class="muted">Comprobando la sesión…</p></div></div>`;
     return;
   }
   if (!ready) {
     box.innerHTML = `<div class="card account-card off">
       <div class="ac-ico">☁</div>
-      <div class="ac-body"><b>Mode local</b><p>El teu progrés es desa en aquest navegador. ${configured ? "Ara mateix no podem connectar amb el servidor." : "Aviat podràs iniciar sessió amb Google per desar-lo al núvol i jugar duels."}</p></div>
+      <div class="ac-body"><b>Modo local</b><p>Tu progreso se guarda en este navegador. ${configured ? "Ahora mismo no podemos conectar con el servidor." : "Pronto podrás iniciar sesión con Google para guardarlo en la nube y jugar duelos."}</p></div>
     </div>`;
     return;
   }
-  box.innerHTML = `<div class="card account-card pitch-card">${Online.pitchHtml("Crea el teu usuari", Online.guestLeft() ? `Pots jugar ${Online.guestLeft() === 1 ? "1 partida més" : `${Online.guestLeft()} partides més`} sense usuari.` : "Ja has gastat les partides de prova.")}</div>`;
+  box.innerHTML = `<div class="card account-card pitch-card">${Online.pitchHtml("Crea tu usuario", Online.guestLeft() ? `Puedes jugar ${Online.guestLeft() === 1 ? "1 partida más" : `${Online.guestLeft()} partidas más`} sin usuario.` : "Ya has gastado las partidas de prueba.")}</div>`;
 }
 
 // ---------- Drets RGPD: portabilitat i supressió ----------
@@ -660,16 +660,16 @@ async function exportMyData() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  toast("S'ha descarregat la còpia de les dades.");
+  toast("Se ha descargado la copia de los datos.");
 }
 
 async function deleteMyAccount() {
-  if (!confirm("Se suprimiran el compte i les dades associades: perfil, resultats del repte diari, duels, amistats i xats privats, campanyes contra amics i pertinença a lligues. Aquesta acció no es pot desfer. El progrés desat en aquest dispositiu no es veurà afectat.\n\nVoleu continuar?")) return;
+  if (!confirm("Se eliminarán la cuenta y los datos asociados: perfil, resultados del reto diario, duelos, amistades y chats privados, campañas contra amigos y pertenencia a ligas. Esta acción no se puede deshacer. El progreso guardado en este dispositivo no se verá afectado.\n\n¿Quieres continuar?")) return;
   const uid = Online.user.uid;
   closeRoom();
   Progress.onSave = null;
   if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
-  toast("S'està suprimint el compte…");
+  toast("Eliminando la cuenta…");
   try {
     for (const k of dailyKeysSinceStart()) {
       await F.deleteDoc(F.doc(db, "dailies", k, "entries", uid)).catch(() => {});
@@ -690,6 +690,9 @@ async function deleteMyAccount() {
         : x.status === "lobby" ? F.updateDoc(c.ref, { players: F.arrayRemove(uid), [`seats.${uid}`]: F.deleteField(), [`turn.${uid}`]: F.deleteField() })
         : F.updateDoc(c.ref, { [`seats.${uid}.name`]: "Jugador", [`seats.${uid}.photo`]: "" })).catch(() => {});
     }
+    // Sales de trucada: se'n surt (o s'esborra, si n'era l'amfitrió)
+    const calls = await F.getDocs(F.query(F.collection(db, "trucades"), F.where("players", "array-contains", uid), F.limit(100)));
+    for (const c of calls.docs) await (c.data().host === uid || c.data().players.length <= 1 ? F.deleteDoc(c.ref) : F.updateDoc(c.ref, { players: F.arrayRemove(uid), [`names.${uid}`]: F.deleteField() })).catch(() => {});
     // Debats entre amics: igual
     const debs = await F.getDocs(F.query(F.collection(db, "debats"), F.where("players", "array-contains", uid), F.limit(200)));
     for (const c of debs.docs) {
@@ -712,7 +715,7 @@ async function deleteMyAccount() {
     }
   } catch (e) {
     console.warn(e);
-    toast("No s'ha pogut completar la supressió. Torneu-ho a provar o escriviu a l'adreça de contacte.");
+    toast("No se ha podido completar la eliminación. Vuelve a intentarlo o escribe a la dirección de contacto.");
     return;
   }
   cacheUser(null);
@@ -721,12 +724,12 @@ async function deleteMyAccount() {
   Online.profile = null;
   renderAccountBtn();
   refreshView();
-  toast("El compte s'ha suprimit.");
+  toast("La cuenta se ha eliminado.");
 }
 
 async function renderLeaderboard(box = $("#leaderboard-box"), inTab = false) {
   if (!box || !ready || !Online.user) return;
-  box.innerHTML = `${inTab ? `<p class="muted">Qui ha acumulat més experiència jugant a tots els jocs.</p>` : `<h2 class="section-title sm">Rànquing</h2>`}<div class="lb"><p class="muted">Carregant…</p></div>`;
+  box.innerHTML = `${inTab ? `<p class="muted">Quién ha acumulado más experiencia jugando a todos los juegos.</p>` : `<h2 class="section-title sm">Ranking</h2>`}<div class="lb"><p class="muted">Cargando…</p></div>`;
   const snap = await safe(() => F.getDocs(F.query(F.collection(db, "users"), F.orderBy("xp", "desc"), F.limit(20))));
   if (!snap) return;
   const rows = snap.docs.map((d, i) => {
@@ -738,7 +741,7 @@ async function renderLeaderboard(box = $("#leaderboard-box"), inTab = false) {
       <strong>${fmt(u.xp || 0)} XP</strong>
     </div>`;
   }).join("");
-  $(".lb", box).innerHTML = rows || `<p class="muted">Encara no hi ha ningú al rànquing.</p>`;
+  $(".lb", box).innerHTML = rows || `<p class="muted">Todavía no hay nadie en el ranking.</p>`;
 }
 
 const googleIcon = () => `<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
@@ -756,14 +759,14 @@ function renderDuel(code) {
   closeRoom();
   const root = $("#duel-root");
   if (authLoading) {
-    root.innerHTML = `<div class="card"><p class="muted">Carregant…</p></div>`;
+    root.innerHTML = `<div class="card"><p class="muted">Cargando…</p></div>`;
     return;
   }
   if (!ready) {
     root.innerHTML = `<div class="card online-off">
       <div class="gc-icon" style="--c:var(--blue)">${duelIcon()}</div>
-      <h3>Els duels arriben aviat</h3>
-      <p>${configured ? "Ara mateix no podem connectar amb el servidor. Torna-ho a provar més tard." : "Podràs reptar els teus amics a un duel de 10 preguntes en temps real, amb les mateixes preguntes per a tots dos."}</p>
+      <h3>Los duelos llegan pronto</h3>
+      <p>${configured ? "Ahora mismo no podemos conectar con el servidor. Vuelve a intentarlo más tarde." : "Podrás retar a tus amigos a un duelo de 10 preguntas en tiempo real, con las mismas preguntas para los dos."}</p>
     </div>`;
     return;
   }
@@ -771,9 +774,9 @@ function renderDuel(code) {
     if (code) sessionStorage.setItem("pendingDuel", code.toUpperCase());
     root.innerHTML = `<div class="card online-off">
       <div class="gc-icon" style="--c:var(--blue)">${duelIcon()}</div>
-      <h3>${code ? "T'han reptat a un duel!" : "Repta els teus amics"}</h3>
-      <p>Inicia sessió amb Google per jugar duels 1 vs 1: 10 preguntes, les mateixes per a tots dos, i veureu la puntuació de l'altre en directe.</p>
-      <button class="btn google-btn lg" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}
+      <h3>${code ? "¡Te han retado a un duelo!" : "Reta a tus amigos"}</h3>
+      <p>Inicia sesión con Google para jugar duelos 1 vs 1: 10 preguntas, las mismas para los dos, y veréis la puntuación del otro en directo.</p>
+      <button class="btn google-btn lg" data-signin>${googleIcon()} Continúa con Google</button>${legalNote()}
     </div>`;
     $("[data-signin]", root).addEventListener("click", signIn);
     return;
@@ -790,41 +793,41 @@ function renderLobby() {
   const root = $("#duel-root");
   root.innerHTML = `
     <div class="duel-steps">
-      <div><b>1</b><span>Crea un duel i envia l'enllaç o el codi a un amic.</span></div>
-      <div><b>2</b><span>Trieu 5 parelles de preguntes: una te la quedes per a tu i l'altra l'envies al rival!</span></div>
-      <div><b>3</b><span>Xateja, envia icones i segueix el marcador en directe. Guanya qui en faci més!</span></div>
+      <div><b>1</b><span>Crea un duelo y envía el enlace o el código a un amigo.</span></div>
+      <div><b>2</b><span>Elegid 5 parejas de preguntas: ¡una te la quedas para ti y la otra se la envías al rival!</span></div>
+      <div><b>3</b><span>Chatea, envía iconos y sigue el marcador en directo. ¡Gana quien acierte más!</span></div>
     </div>
     <div class="duel-grid">
       <div class="card duel-card">
-        <p class="kicker">Nou repte</p>
-        <h3>Crea un duel</h3>
-        <p class="muted">5 preguntes triades per tu + 5 enviades pel rival · Xat i icones en viu.</p>
-        <button class="btn primary lg" data-create>Crea el duel</button>
+        <p class="kicker">Nuevo reto</p>
+        <h3>Crea un duelo</h3>
+        <p class="muted">5 preguntas elegidas por ti + 5 enviadas por el rival · Chat e iconos en vivo.</p>
+        <button class="btn primary lg" data-create>Crea el duelo</button>
       </div>
       <div class="card duel-card sim-duelcard">
         <p class="kicker">Simulador del 29N</p>
-        <h3>Duel de campanya</h3>
-        <p class="muted">El mateix partit i el mateix país per als dos. Cadascú fa la seva campanya i guanya qui tregui més escons.</p>
-        <button class="btn primary lg" data-create-sim>Crea el duel de campanya</button>
+        <h3>Duelo de campaña</h3>
+        <p class="muted">El mismo partido y el mismo país para los dos. Cada uno hace su campaña y gana quien saque más escaños.</p>
+        <button class="btn primary lg" data-create-sim>Crea el duelo de campaña</button>
       </div>
       <div class="card duel-card">
-        <p class="kicker">T'han passat un codi?</p>
-        <h3>Uneix-te</h3>
+        <p class="kicker">¿Te han pasado un código?</p>
+        <h3>Únete</h3>
         <form class="join-form" data-join>
-          <input type="text" maxlength="6" placeholder="CODI" autocomplete="off" spellcheck="false" aria-label="Codi del duel">
+          <input type="text" maxlength="6" placeholder="CÓDIGO" autocomplete="off" spellcheck="false" aria-label="Código del duelo">
           <button class="btn lg" type="submit">Entra</button>
         </form>
       </div>
     </div>
-    <h2 class="section-title sm">Els teus duels</h2>
-    <div class="duel-list"><p class="muted">Carregant…</p></div>`;
+    <h2 class="section-title sm">Tus duelos</h2>
+    <div class="duel-list"><p class="muted">Cargando…</p></div>`;
   $("[data-create]", root).addEventListener("click", () => createDuel());
   $("[data-create-sim]", root).addEventListener("click", () => createDuel(null, null, "sim"));
   $("[data-join]", root).addEventListener("submit", (e) => {
     e.preventDefault();
     const c = $("input", e.target).value.trim().toUpperCase();
     if (c.length === 6) joinDuel(c);
-    else toast("El codi té 6 caràcters");
+    else toast("El código tiene 6 caracteres");
   });
   loadMyDuels();
 }
@@ -835,20 +838,20 @@ async function loadMyDuels() {
   if (!snap || !list) return;
   const uid = Online.user.uid;
   const duels = snap.docs.map((d) => d.data()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 12);
-  if (!duels.length) { list.innerHTML = `<p class="muted">Encara no has jugat cap duel. Crea'n un i repta algú!</p>`; return; }
+  if (!duels.length) { list.innerHTML = `<p class="muted">Todavía no has jugado ningún duelo. ¡Crea uno y reta a alguien!</p>`; return; }
   list.innerHTML = duels.map((d) => {
     const rival = d.host?.uid === uid ? d.guest : d.host;
     const mine = d[`p_${uid}`] || fresh(), theirs = rival ? d[`p_${rival.uid}`] || fresh() : null;
-    let label = "Esperant rival", cls = "wait";
+    let label = "Esperando rival", cls = "wait";
     if (d.status !== "waiting") {
       if (mine.done && theirs?.done) {
-        label = mine.score > theirs.score ? "Victòria" : mine.score < theirs.score ? "Derrota" : "Empat";
+        label = mine.score > theirs.score ? "Victoria" : mine.score < theirs.score ? "Derrota" : "Empate";
         cls = mine.score > theirs.score ? "win" : mine.score < theirs.score ? "lose" : "tie";
-      } else { label = "En joc"; cls = "live"; }
+      } else { label = "En juego"; cls = "live"; }
     }
     return `<a class="duel-row" href="#duel/${d.code}">
       ${avatar(rival || { name: "?" }, 36)}
-      <span class="dr-name">${rival ? esc(rival.name) : "Sense rival"}<small>Codi ${d.code}</small></span>
+      <span class="dr-name">${rival ? esc(rival.name) : "Sin rival"}<small>Código ${d.code}</small></span>
       ${theirs ? `<span class="dr-score">${fmt(mine.score)} – ${fmt(theirs.score)}</span>` : ""}
       <span class="dr-tag ${cls}">${label}</span>
     </a>`;
@@ -863,7 +866,7 @@ async function createDuel(fromCode = null, prevData = null, kind = prevData?.kin
     seed: Math.floor(Math.random() * 2 ** 31),
     players: [uid], host: me(), guest: null,
     [`p_${uid}`]: fresh(),
-  }), "No s'ha pogut crear el duel");
+  }), "No se ha podido crear el duelo");
   if (ok !== null) {
     if (fromCode && prevData) {
       patchMyDuel(F.doc(db, "duels", fromCode), uid, prevData, { rematch: code }).catch(() => {});
@@ -890,11 +893,11 @@ async function joinDuel(code) {
   const ref = F.doc(db, "duels", code);
   const snap = await safe(() => F.getDoc(ref));
   if (!snap) return;
-  if (!snap.exists()) return toast("No existeix cap duel amb aquest codi");
+  if (!snap.exists()) return toast("No existe ningún duelo con este código");
   const d = snap.data();
   if (d.players.includes(uid)) { location.hash = `#duel/${code}`; return; }
-  if (d.guest) return toast("Aquest duel ja està complet");
-  const ok = await safe(() => F.updateDoc(ref, { guest: me(), players: F.arrayUnion(uid), status: "playing", [`p_${uid}`]: fresh() }), "No t'has pogut unir al duel");
+  if (d.guest) return toast("Este duelo ya está completo");
+  const ok = await safe(() => F.updateDoc(ref, { guest: me(), players: F.arrayUnion(uid), status: "playing", [`p_${uid}`]: fresh() }), "No te has podido unir al duelo");
   if (ok !== null) {
     if (location.hash === `#duel/${code}`) renderRoom(code);
     else location.hash = `#duel/${code}`;
@@ -916,7 +919,7 @@ function patchMyDuel(ref, uid, dataObj, patch) {
 
 // ---------- Xat i icones en viu per als duels ----------
 const DUEL_EMOTES = ["😂", "🔥", "😱", "👏", "💀", "🏛️", "🤔", "⚡"];
-const DUEL_QUICK_MSGS = ["Bona sort!", "Quina pregunta!", "Uf, difícil!", "Bona!", "Revenja?"];
+const DUEL_QUICK_MSGS = ["¡Buena suerte!", "¡Qué pregunta!", "¡Uf, difícil!", "¡Buena!", "¿Revancha?"];
 
 function popEmoteBubble(player, emoji) {
   let layer = $("#duel-emote-layer");
@@ -940,18 +943,18 @@ function popEmoteBubble(player, emoji) {
 function mountDuelSocial(container, ref, uid) {
   const wrap = h(`<div class="card duel-social">
     <div class="ds-head">
-      <span class="kicker">En directe amb el rival</span>
-      <div class="ds-emotes" role="group" aria-label="Envia una icona">
-        ${DUEL_EMOTES.map((e) => `<button type="button" class="ds-emote-btn" data-emote="${e}" title="Envia ${e}">${e}</button>`).join("")}
+      <span class="kicker">En directo con el rival</span>
+      <div class="ds-emotes" role="group" aria-label="Envía un icono">
+        ${DUEL_EMOTES.map((e) => `<button type="button" class="ds-emote-btn" data-emote="${e}" title="Envía ${e}">${e}</button>`).join("")}
       </div>
     </div>
     <div class="ds-quick">
       ${DUEL_QUICK_MSGS.map((m) => `<button type="button" class="ds-chip" data-qmsg="${esc(m)}">${esc(m)}</button>`).join("")}
     </div>
-    <div class="ds-msgs" aria-live="polite"><p class="muted">Envia una icona o escriu al teu rival…</p></div>
+    <div class="ds-msgs" aria-live="polite"><p class="muted">Envía un icono o escribe a tu rival…</p></div>
     <form class="ds-form" autocomplete="off">
-      <input type="text" maxlength="120" placeholder="Escriu un missatge al rival…" aria-label="Missatge">
-      <button class="btn primary" type="submit">Envia</button>
+      <input type="text" maxlength="120" placeholder="Escribe un mensaje al rival…" aria-label="Mensaje">
+      <button class="btn primary" type="submit">Envía</button>
     </form>
   </div>`);
   container.appendChild(wrap);
@@ -1029,7 +1032,7 @@ function mountDuelSocial(container, ref, uid) {
 
     const msgBox = $(".ds-msgs", wrap);
     if (!allMsgs.length) {
-      msgBox.innerHTML = `<p class="muted">Envia una icona o escriu al teu rival…</p>`;
+      msgBox.innerHTML = `<p class="muted">Envía un icono o escribe a tu rival…</p>`;
     } else {
       msgBox.innerHTML = allMsgs.slice(-30).map((x) => `
         <div class="ds-msg ${x.isMe ? "me" : "them"}">
@@ -1056,11 +1059,11 @@ function liveBarHtml(d, uid) {
   const side = (p, cls) => {
     const pr = (p && d[`p_${p.uid}`]) || fresh();
     const pk = (pr.picks || []).length;
-    const sub = !p ? "Esperant que entri…" : pr.done ? `Acabat · ${pr.hits}/${DUEL_LEN}` : pr.i > 0 ? `Pregunta ${Math.min(pr.i + 1, DUEL_LEN)}/${DUEL_LEN}` : pk >= 5 ? "Tria feta" : `Triant (${pk}/5)`;
+    const sub = !p ? "Esperando a que entre…" : pr.done ? `Terminado · ${pr.hits}/${DUEL_LEN}` : pr.i > 0 ? `Pregunta ${Math.min(pr.i + 1, DUEL_LEN)}/${DUEL_LEN}` : pk >= 5 ? "Elección hecha" : `Eligiendo (${pk}/5)`;
     return `<div class="dlb-side ${cls}" ${p?.uid ? `data-user="${p.uid}"` : ""}>
       ${avatar(p || { name: "?" }, 38)}
       <div class="dlb-info">
-        <b><span>${p ? esc(cls === "me" ? "Tu" : firstName(p.name)) : "Rival"}</span><span class="dlb-pts">${fmt(pr.score)}</span></b>
+        <b><span>${p ? esc(cls === "me" ? "Tú" : firstName(p.name)) : "Rival"}</span><span class="dlb-pts">${fmt(pr.score)}</span></b>
         ${dotsRow(pr.res, DUEL_LEN)}
         <small class="dlb-sub">${sub}</small>
       </div>
@@ -1083,10 +1086,10 @@ function duelRecap(d, uid) {
 function recapListHtml(items, rivalName) {
   if (!items.length) return "";
   return `<div class="duel-qlist">
-    <p class="kicker">Les teves 10 preguntes</p>
+    <p class="kicker">Tus 10 preguntas</p>
     ${items.map((x, i) => `<div class="dq ${x.ok === true ? "ok" : x.ok === false ? "ko" : ""}">
       <span class="dq-n">${i + 1}</span>
-      <div><b>${esc(x.q)}</b><small>${x.origin === "mine" ? "🎯 Triada per tu" : `💣 Enviada per ${esc(rivalName)}`} · Resposta: ${esc(x.a)}</small></div>
+      <div><b>${esc(x.q)}</b><small>${x.origin === "mine" ? "🎯 Elegida por ti" : `💣 Enviada por ${esc(rivalName)}`} · Respuesta: ${esc(x.a)}</small></div>
       <span class="dq-r">${x.ok === true ? "✓" : x.ok === false ? "✗" : "–"}</span>
     </div>`).join("")}
   </div>`;
@@ -1105,12 +1108,12 @@ function buildPlayerRounds(seed, isHost, myPicks, rivalPicks, rivalName) {
     rounds.push({
       ...kept,
       origin: "mine",
-      label: `${kept.label} · <span class="q-origin mine">🎯 Triada per tu</span>`,
+      label: `${kept.label} · <span class="q-origin mine">🎯 Elegida por ti</span>`,
     });
     rounds.push({
       ...sent,
       origin: "rival",
-      label: `${sent.label} · <span class="q-origin rival">💣 Enviada per ${esc(rivalName)}</span>`,
+      label: `${sent.label} · <span class="q-origin rival">💣 Enviada por ${esc(rivalName)}</span>`,
     });
   }
   return rounds;
@@ -1118,7 +1121,7 @@ function buildPlayerRounds(seed, isHost, myPicks, rivalPicks, rivalName) {
 
 function renderRoom(code) {
   const root = $("#duel-root");
-  root.innerHTML = `<div id="duel-room-main"><div class="card"><p class="muted">Carregant el duel…</p></div></div><div id="duel-room-social"></div>`;
+  root.innerHTML = `<div id="duel-room-main"><div class="card"><p class="muted">Cargando el duelo…</p></div></div><div id="duel-room-social"></div>`;
   const mainBox = $("#duel-room-main", root);
   const socialBox = $("#duel-room-social", root);
   const uid = Online.user.uid;
@@ -1127,7 +1130,7 @@ function renderRoom(code) {
 
   roomUnsub = F.onSnapshot(ref, (snap) => {
     if (!snap.exists()) {
-      mainBox.innerHTML = `<div class="card online-off"><h3>Aquest duel no existeix</h3><p>Revisa el codi o crea'n un de nou.</p><a class="btn primary" href="#duel">Torna</a></div>`;
+      mainBox.innerHTML = `<div class="card online-off"><h3>Este duelo no existe</h3><p>Revisa el código o crea uno nuevo.</p><a class="btn primary" href="#duel">Vuelve</a></div>`;
       socialBox.innerHTML = "";
       return;
     }
@@ -1139,9 +1142,9 @@ function renderRoom(code) {
     if (!isPlayer && !d.guest) {
       mainBox.innerHTML = `<div class="card online-off invite">
         <span data-user="${d.host.uid}">${avatar(d.host, 72)}</span>
-        <h3>${esc(d.host.name)} et repta!</h3>
-        <p>${d.kind === "sim" ? "Duel de campanya: el mateix partit i el mateix país per als dos. Guanya qui tregui més escons." : "Duel 1 vs 1 d'elecció: cadascú tria 5 preguntes per a si mateix i n'envia 5 al rival!"}</p>
-        <button class="btn primary lg" data-accept>Accepta el repte</button>
+        <h3>¡${esc(d.host.name)} te reta!</h3>
+        <p>${d.kind === "sim" ? "Duelo de campaña: el mismo partido y el mismo país para los dos. Gana quien saque más escaños." : "Duelo 1 vs 1 de elección: ¡cada uno elige 5 preguntas para sí mismo y envía 5 al rival!"}</p>
+        <button class="btn primary lg" data-accept>Acepta el reto</button>
       </div>`;
       $("[data-accept]", mainBox).addEventListener("click", () => joinDuel(code));
       return;
@@ -1158,20 +1161,20 @@ function renderRoom(code) {
 
     if (d.status === "waiting") {
       mainBox.innerHTML = `<div class="duel-live-bar card">${liveBarHtml(d, uid)}</div><div class="card waiting-room">
-        <p class="kicker">Duel creat</p>
-        <h3>Envia aquest codi al teu rival</h3>
+        <p class="kicker">Duelo creado</p>
+        <h3>Envía este código a tu rival</h3>
         <div class="code-tiles">${[...code].map((c) => `<span>${c}</span>`).join("")}</div>
         <div class="row center">
-          <button class="btn primary" data-copy>Copia l'enllaç</button>
-          ${navigator.share ? `<button class="btn" data-share>Comparteix</button>` : ""}
-          ${isPlayer && myPicksCount < 5 && d.kind !== "sim" ? `<button class="btn" data-predraft>Ves triant les 5 preguntes (${myPicksCount}/5)</button>` : ""}
+          <button class="btn primary" data-copy>Copia el enlace</button>
+          ${navigator.share ? `<button class="btn" data-share>Comparte</button>` : ""}
+          ${isPlayer && myPicksCount < 5 && d.kind !== "sim" ? `<button class="btn" data-predraft>Ve eligiendo las 5 preguntas (${myPicksCount}/5)</button>` : ""}
         </div>
-        ${d.kind === "sim" ? `<p class="waiting-dots">Esperant el rival<span>.</span><span>.</span><span>.</span></p><p class="muted">Pots començar la campanya ara mateix: el duel no cal jugar-lo alhora.</p>${isPlayer ? `<div class="row center"><button class="btn primary" data-simplay>Comença la campanya</button></div>` : ""}` : myPicksCount >= 5 ? `<p class="synced">Ja has triat les teves 5 preguntes! Esperant que entri el rival…</p>` : `<p class="waiting-dots">Esperant el rival<span>.</span><span>.</span><span>.</span></p>`}
+        ${d.kind === "sim" ? `<p class="waiting-dots">Esperando al rival<span>.</span><span>.</span><span>.</span></p><p class="muted">Puedes empezar la campaña ahora mismo: no hace falta jugar el duelo a la vez.</p>${isPlayer ? `<div class="row center"><button class="btn primary" data-simplay>Empieza la campaña</button></div>` : ""}` : myPicksCount >= 5 ? `<p class="synced">¡Ya has elegido tus 5 preguntas! Esperando a que entre el rival…</p>` : `<p class="waiting-dots">Esperando al rival<span>.</span><span>.</span><span>.</span></p>`}
       </div>`;
       $("[data-copy]", mainBox).addEventListener("click", async () => {
-        try { await navigator.clipboard.writeText(duelLink(code)); toast("Enllaç copiat"); } catch { toast(duelLink(code)); }
+        try { await navigator.clipboard.writeText(duelLink(code)); toast("Enlace copiado"); } catch { toast(duelLink(code)); }
       });
-      $("[data-share]", mainBox)?.addEventListener("click", () => navigator.share({ title: "Política en Joc", text: "Et repto a un duel de política! Codi: " + code, url: duelLink(code) }).catch(() => {}));
+      $("[data-share]", mainBox)?.addEventListener("click", () => navigator.share({ title: "Política en Joc", text: "¡Te reto a un duelo de política! Código: " + code, url: duelLink(code) }).catch(() => {}));
       $("[data-predraft]", mainBox)?.addEventListener("click", () => startDuelGame(code, d));
       $("[data-simplay]", mainBox)?.addEventListener("click", () => simStartDuel(code, d, null));
       return;
@@ -1186,8 +1189,8 @@ function renderRoom(code) {
       const [a, b] = players.map(prog);
       const winner = a.score === b.score ? null : a.score > b.score ? players[0] : players[1];
       banner = winner
-        ? `<div class="duel-banner ${isPlayer ? (winner.uid === uid ? "win" : "lose") : ""}">${isPlayer ? (winner.uid === uid ? "Has guanyat!" : `Guanya ${esc(firstName(winner.name))}`) : `Guanya ${esc(firstName(winner.name))}`}</div>`
-        : `<div class="duel-banner tie">Empat!</div>`;
+        ? `<div class="duel-banner ${isPlayer ? (winner.uid === uid ? "win" : "lose") : ""}">${isPlayer ? (winner.uid === uid ? "¡Has ganado!" : `Gana ${esc(firstName(winner.name))}`) : `Gana ${esc(firstName(winner.name))}`}</div>`
+        : `<div class="duel-banner tie">¡Empate!</div>`;
     }
     const rematchCode = rivalProg?.rematch || myProg?.rematch;
     mainBox.innerHTML = `<div class="card scoreboard">
@@ -1196,41 +1199,41 @@ function renderRoom(code) {
         const pr = prog(p);
         const pk = (pr.picks || []).length;
         const statusTxt = d.kind === "sim"
-          ? (pr.done ? `Acabat · ${pr.hits} ${pr.hits === 1 ? "escó" : "escons"}` : pr.i > 0 ? `Fent campanya · dia ${pr.i} de 6` : "Encara no ha començat")
+          ? (pr.done ? `Terminado · ${pr.hits} ${pr.hits === 1 ? "escaño" : "escaños"}` : pr.i > 0 ? `Haciendo campaña · día ${pr.i} de 6` : "Todavía no ha empezado")
           : pr.done
-          ? `Acabat · ${pr.hits}/${DUEL_LEN} encerts`
+          ? `Terminado · ${pr.hits}/${DUEL_LEN} aciertos`
           : pr.i > 0
-            ? `Pregunta ${pr.i}/${DUEL_LEN} · ${pr.hits} encerts`
+            ? `Pregunta ${pr.i}/${DUEL_LEN} · ${pr.hits} aciertos`
             : pk >= 5
-              ? "5/5 preguntes triades · A punt!"
-              : `Triant preguntes (${pk}/5)…`;
+              ? "5/5 preguntas elegidas · ¡Listo!"
+              : `Eligiendo preguntas (${pk}/5)…`;
         return `${k === 1 ? `<span class="sb-vs">VS</span>` : ""}
         <div class="sb-player ${p.uid === uid ? "me" : ""}" data-user="${p.uid}">
           ${avatar(p, 64)}
-          <b>${esc(firstName(p.name))}${p.uid === uid ? " (tu)" : ""}</b>
+          <b>${esc(firstName(p.name))}${p.uid === uid ? " (tú)" : ""}</b>
           <strong>${fmt(pr.score)}</strong>
           <div class="sb-bar"><div style="width:${(pr.i / (d.kind === "sim" ? 6 : DUEL_LEN)) * 100}%"></div></div>
           ${d.kind === "sim" ? "" : dotsRow(pr.res, DUEL_LEN)}
           <small>${statusTxt}</small>
         </div>`;
       }).join("")}</div>
-      ${rivalProg?.rematch ? `<div class="rematch-alert"><b>🔥 ${esc(firstName(rival.name))} et demana la revenja!</b><button class="btn primary" data-go-rematch="${esc(rivalProg.rematch)}">Accepta la revenja →</button></div>` : ""}
+      ${rivalProg?.rematch ? `<div class="rematch-alert"><b>🔥 ¡${esc(firstName(rival.name))} te pide la revancha!</b><button class="btn primary" data-go-rematch="${esc(rivalProg.rematch)}">Acepta la revancha →</button></div>` : ""}
       <div class="row center">
-        ${isPlayer && !myProg.done && d.kind === "sim" ? `<button class="btn primary lg" data-simplay>${myProg.i ? "Continua la campanya" : "Comença la campanya"}</button>` : ""}
-        ${isPlayer && !myProg.done && d.kind !== "sim" ? `<button class="btn primary lg" data-play>${myPicksCount < 5 ? (myPicksCount ? `Continua l'elecció (${myPicksCount}/5)` : "Tria les preguntes i juga") : (myProg.i ? "Continua la partida" : "Juga ara")}</button>` : ""}
-        ${allDone && isPlayer && !rematchCode ? `<button class="btn primary lg" data-rematch>Demana revenja</button>` : ""}
-        ${myProg?.rematch && !rivalProg?.rematch ? `<a class="btn primary lg" href="#duel/${esc(myProg.rematch)}">Ves a la sala de revenja →</a>` : ""}
-        <a class="btn lg" href="#duel">Tots els duels</a>
+        ${isPlayer && !myProg.done && d.kind === "sim" ? `<button class="btn primary lg" data-simplay>${myProg.i ? "Sigue la campaña" : "Empieza la campaña"}</button>` : ""}
+        ${isPlayer && !myProg.done && d.kind !== "sim" ? `<button class="btn primary lg" data-play>${myPicksCount < 5 ? (myPicksCount ? `Continúa la elección (${myPicksCount}/5)` : "Elige las preguntas y juega") : (myProg.i ? "Continúa la partida" : "Juega ahora")}</button>` : ""}
+        ${allDone && isPlayer && !rematchCode ? `<button class="btn primary lg" data-rematch>Pide la revancha</button>` : ""}
+        ${myProg?.rematch && !rivalProg?.rematch ? `<a class="btn primary lg" href="#duel/${esc(myProg.rematch)}">Ve a la sala de la revancha →</a>` : ""}
+        <a class="btn lg" href="#duel">Todos los duelos</a>
       </div>
       ${isPlayer && myProg.done && d.kind !== "sim" ? recapListHtml(duelRecap(d, uid), firstName(rival?.name)) : ""}
-      ${isPlayer && myProg.done && !allDone ? `<p class="waiting-dots">Esperant que ${esc(firstName(rival?.name))} acabi<span>.</span><span>.</span><span>.</span></p>` : ""}
+      ${isPlayer && myProg.done && !allDone ? `<p class="waiting-dots">Esperando a que ${esc(firstName(rival?.name))} termine<span>.</span><span>.</span><span>.</span></p>` : ""}
     </div>`;
     $("[data-play]", mainBox)?.addEventListener("click", () => startDuelGame(code, d));
     $("[data-simplay]", mainBox)?.addEventListener("click", () => simStartDuel(code, d, rival?.name));
     $("[data-rematch]", mainBox)?.addEventListener("click", () => requestRematch(code));
     $("[data-go-rematch]", mainBox)?.addEventListener("click", (e) => joinDuel(e.currentTarget.dataset.goRematch));
   }, () => {
-    mainBox.innerHTML = `<div class="card online-off"><h3>No es pot obrir el duel</h3><p>Comprova la connexió i torna-ho a provar.</p></div>`;
+    mainBox.innerHTML = `<div class="card online-off"><h3>No se puede abrir el duelo</h3><p>Comprueba la conexión y vuelve a intentarlo.</p></div>`;
   });
 }
 
@@ -1239,8 +1242,8 @@ function startDuelGame(code, data) {
   const isHost = data.host.uid === uid;
   const id = `duel-${code}`;
   const game = {
-    id, kicker: `Duel 1 vs 1`, title: "Duel d'Elecció", color: "#3554ff",
-    autostart: true, noReplay: true, backHref: `#duel/${code}`, backLabel: "Torna al duel",
+    id, kicker: `Duelo 1 vs 1`, title: "Duelo de Elección", color: "#3554ff",
+    autostart: true, noReplay: true, backHref: `#duel/${code}`, backLabel: "Vuelve al duelo",
     start(ctx) {
       const ref = F.doc(db, "duels", code);
       const field = `p_${uid}`;
@@ -1277,8 +1280,8 @@ function startDuelGame(code, data) {
         if (prevRival && o && o.i > (prevRival.i || 0)) {
           const lastOk = o.res?.[o.i - 1];
           const rName = firstName(rival?.name);
-          if (lastOk === true) toast(`⚡ ${rName} ha encertat la pregunta ${o.i}! (${fmt(o.score)} pts)`);
-          else if (lastOk === false) toast(`💥 ${rName} ha fallat la pregunta ${o.i}!`);
+          if (lastOk === true) toast(`⚡ ¡${rName} ha acertado la pregunta ${o.i}! (${fmt(o.score)} pts)`);
+          else if (lastOk === false) toast(`💥 ¡${rName} ha fallado la pregunta ${o.i}!`);
         }
 
         renderLiveBar();
@@ -1307,28 +1310,28 @@ function startDuelGame(code, data) {
         const k = myPicks.length;
         if (k >= 5) return afterMyDraft();
         const [cardA, cardB] = myPairs[k];
-        const rName = rival ? firstName(rival.name) : "el teu rival";
-        ctx.hud([["d", "Elecció", `${k + 1}/5`]]);
+        const rName = rival ? firstName(rival.name) : "tu rival";
+        ctx.hud([["d", "Elección", `${k + 1}/5`]]);
         stageInner.innerHTML = "";
         const el = h(`<div class="card draft-stage">
           <div class="draft-head">
-            <span class="draft-step-badge">Parella ${k + 1} de 5</span>
-            <h3>Quina pregunta et quedes per a tu?</h3>
-            <p class="muted">Toca la que vulguis respondre tu. <b>L'altra s'enviarà directament a ${esc(rName)}!</b></p>
+            <span class="draft-step-badge">Pareja ${k + 1} de 5</span>
+            <h3>¿Qué pregunta te quedas para ti?</h3>
+            <p class="muted">Toca la que quieras responder tú. <b>¡La otra se enviará directamente a ${esc(rName)}!</b></p>
           </div>
           <div class="draft-pair">
             <button type="button" class="draft-card" data-pick="0">
               <span class="dc-cat">${esc(cardA.catBadge)}</span>
               <p class="dc-preview">${esc(cardA.preview)}</p>
-              <span class="dc-cta">✓ Me la quedo per a mi</span>
-              <small class="dc-sub">L'altra va per a ${esc(rName)}</small>
+              <span class="dc-cta">✓ Me la quedo para mí</span>
+              <small class="dc-sub">La otra va para ${esc(rName)}</small>
             </button>
             <div class="draft-or">O</div>
             <button type="button" class="draft-card" data-pick="1">
               <span class="dc-cat">${esc(cardB.catBadge)}</span>
               <p class="dc-preview">${esc(cardB.preview)}</p>
-              <span class="dc-cta">✓ Me la quedo per a mi</span>
-              <small class="dc-sub">L'altra va per a ${esc(rName)}</small>
+              <span class="dc-cta">✓ Me la quedo para mí</span>
+              <small class="dc-sub">La otra va para ${esc(rName)}</small>
             </button>
           </div>
         </div>`);
@@ -1336,7 +1339,7 @@ function startDuelGame(code, data) {
 
         let picked = false;
         const draftTimer = questionTimer(ctx, $(".draft-head", el), 10, () => {
-          toast("Temps esgotat: s'ha triat a l'atzar");
+          toast("Tiempo agotado: se ha elegido al azar");
           choose(Math.random() < 0.5 ? 0 : 1);
         });
         $$("[data-pick]", el).forEach((btn) => btn.addEventListener("click", () => choose(Number(btn.dataset.pick))));
@@ -1347,7 +1350,7 @@ function startDuelGame(code, data) {
           const btn = $(`[data-pick="${choice}"]`, el);
           const otherBtn = $(`[data-pick="${1 - choice}"]`, el);
           btn.classList.add("chosen-mine");
-          $(".dc-cta", btn).textContent = "✓ PER A TU";
+          $(".dc-cta", btn).textContent = "✓ PARA TI";
           otherBtn.classList.add("chosen-rival");
           $(".dc-cta", otherBtn).textContent = `↗ ENVIADA A ${rName.toUpperCase()}`;
           Sfx.play("pick");
@@ -1372,19 +1375,19 @@ function startDuelGame(code, data) {
         const o = rival ? (liveData[`p_${rival.uid}`] || fresh()) : null;
         const rName = rival ? firstName(rival.name) : null;
         const rPicks = (o?.picks || []).length;
-        ctx.hud([["d", "Elecció", "5/5"]]);
+        ctx.hud([["d", "Elección", "5/5"]]);
         stageInner.innerHTML = `<div class="card waiting-room">
-          <p class="kicker">Tria completada (5/5)</p>
-          <h3>Ja has triat les 5 preguntes teves i les 5 per al rival!</h3>
+          <p class="kicker">Elección completada (5/5)</p>
+          <h3>¡Ya has elegido tus 5 preguntas y las 5 para el rival!</h3>
           ${rName
-            ? `<p class="waiting-dots">Esperant que <b>${esc(rName)}</b> acabi d'escollir les seves (${rPicks}/5)<span>.</span><span>.</span><span>.</span></p>
-               <p class="muted">Tan bon punt acabi de triar començarà sol, o pots començar ja les teves preguntes.</p>
+            ? `<p class="waiting-dots">Esperando a que <b>${esc(rName)}</b> termine de escoger las suyas (${rPicks}/5)<span>.</span><span>.</span><span>.</span></p>
+               <p class="muted">En cuanto termine de elegir empezará solo, o puedes empezar ya tus preguntas.</p>
                <div class="row center">
-                 <button class="btn primary lg" data-start-now>Comença ja les preguntes →</button>
-                 <a class="btn lg" href="#duel/${code}">Torna a la sala</a>
+                 <button class="btn primary lg" data-start-now>Empieza ya las preguntas →</button>
+                 <a class="btn lg" href="#duel/${code}">Vuelve a la sala</a>
                </div>`
-            : `<p class="waiting-dots">Esperant que el teu rival s'uneixi al duel<span>.</span><span>.</span><span>.</span></p>
-               <a class="btn lg" href="#duel/${code}">Torna a la sala del duel</a>`}
+            : `<p class="waiting-dots">Esperando a que tu rival se una al duelo<span>.</span><span>.</span><span>.</span></p>
+               <a class="btn lg" href="#duel/${code}">Vuelve a la sala del duelo</a>`}
         </div>`;
         $("[data-start-now]", stageInner)?.addEventListener("click", () => {
           waitingForRival = false;
@@ -1427,10 +1430,10 @@ function startDuelGame(code, data) {
                 done: true,
               }));
               stageInner.innerHTML = `<div class="card waiting-room">
-                <p class="kicker">Has acabat</p>
+                <p class="kicker">Has terminado</p>
                 <div class="result-score">${fmt(res.score)}</div>
-                <p class="waiting-dots">Esperant que ${esc(firstName(rival?.name))} acabi<span>.</span><span>.</span><span>.</span></p>
-                <a class="btn" href="#duel/${code}">Torna al duel</a>
+                <p class="waiting-dots">Esperando a que ${esc(firstName(rival?.name))} termine<span>.</span><span>.</span><span>.</span></p>
+                <a class="btn" href="#duel/${code}">Vuelve al duelo</a>
               </div>`;
               const snap = await safe(() => F.getDoc(ref));
               const d = snap?.data();
@@ -1454,13 +1457,13 @@ function startDuelGame(code, data) {
         const name = firstName(rival?.name);
         ctx.finish({
           ...finished, xp, noRecord: true,
-          verdict: outcome === "win" ? `Has guanyat a ${name}: ${fmt(mine)} a ${fmt(theirs)}!`
-            : outcome === "lose" ? `${name} t'ha guanyat: ${fmt(theirs)} a ${fmt(mine)}.`
-            : `Empat a ${fmt(mine)} punts amb ${name}.`,
+          verdict: outcome === "win" ? `¡Has ganado a ${name}: ${fmt(mine)} a ${fmt(theirs)}!`
+            : outcome === "lose" ? `${name} te ha ganado: ${fmt(theirs)} a ${fmt(mine)}.`
+            : `Empate a ${fmt(mine)} puntos con ${name}.`,
           recap: [],
           extraHtml: `<div class="duel-live-bar card">${liveBarHtml(d, uid)}</div>
             <div class="rematch-slot"></div>
-            <div class="row center"><button class="btn primary lg" data-rematch>Tornar a jugar (Revenja)</button></div>
+            <div class="row center"><button class="btn primary lg" data-rematch>Volver a jugar (Revancha)</button></div>
             ${recapListHtml(duelRecap(d, uid), name)}`,
           onShown(body) {
             $("[data-rematch]", body)?.addEventListener("click", () => requestRematch(code));
@@ -1473,10 +1476,10 @@ function startDuelGame(code, data) {
               if (!r?.rematch || alerted || !document.body.contains(body)) return;
               alerted = true;
               Sfx.play("pick");
-              toast(`🔥 ${name} et demana la revenja!`);
+              toast(`🔥 ¡${name} te pide la revancha!`);
               const slot = $(".rematch-slot", body);
               if (slot) {
-                slot.innerHTML = `<div class="rematch-alert"><b>🔥 ${esc(name)} et demana la revenja!</b><button class="btn primary" data-go>Accepta la revenja →</button></div>`;
+                slot.innerHTML = `<div class="rematch-alert"><b>🔥 ¡${esc(name)} te pide la revancha!</b><button class="btn primary" data-go>Acepta la revancha →</button></div>`;
                 $("[data-go]", slot).addEventListener("click", () => joinDuel(r.rematch));
               }
             }, () => {});
@@ -1503,7 +1506,7 @@ Online.submitDaily = async (key, { ms, hits, errors, n = 1, f = null, f1 = null 
   // Sense nom d'usuari no es publica res (es fa en desar-lo)
   if (!ready || !Online.user || !Online.profile?.handle || n > 3) return;
   const ref = F.doc(db, "dailies", key, "entries", Online.user.uid);
-  const snap = await safe(() => F.getDoc(ref), "No s'ha pogut publicar el temps");
+  const snap = await safe(() => F.getDoc(ref), "No se ha podido publicar el tiempo");
   if (!snap) return;
   ms = Math.max(3000, Math.round(ms));
   if (!snap.exists()) {
@@ -1512,11 +1515,11 @@ Online.submitDaily = async (key, { ms, hits, errors, n = 1, f = null, f1 = null 
     if (Array.isArray(fails)) {
       try { await F.setDoc(ref, { ...base, f: fails.slice(0, 10), fd: true }); return; } catch { /* regles sense el camp f: es desa sense el detall */ }
     }
-    return safe(() => F.setDoc(ref, base), "No s'ha pogut publicar el temps");
+    return safe(() => F.setDoc(ref, base), "No se ha podido publicar el tiempo");
   }
   const cur = snap.data();
   if (ms >= cur.ms || n <= (cur.n || 1)) return;
-  await safe(() => F.updateDoc(ref, { ms, hits, errors, n, t: F.serverTimestamp() }), "No s'ha pogut publicar el temps");
+  await safe(() => F.updateDoc(ref, { ms, hits, errors, n, t: F.serverTimestamp() }), "No se ha podido publicar el tiempo");
 };
 
 async function worldTop(key, n = 50) {
@@ -1540,7 +1543,7 @@ Online.fillDailyRank = async (key) => {
 Online.renderDailyMini = async (box, key) => {
   if (!box || !ready) return;
   if (!Online.user) {
-    box.innerHTML = `<div class="card account-card"><div class="ac-ico">🏆</div><div class="ac-body"><b>Entra al rànquing mundial</b><p>Inicia sessió per publicar el teu temps i comparar-te amb tothom.</p></div><button class="btn google-btn" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}</div>`;
+    box.innerHTML = `<div class="card account-card"><div class="ac-ico">🏆</div><div class="ac-body"><b>Entra en el ranking mundial</b><p>Inicia sesión para publicar tu tiempo y compararte con todo el mundo.</p></div><button class="btn google-btn" data-signin>${googleIcon()} Continúa con Google</button>${legalNote()}</div>`;
     $("[data-signin]", box).addEventListener("click", signIn);
     return;
   }
@@ -1549,7 +1552,7 @@ Online.renderDailyMini = async (box, key) => {
   const top = await worldTop(key, 5);
   const pos = await myPosition(key);
   if (!top) return;
-  box.innerHTML = `<div class="dsoc" data-soc></div><h4 class="section-title sm" style="margin-top:0">Rànquing mundial d'avui${pos ? ` · ets el #${fmt(pos)}` : ""}</h4>${rankRows(top)}`;
+  box.innerHTML = `<div class="dsoc" data-soc></div><h4 class="section-title sm" style="margin-top:0">Ranking mundial de hoy${pos ? ` · eres el #${fmt(pos)}` : ""}</h4>${rankRows(top)}`;
   const soc = $("[data-soc]", box), lines = [];
   const paint = () => { soc.innerHTML = lines.join(""); };
   // Percentil: quanta gent ha fet un temps pitjor
@@ -1557,15 +1560,15 @@ Online.renderDailyMini = async (box, key) => {
   const n = total?.data().count || 0;
   const pct = pos && n >= 5 ? Math.round((100 * (n - pos)) / (n - 1)) : null;
   (Online.dailySocial ||= {})[key] = { pct, n };
-  if (pct !== null) lines.push(`<p class="dsoc-pct"><b>${pct} %</b><span>Has estat més ràpid que el ${pct} % de les ${fmt(n)} persones que han fet el repte avui.</span></p>`);
+  if (pct !== null) lines.push(`<p class="dsoc-pct"><b>${pct} %</b><span>Has sido más rápido que el ${pct} % de las ${fmt(n)} personas que han hecho el reto hoy.</span></p>`);
   paint();
   // La prova que més gent ha fallat a la partida de tothom
   const hard = await dailyHardest(key);
   if (hard) {
     const it = dailyItems(key, 1)[hard.k];
     const mine = dailyResult(key)?.f1;
-    const you = Array.isArray(mine) ? (mine.includes(hard.k) ? "Tu també l'has fallada." : "Tu l'has encertada!") : "";
-    lines.push(`<div class="dsoc-hard"><small>La prova més difícil d'avui</small><b>«${esc(String(it?.recapQ || "").slice(0, 120))}»</b><span>Només l'ha encertada el ${hard.pct} % de la gent. ${you}</span></div>`);
+    const you = Array.isArray(mine) ? (mine.includes(hard.k) ? "Tú también la has fallado." : "¡Tú la has acertado!") : "";
+    lines.push(`<div class="dsoc-hard"><small>La prueba más difícil de hoy</small><b>«${esc(String(it?.recapQ || "").slice(0, 120))}»</b><span>Solo la ha acertado el ${hard.pct} % de la gente. ${you}</span></div>`);
     paint();
   }
   // Posició a les lligues d'amics
@@ -1574,7 +1577,7 @@ Online.renderDailyMini = async (box, key) => {
     const entries = await leagueEntries(lg, key);
     const i = entries.findIndex((e) => e.uid === Online.user.uid);
     if (i < 0) continue;
-    lines.push(`<a class="dsoc-lg" href="#ranking"><span>🏆 ${esc(lg.name)}</span><b>#${i + 1}</b><small>de ${entries.length} ${entries.length === 1 ? "membre" : "membres"} que l'han fet avui</small></a>`);
+    lines.push(`<a class="dsoc-lg" href="#ranking"><span>🏆 ${esc(lg.name)}</span><b>#${i + 1}</b><small>de ${entries.length} ${entries.length === 1 ? "miembro" : "miembros"} que lo han hecho hoy</small></a>`);
     paint();
   }
 };
@@ -1608,7 +1611,7 @@ Online.reportSimDuel = async (code, patch) => {
   const snap = await safe(() => F.getDoc(ref));
   const d = snap?.data();
   if (!d || !d.players.includes(Online.user.uid)) return;
-  await safe(() => patchMyDuel(ref, Online.user.uid, d, patch), "No s'ha pogut desar el resultat del duel");
+  await safe(() => patchMyDuel(ref, Online.user.uid, d, patch), "No se ha podido guardar el resultado del duelo");
 };
 
 // ---------- Amics: sol·licituds d'amistat i xat privat ----------
@@ -1650,16 +1653,16 @@ Online.amics = {
     return safe(() => F.setDoc(amiRef(id), {
       users: [uid, other.uid].sort(), from: uid, status: "pendent", createdAt: F.serverTimestamp(), updatedAt: F.serverTimestamp(),
       u: { [uid]: amiMe(), [other.uid]: { name: other.name || "Jugador", photo: other.photo || "" } }, last: null, read: {},
-    }), "No s'ha pogut enviar la sol·licitud");
+    }), "No se ha podido enviar la solicitud");
   },
   accept(id) {
-    return safe(() => F.updateDoc(amiRef(id), { status: "ok", [`u.${Online.user.uid}`]: amiMe(), updatedAt: F.serverTimestamp() }), "No s'ha pogut acceptar");
+    return safe(() => F.updateDoc(amiRef(id), { status: "ok", [`u.${Online.user.uid}`]: amiMe(), updatedAt: F.serverTimestamp() }), "No se ha podido aceptar");
   },
   // Rebutjar, cancel·lar o deixar de ser amics: s'esborra la relació i el xat
   async remove(id) {
     const msgs = await safe(() => F.getDocs(F.query(F.collection(db, "amistats", id, "missatges"), F.limit(500))));
     for (const d of msgs?.docs || []) await F.deleteDoc(d.ref).catch(() => {});
-    return safe(() => F.deleteDoc(amiRef(id)), "No s'ha pogut esborrar");
+    return safe(() => F.deleteDoc(amiRef(id)), "No se ha podido borrar");
   },
   watchChat(id, cb) {
     const q = F.query(F.collection(db, "amistats", id, "missatges"), F.orderBy("ts", "asc"), F.limitToLast(150));
@@ -1667,7 +1670,7 @@ Online.amics = {
   },
   async send(id, t) {
     const uid = Online.user.uid;
-    const ok = await safe(() => F.addDoc(F.collection(db, "amistats", id, "missatges"), { from: uid, t, ts: F.serverTimestamp() }), "No s'ha pogut enviar el missatge");
+    const ok = await safe(() => F.addDoc(F.collection(db, "amistats", id, "missatges"), { from: uid, t, ts: F.serverTimestamp() }), "No se ha podido enviar el mensaje");
     if (ok === null) return null;
     await safe(() => F.updateDoc(amiRef(id), { last: { from: uid, t: t.slice(0, 120), ts: Date.now() }, [`read.${uid}`]: Date.now(), updatedAt: F.serverTimestamp() }));
     return true;
@@ -1679,30 +1682,80 @@ Online.amics = {
 // debats/{code}: players, seats.<uid> (nom i candidat), st (estat del debat, JSON, l'escriu l'amfitrió),
 // ch.<uid> (la tria de cada jugador: { k: "bloc:fase", v }), rd.<uid> (fins on ha mirat). Motor: debat-multi.js.
 const debRef = (code) => F.doc(db, "debats", code);
+// ---------- Trucades i videotrucades entre amics (trucada.js) ----------
+// L'àudio i el vídeo van directament entre els navegadors (WebRTC). Firestore només fa de bústia per posar-los en contacte:
+// {campanyes|debats|trucades}/{code}/senyal/{id}: presència (in_<uid>: nom, sessió, micro, càmera) i missatges de connexió
+// (offer, answer, ice) adreçats a una sola persona, que els esborra en llegir-los. En penjar, s'esborra tot el que és teu.
+// trucades/{code}: sales de trucada soles (la sala de prova del Laboratori): players, names.
+const callRef = (code) => F.doc(db, "trucades", code);
+Online.call = {
+  ok: () => ready && !!Online.user,
+  uid: () => Online.user?.uid,
+  async create() {
+    const uid = Online.user.uid, code = genCode();
+    const ok = await safe(() => F.setDoc(callRef(code), { code, host: uid, players: [uid], names: { [uid]: me().name }, createdAt: F.serverTimestamp() }), "No se ha podido crear la sala");
+    return ok === null ? null : code;
+  },
+  async join(code) {
+    const uid = Online.user.uid;
+    const snap = await safe(() => F.getDoc(callRef(code)));
+    if (!snap) return { err: "connexio" };
+    if (!snap.exists()) return { err: "No existe ninguna sala con este código." };
+    const d = snap.data();
+    if (d.players.includes(uid)) return { ok: true, d };
+    if (d.players.length >= 4) return { err: "Esta sala ya tiene cuatro personas." };
+    const ok = await safe(() => F.updateDoc(callRef(code), { players: F.arrayUnion(uid), [`names.${uid}`]: me().name }), "No te has podido unir a la sala");
+    return ok === null ? { err: "connexio" } : { ok: true };
+  },
+  watchRoom(code, cb) { return F.onSnapshot(callRef(code), (s) => cb(s.exists() ? s.data() : null), (e) => { console.warn(e); cb(null); }); },
+  async leaveRoom(code) {
+    const uid = Online.user.uid;
+    const s = await safe(() => F.getDoc(callRef(code)));
+    if (!s?.exists()) return;
+    const d = s.data();
+    if (d.host === uid || d.players.length <= 1) return safe(() => F.deleteDoc(callRef(code)));
+    return safe(() => F.updateDoc(callRef(code), { players: F.arrayRemove(uid), [`names.${uid}`]: F.deleteField() }));
+  },
+  // La bústia de senyals d'una sala: put (presència), send (a una persona), del, watch (canvis de documents)
+  transport(parent, code) {
+    const uid = Online.user.uid, col = F.collection(db, parent, code, "senyal");
+    return {
+      uid,
+      put: (id, d) => F.setDoc(F.doc(col, id), d).catch((e) => console.warn(e)),
+      send: (d) => { const r = F.doc(col); return F.setDoc(r, d).then(() => r.id).catch((e) => { console.warn(e); return null; }); },
+      del: (id) => F.deleteDoc(F.doc(col, id)).catch(() => {}),
+      watch(cb) {
+        return F.onSnapshot(F.query(col, F.where("to", "in", ["all", uid]), F.limit(300)),
+          (s) => cb(s.docChanges().map((c) => ({ type: c.type, id: c.doc.id, d: c.doc.data() }))), (e) => console.warn(e));
+      },
+    };
+  },
+};
+
 Online.debat = {
   ok: () => ready && !!Online.user,
   uid: () => Online.user?.uid,
   async create(cand) {
     const uid = Online.user.uid, code = genCode();
-    const ok = await safe(() => F.setDoc(debRef(code), { code, createdAt: F.serverTimestamp(), status: "lobby", host: uid, players: [uid], seats: { [uid]: { name: me().name, cand } }, st: null, ch: {}, rd: {} }), "No s'ha pogut crear la sala");
+    const ok = await safe(() => F.setDoc(debRef(code), { code, createdAt: F.serverTimestamp(), status: "lobby", host: uid, players: [uid], seats: { [uid]: { name: me().name, cand } }, st: null, ch: {}, rd: {} }), "No se ha podido crear la sala");
     return ok === null ? null : code;
   },
   async join(code, cand) {
     const uid = Online.user.uid;
     const snap = await safe(() => F.getDoc(debRef(code)));
     if (!snap) return { err: "connexio" };
-    if (!snap.exists()) return { err: "No existeix cap debat amb aquest codi." };
+    if (!snap.exists()) return { err: "No existe ningún debate con este código." };
     const d = snap.data();
     if (d.players.includes(uid)) return { ok: true };
-    if (d.status !== "lobby") return { err: "Aquest debat ja ha començat." };
-    if (d.players.length >= 4) return { err: "Aquest debat ja té quatre candidats." };
-    const ok = await safe(() => F.updateDoc(debRef(code), { players: F.arrayUnion(uid), [`seats.${uid}`]: { name: me().name, cand } }), "No t'has pogut unir al debat");
+    if (d.status !== "lobby") return { err: "Este debate ya ha empezado." };
+    if (d.players.length >= 4) return { err: "Este debate ya tiene cuatro candidatos." };
+    const ok = await safe(() => F.updateDoc(debRef(code), { players: F.arrayUnion(uid), [`seats.${uid}`]: { name: me().name, cand } }), "No te has podido unir al debate");
     return ok === null ? { err: "connexio" } : { ok: true };
   },
   watch(code, cb) { return F.onSnapshot(debRef(code), (s) => cb(s.exists() ? s.data() : null), (e) => { console.warn(e); cb(null); }); },
   setCand(code, cand) { return safe(() => F.updateDoc(debRef(code), { [`seats.${Online.user.uid}.cand`]: cand })); },
-  host(code, patch) { return safe(() => F.updateDoc(debRef(code), patch), "No s'ha pogut desar"); },
-  choose(code, k, v) { return safe(() => F.updateDoc(debRef(code), { [`ch.${Online.user.uid}`]: { k, v } }), "No s'ha pogut enviar la resposta"); },
+  host(code, patch) { return safe(() => F.updateDoc(debRef(code), patch), "No se ha podido guardar"); },
+  choose(code, k, v) { return safe(() => F.updateDoc(debRef(code), { [`ch.${Online.user.uid}`]: { k, v } }), "No se ha podido enviar la respuesta"); },
   ready(code, k) { return safe(() => F.updateDoc(debRef(code), { [`rd.${Online.user.uid}`]: k })); },
   leave(code) { return safe(() => F.updateDoc(debRef(code), { players: F.arrayRemove(Online.user.uid), [`seats.${Online.user.uid}`]: F.deleteField() })); },
   remove(code) { return safe(() => F.deleteDoc(debRef(code))); },
@@ -1723,19 +1776,19 @@ Online.camp = {
       code, createdAt: F.serverTimestamp(), status: "lobby", host: uid, diff,
       seed: `amics-${code}-${Math.random().toString(36).slice(2, 8)}`,
       players: [uid], seats: { [uid]: campSeat() }, day: 0, world: null, turn: {},
-    }), "No s'ha pogut crear la sala");
+    }), "No se ha podido crear la sala");
     return ok === null ? null : code;
   },
   async join(code) {
     const uid = Online.user.uid;
     const snap = await safe(() => F.getDoc(campRef(code)));
     if (!snap) return { err: "connexio" };
-    if (!snap.exists()) return { err: "No existeix cap campanya amb aquest codi." };
+    if (!snap.exists()) return { err: "No existe ninguna campaña con este código." };
     const d = snap.data();
     if (d.players.includes(uid)) return { ok: true };
-    if (d.status !== "lobby") return { err: "Aquesta campanya ja ha començat." };
-    if (d.players.length >= CAMP_MAX) return { err: "Aquesta campanya ja té quatre jugadors." };
-    const ok = await safe(() => F.updateDoc(campRef(code), { players: F.arrayUnion(uid), [`seats.${uid}`]: campSeat() }), "No t'has pogut unir a la campanya");
+    if (d.status !== "lobby") return { err: "Esta campaña ya ha empezado." };
+    if (d.players.length >= CAMP_MAX) return { err: "Esta campaña ya tiene cuatro jugadores." };
+    const ok = await safe(() => F.updateDoc(campRef(code), { players: F.arrayUnion(uid), [`seats.${uid}`]: campSeat() }), "No te has podido unir a la campaña");
     return ok === null ? { err: "connexio" } : { ok: true };
   },
   // La sala i, quan ja hi ets, el xat (campanyes/{code}/xat): cada missatge només el poden llegir qui l'envia i a qui va
@@ -1763,7 +1816,7 @@ Online.camp = {
   },
   setSeat(code, patch) {
     const uid = Online.user.uid;
-    return safe(() => F.updateDoc(campRef(code), Object.fromEntries(Object.entries(patch).map(([k, v]) => [`seats.${uid}.${k}`, v]))), "No s'ha pogut desar");
+    return safe(() => F.updateDoc(campRef(code), Object.fromEntries(Object.entries(patch).map(([k, v]) => [`seats.${uid}.${k}`, v]))), "No se ha podido guardar");
   },
   leave(code) {
     const uid = Online.user.uid;
@@ -1780,12 +1833,12 @@ Online.camp = {
   },
   // L'amfitrió comença: el món del primer dia (JSON)
   start(code, world) {
-    return safe(() => F.updateDoc(campRef(code), { status: "playing", day: 1, world, turn: {} }), "No s'ha pogut començar la campanya");
+    return safe(() => F.updateDoc(campRef(code), { status: "playing", day: 1, world, turn: {} }), "No se ha podido empezar la campaña");
   },
   // El meu dia, acabat
   submit(code, day, world) {
     const uid = Online.user.uid;
-    return safe(() => F.updateDoc(campRef(code), { [`turn.${uid}`]: { day, world } }), "No s'ha pogut enviar el teu dia. Torna-ho a provar.");
+    return safe(() => F.updateDoc(campRef(code), { [`turn.${uid}`]: { day, world } }), "No se ha podido enviar tu día. Vuelve a intentarlo.");
   },
   // Tanca el dia per a tothom (si encara no ho ha fet un altre jugador). extra: altres camps (la negociació, l'últim dia)
   async resolve(code, day, world, done = false, extra = {}) {
@@ -1799,9 +1852,9 @@ Online.camp = {
     } catch (e) { console.warn(e); return false; }
   },
   // Xat dels equips: missatges a tothom o privats (to: uid)
-  chat(code, msg) { return safe(() => F.setDoc(F.doc(db, "campanyes", code, "xat", msg.id), msg), "No s'ha pogut enviar el missatge"); },
+  chat(code, msg) { return safe(() => F.setDoc(F.doc(db, "campanyes", code, "xat", msg.id), msg), "No se ha podido enviar el mensaje"); },
   // Negociació: pactes i votacions (camps amb punts, p. ex. «neg.pacts.<id>»)
-  neg(code, patch) { return safe(() => F.updateDoc(campRef(code), patch), "No s'ha pogut desar"); },
+  neg(code, patch) { return safe(() => F.updateDoc(campRef(code), patch), "No se ha podido guardar"); },
   async mine() {
     const uid = Online.user.uid;
     const snap = await safe(() => F.getDocs(F.query(F.collection(db, "campanyes"), F.where("players", "array-contains", uid), F.limit(20))));
@@ -1810,11 +1863,11 @@ Online.camp = {
 };
 
 function rankRows(list) {
-  if (!list.length) return `<p class="muted">Encara no hi ha cap temps. Sigues el primer!</p>`;
+  if (!list.length) return `<p class="muted">Todavía no hay ningún tiempo. ¡Sé el primero!</p>`;
   return `<div class="lb">${list.map((e, i) => `
     <div class="lb-row ${e.uid === Online.user?.uid ? "me" : ""}" ${e.uid ? `data-user="${e.uid}" tabindex="0"` : ""}>
       <b class="lb-pos">${i + 1}</b>${avatar(e, 34)}
-      <span class="lb-name">${esc(e.name || "Jugador")}<small>${e.hits}/10 · ${e.errors} ${e.errors === 1 ? "error" : "errors"}</small></span>
+      <span class="lb-name">${esc(e.name || "Jugador")}<small>${e.hits}/10 · ${e.errors} ${e.errors === 1 ? "error" : "errores"}</small></span>
       <strong>${fmtSecs(e.ms)}</strong>
     </div>`).join("")}</div>`;
 }
@@ -1823,18 +1876,18 @@ Online.renderRanking = (root, arg) => {
   const key = todayKey();
   if (arg) sessionStorage.setItem("pendingLeague", arg.toUpperCase());
   if (authLoading) {
-    root.innerHTML = `<div class="card"><p class="muted">Carregant…</p></div>`;
+    root.innerHTML = `<div class="card"><p class="muted">Cargando…</p></div>`;
     return;
   }
   if (!ready) {
-    root.innerHTML = `<div class="card rank-off"><h3>El rànquing s'activarà aviat</h3><p>${configured ? "Ara mateix no podem connectar amb el servidor." : "Quan l'app estigui publicada podràs comparar el teu temps amb tothom i crear lligues amb els teus amics."}</p></div>`;
+    root.innerHTML = `<div class="card rank-off"><h3>El ranking se activará pronto</h3><p>${configured ? "Ahora mismo no podemos conectar con el servidor." : "Cuando la app esté publicada podrás comparar tu tiempo con todo el mundo y crear ligas con tus amigos."}</p></div>`;
     return;
   }
   if (!Online.user) {
     root.innerHTML = `<div class="card rank-off">
-      <h3>${arg ? "T'han convidat a una lliga!" : "Competeix cada dia"}</h3>
-      <p>Inicia sessió per publicar el temps del repte diari, veure el rànquing mundial i crear lligues amb els teus amics.</p>
-      <button class="btn google-btn lg" data-signin>${googleIcon()} Continua amb Google</button>${legalNote()}
+      <h3>${arg ? "¡Te han invitado a una liga!" : "Compite cada día"}</h3>
+      <p>Inicia sesión para publicar el tiempo del reto diario, ver el ranking mundial y crear ligas con tus amigos.</p>
+      <button class="btn google-btn lg" data-signin>${googleIcon()} Continúa con Google</button>${legalNote()}
     </div>`;
     $("[data-signin]", root).addEventListener("click", signIn);
     return;
@@ -1844,10 +1897,10 @@ Online.renderRanking = (root, arg) => {
   root.innerHTML = `
     <div class="rank-tabs">
       <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
-      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amics</button>
-      <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiència</button>
+      <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Amigos</button>
+      <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiencia</button>
     </div>
-    <div id="rank-body"><p class="muted">Carregant…</p></div>`;
+    <div id="rank-body"><p class="muted">Cargando…</p></div>`;
   $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
   if (rankTab === "world") renderWorld($("#rank-body"), key);
   else if (rankTab === "xp") renderLeaderboard($("#rank-body"), true);
@@ -1860,7 +1913,7 @@ async function renderWorld(box, key) {
   const done = dailyResult(key);
   const pos = done ? await myPosition(key) : null;
   box.innerHTML = `
-    <p class="muted" style="margin-bottom:12px">Repte #${dailyNumber(key)} · ${pos ? `Ets el <b>#${fmt(pos)}</b> del món.` : done ? "" : `Encara no l'has fet. <a href="#joc/diari">Juga ara</a>.`}</p>
+    <p class="muted" style="margin-bottom:12px">Reto #${dailyNumber(key)} · ${pos ? `Eres el <b>#${fmt(pos)}</b> del mundo.` : done ? "" : `Todavía no lo has hecho. <a href="#joc/diari">Juega ahora</a>.`}</p>
     ${rankRows(top)}`;
 }
 
@@ -1885,18 +1938,18 @@ async function renderLeagues(box, key) {
   box.innerHTML = `
     <div class="duel-grid">
       <div class="card duel-card">
-        <p class="kicker">Nova lliga</p>
-        <h3>Crea una lliga</h3>
+        <p class="kicker">Nueva liga</p>
+        <h3>Crea una liga</h3>
         <form class="join-form" data-create-league>
-          <input type="text" class="name-input" maxlength="30" placeholder="Nom de la lliga" aria-label="Nom de la lliga">
+          <input type="text" class="name-input" maxlength="30" placeholder="Nombre de la liga" aria-label="Nombre de la liga">
           <button class="btn primary" type="submit">Crea</button>
         </form>
       </div>
       <div class="card duel-card">
-        <p class="kicker">T'han passat un codi?</p>
-        <h3>Uneix-te</h3>
+        <p class="kicker">¿Te han pasado un código?</p>
+        <h3>Únete</h3>
         <form class="join-form" data-join-league>
-          <input type="text" maxlength="${LEAGUE_LEN}" placeholder="CODI" autocomplete="off" aria-label="Codi de la lliga">
+          <input type="text" maxlength="${LEAGUE_LEN}" placeholder="CÓDIGO" autocomplete="off" aria-label="Código de la liga">
           <button class="btn" type="submit">Entra</button>
         </form>
       </div>
@@ -1907,47 +1960,47 @@ async function renderLeagues(box, key) {
     e.preventDefault();
     const c = $("input", e.target).value.trim().toUpperCase();
     if (c.length === LEAGUE_LEN) joinLeague(c);
-    else toast(`El codi té ${LEAGUE_LEN} caràcters`);
+    else toast(`El código tiene ${LEAGUE_LEN} caracteres`);
   });
   const list = $("#league-list", box);
   if (!leagues.length) {
-    list.innerHTML = `<p class="muted" style="margin-top:18px">Encara no estàs a cap lliga. Crea'n una i convida els teus amics!</p>`;
+    list.innerHTML = `<p class="muted" style="margin-top:18px">Todavía no estás en ninguna liga. ¡Crea una e invita a tus amigos!</p>`;
     return;
   }
   for (const lg of leagues) {
     const sec = h(`<section class="league">
       <div class="group-head"><span class="group-dot" style="--c:var(--yellow)"></span><h3>${esc(lg.name)}</h3>
-        <p>${lg.members.length} ${lg.members.length === 1 ? "membre" : "membres"} · codi ${lg.code}</p>
-        <button class="btn ghost" data-invite style="margin-left:auto">Convida</button></div>
-      <div class="league-body"><p class="muted">Carregant…</p></div>
+        <p>${lg.members.length} ${lg.members.length === 1 ? "miembro" : "miembros"} · código ${lg.code}</p>
+        <button class="btn ghost" data-invite style="margin-left:auto">Invita</button></div>
+      <div class="league-body"><p class="muted">Cargando…</p></div>
     </section>`);
     list.appendChild(sec);
     $("[data-invite]", sec).addEventListener("click", () => inviteLeague(lg));
     const entries = await leagueEntries(lg, key);
     const missing = lg.members.length - entries.length;
     $(".league-body", sec).innerHTML = rankRows(entries) +
-      (missing > 0 ? `<p class="muted" style="margin-top:8px">${missing} ${missing === 1 ? "membre encara no ha" : "membres encara no han"} fet el repte d'avui.</p>` : "");
+      (missing > 0 ? `<p class="muted" style="margin-top:8px">${missing} ${missing === 1 ? "miembro aún no ha" : "miembros aún no han"} hecho el reto de hoy.</p>` : "");
   }
 }
 
 const leagueLink = (code) => `${location.origin}${location.pathname}#ranking/${code}`;
 async function inviteLeague(lg) {
-  const text = `Uneix-te a la meva lliga «${lg.name}» a Política en Joc i competim cada dia al repte diari! Codi: ${lg.code}`;
+  const text = `¡Únete a mi liga «${lg.name}» en Política en Joc y compitamos cada día en el reto diario! Código: ${lg.code}`;
   try {
     if (navigator.share) await navigator.share({ title: "Política en Joc", text, url: leagueLink(lg.code) });
-    else { await navigator.clipboard.writeText(`${text}\n${leagueLink(lg.code)}`); toast("Invitació copiada"); }
+    else { await navigator.clipboard.writeText(`${text}\n${leagueLink(lg.code)}`); toast("Invitación copiada"); }
   } catch { /* cancel·lat */ }
 }
 
 async function createLeague(name) {
-  if (!name) return toast("Posa un nom a la lliga");
+  if (!name) return toast("Ponle un nombre a la liga");
   const code = Array.from({ length: LEAGUE_LEN }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
   const ok = await safe(() => F.setDoc(F.doc(db, "leagues", code), {
     code, name: name.slice(0, 30), owner: Online.user.uid, members: [Online.user.uid], createdAt: F.serverTimestamp(),
-  }), "No s'ha pogut crear la lliga");
+  }), "No se ha podido crear la liga");
   if (ok === null) return;
   rankTab = "friends";
-  toast("Lliga creada! Convida els teus amics.");
+  toast("¡Liga creada! Invita a tus amigos.");
   Online.renderRanking($("#ranking-root"));
 }
 
@@ -1955,11 +2008,11 @@ async function joinLeague(code) {
   const ref = F.doc(db, "leagues", code);
   const snap = await safe(() => F.getDoc(ref));
   if (!snap) return;
-  if (!snap.exists()) return toast("No existeix cap lliga amb aquest codi");
+  if (!snap.exists()) return toast("No existe ninguna liga con este código");
   if (!snap.data().members.includes(Online.user.uid)) {
-    const ok = await safe(() => F.updateDoc(ref, { members: F.arrayUnion(Online.user.uid) }), "No t'has pogut unir a la lliga");
+    const ok = await safe(() => F.updateDoc(ref, { members: F.arrayUnion(Online.user.uid) }), "No te has podido unir a la liga");
     if (ok === null) return;
-    toast(`T'has unit a «${snap.data().name}»`);
+    toast(`Te has unido a «${snap.data().name}»`);
   }
   rankTab = "friends";
   if (location.hash !== "#ranking") location.hash = "#ranking";
@@ -1968,12 +2021,12 @@ async function joinLeague(code) {
 
 async function joinLeaguePrompt(root, code) {
   const snap = await safe(() => F.getDoc(F.doc(db, "leagues", code)));
-  if (!snap?.exists()) { toast("Aquesta lliga no existeix"); location.hash = "#ranking"; return; }
+  if (!snap?.exists()) { toast("Esta liga no existe"); location.hash = "#ranking"; return; }
   const lg = snap.data();
   root.innerHTML = `<div class="card online-off invite">
-    <h3>Et conviden a «${esc(lg.name)}»</h3>
-    <p>${lg.members.length} ${lg.members.length === 1 ? "persona ja hi juga" : "persones ja hi juguen"}. Compareu els vostres temps del repte diari cada dia.</p>
-    <button class="btn primary lg" data-accept>Uneix-m'hi</button>
+    <h3>Te invitan a «${esc(lg.name)}»</h3>
+    <p>${lg.members.length} ${lg.members.length === 1 ? "persona ya juega" : "personas ya juegan"}. Comparad vuestros tiempos del reto diario cada día.</p>
+    <button class="btn primary lg" data-accept>Únete</button>
   </div>`;
   $("[data-accept]", root).addEventListener("click", () => joinLeague(code));
 }
@@ -2005,7 +2058,7 @@ if (configured) {
     db = F.getFirestore(app);
     ready = !!db;
   } catch (e) {
-    console.warn("No s'ha pogut carregar Firebase:", e);
+    console.warn("No se ha podido cargar Firebase:", e);
   }
   authLoading = false;
 }

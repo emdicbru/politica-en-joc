@@ -6954,3 +6954,56 @@ body:not(.playing) .simmp-strip { display: none; }
 .ami-m, .simchat-m { position: relative; }
 .ami-flag { position: absolute; top: 2px; right: -26px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink-2); font-size: .8rem; cursor: pointer; opacity: .45; }
 .ami-flag:hover, .ami-flag:focus-visible { opacity: 1; background: #fde2df; color: #b3261e; }
+
+/* ---------- Trucades i videotrucades entre amics (trucada.js) ---------- */
+.call-ui { position: fixed; z-index: 97; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); display: grid; justify-items: end; gap: 8px; max-width: calc(100vw - 24px); }
+.call-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 99px; background: var(--card); box-shadow: 3px 3px 0 var(--ink); font: inherit; font-weight: 900; color: var(--ink); cursor: pointer; }
+.call-pill.live { background: #e3f7ea; animation: callPulse 1.6s ease-in-out infinite; }
+.call-pill.on { padding: 4px; gap: 4px; background: #17173d; color: #fff; }
+.call-pill.on > button:first-child { display: inline-flex; gap: 6px; align-items: center; padding: 4px 8px; border: 0; background: none; color: inherit; font: inherit; font-weight: 900; cursor: pointer; }
+@keyframes callPulse { 50% { box-shadow: 3px 3px 0 var(--ink), 0 0 0 6px rgba(15, 122, 69, .18); } }
+.call-ask { width: min(340px, calc(100vw - 24px)); display: grid; gap: 8px; padding: 14px; order: -1; }
+.call-ask p { margin: 0; }
+.call-ask .muted { font-size: .84rem; }
+.call-ask-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.call-ui.dock { width: min(420px, calc(100vw - 24px)); padding: 10px; border: 2px solid var(--ink); border-radius: 16px; background: #17173d; color: #fff; box-shadow: 4px 4px 0 var(--ink); gap: 8px; justify-items: stretch; }
+.call-head { display: flex; align-items: center; gap: 8px; }
+.call-head b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.call-head span { font-variant-numeric: tabular-nums; opacity: .8; font-size: .85rem; }
+.call-grid { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
+.call-grid.n1 { grid-template-columns: 1fr; }
+.call-tile { position: relative; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; background: #2a2a55; display: grid; place-items: center; outline: 3px solid transparent; transition: outline-color .15s; }
+.call-tile.talk { outline-color: #3ddc84; }
+.call-tile.err { opacity: .6; }
+.call-tile.bot { opacity: .55; }
+.call-tile video { width: 100%; height: 100%; object-fit: cover; }
+.call-tile audio { display: none; }
+.call-av { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--yellow); color: #17173d; font-family: var(--display); font-weight: 900; font-size: 1.5rem; }
+.call-tile small { position: absolute; left: 6px; right: 6px; bottom: 5px; padding: 2px 6px; border-radius: 6px; background: rgba(0, 0, 0, .55); font-size: .72rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.call-note { margin: 0; font-size: .78rem; opacity: .85; }
+.call-ctrl { display: flex; justify-content: center; gap: 10px; }
+.call-ic { min-width: 42px; height: 42px; padding: 0 10px; border: 2px solid #fff; border-radius: 99px; background: transparent; color: #fff; font: inherit; font-weight: 900; font-size: 1.05rem; cursor: pointer; }
+.call-pill .call-ic { min-width: 34px; height: 34px; font-size: .9rem; }
+.call-ic.off { background: #fff; color: #17173d; }
+.call-ic.end { background: #e0302a; border-color: #e0302a; }
+.call-head .call-ic { min-width: 32px; height: 32px; font-size: .8rem; }
+.ami-call { display: grid; gap: 10px; }
+.ami-call h3 { margin: 0; }
+.ami-call-who { margin: 0; padding-left: 18px; }
+@media (max-width: 640px) {
+  .call-ui { bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .call-ui.dock { right: 8px; width: calc(100vw - 16px); }
+  .call-tile { aspect-ratio: 16 / 10; }
+}
+/* Al plató del debat (a pantalla completa), per sobre de la franja inferior */
+body:has(.db-theater) .call-ui { top: calc(112px + env(safe-area-inset-top)); bottom: auto; }
+body:has(.db-theater) .call-ask { order: 1; }
+@media (max-width: 640px) { body:has(.db-theater) .call-ui { top: calc(172px + env(safe-area-inset-top)); } }
+/* Debat entre amics en pantalla estreta: el medidor té una línia per candidat, i els rellotges i el botó de trucada van a sota */
+@media (max-width: 900px) {
+  body:has(.dbm-meters) { --dbm-rows: 2; }
+  body:has(.dbm-meters li:nth-child(3)) { --dbm-rows: 3; }
+  body:has(.dbm-meters li:nth-child(4)) { --dbm-rows: 4; }
+  .db-theater:has(.dbm-meters) .db-clocks { top: calc(70px + var(--dbm-rows) * 24px + 22px); }
+  body:has(.dbm-meters) .call-ui { top: calc(70px + var(--dbm-rows) * 24px + 64px + env(safe-area-inset-top)); }
+}

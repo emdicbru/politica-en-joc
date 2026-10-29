@@ -3,7 +3,7 @@
 // control, una de local amb candidats ficticis (DbLab). L'amfitrió fa avançar el debat; tothom veu el mateix.
 
 // Quan el veurà tothom. Fins llavors, només des del Laboratori, amb candidats ficticis.
-const DBM_FROM = Infinity;
+const DBM_FROM = Date.UTC(2026, 9, 29, 16, 0); // públic des del 29-10-2026 (v96)
 const dbmPublic = () => Date.now() >= DBM_FROM;
 const dbmOn = () => dbmPublic() || (typeof featPreview === "function" && featPreview("debatamics"));
 const dbmIsLab = () => !dbmPublic() && typeof featPreview === "function" && featPreview("debatamics");
@@ -105,6 +105,10 @@ function dbmOnDoc(G, d) {
   if (!G.ctx.alive()) return;
   if (!d) { toast("Este debate ya no existe"); return dbmHome(G); }
   G.dbmDoc = d;
+  // Trucada amb els altres candidats (trucada.js)
+  if (d.players.includes(dbmUid())) window.Call?.attach({ parent: "debats", code: d.code, title: "Debate entre amigos", lab: dbmIsLab(), alive: () => G.ctx.alive(),
+    names: Object.fromEntries(d.players.filter((u) => !u.startsWith("bot-")).map((u) => [u, d.seats[u]?.name || "Jugador"])),
+    bots: d.players.filter((u) => u.startsWith("bot-")).map((u) => d.seats[u]?.cand?.name || d.seats[u]?.name || "Candidato ficticio") });
   if (d.status === "lobby") return dbmLobby(G, d);
   dbmPlay(G, d);
   dbmHostTick(G, d);

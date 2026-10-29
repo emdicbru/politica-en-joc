@@ -92,7 +92,7 @@ function callOnDocs(changes) {
       if (type === "removed") { Call.others.delete(d.from); callDrop(d.from); }
       else {
         Call.others.set(d.from, d);
-        if (!was && callFresh(d) && Call.room) { toast(`📞 ${callName(d.from)} ${Call.joined ? "se ha unido a la llamada" : "está en la llamada"}`); Sfx.play?.("pick"); }
+        if (!was && callFresh(d) && Call.room) { toast(`📞 ${callName(d.from)} ${Call.joined ? "s'ha unit a la trucada" : "és a la trucada"}`); Sfx.play?.("pick"); }
         if (Call.joined) callEnsure(d);
       }
       callPaint();
@@ -112,12 +112,21 @@ function callSweep() {
 // ---------- Entrar i sortir ----------
 async function callJoin(video) {
   if (!Call.room || Call.joined) return;
-  if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") { toast("Este navegador no permite llamadas. Pruébalo con Chrome, Safari o Firefox actualizados."); return; }
+  // Navegadors integrats d'altres apps (Instagram, Facebook…): sovint no deixen fer servir el micro
+  const inApp = /FBAN|FBAV|Instagram|Line\/|; wv\)/i.test(navigator.userAgent);
+  if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") { toast(inApp ? "El navegador d'aquesta app no permet trucades. Obre l'enllaç amb Chrome o Safari (menú ⋮ → «Obre al navegador»)." : "Aquest navegador no permet trucades. Prova-ho amb Chrome, Safari o Firefox actualitzats."); return; }
+  const lock = /android/i.test(navigator.userAgent) ? "Toca el cadenat 🔒 al costat de l'adreça → Permisos → Micròfon (i Càmera) → Permet, i torna-ho a provar." : "Toca el cadenat 🔒 al costat de l'adreça i permet el micròfon (i la càmera), i torna-ho a provar.";
+  // Si ja s'havia denegat, el navegador no ho tornarà a preguntar: cal dir on es canvia
+  const prev = await navigator.permissions?.query({ name: "microphone" }).catch(() => null);
+  if (prev?.state === "denied") { toast(`El micròfon està bloquejat per a aquesta web. ${lock}`); return; }
   try {
     Call.local = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: video ? { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } : false });
   } catch (e) {
     console.warn(e);
-    toast(e.name === "NotAllowedError" ? "Tienes que dar permiso al micrófono (y a la cámara, si quieres vídeo) en la configuración del navegador." : e.name === "NotFoundError" ? "No se ha encontrado ningún micrófono en este dispositivo." : "No se ha podido abrir el micrófono.");
+    toast(e.name === "NotAllowedError" ? (inApp ? "El navegador d'aquesta app no deixa fer servir el micròfon. Obre l'enllaç amb Chrome o Safari." : `Cal permís per al micròfon${video ? " i la càmera" : ""}. ${lock}`)
+      : e.name === "NotFoundError" ? "No s'ha trobat cap micròfon en aquest dispositiu."
+      : e.name === "NotReadableError" ? "Una altra app està fent servir el micròfon o la càmera. Tanca-la i torna-ho a provar."
+      : "No s'ha pogut obrir el micròfon.");
     return;
   }
   Call.joined = true;
@@ -134,7 +143,7 @@ async function callJoin(video) {
 }
 function callPresence() {
   if (!Call.joined) return;
-  return Call.tr.put(`in_${Call.me}`, { from: Call.me, to: "all", kind: "in", sid: Call.sid, name: (Call.room.lab ? `Pestaña ${Call.me.slice(-3)}` : window.Online?.profile?.handle || "Jugador").slice(0, 40), mic: Call.mic, video: Call.video, ts: Date.now() });
+  return Call.tr.put(`in_${Call.me}`, { from: Call.me, to: "all", kind: "in", sid: Call.sid, name: (Call.room.lab ? `Pestanya ${Call.me.slice(-3)}` : window.Online?.profile?.handle || "Jugador").slice(0, 40), mic: Call.mic, video: Call.video, ts: Date.now() });
 }
 function callHangup() {
   if (!Call.joined) return;
@@ -240,7 +249,7 @@ async function callToggleVideo() {
       const s = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } });
       Call.local.getVideoTracks().forEach((t) => { t.stop(); Call.local.removeTrack(t); });
       Call.local.addTrack(s.getVideoTracks()[0]);
-    } catch (e) { console.warn(e); toast("No se ha podido abrir la cámara. Revisa su permiso en el navegador."); return; }
+    } catch (e) { console.warn(e); toast("No s'ha pogut obrir la càmera. Revisa'n el permís al navegador."); return; }
     Call.video = true;
   } else {
     Call.video = false;
@@ -287,28 +296,30 @@ const callClock = () => { const s = Math.floor((Date.now() - Call.since) / 1000)
 function callPaint() {
   if (!Call.room) { $(".call-ui")?.remove(); return; }
   let el = $(".call-ui");
-  if (!el) { el = h(`<div class="call-ui" role="region" aria-label="Llamada"></div>`); document.body.appendChild(el); callBind(el); }
+  if (!el) { el = h(`<div class="call-ui" role="region" aria-label="Trucada"></div>`); document.body.appendChild(el); callBind(el); }
   const inCall = callIn();
+  // Trucades des del xat privat: fora de la trucada, el botó només surt si l'altre encara hi és (el xat ja té els seus)
+  if (!Call.joined && Call.room.quiet && !inCall.length && !Call.asking) { el.remove(); return; }
   if (!Call.joined) {
     el.className = "call-ui pill";
     el.dataset.sig = "";
-    el.innerHTML = `<button type="button" class="call-pill ${inCall.length ? "live" : ""}" data-call-open aria-label="Llamada con los amigos${inCall.length ? `: ${inCall.length} ${inCall.length === 1 ? "persona" : "personas"} en la llamada` : ""}">📞<span>${inCall.length ? `${inCall.length} en la llamada · Entra` : "Llama"}</span></button>
+    el.innerHTML = `<button type="button" class="call-pill ${inCall.length ? "live" : ""}" data-call-open aria-label="Trucada amb els amics${inCall.length ? `: ${inCall.length} ${inCall.length === 1 ? "persona" : "persones"} a la trucada` : ""}">📞<span>${inCall.length ? `${inCall.length} a la trucada · Entra` : "Truca"}</span></button>
       ${el.dataset.ask ? `<div class="call-ask card">
-        <p><b>Llamada con los amigos</b>${inCall.length ? ` · ${inCall.length === 1 ? "está" : "están"} ${inCall.map((p) => esc(callName(p.from))).join(", ")}` : ""}</p>
-        <p class="muted">La voz y la imagen van directamente entre vuestros dispositivos: no se graban ni pasan por ningún servidor nuestro.${Call.room.lab ? " Laboratorio: abre esta misma pantalla en otra pestaña para hablar." : ""}</p>
-        <div class="call-ask-btns"><button type="button" class="btn primary" data-call-join="0">🎙️ Entra con voz</button><button type="button" class="btn" data-call-join="1">📹 Con vídeo</button><button type="button" class="btn ghost" data-call-x>Ahora no</button></div>
+        <p><b>Trucada amb els amics</b>${inCall.length ? ` · hi ${inCall.length === 1 ? "és" : "són"} ${inCall.map((p) => esc(callName(p.from))).join(", ")}` : ""}</p>
+        <p class="muted">La veu i la imatge van directament entre els vostres dispositius: no es graven ni passen per cap servidor nostre.${Call.room.lab ? " Laboratori: obre aquesta mateixa pantalla en una altra pestanya per parlar-hi." : ""}</p>
+        <div class="call-ask-btns"><button type="button" class="btn primary" data-call-join="0">🎙️ Entra amb veu</button><button type="button" class="btn" data-call-join="1">📹 Amb vídeo</button><button type="button" class="btn ghost" data-call-x>Ara no</button></div>
       </div>` : ""}`;
     return;
   }
   if (Call.min) {
     el.className = "call-ui pill";
     el.dataset.sig = "";
-    el.innerHTML = `<div class="call-pill on"><button type="button" data-call-max aria-label="Abre la llamada">📞<span>${callClock()} · ${inCall.length + 1}</span></button><button type="button" class="call-ic ${Call.mic ? "" : "off"}" data-call-mic aria-label="${Call.mic ? "Silencia el micro" : "Activa el micro"}">${Call.mic ? "🎙️" : "🔇"}</button><button type="button" class="call-ic end" data-call-end aria-label="Cuelga">✕</button></div>`;
+    el.innerHTML = `<div class="call-pill on"><button type="button" data-call-max aria-label="Obre la trucada">📞<span>${callClock()} · ${inCall.length + 1}</span></button><button type="button" class="call-ic ${Call.mic ? "" : "off"}" data-call-mic aria-label="${Call.mic ? "Silencia el micro" : "Activa el micro"}">${Call.mic ? "🎙️" : "🔇"}</button><button type="button" class="call-ic end" data-call-end aria-label="Penja">✕</button></div>`;
     return;
   }
   el.className = "call-ui dock";
   const tiles = [
-    { uid: Call.me, name: Call.room.lab ? `Pestaña ${Call.me.slice(-3)} (tú)` : `${window.Online?.profile?.handle || "Tú"} (tú)`, me: true, video: Call.video, mic: Call.mic, state: "ok" },
+    { uid: Call.me, name: Call.room.lab ? `Pestanya ${Call.me.slice(-3)} (tu)` : `${window.Online?.profile?.handle || "Tu"} (tu)`, me: true, video: Call.video, mic: Call.mic, state: "ok" },
     ...inCall.map((p) => ({ uid: p.from, name: callName(p.from), video: p.video, mic: p.mic, state: Call.peers.get(p.from)?.state || "connectant" })),
     ...(Call.room.bots || []).map((n) => ({ name: n, bot: true })),
   ];
@@ -316,15 +327,15 @@ function callPaint() {
   // Només es refà el panell si ha canviat alguna cosa que es veu (la presència es renova sola cada 30 s)
   const sig = JSON.stringify(tiles.map((t) => [t.uid, t.name, t.video, t.mic, t.state]));
   if (el.dataset.sig !== sig || !$(".call-grid", el)) { el.dataset.sig = sig;
-  el.innerHTML = `<div class="call-head"><b>📞 ${esc(Call.room.title || "Llamada")}</b><span>${callClock()}</span><button type="button" class="call-ic" data-call-min aria-label="Minimiza la llamada">▁</button></div>
+  el.innerHTML = `<div class="call-head"><b>📞 ${esc(Call.room.title || "Trucada")}</b><span>${callClock()}</span><button type="button" class="call-ic" data-call-min aria-label="Minimitza la trucada">▁</button></div>
     <div class="call-grid n${Math.min(n, 4)}">${tiles.map((t) => `<div class="call-tile ${t.bot ? "bot" : ""} ${t.state === "error" ? "err" : ""}" ${t.bot ? "" : `data-uid="${esc(t.uid)}"`}>
       ${t.video && !t.bot ? `<video autoplay playsinline ${t.me ? "muted" : ""}></video>` : callAv(t.name)}
       ${!t.me && !t.bot && !t.video ? `<audio autoplay></audio>` : ""}
-      <small>${t.mic === false ? "🔇 " : ""}${esc(t.name)}${t.bot ? " · ficticio, no habla" : t.state === "connectant" ? " · conectando…" : t.state === "error" ? " · no se puede conectar" : ""}</small>
+      <small>${t.mic === false ? "🔇 " : ""}${esc(t.name)}${t.bot ? " · fictici, no parla" : t.state === "connectant" ? " · connectant…" : t.state === "error" ? " · no es pot connectar" : ""}</small>
     </div>`).join("")}</div>
-    ${tiles.some((t) => t.state === "error") ? `<p class="call-note">Alguna conexión no sale: pasa con algunas redes (sobre todo datos móviles o redes de empresa). Probad con wifi.</p>` : ""}
-    ${n === 1 ? `<p class="call-note">Todavía no hay nadie más. Cuando alguien de la sala entre en la llamada, lo oirás aquí.</p>` : ""}
-    <div class="call-ctrl"><button type="button" class="call-ic ${Call.mic ? "" : "off"}" data-call-mic aria-label="${Call.mic ? "Silencia el micro" : "Activa el micro"}">${Call.mic ? "🎙️" : "🔇"}</button><button type="button" class="call-ic ${Call.video ? "" : "off"}" data-call-cam aria-label="${Call.video ? "Apaga la cámara" : "Enciende la cámara"}">${Call.video ? "📹" : "📷"}</button><button type="button" class="call-ic end" data-call-end aria-label="Cuelga">Cuelga</button></div>`;
+    ${tiles.some((t) => t.state === "error") ? `<p class="call-note">Alguna connexió no surt: passa amb algunes xarxes (sobretot dades mòbils o xarxes d'empresa). Proveu amb wifi.</p>` : ""}
+    ${n === 1 ? `<p class="call-note">Encara no hi ha ningú més. Quan algú de la sala entri a la trucada, el sentiràs aquí.</p>` : ""}
+    <div class="call-ctrl"><button type="button" class="call-ic ${Call.mic ? "" : "off"}" data-call-mic aria-label="${Call.mic ? "Silencia el micro" : "Activa el micro"}">${Call.mic ? "🎙️" : "🔇"}</button><button type="button" class="call-ic ${Call.video ? "" : "off"}" data-call-cam aria-label="${Call.video ? "Apaga la càmera" : "Encén la càmera"}">${Call.video ? "📹" : "📷"}</button><button type="button" class="call-ic end" data-call-end aria-label="Penja">Penja</button></div>`;
   }
   // Les imatges i el so
   $$(".call-tile[data-uid]", el).forEach((t) => {
@@ -340,8 +351,8 @@ function callBind(el) {
     const b = e.target.closest("button");
     if (!b) return;
     if (b.matches("[data-call-open]")) { el.dataset.ask = el.dataset.ask ? "" : "1"; callPaint(); }
-    else if (b.matches("[data-call-x]")) { el.dataset.ask = ""; callPaint(); }
-    else if (b.matches("[data-call-join]")) { el.dataset.ask = ""; callJoin(b.dataset.callJoin === "1"); }
+    else if (b.matches("[data-call-x]")) { el.dataset.ask = ""; Call.asking = false; callPaint(); }
+    else if (b.matches("[data-call-join]")) { el.dataset.ask = ""; Call.asking = false; callJoin(b.dataset.callJoin === "1"); }
     else if (b.matches("[data-call-mic]")) callToggleMic();
     else if (b.matches("[data-call-cam]")) callToggleVideo();
     else if (b.matches("[data-call-end]")) callHangup();
@@ -349,4 +360,5 @@ function callBind(el) {
     else if (b.matches("[data-call-max]")) { Call.min = false; callPaint(); }
   });
 }
-window.Call = { attach: callAttach, detach: callDetach, state: Call };
+// ask: obre la pregunta «amb veu o amb vídeo»; join: entra directament
+window.Call = { attach: callAttach, detach: callDetach, state: Call, join: callJoin, ask: () => { if (!Call.room || Call.joined) return; Call.asking = true; callPaint(); const el = $(".call-ui"); if (el) { el.dataset.ask = "1"; callPaint(); } } };

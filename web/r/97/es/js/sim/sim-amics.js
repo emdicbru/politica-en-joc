@@ -5,7 +5,7 @@
 
 // Quan la veurà tothom. Fins llavors, només es pot provar des del Laboratori del Centre de control, amb una sala local
 // i amics ficticis (sim-lab.js), sense escriure res a Firestore.
-const SIM_AMICS_FROM = Infinity;
+const SIM_AMICS_FROM = Date.UTC(2026, 9, 29, 16, 0); // pública des del 29-10-2026 (v96)
 const simAmicsPublic = () => Date.now() >= SIM_AMICS_FROM;
 const simAmicsOn = () => simAmicsPublic() || (typeof featPreview === "function" && featPreview("amics"));
 const simMpIsLab = () => !simAmicsPublic() && typeof featPreview === "function" && featPreview("amics");
@@ -48,10 +48,10 @@ function simMpEnter(G) {
 }
 function simMpSignIn(G) {
   const el = simMount(G, `<div class="sim-wrap"><div class="card sim-card simmp-card">
-    <p class="sim-kick">Campanya contra amics</p>
-    <h3 class="sim-h">Entra amb el teu compte</h3>
-    <p class="sim-lead">Per jugar contra amics cal un usuari: és com et veuran els altres jugadors. Només és un clic amb Google.</p>
-    <div class="sim-actions-row"><button class="btn primary lg" data-in>Entra amb Google</button></div>
+    <p class="sim-kick">Campaña contra amigos</p>
+    <h3 class="sim-h">Entra con tu cuenta</h3>
+    <p class="sim-lead">Para jugar contra amigos necesitas un usuario: es como te verán los demás jugadores. Solo es un clic con Google.</p>
+    <div class="sim-actions-row"><button class="btn primary lg" data-in>Entra con Google</button></div>
   </div></div>`);
   $("[data-in]", el).addEventListener("click", () => window.Online?.signIn?.());
   // Quan la sessió estigui a punt, continua sol
@@ -61,20 +61,20 @@ function simMpSignIn(G) {
 async function simMpHome(G) {
   const lab = simMpIsLab();
   const el = simMount(G, `<div class="sim-wrap"><div class="card sim-card simmp-card">
-    ${lab ? `<p class="simmp-lab">🧪 Laboratori: aquesta campanya és de prova. Hi jugues amb amics ficticis, en aquesta pestanya, i no es desa res al núvol.</p>` : ""}
-    <p class="sim-kick">Campanya contra amics · de 2 a 4 jugadors</p>
-    <h3 class="sim-h">Competiu per les mateixes eleccions</h3>
-    <p class="sim-lead">Cadascú funda el seu partit i tots feu campanya al mateix país, contra els partits reals i entre vosaltres: els vostres mítings, anuncis i atacs es disputen els mateixos votants. Cada dia, tothom fa les seves tres franges; quan tots heu acabat, passa la nit, surt l'enquesta i comença el dia següent.</p>
+    ${lab ? `<p class="simmp-lab">🧪 Laboratorio: esta campaña es de prueba. Juegas con amigos ficticios, en esta pestaña, y no se guarda nada en la nube.</p>` : ""}
+    <p class="sim-kick">Campaña contra amigos · de 2 a 4 jugadores</p>
+    <h3 class="sim-h">Competid por las mismas elecciones</h3>
+    <p class="sim-lead">Cada uno funda su partido y todos hacéis campaña en el mismo país, contra los partidos reales y entre vosotros: vuestros mítines, anuncios y ataques se disputan los mismos votantes. Cada día, todos hacen sus tres franjas; cuando todos habéis terminado, pasa la noche, sale la encuesta y empieza el día siguiente.</p>
     <div class="simmp-two">
       <section>
         <h4>Crea una sala</h4>
-        <div class="sim-diffs" role="radiogroup" aria-label="Dificultat"><span>Dificultat</span>${Object.entries(SIM_DIFF).map(([k, d]) => `<label><input type="radio" name="simmp-diff" value="${k}" ${k === "normal" ? "checked" : ""}><span>${d.label}</span></label>`).join("")}</div>
+        <div class="sim-diffs" role="radiogroup" aria-label="Dificultad"><span>Dificultad</span>${Object.entries(SIM_DIFF).map(([k, d]) => `<label><input type="radio" name="simmp-diff" value="${k}" ${k === "normal" ? "checked" : ""}><span>${d.label}</span></label>`).join("")}</div>
         <button class="btn primary lg" data-new>Crea la sala</button>
-        <small>${lab ? "A la sala hi podràs afegir fins a tres amics ficticis." : "Rebràs un codi i un enllaç per convidar els teus amics."}</small>
+        <small>${lab ? "En la sala podrás añadir hasta tres amigos ficticios." : "Recibirás un código y un enlace para invitar a tus amigos."}</small>
       </section>
       <section ${lab ? "hidden" : ""}>
-        <h4>Tens un codi?</h4>
-        <form class="simmp-join" data-join><input data-code maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123" aria-label="Codi de la sala"><button class="btn" type="submit">Entra-hi</button></form>
+        <h4>¿Tienes un código?</h4>
+        <form class="simmp-join" data-join><input data-code maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123" aria-label="Código de la sala"><button class="btn" type="submit">Entra</button></form>
         <p class="simmp-err" data-err role="alert"></p>
       </section>
     </div>
@@ -91,7 +91,7 @@ async function simMpHome(G) {
   $("[data-join]", el).addEventListener("submit", (e) => {
     e.preventDefault();
     const code = $("[data-code]", el).value.trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(code)) { $("[data-err]", el).textContent = "El codi té sis lletres o xifres."; return; }
+    if (!/^[A-Z0-9]{6}$/.test(code)) { $("[data-err]", el).textContent = "El código tiene seis letras o cifras."; return; }
     simMpOpen(G, code, true);
   });
   // Les meves campanyes en curs
@@ -99,9 +99,9 @@ async function simMpHome(G) {
   if (!G.ctx.alive() || !mine.length) return;
   const box = $("[data-mine]", el);
   if (!box) return;
-  box.innerHTML = `<h4 class="sim-h4">Les teves campanyes</h4><ul class="simmp-mine">${mine.map((d) => {
+  box.innerHTML = `<h4 class="sim-h4">Tus campañas</h4><ul class="simmp-mine">${mine.map((d) => {
     const n = d.players.length;
-    const what = d.status === "lobby" ? `A la sala · ${n} ${n === 1 ? "jugador" : "jugadors"}` : `Dia ${Math.min(d.day, 6)} de 6`;
+    const what = d.status === "lobby" ? `En la sala · ${n} ${n === 1 ? "jugador" : "jugadores"}` : `Día ${Math.min(d.day, 6)} de 6`;
     return `<li><button class="sim-choice" data-open="${esc(d.code)}"><b>${esc(d.code)}</b><small>${what} · ${d.players.map((u) => esc(d.seats?.[u]?.name || "?")).join(", ")}</small></button></li>`;
   }).join("")}</ul>`;
   $$("[data-open]", box).forEach((b) => b.addEventListener("click", () => simMpOpen(G, b.dataset.open, false)));
@@ -126,14 +126,14 @@ async function simMpOpen(G, code, join) {
 
 function simMpOnDoc(G, d) {
   if (!G.ctx.alive()) return;
-  if (!d) { toast("Aquesta campanya ja no existeix"); G.mpUnsub?.(); G.mp = null; SimOpts.amics = {}; return simMpHome(G); }
+  if (!d) { toast("Esta campaña ya no existe"); G.mpUnsub?.(); G.mp = null; SimOpts.amics = {}; return simMpHome(G); }
   G.mpDoc = d;
   const uid = simMpUid();
   if (!d.players.includes(uid)) { G.mpUnsub?.(); G.mp = null; SimOpts.amics = {}; return simMpHome(G); }
   // Trucada amb els altres equips (trucada.js)
-  window.Call?.attach({ parent: "campanyes", code: d.code, title: "Equips de campanya", lab: simMpIsLab(), alive: () => G.ctx.alive(),
+  window.Call?.attach({ parent: "campanyes", code: d.code, title: "Equipos de campaña", lab: simMpIsLab(), alive: () => G.ctx.alive(),
     names: Object.fromEntries(d.players.filter((u) => !u.startsWith("bot-")).map((u) => [u, d.seats[u]?.name || "Jugador"])),
-    bots: d.players.filter((u) => u.startsWith("bot-")).map((u) => d.seats[u]?.name || "Amic fictici") });
+    bots: d.players.filter((u) => u.startsWith("bot-")).map((u) => d.seats[u]?.name || "Amigo ficticio") });
   if (d.status === "lobby") { if (!G.mpCreating) simMpLobby(G, d); return; }
   simMpPlaying(G, d);
 }
@@ -147,37 +147,37 @@ function simMpLobby(G, d) {
   const sigs = seats.filter((x) => x.party).map((x) => simNorm(x.party.sig));
   const dup = sigs.length !== new Set(sigs).size;
   const canStart = host && seats.length >= 2 && seats.every((x) => x.party) && !dup;
-  const why = seats.length < 2 ? "Cal almenys un amic a la sala." : !seats.every((x) => x.party) ? "Tothom ha de tenir el partit creat." : dup ? "Dos partits tenen les mateixes sigles: un dels dos les ha de canviar." : "";
+  const why = seats.length < 2 ? "Hace falta al menos un amigo en la sala." : !seats.every((x) => x.party) ? "Todo el mundo tiene que tener el partido creado." : dup ? "Dos partidos tienen las mismas siglas: uno de los dos tiene que cambiarlas." : "";
   const lab = simMpIsLab();
   const el = simMount(G, `<div class="sim-wrap"><div class="card sim-card simmp-card">
-    ${lab ? `<p class="simmp-lab">🧪 Laboratori: sala de prova amb amics ficticis. No es desa res al núvol.</p>` : ""}
-    <p class="sim-kick">Campanya contra amics · sala</p>
-    ${lab ? `<div class="simmp-code"><div><small>Amics ficticis</small><b class="sm">Fins a 3</b></div><button class="btn primary" data-bot ${seats.length >= 4 ? "disabled" : ""}>+ Afegeix un amic fictici</button></div>` : `<div class="simmp-code"><div><small>Codi de la sala</small><b>${esc(d.code)}</b></div><button class="btn" data-copy>Copia l'enllaç</button>${navigator.share ? `<button class="btn" data-share>Comparteix</button>` : ""}</div>`}
+    ${lab ? `<p class="simmp-lab">🧪 Laboratorio: sala de prueba con amigos ficticios. No se guarda nada en la nube.</p>` : ""}
+    <p class="sim-kick">Campaña contra amigos · sala</p>
+    ${lab ? `<div class="simmp-code"><div><small>Amigos ficticios</small><b class="sm">Hasta 3</b></div><button class="btn primary" data-bot ${seats.length >= 4 ? "disabled" : ""}>+ Añade un amigo ficticio</button></div>` : `<div class="simmp-code"><div><small>Código de la sala</small><b>${esc(d.code)}</b></div><button class="btn" data-copy>Copia el enlace</button>${navigator.share ? `<button class="btn" data-share>Comparte</button>` : ""}</div>`}
     <ul class="simmp-seats">${seats.map((x) => `<li class="${x.uid === uid ? "me" : ""}">
       ${x.party ? simLogoSvg({ ...x.party, id: x.uid }, 40) : `<span class="simmp-nologo" aria-hidden="true">?</span>`}
-      <span><b>${x.party ? esc(x.party.name) : "Encara sense partit"}</b><small>${esc(x.name || "Jugador")}${x.uid === d.host ? " · amfitrió" : ""}${x.uid === uid ? " · tu" : ""}</small></span>
-      <em>${x.party ? "✓ A punt" : "Creant…"}</em>
-    </li>`).join("")}${Array.from({ length: 4 - seats.length }, () => `<li class="free"><span class="simmp-nologo" aria-hidden="true">+</span><span><b>Lloc lliure</b><small>Comparteix el codi</small></span></li>`).join("")}</ul>
+      <span><b>${x.party ? esc(x.party.name) : "Todavía sin partido"}</b><small>${esc(x.name || "Jugador")}${x.uid === d.host ? " · anfitrión" : ""}${x.uid === uid ? " · tú" : ""}</small></span>
+      <em>${x.party ? "✓ Listo" : "Creando…"}</em>
+    </li>`).join("")}${Array.from({ length: 4 - seats.length }, () => `<li class="free"><span class="simmp-nologo" aria-hidden="true">+</span><span><b>Plaza libre</b><small>Comparte el código</small></span></li>`).join("")}</ul>
     <div class="sim-actions-row">
-      <button class="btn ${mine.party ? "" : "primary lg"}" data-party>${mine.party ? "Canvia el teu partit" : "Crea el teu partit"}</button>
-      ${host ? `<button class="btn primary lg" data-start ${canStart ? "" : "disabled"}>Comença la campanya</button>` : ""}
+      <button class="btn ${mine.party ? "" : "primary lg"}" data-party>${mine.party ? "Cambia tu partido" : "Crea tu partido"}</button>
+      ${host ? `<button class="btn primary lg" data-start ${canStart ? "" : "disabled"}>Empieza la campaña</button>` : ""}
     </div>
     ${host && why ? `<p class="simmp-note">${why}</p>` : ""}
-    ${!host ? `<p class="simmp-note">${mine.party ? `Esperant que ${esc(d.seats[d.host]?.name || "l'amfitrió")} comenci la campanya.` : "Crea el teu partit mentre arriben els altres."}</p>` : ""}
-    <p class="simmp-note">Dificultat: <b>${SIM_DIFF[d.diff]?.label || ""}</b>. Sis dies de campanya, la jornada de reflexió i la nit electoral. Guanya qui tregui més escons.</p>
-    <div class="sim-actions-row"><button class="btn ghost" data-leave>${host && seats.length === 1 ? "Esborra la sala" : "Surt de la sala"}</button></div>
+    ${!host ? `<p class="simmp-note">${mine.party ? `Esperando a que ${esc(d.seats[d.host]?.name || "el anfitrión")} empiece la campaña.` : "Crea tu partido mientras llegan los demás."}</p>` : ""}
+    <p class="simmp-note">Dificultad: <b>${SIM_DIFF[d.diff]?.label || ""}</b>. Seis días de campaña, la jornada de reflexión y la noche electoral. Gana quien saque más escaños.</p>
+    <div class="sim-actions-row"><button class="btn ghost" data-leave>${host && seats.length === 1 ? "Borra la sala" : "Sal de la sala"}</button></div>
   </div></div>`);
   $("[data-bot]", el)?.addEventListener("click", () => { Sfx.play("pick"); SimLab.addBot(); });
   $("[data-copy]", el)?.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(simMpLink(d.code)); toast("Enllaç copiat"); } catch { toast(simMpLink(d.code)); }
+    try { await navigator.clipboard.writeText(simMpLink(d.code)); toast("Enlace copiado"); } catch { toast(simMpLink(d.code)); }
   });
-  $("[data-share]", el)?.addEventListener("click", () => navigator.share({ title: "Campanya contra amics · Política en Joc", text: `Funda el teu partit i competim per les eleccions! Codi: ${d.code}`, url: simMpLink(d.code) }).catch(() => {}));
+  $("[data-share]", el)?.addEventListener("click", () => navigator.share({ title: "Campaña contra amigos · Política en Joc", text: `¡Funda tu partido y compitamos por las elecciones! Código: ${d.code}`, url: simMpLink(d.code) }).catch(() => {}));
   $("[data-party]", el).addEventListener("click", () => {
     G.mpCreating = true;
     G.mpCreate = async (P) => {
       G.mpCreating = false;
       const taken = d.players.filter((u) => u !== uid && G.mpDoc.seats[u]?.party).map((u) => simNorm(G.mpDoc.seats[u].party.sig));
-      if (taken.includes(simNorm(P.sig))) toast("Un altre jugador ja fa servir aquestes sigles: canvia-les perquè es pugui començar");
+      if (taken.includes(simNorm(P.sig))) toast("Otro jugador ya usa estas siglas: cámbialas para que se pueda empezar");
       await simMpApi().setSeat(d.code, { party: P, ready: true });
       simMpLobby(G, G.mpDoc);
     };
@@ -191,7 +191,7 @@ function simMpLobby(G, d) {
     else Sfx.play("win");
   });
   $("[data-leave]", el).addEventListener("click", async () => {
-    if (!confirm(host && seats.length === 1 ? "S'esborrarà la sala. Continuar?" : "Vols sortir de la sala?")) return;
+    if (!confirm(host && seats.length === 1 ? "Se borrará la sala. ¿Continuar?" : "¿Quieres salir de la sala?")) return;
     G.mpUnsub?.();
     if (lab || (host && seats.length === 1)) await simMpApi().remove(d.code);
     else await simMpApi().leave(d.code);
@@ -219,7 +219,7 @@ function simMpPlaying(G, d) {
   } else if (d.day > G.mp.day) {
     // Ha començat un dia nou (o s'ha acabat la campanya)
     const W = JSON.parse(d.world);
-    if (G.state?.stage !== "waiting" && G.state?.phase === "campaign") toast("Els altres han tancat el dia sense tu: el que no havies enviat no compta");
+    if (G.state?.stage !== "waiting" && G.state?.phase === "campaign") toast("Los demás han cerrado el día sin ti: lo que no habías enviado no cuenta");
     return simMpNewDay(G, W, true);
   }
   if (G.state?.stage === "waiting") simMpWaitingPaint(G, d);
@@ -274,9 +274,9 @@ function simMpWaiting(G) {
   simHud(G);
   const s = G.state;
   simMount(G, `<div class="sim-wrap"><div class="card sim-card simmp-card simmp-wait">
-    <p class="sim-kick">Dia ${s.day} de ${s.days} · fet</p>
-    <h3 class="sim-h">Esperant els altres candidats</h3>
-    <p class="sim-lead">Quan tothom hagi acabat el dia, passarà la nit: els rivals mouran fitxa, sortirà l'enquesta del matí i començarà el dia següent.</p>
+    <p class="sim-kick">Día ${s.day} de ${s.days} · hecho</p>
+    <h3 class="sim-h">Esperando a los demás candidatos</h3>
+    <p class="sim-lead">Cuando todos hayan terminado el día, pasará la noche: los rivales moverán ficha, saldrá la encuesta de la mañana y empezará el día siguiente.</p>
     <ul class="simmp-seats" data-who></ul>
     <div data-force></div>
   </div></div>`);
@@ -294,15 +294,15 @@ function simMpWaitingPaint(G, d) {
     const P = W.hum[`h${k}`]?.me;
     const done = d.turn?.[u]?.day === d.day;
     const prog = d.seats[u]?.prog;
-    const how = done ? "✓ Ha acabat el dia" : prog?.day === d.day ? `Fent campanya · ${prog.slot || 0} de 3 franges` : "Encara no ha començat el dia";
+    const how = done ? "✓ Ha terminado el día" : prog?.day === d.day ? `Haciendo campaña · ${prog.slot || 0} de 3 franjas` : "Todavía no ha empezado el día";
     return `<li class="${u === simMpUid() ? "me" : ""} ${done ? "ok" : ""}">${P ? simLogoSvg(P, 34) : ""}<span><b>${esc(P?.name || "")}</b><small>${esc(d.seats[u]?.name || "")}</small></span><em>${how}</em></li>`;
   }).join("");
   const force = $("[data-force]");
   const waited = G.mp.sentAt && Date.now() - G.mp.sentAt > SIM_MP_WAIT_FORCE;
   const missing = d.players.filter((u) => d.turn?.[u]?.day !== d.day).length;
-  if (force) force.innerHTML = waited && missing ? `<p class="simmp-note">Si algú no pot continuar ara, podeu tancar el dia sense ell: aquell dia no farà campanya.</p><button class="btn" data-go>Tanca el dia sense els que falten</button>` : "";
+  if (force) force.innerHTML = waited && missing ? `<p class="simmp-note">Si alguien no puede continuar ahora, podéis cerrar el día sin él: ese día no hará campaña.</p><button class="btn" data-go>Cierra el día sin los que faltan</button>` : "";
   $("[data-go]", force || document)?.addEventListener("click", () => {
-    if (!confirm("Es tancarà el dia i qui no hagi acabat es quedarà sense campanya avui. Continuar?")) return;
+    if (!confirm("Se cerrará el día y quien no haya terminado se quedará sin campaña hoy. ¿Continuar?")) return;
     G.mp.force = d.day;
     simMpMaybeResolve(G, G.mpDoc);
   });
@@ -328,7 +328,7 @@ async function simMpMaybeResolve(G, d) {
 // Franja amb els altres jugadors, sempre visible durant la partida
 function simMpStrip(G, d) {
   let el = $(".simmp-strip");
-  if (!el) { el = h(`<aside class="simmp-strip" aria-label="Els altres jugadors"></aside>`); document.body.appendChild(el); }
+  if (!el) { el = h(`<aside class="simmp-strip" aria-label="Los demás jugadores"></aside>`); document.body.appendChild(el); }
   const W = G.mp?.W || (d.world ? JSON.parse(d.world) : null);
   if (!W) return;
   el.innerHTML = `${simChatButton(G)}<span class="simmp-strip-h">👥</span>${d.players.map((u, k) => {
@@ -349,14 +349,14 @@ function simMpFinalHtml(G, r) {
     return { id, name: W.mp.names[k], P: W.hum[id].me, seats: t?.seats || 0, votes: t?.votes || 0, share: t?.share || 0 };
   }).sort((a, b) => b.seats - a.seats || b.votes - a.votes);
   const pos = rows.findIndex((x) => x.id === me) + 1;
-  const head = pos === 1 ? "Has guanyat la campanya contra els teus amics!" : `Quedes ${pos === 2 ? "segon" : pos === 3 ? "tercer" : "quart"} entre els amics.`;
+  const head = pos === 1 ? "¡Has ganado la campaña contra tus amigos!" : `Quedas ${pos === 2 ? "segundo" : pos === 3 ? "tercero" : "cuarto"} entre los amigos.`;
   store.set(simMpLocalKey(), null);
   SimOpts.amics = {}; // «Torna-hi» porta a l'entrada de les campanyes contra amics
   return `<div class="simmp-final">
     <h4>${head}</h4>
-    <ol>${rows.map((x, i) => `<li class="${x.id === me ? "me" : ""}"><b class="simmp-pos">${i + 1}</b>${simLogoSvg(x.P, 34)}<span><b>${esc(x.P.name)}</b><small>${esc(x.name)}${x.id === me ? " · tu" : ""}</small></span><strong>${x.seats} ${x.seats === 1 ? "escó" : "escons"}</strong><em>${simNum(x.share * 100)} %</em></li>`).join("")}</ol>
+    <ol>${rows.map((x, i) => `<li class="${x.id === me ? "me" : ""}"><b class="simmp-pos">${i + 1}</b>${simLogoSvg(x.P, 34)}<span><b>${esc(x.P.name)}</b><small>${esc(x.name)}${x.id === me ? " · tú" : ""}</small></span><strong>${x.seats} ${x.seats === 1 ? "escaño" : "escaños"}</strong><em>${simNum(x.share * 100)} %</em></li>`).join("")}</ol>
     ${simMpGovHtml(G)}
     ${simMpLegHtml(G)}
-    <p class="simmp-note">Tots heu jugat les mateixes eleccions: el resultat és el mateix per a tothom.</p>
+    <p class="simmp-note">Todos habéis jugado las mismas elecciones: el resultado es el mismo para todos.</p>
   </div>`;
 }

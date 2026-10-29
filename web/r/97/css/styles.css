@@ -7007,3 +7007,155 @@ body:has(.db-theater) .call-ask { order: 1; }
   .db-theater:has(.dbm-meters) .db-clocks { top: calc(70px + var(--dbm-rows) * 24px + 22px); }
   body:has(.dbm-meters) .call-ui { top: calc(70px + var(--dbm-rows) * 24px + 64px + env(safe-area-inset-top)); }
 }
+
+/* ---------- Xats (xat.js): el privat entre amics i el dels equips de campanya ---------- */
+.xat { position: relative; display: grid; overflow: hidden; }
+.xat-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 2px solid var(--ink); background: var(--card); }
+.xat-back { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: var(--ink); font-weight: 900; font-size: 1.2rem; text-decoration: none; }
+.xat-back:hover { background: var(--paper); }
+.xat-head .ami-chat-who { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; cursor: pointer; }
+.xat-head .ami-chat-who > span { display: grid; min-width: 0; }
+.xat-head .ami-chat-who b { font-family: var(--display); font-weight: 900; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xat-head .ami-chat-who small { font-size: .76rem; color: var(--ink-2); font-weight: 700; min-height: 1em; }
+.xat-acts { display: flex; gap: 6px; }
+.xat-act { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 2px solid var(--ink); border-radius: 50%; background: var(--card); color: var(--ink); font-size: 1rem; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
+.xat-act:hover { background: var(--yellow); }
+.xat-act:active { transform: translate(2px, 2px); box-shadow: none; }
+.xat-typing { color: #1f8f4e; }
+.xat-typing i { display: inline-block; width: 4px; height: 4px; margin-left: 2px; border-radius: 50%; background: currentColor; animation: xatDot 1s infinite; }
+.xat-typing i:nth-child(2) { animation-delay: .15s; }
+.xat-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes xatDot { 0%, 60%, 100% { opacity: .25; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+
+.xat-log { overflow-y: auto; overscroll-behavior: contain; padding: 12px 14px 18px; display: flex; flex-direction: column; background-color: var(--paper); background-image: radial-gradient(rgba(23, 23, 61, .07) 1px, transparent 1px); background-size: 14px 14px; }
+.xat-intro { align-self: center; max-width: 420px; margin: 4px 0 10px; padding: 7px 12px; border-radius: 10px; background: #fff8dc; border: 1.5px solid rgba(23, 23, 61, .25); font-size: .76rem; text-align: center; color: var(--ink-2); }
+.xat-empty { align-self: center; margin: auto 0; padding: 18px; text-align: center; color: var(--ink-2); font-weight: 700; }
+.xat-day { position: sticky; top: 0; z-index: 2; align-self: center; margin: 10px 0 6px; }
+.xat-day span { display: inline-block; padding: 3px 10px; border: 1.5px solid var(--ink); border-radius: 99px; background: var(--card); font-size: .72rem; font-weight: 800; }
+.xat-new { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; color: #d93025; font-size: .72rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+.xat-new::before, .xat-new::after { content: ""; flex: 1; height: 2px; background: currentColor; opacity: .5; }
+.xat-sys { align-self: center; max-width: 92%; margin: 8px 0; padding: 6px 12px; border-radius: 10px; background: #17173d; color: #fff; font-size: .78rem; font-weight: 700; text-align: center; }
+.xat-sys a { color: var(--yellow); }
+
+.xat-m { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 8px; align-items: end; margin-top: 2px; max-width: 100%; }
+.xat-m.first { margin-top: 10px; }
+.xat-m.me { grid-template-columns: minmax(0, 1fr); justify-items: end; }
+.xat-av { grid-row: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--pc); color: #fff; border: 2px solid var(--ink); font-weight: 900; font-size: .9rem; }
+.xat-av img { width: 100%; height: 100%; object-fit: cover; }
+.xat-av.sp { visibility: hidden; }
+.xat-sig { font-size: .58rem; letter-spacing: -.02em; }
+.xat-b { position: relative; justify-self: start; max-width: min(80%, 520px); padding: 7px 12px; border: 2px solid var(--ink); border-radius: 6px 18px 18px 6px; background: var(--card); line-height: 1.38; outline: none; }
+.xat-m.first .xat-b { border-top-left-radius: 18px; }
+.xat-m.last .xat-b { border-bottom-left-radius: 18px; box-shadow: 2px 2px 0 var(--ink); }
+.xat-m.me .xat-b { justify-self: end; border-radius: 18px 6px 6px 18px; background: #ffe680; }
+.xat-m.me.first .xat-b { border-top-right-radius: 18px; }
+.xat-m.me.last .xat-b { border-bottom-right-radius: 18px; }
+.xat-b:focus-visible { box-shadow: 0 0 0 3px #4d7cfe; }
+.xat-b p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .94rem; }
+.xat-b a { color: #2a4fd6; font-weight: 700; word-break: break-all; }
+.xat-who { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; color: var(--ink); font-size: .76rem; font-weight: 900; }
+.xat-who i { padding: 0 5px; border-radius: 5px; background: var(--pc); color: #fff; font-style: normal; font-size: .64rem; }
+.xat-m.big .xat-b { padding: 0; border: 0; background: none; box-shadow: none; }
+.xat-m.big .xat-b p { font-size: 2.6rem; line-height: 1.1; }
+.xat-meta { grid-column: 2; margin: 2px 4px 0; font-size: .66rem; font-weight: 700; color: var(--ink-2); }
+.xat-m.me .xat-meta { grid-column: 1; }
+.xat-seen { align-self: flex-end; margin: 1px 4px 0; font-size: .66rem; font-weight: 900; color: #2a4fd6; }
+.xat-quote { display: grid; gap: 1px; width: 100%; margin: 2px 0 5px; padding: 4px 8px; border: 0; border-left: 3px solid var(--ink); border-radius: 6px; background: rgba(23, 23, 61, .07); text-align: left; font: inherit; font-size: .8rem; color: var(--ink); cursor: pointer; }
+.xat-quote b { font-size: .72rem; }
+.xat-quote span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--ink-2); }
+.xat-reacts { display: flex; flex-wrap: wrap; gap: 4px; margin: 5px 0 -16px; position: relative; z-index: 1; }
+.xat-m:has(.xat-reacts) { margin-bottom: 14px; }
+.xat-reacts button { display: inline-flex; align-items: center; gap: 2px; padding: 1px 6px; border: 1.5px solid var(--ink); border-radius: 99px; background: var(--card); font-size: .85rem; cursor: pointer; line-height: 1.3; }
+.xat-reacts button.on { background: #cfe0ff; }
+.xat-reacts small { font-size: .7rem; font-weight: 900; }
+.xat-m.flash .xat-b { animation: xatFlash 1.4s ease; }
+@keyframes xatFlash { 0%, 60% { box-shadow: 0 0 0 4px #4d7cfe; } 100% { box-shadow: none; } }
+.xat-burst { position: absolute; left: 50%; top: 50%; font-size: 2.2rem; pointer-events: none; animation: xatBurst .7s ease-out forwards; }
+@keyframes xatBurst { 0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; } 60% { transform: translate(-50%, -70%) scale(1.25); opacity: 1; } 100% { transform: translate(-50%, -110%) scale(1); opacity: 0; } }
+.xat-tools { position: absolute; z-index: 3; top: -16px; right: 8px; display: flex; gap: 2px; padding: 2px; border: 1.5px solid var(--ink); border-radius: 99px; background: var(--card); box-shadow: 2px 2px 0 var(--ink); }
+.xat-m.me .xat-tools { right: auto; left: 8px; }
+.xat-m:not(:hover) .xat-tools { display: none; }
+.xat-tools button { width: 28px; height: 26px; padding: 0; border: 0; border-radius: 99px; background: none; font-size: .9rem; cursor: pointer; color: var(--ink); }
+.xat-tools button:hover { background: var(--paper); }
+.xat-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 10px; min-width: min(250px, 62vw); margin: 2px 0; padding: 8px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; }
+.xat-card-i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--yellow); border: 2px solid var(--ink); font-size: 1.2rem; }
+.xat-card.k-call .xat-card-i { background: #3ddc84; }
+.xat-card.k-duel .xat-card-i { background: #ff8a5c; }
+.xat-card > span:nth-child(2) { display: grid; min-width: 0; }
+.xat-card b { font-size: .9rem; }
+.xat-card small { font-size: .74rem; color: var(--ink-2); }
+.xat-card em { font-size: .74rem; color: var(--ink-2); font-style: normal; }
+
+.xat-foot { border-top: 2px solid var(--ink); background: var(--card); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); display: grid; gap: 6px; }
+.xat-form { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.xat-form textarea { min-height: 42px; max-height: 132px; padding: 10px 14px; border: 2px solid var(--ink); border-radius: 21px; resize: none; font: 600 .95rem/1.35 var(--sans); background: var(--paper); color: var(--ink); overflow-y: auto; }
+.xat-form textarea:focus { outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(77, 124, 254, .35); }
+.xat-emo-btn { width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; background: none; font-size: 1.35rem; cursor: pointer; }
+.xat-emo-btn:hover { background: var(--paper); }
+.xat-send { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid var(--ink); border-radius: 50%; background: var(--red); color: #fff; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); transition: transform .1s, opacity .15s; }
+.xat-send:disabled { opacity: .35; box-shadow: none; cursor: default; }
+.xat-send:not(:disabled):active { transform: translate(2px, 2px); box-shadow: none; }
+.xat-emo { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 2px; max-height: 150px; overflow-y: auto; padding: 4px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); }
+.xat-emo[hidden], .xat-chips[hidden], .xat-reply[hidden] { display: none; }
+.xat-emo button { height: 38px; border: 0; border-radius: 8px; background: none; font-size: 1.3rem; cursor: pointer; }
+.xat-emo button:hover { background: #fff; }
+.xat-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 1px 1px 3px; }
+.xat-chips button { flex: none; padding: 5px 11px; border: 1.5px solid var(--ink); border-radius: 99px; background: var(--paper); font: 700 .8rem var(--sans); color: var(--ink); cursor: pointer; }
+.xat-chips button:hover { background: var(--yellow); }
+.xat-reply { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-left: 4px solid #4d7cfe; border-radius: 8px; background: #eef3ff; }
+.xat-reply span { flex: 1; min-width: 0; display: grid; font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xat-reply span b { font-size: .74rem; color: #2a4fd6; }
+.xat-reply button { border: 0; background: none; font-size: 1rem; cursor: pointer; color: var(--ink); }
+.xat-down { position: absolute; z-index: 4; right: 16px; bottom: 96px; display: grid; place-items: center; width: 42px; height: 42px; border: 2px solid var(--ink); border-radius: 50%; background: var(--card); box-shadow: 2px 2px 0 var(--ink); font-weight: 900; font-size: 1.1rem; cursor: pointer; color: var(--ink); }
+.xat-down b { position: absolute; top: -8px; right: -6px; min-width: 18px; padding: 0 4px; border-radius: 99px; background: var(--red); color: #fff; font-size: .68rem; }
+.xat-down b:empty { display: none; }
+.xat-down[hidden] { display: none; }
+
+.xat-sheet-bg { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; background: rgba(10, 10, 30, .45); }
+.xat-sheet { width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 14px; border: 2px solid var(--ink); border-radius: 18px; background: var(--card); box-shadow: 4px 4px 0 var(--ink); }
+.xat-sheet-t { margin: 0; padding: 6px 10px; border-radius: 10px; background: var(--paper); font-size: .84rem; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.xat-sheet-r { display: flex; justify-content: space-between; gap: 4px; }
+.xat-sheet-r button { width: 46px; height: 46px; border: 2px solid transparent; border-radius: 50%; background: var(--paper); font-size: 1.5rem; cursor: pointer; transition: transform .1s; }
+.xat-sheet-r button:hover { transform: scale(1.15); }
+.xat-sheet-r button.on { border-color: var(--ink); background: #cfe0ff; }
+.xat-sheet-a { display: grid; }
+.xat-sheet-a button { padding: 11px 6px; border: 0; border-top: 1.5px solid rgba(23, 23, 61, .12); background: none; text-align: left; font: 700 .95rem var(--sans); color: var(--ink); cursor: pointer; }
+.xat-sheet-a button:hover { background: var(--paper); }
+.xat-sheet-a .danger, .xat-menu .danger { color: #c62828; }
+@media (max-width: 640px) {
+  .xat-sheet-bg { place-items: end center; }
+  .xat-sheet { width: 100vw; border-radius: 20px 20px 0 0; border-bottom: 0; padding-bottom: calc(14px + env(safe-area-inset-bottom)); animation: xatUp .2s ease; }
+}
+@keyframes xatUp { from { transform: translateY(40px); opacity: .4; } }
+.xat-menu { position: fixed; z-index: 110; display: grid; min-width: 220px; padding: 6px; border: 2px solid var(--ink); border-radius: 14px; background: var(--card); box-shadow: 4px 4px 0 var(--ink); }
+.xat-menu button { padding: 10px 12px; border: 0; border-radius: 8px; background: none; text-align: left; font: 700 .92rem var(--sans); color: var(--ink); cursor: pointer; }
+.xat-menu button:hover { background: var(--paper); }
+
+/* El xat privat: una targeta alta; en mòbil, a pantalla completa com una app de missatges */
+.ami-chat.xat { grid-template-rows: auto minmax(0, 1fr) auto; height: min(760px, calc(100dvh - 190px)); min-height: 440px; padding: 0; gap: 0; }
+@media (max-width: 640px) {
+  .ami-chat.xat { position: fixed; inset: 0; z-index: 70; height: auto; min-height: 0; border: 0; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top); }
+  .xat-b { max-width: 84%; }
+}
+/* El xat dels equips de campanya */
+.simchat.xat { position: fixed; grid-template-rows: auto auto minmax(0, 1fr) auto auto; }
+.simchat .xat-head { background: #17173d; color: #fff; border-bottom-color: #17173d; }
+.simchat .xat-head .xat-act { background: transparent; color: #fff; border-color: #fff; box-shadow: none; }
+.simchat-ttl { display: grid; margin-right: auto; }
+.simchat-ttl b { font-family: var(--display); font-weight: 900; }
+.simchat-ttl small { font-size: .74rem; opacity: .75; font-weight: 700; }
+.simchat-tabs button { padding: 4px 10px 4px 4px; }
+.simchat-tabs button:not(.priv) { padding-left: 10px; }
+.simchat-tabs button i { width: auto; height: 22px; min-width: 22px; padding: 0 4px; display: grid; place-items: center; border-radius: 99px; background: var(--pc); color: #fff; border: 1.5px solid var(--ink); font-style: normal; font-size: .6rem; font-weight: 900; }
+.simchat-tabs button span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.simchat .xat-down { bottom: 108px; }
+.simchat.composing .xat-foot { display: none; }
+.simchat.composing { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+@media (max-width: 640px) {
+  .simchat.xat { inset: 0; width: 100vw; height: 100dvh; right: 0; bottom: 0; border: 0; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top); }
+}
+
+.xat-card > .btn, .xat-card > em { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
+/* Amb el xat dels equips obert, la trucada al costat (ordinador) o amagada si no hi ets (mòbil, xat a pantalla completa) */
+body:has(.simchat) .call-ui { right: calc(min(400px, 100vw - 32px) + 30px); }
+@media (max-width: 640px) { body:has(.simchat) .call-ui { right: 12px; } body:has(.simchat) .call-ui.pill, body:has(.ami-chat.xat) .call-ui.pill { display: none; } }

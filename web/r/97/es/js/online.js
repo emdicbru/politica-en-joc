@@ -858,7 +858,7 @@ async function loadMyDuels() {
   }).join("");
 }
 
-async function createDuel(fromCode = null, prevData = null, kind = prevData?.kind || "quiz") {
+async function createDuel(fromCode = null, prevData = null, kind = prevData?.kind || "quiz", go = true) {
   const uid = Online.user.uid;
   const code = genCode();
   const ok = await safe(() => F.setDoc(F.doc(db, "duels", code), {
@@ -871,8 +871,10 @@ async function createDuel(fromCode = null, prevData = null, kind = prevData?.kin
     if (fromCode && prevData) {
       patchMyDuel(F.doc(db, "duels", fromCode), uid, prevData, { rematch: code }).catch(() => {});
     }
-    location.hash = `#duel/${code}`;
+    if (go) location.hash = `#duel/${code}`;
+    return code;
   }
+  return null;
 }
 
 async function requestRematch(code) {
@@ -1666,15 +1668,21 @@ Online.amics = {
   },
   watchChat(id, cb) {
     const q = F.query(F.collection(db, "amistats", id, "missatges"), F.orderBy("ts", "asc"), F.limitToLast(150));
-    return F.onSnapshot(q, (s) => cb(s.docs.map((d) => { const x = d.data(); return { id: d.id, from: x.from, t: x.t, ts: x.ts?.seconds ? x.ts.seconds * 1000 : Date.now() }; })), (e) => { console.warn(e); cb(null); });
+    return F.onSnapshot(q, (s) => cb(s.docs.map((d) => { const x = d.data(); return { id: d.id, from: x.from, t: x.t, re: x.re || null, r: x.r || null, card: x.card || null, ts: x.ts?.seconds ? x.ts.seconds * 1000 : Date.now() }; })), (e) => { console.warn(e); cb(null); });
   },
-  async send(id, t) {
+  // extra: { re: { id, t, from } } (resposta) o { card: { k: "call" | "camp" | "duel", code } } (invitació)
+  async send(id, t, extra = {}) {
     const uid = Online.user.uid;
-    const ok = await safe(() => F.addDoc(F.collection(db, "amistats", id, "missatges"), { from: uid, t, ts: F.serverTimestamp() }), "No se ha podido enviar el mensaje");
+    const ok = await safe(() => F.addDoc(F.collection(db, "amistats", id, "missatges"), { from: uid, t, ts: F.serverTimestamp(), ...extra }), "No se ha podido enviar el mensaje");
     if (ok === null) return null;
-    await safe(() => F.updateDoc(amiRef(id), { last: { from: uid, t: t.slice(0, 120), ts: Date.now() }, [`read.${uid}`]: Date.now(), updatedAt: F.serverTimestamp() }));
+    await safe(() => F.updateDoc(amiRef(id), { last: { from: uid, t: t.slice(0, 120), ts: Date.now() }, [`read.${uid}`]: Date.now(), [`typing.${uid}`]: F.deleteField(), updatedAt: F.serverTimestamp() }));
     return true;
   },
+  react(id, msg, emoji) { return safe(() => F.updateDoc(F.doc(db, "amistats", id, "missatges", msg), { [`r.${Online.user.uid}`]: emoji || F.deleteField() })); },
+  delMsg(id, msg) { return safe(() => F.deleteDoc(F.doc(db, "amistats", id, "missatges", msg)), "No se ha podido borrar"); },
+  typing(id) { return F.updateDoc(amiRef(id), { [`typing.${Online.user.uid}`]: Date.now() }).catch(() => {}); },
+  // Un duel nou per convidar-hi un amic des del xat (no hi entra: torna el codi)
+  newDuel(kind = "quiz") { return createDuel(null, null, kind, false); },
   read(id) { return safe(() => F.updateDoc(amiRef(id), { [`read.${Online.user.uid}`]: Date.now() })); },
 };
 
@@ -1853,6 +1861,8 @@ Online.camp = {
   },
   // Xat dels equips: missatges a tothom o privats (to: uid)
   chat(code, msg) { return safe(() => F.setDoc(F.doc(db, "campanyes", code, "xat", msg.id), msg), "No se ha podido enviar el mensaje"); },
+  react(code, msg, emoji) { return safe(() => F.updateDoc(F.doc(db, "campanyes", code, "xat", msg), { [`r.${Online.user.uid}`]: emoji || F.deleteField() })); },
+  delMsg(code, msg) { return safe(() => F.deleteDoc(F.doc(db, "campanyes", code, "xat", msg)), "No se ha podido borrar"); },
   // Negociació: pactes i votacions (camps amb punts, p. ex. «neg.pacts.<id>»)
   neg(code, patch) { return safe(() => F.updateDoc(campRef(code), patch), "No se ha podido guardar"); },
   async mine() {

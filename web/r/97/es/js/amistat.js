@@ -35,7 +35,9 @@ window.amicsAuth = () => {
     AMI.list = list;
     amiBadge();
     AMI.cardPaint?.(); // la targeta oberta, amb l'estat nou
+    AMI.chatPaint?.(); // el xat obert: «escrivint…» i «Vist»
     if (location.hash.startsWith("#amics") && !location.hash.startsWith("#amics/xat/")) renderAmics();
+    else if (location.hash.startsWith("#amics/xat/") && !AMI.chatWith) renderAmics(); // el xat esperava la llista
   });
 };
 // Número a la pestanya Social: sol·licituds rebudes i xats amb missatges nous
@@ -154,47 +156,151 @@ async function renderAmics() {
 }
 
 // ---------- El xat privat ----------
+// Les peces del xat (missatges, quadre d'escriure, reaccions, respostes) són a xat.js. Aquí: les dades, «escrivint…»,
+// «Vist» i les invitacions (trucada, duel, campanya), que arriben a l'altre com una targeta amb un botó.
+const AMI_CARD = {
+  call: { ico: "📞", t: "Llamada", mine: "Has llamado", other: "Te llama", go: "Entra", again: "Otra vez", ttl: 3 * 3600e3 },
+  camp: { ico: "👥", t: "Campaña contra amigos", mine: "Has creado una campaña", other: "Te invita a una campaña", go: "Únete", again: "Ábrela" },
+  duel: { ico: "⚔️", t: "Duelo 1 contra 1", mine: "Has creado un duelo", other: "Te reta a un duelo", go: "Acepta el reto", again: "Ábrelo" },
+};
 function amiChatClose() {
   AMI.chatUnsub?.();
   AMI.chatUnsub = null;
   AMI.chatWith = null;
+  AMI.chatPaint = null;
+  clearInterval(AMI.chatTimer);
+  $(".xat-menu")?.remove();
+}
+// Entra a una trucada amb un amic (sala trucades/{code}): video null = pregunta si amb veu o amb vídeo
+async function amiCallGo(code, p, uid, video) {
+  const r = await window.Online.call.join(code);
+  if (r.err) { toast(r.err === "connexio" ? "No se ha podido conectar. Vuelve a intentarlo." : r.err); return; }
+  const names = { [amiMe()]: window.Online.profile?.handle || "Tú", [uid]: p.name || "Jugador" };
+  window.Call?.attach({ parent: "trucades", code, title: `Llamada con ${p.name || "un amigo"}`, names, quiet: true, alive: () => location.hash === `#amics/xat/${encodeURIComponent(uid)}` });
+  if (video === null) window.Call?.ask(); else window.Call?.join(video);
 }
 function amiChat(root, uid) {
-  if (!amiOn()) { location.hash = "#amics"; return; }
+  // Mentre s'inicia la sessió (en obrir l'enllaç o recarregar) s'espera; sense sessió, a la pestanya Amics
+  if (!amiOn()) {
+    if (window.Online?.isGuest?.()) { location.hash = "#amics"; return; }
+    root.innerHTML = `<p class="muted">Cargando…</p>`;
+    return;
+  }
   if (!AMI.list) { root.innerHTML = `<p class="muted">Cargando…</p>`; setTimeout(() => location.hash.startsWith(`#amics/xat/`) && renderAmics(), 600); return; }
   const f = amiOf(uid);
   if (!f || f.status !== "ok") { root.innerHTML = `<div class="card"><p>Solo puedes chatear con tus amigos.</p><a class="btn" href="#amics">Vuelve a los amigos</a></div>`; return; }
   if (AMI.chatWith === uid && $(".ami-chat", root)) return;
   amiChatClose();
   AMI.chatWith = uid;
-  const p = f.u?.[uid] || {};
-  root.innerHTML = `<section class="card ami-chat">
-    <header><a class="btn ghost sm" href="#amics" aria-label="Vuelve a los amigos">←</a><span data-user="${esc(uid)}" tabindex="0" class="ami-chat-who">${amiAv(p, 36)}<b>${esc(p.name || "Jugador")}</b></span><button type="button" class="linklike" data-unfriend>Dejad de ser amigos</button></header>
-    <div class="ami-log" data-log aria-live="polite"><p class="muted">Cargando…</p></div>
-    <form class="ami-form" data-form><input data-msg maxlength="500" autocomplete="off" placeholder="Escribe un mensaje…" aria-label="Mensaje"><button class="btn primary" type="submit">Envía</button></form>
-    <p class="ami-note">Mensajes privados entre vosotros dos. Sé respetuoso: si alguien te molesta, denuncia el mensaje con ⚑ o deja de ser su amigo y se borrará el chat.</p>
+  const p = f.u?.[uid] || {}, me = amiMe(), name = p.name || "Jugador";
+  AMI.chatSince = f.read?.[me] || 0; // la línia de «missatges nous»: el que ha arribat des de l'última vegada
+  root.innerHTML = `<section class="card ami-chat xat">
+    <header class="xat-head">
+      <a class="xat-back" href="#amics" aria-label="Vuelve a los amigos">←</a>
+      <span data-user="${esc(uid)}" tabindex="0" class="ami-chat-who">${amiAv(p, 40)}<span><b>${esc(name)}</b><small data-status>Amigos</small></span></span>
+      <div class="xat-acts">
+        <button type="button" class="xat-act" data-inv="call" aria-label="Llamada de voz" title="Llamada de voz">📞</button>
+        <button type="button" class="xat-act" data-inv="video" aria-label="Videollamada" title="Videollamada">📹</button>
+        <button type="button" class="xat-act" data-more aria-label="Más opciones" aria-haspopup="menu">⋯</button>
+      </div>
+    </header>
+    <div class="xat-log" data-xat-log aria-live="polite"><p class="muted">Cargando…</p></div>
+    <div class="xat-foot">${xatComposer({ max: 500, placeholder: `Escribe a ${name}…` })}</div>
   </section>`;
-  const log = $("[data-log]", root), me = amiMe();
-  AMI.chatUnsub = window.Online.amics.watchChat(f.id, (msgs) => {
-    if (!msgs) { log.innerHTML = `<p class="muted">No se han podido cargar los mensajes.</p>`; return; }
-    log.innerHTML = msgs.length ? msgs.map((m) => `<div class="ami-m ${m.from === me ? "me" : ""}"><p>${esc(m.t)}</p>${m.from === me ? "" : amiFlagBtn(p.name, uid, m.t)}<small>${new Date(m.ts).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div>`).join("") : `<p class="muted">Todavía no hay mensajes. ¡Saluda!</p>`;
-    log.scrollTop = log.scrollHeight;
+  const sec = $(".ami-chat", root), log = $("[data-xat-log]", sec);
+  let msgs = [], first = true;
+  const who = (u) => (u === me ? { name: "Tú", color: "#17173d" } : { name, color: "#6c4cff", av: p.photo ? `<img src="${esc(p.photo)}" alt="" referrerpolicy="no-referrer">` : null });
+  const card = (m) => {
+    const C = m.card && AMI_CARD[m.card.k];
+    if (!C) return "";
+    const mine = m.from === me, old = C.ttl && Date.now() - m.ts > C.ttl;
+    return `<div class="xat-card k-${m.card.k}"><span class="xat-card-i" aria-hidden="true">${C.ico}</span><span><b>${C.t}</b><small>${mine ? C.mine : C.other}</small></span>
+      ${old ? `<em>Ya ha terminado</em>` : `<button type="button" class="btn sm ${mine ? "" : "primary"}" data-card="${m.card.k}:${esc(m.card.code)}">${mine ? C.again : C.go}</button>`}</div>`;
+  };
+  const paint = () => {
+    const f2 = amiOf(uid) || f;
+    const before = xatBefore(sec);
+    log.innerHTML = `<div class="xat-intro">🔒 Chat privado entre vosotros dos. Mantén pulsado un mensaje (o haz clic con el botón derecho) para responderlo, reaccionar o denunciarlo.</div>`
+      + xatRender(msgs, { me, who, readTs: f2.read?.[uid] || 0, newSince: AMI.chatSince, extra: card, empty: `Todavía no os habéis escrito. Saluda a ${esc(name)} 👋` });
+    xatAfter(sec, before, first);
+    first = false;
+    const typing = (f2.typing?.[uid] || 0) > Date.now() - 7000;
+    $("[data-status]", sec).innerHTML = typing ? `<span class="xat-typing">escribiendo<i></i><i></i><i></i></span>` : "Amigos";
+  };
+  AMI.chatPaint = paint;
+  AMI.chatTimer = setInterval(() => { if ($("[data-status] .xat-typing", sec)) paint(); }, 3000);
+  AMI.chatUnsub = window.Online.amics.watchChat(f.id, (list) => {
+    if (!list) { log.innerHTML = `<p class="muted">No se han podido cargar los mensajes.</p>`; return; }
+    const fresh = !first && list.length > msgs.length && list[list.length - 1]?.from !== me;
+    msgs = list;
+    paint();
+    if (fresh) Sfx.play("tick");
     window.Online.amics.read(f.id);
   });
-  $("[data-form]", root).addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const i = $("[data-msg]", root), t = i.value.trim().slice(0, 500);
-    if (!t) return;
-    i.value = "";
-    if (await window.Online.amics.send(f.id, t) === null) i.value = t;
+  xatBind(sec, {
+    me, who, msg: (id) => msgs.find((m) => m.id === id),
+    send: (t, re) => window.Online.amics.send(f.id, t, re ? { re } : {}),
+    react: (id, e) => window.Online.amics.react(f.id, id, e),
+    del: (id) => window.Online.amics.delMsg(f.id, id),
+    report: (m) => amiReportData(name, uid, m.t),
+    typing: () => window.Online.amics.typing(f.id),
   });
-  $("[data-unfriend]", root).addEventListener("click", async () => {
-    if (!confirm(`Dejaréis de ser amigos y se borrará todo el chat con ${p.name || "este jugador"}. ¿Continuar?`)) return;
-    amiChatClose();
-    await window.Online.amics.remove(f.id);
-    location.hash = "#amics";
+  // Invitacions: trucada, videotrucada, duel i campanya
+  const invite = async (k) => {
+    $(".xat-menu")?.remove();
+    if (k === "call" || k === "video") {
+      const code = await window.Online.call.create();
+      if (!code) return;
+      await window.Online.amics.send(f.id, k === "video" ? "📹 Te he hecho una videollamada" : "📞 Te he llamado", { card: { k: "call", code } });
+      return amiCallGo(code, p, uid, k === "video");
+    }
+    if (k === "duel") {
+      const code = await window.Online.amics.newDuel();
+      if (!code) return;
+      await window.Online.amics.send(f.id, "⚔️ ¡Te reto a un duelo!", { card: { k: "duel", code } });
+      location.hash = `#duel/${code}`;
+    }
+    if (k === "camp") {
+      const code = await window.Online.camp.create();
+      if (!code) return;
+      await window.Online.amics.send(f.id, "👥 ¿Jugamos una campaña electoral?", { card: { k: "camp", code } });
+      location.hash = `#simulador/amics-${code}`;
+    }
+  };
+  $$("[data-inv]", sec).forEach((b) => b.addEventListener("click", () => invite(b.dataset.inv)));
+  $("[data-more]", sec).addEventListener("click", (e) => {
+    if ($(".xat-menu")) { $(".xat-menu").remove(); return; }
+    const r = e.currentTarget.getBoundingClientRect();
+    const menu = h(`<div class="xat-menu" role="menu" style="top:${Math.round(r.bottom + 6)}px;right:${Math.round(innerWidth - r.right)}px">
+      <button type="button" role="menuitem" data-mi="duel">⚔️ Rétalo a un duelo</button>
+      ${typeof simAmicsOn === "function" && simAmicsOn() ? `<button type="button" role="menuitem" data-mi="camp">👥 Campaña contra amigos</button>` : ""}
+      <button type="button" role="menuitem" data-mi="profile">👤 Perfil de ${esc(name)}</button>
+      <button type="button" role="menuitem" data-mi="unfriend" class="danger">Dejad de ser amigos</button>
+    </div>`);
+    document.body.appendChild(menu);
+    menu.addEventListener("click", async (ev) => {
+      const k = ev.target.closest("[data-mi]")?.dataset.mi;
+      if (!k) return;
+      menu.remove();
+      if (k === "profile") amiCard(uid);
+      else if (k === "unfriend") {
+        if (!confirm(`Dejaréis de ser amigos y se borrará todo el chat con ${name}. ¿Continuar?`)) return;
+        amiChatClose();
+        await window.Online.amics.remove(f.id);
+        location.hash = "#amics";
+      } else invite(k);
+    });
+    setTimeout(() => document.addEventListener("click", function off(ev) { if (!ev.target.closest(".xat-menu, [data-more]")) { $(".xat-menu")?.remove(); document.removeEventListener("click", off); } }), 0);
   });
-  $("[data-msg]", root).focus({ preventScroll: true });
+  log.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-card]");
+    if (!b) return;
+    const [k, code] = b.dataset.card.split(":");
+    if (k === "call") amiCallGo(code, p, uid, null);
+    else if (k === "camp") location.hash = `#simulador/amics-${code}`;
+    else if (k === "duel") location.hash = `#duel/${code}`;
+  });
+  if (!xatCoarse()) $("[data-xat-in]", sec).focus({ preventScroll: true });
 }
 // ---------- Sala de trucada de prova (Laboratori): #amics/trucada, #amics/trucada/CODI, #amics/trucada/LOCAL ----------
 // Es crea des del Laboratori; qualsevol persona amb sessió hi entra amb l'enllaç. LOCAL: entre pestanyes d'aquest navegador.
@@ -241,8 +347,8 @@ async function amiCallRoom(root, code) {
 
 // Denunciar un missatge (xat privat o de la campanya): arriba a l'equip com un avís al Centre de control
 const amiFlagBtn = (name, uid, t) => `<button type="button" class="ami-flag" data-flag data-flag-who="${esc(name || "Jugador")}" data-flag-uid="${esc(uid || "")}" data-flag-t="${esc(t || "")}" aria-label="Denuncia este mensaje" title="Denuncia este mensaje">⚑</button>`;
-async function amiReport(b) {
-  const { flagWho: who, flagUid: uid, flagT: t } = b.dataset;
+function amiReport(b) { return amiReportData(b.dataset.flagWho, b.dataset.flagUid, b.dataset.flagT); }
+async function amiReportData(who, uid, t) {
   if (!confirm(`¿Quieres denunciar este mensaje de ${who}? El equipo de Política en Joc lo revisará y, si hace falta, tomará medidas.`)) return;
   if (typeof featPreview === "function" && featPreview("amics") && String(uid).startsWith("bot-")) { toast("En el laboratorio no se envía: es un amigo ficticio."); return; }
   const c = typeof rptContext === "function" ? rptContext() : { ver: "", ua: "", scr: "" };

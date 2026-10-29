@@ -3,7 +3,7 @@
 // control, una de local amb candidats ficticis (DbLab). L'amfitrió fa avançar el debat; tothom veu el mateix.
 
 // Quan el veurà tothom. Fins llavors, només des del Laboratori, amb candidats ficticis.
-const DBM_FROM = Infinity;
+const DBM_FROM = Date.UTC(2026, 9, 29, 16, 0); // públic des del 29-10-2026 (v96)
 const dbmPublic = () => Date.now() >= DBM_FROM;
 const dbmOn = () => dbmPublic() || (typeof featPreview === "function" && featPreview("debatamics"));
 const dbmIsLab = () => !dbmPublic() && typeof featPreview === "function" && featPreview("debatamics");

@@ -38,45 +38,69 @@ function simChatToggle(G, open = !G.chatOpen) {
   G.chatTab = G.chatTab || "all";
   simChatPaint(G);
 }
+// Frases ràpides segons la pestanya i el moment de la partida
+function simChatChips(G, tab) {
+  const d = G.mpDoc;
+  if (tab === "ai") return [];
+  if (tab === "all") return d.leg ? ["Buena sesión a todos 🏛️", "Votaremos a favor 👍", "Esta no la votaremos ✋", "😂"] : d.neg ? ["¿Quién quiere hablar de pactos? 🤝", "Felicidades por el resultado 👏", "😅"] : ["¡Buena campaña a todos! 🍀", "Nos vemos en las urnas 🗳️", "👏", "😂"];
+  if (d.leg) return ["¿Nos apoyáis en la ley? 📜", "Contad con nuestro voto 👍", "Esta no la podemos votar ✋", "¿Qué necesitáis a cambio? 🤔"];
+  if (d.neg) return ["¿Hablamos de pactos? 🤝", "¿Qué necesitáis para votarnos?", "¿Votaréis a favor de la investidura?", "De acuerdo 👍", "Tenemos que pensarlo 🤔"];
+  return ["¿Hacemos piña? 😏", "¡Buena campaña! 🍀", "Ya nos veremos en las urnas 😎", "😂"];
+}
 function simChatPaint(G) {
   if (!G.chatOpen || !G.mpDoc) return;
   const d = G.mpDoc, me = simMpMe();
   let box = $(".simchat");
   if (!box) {
-    box = h(`<section class="simchat" role="dialog" aria-label="Chat de los equipos de campaña">
-      <header><b>Equipos de campaña</b><button type="button" class="simchat-x" data-chat-close aria-label="Cierra el chat">✕</button></header>
+    box = h(`<section class="simchat xat" role="dialog" aria-label="Chat de los equipos de campaña">
+      <header class="xat-head"><span class="simchat-ttl"><b>Equipos de campaña</b><small data-chat-sub></small></span><button type="button" class="xat-act" data-chat-close aria-label="Cierra el chat">✕</button></header>
       <nav class="simchat-tabs" role="tablist" data-tabs></nav>
-      <div class="simchat-log" data-log aria-live="polite"></div>
+      <div class="xat-log simchat-log" data-xat-log aria-live="polite"></div>
       <div data-compose></div>
-      <form class="simchat-form" data-form><input data-msg maxlength="${SIM_CHAT_MAX}" autocomplete="off" placeholder="Escribe un mensaje…" aria-label="Mensaje"><button class="btn primary" type="submit">Envía</button></form>
+      <div class="xat-foot">${xatComposer({ max: SIM_CHAT_MAX })}</div>
     </section>`);
     document.body.appendChild(box);
     $("[data-chat-close]", box).addEventListener("click", () => simChatToggle(G, false));
-    $("[data-form]", box).addEventListener("submit", (e) => {
-      e.preventDefault();
-      const i = $("[data-msg]", box), t = i.value.trim().slice(0, SIM_CHAT_MAX);
-      if (!t) return;
-      i.value = "";
-      simChatSend(G, G.chatTab, t);
+    xatBind(box, {
+      me, who: (u) => simChatWho(G, u), msg: (id) => (G.mpDoc.chat || []).find((m) => m.id === id),
+      send: (t, re) => simChatSend(G, G.chatTab, t, re ? { re } : {}),
+      react: (id, e) => simMpApi().react?.(G.mp.code, id, e),
+      del: (id) => simMpApi().delMsg?.(G.mp.code, id),
+      canDelete: (m) => !m.pact,
+      report: (m) => amiReportData(simMpWho(G, m.from).name, m.from, m.t),
+    });
+    $("[data-xat-log]", box).addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pact-ok], [data-pact-no]");
+      if (b) simPactAnswer(G, b.dataset.pactOk || b.dataset.pactNo, !!b.dataset.pactOk);
     });
   }
   const tab = G.chatTab;
   const others = d.players.filter((u) => u !== me);
-  const aiTab = (d.chat || []).some((m) => String(m.from).startsWith("ai:") && m.to === me);
+  const isAi = (x) => String(x).startsWith("ai:");
+  const aiTab = (d.chat || []).some((m) => isAi(m.from) && m.to === me);
+  $("[data-chat-sub]", box).textContent = d.leg ? "Legislatura" : d.neg ? "Negociación para formar gobierno" : d.status === "playing" ? `Campaña · día ${Math.min(d.day, 6)}` : "";
+  // Pestanyes: tots i cada partit (amb el seu color i les sigles)
   $("[data-tabs]", box).innerHTML = [["all", "Todos"], ...others.map((u) => [u, simMpWho(G, u).sig]), ...(aiTab ? [["ai", "Otros partidos"]] : [])].map(([k, l]) => {
     const n = simChatUnread(G, k);
-    const c = k === "all" || k === "ai" ? "" : `style="--pc:${simMpWho(G, k).color}"`;
-    return `<button type="button" role="tab" aria-selected="${k === tab}" class="${k === tab ? "on" : ""} ${k === "all" ? "" : "priv"}" data-tab="${esc(k)}" ${c}>${k === "all" || k === "ai" ? "" : "<i></i>"}${esc(l)}${n ? `<b>${n}</b>` : ""}</button>`;
+    const W = k === "all" || k === "ai" ? null : simMpWho(G, k);
+    return `<button type="button" role="tab" aria-selected="${k === tab}" class="${k === tab ? "on" : ""} ${W ? "priv" : ""}" data-tab="${esc(k)}" ${W ? `style="--pc:${W.color}" title="Xat privat amb ${esc(W.name)} (${esc(W.party)})"` : ""}>${W ? `<i>${esc(W.sig.slice(0, 3))}</i>` : k === "all" ? "📣 " : ""}<span>${esc(W ? W.name : l)}</span>${n ? `<b>${n}</b>` : ""}</button>`;
   }).join("");
-  $$("[data-tab]", box).forEach((b) => b.addEventListener("click", () => { G.chatTab = b.dataset.tab; G.chatCompose = false; simChatPaint(G); }));
+  $$("[data-tab]", box).forEach((b) => b.addEventListener("click", () => { G.chatTab = b.dataset.tab; G.chatCompose = false; xatReplySet(box, null); simChatPaint(G); }));
   // Missatges de la pestanya (el general, o els privats entre tu i aquest jugador)
-  const isAi = (x) => String(x).startsWith("ai:");
   const msgs = (d.chat || []).filter((m) => (tab === "all" ? m.to === "all" : tab === "ai" ? (isAi(m.from) && m.to === me) || (m.from === me && isAi(m.to)) : (m.from === me && m.to === tab) || (m.from === tab && m.to === me)));
-  const log = $("[data-log]", box);
-  const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
-  log.innerHTML = msgs.length ? msgs.map((m) => simChatMsg(G, m)).join("") : `<p class="simchat-empty">${tab === "ai" ? "Aquí te escriben los partidos de la máquina cuando buscan apoyos." : tab === "all" ? "Aquí habláis todos los equipos. Los mensajes privados, en la pestaña de cada partido." : `Chat privado con ${esc(simMpWho(G, tab).name)}.${d.neg ? " Desde aquí le puedes ofrecer un pacto." : ""}`}</p>`;
-  if (atEnd || !G.chatScrolled) { log.scrollTop = log.scrollHeight; G.chatScrolled = true; }
-  $$("[data-pact-ok], [data-pact-no]", log).forEach((b) => b.addEventListener("click", () => simPactAnswer(G, b.dataset.pactOk || b.dataset.pactNo, !!b.dataset.pactOk)));
+  const fresh = box.dataset.tab !== tab;
+  if (fresh) { G.chatSince = (G.chatSeen || {})[tab] || 0; box.dataset.tab = tab; }
+  const before = xatBefore(box);
+  const W = tab !== "all" && tab !== "ai" ? simMpWho(G, tab) : null;
+  $("[data-xat-log]", box).innerHTML = `${W ? `<div class="xat-intro">🔒 Chat privado con <b>${esc(W.name)}</b> (${esc(W.party)}). Nadie más puede leerlo.${d.neg && !d.neg.result ? " Desde aquí le puedes ofrecer un pacto." : ""}</div>` : ""}`
+    + xatRender(msgs, {
+      me, who: (u) => simChatWho(G, u), names: tab === "all", newSince: G.chatSince,
+      extra: (m) => { const p = m.pact ? G.mpDoc.neg?.pacts?.[m.pact] : null; return p ? simPactCard(G, p) : ""; },
+      empty: tab === "ai" ? "Aquí te escriben los partidos de la máquina cuando buscan apoyos." : tab === "all" ? "Aquí habláis todos los equipos. Para hablar en privado, elige un partido arriba." : `Todavía no habéis hablado. Saluda a ${esc(W.name)} 👋`,
+    });
+  xatAfter(box, before, fresh);
+  xatChipsSet(box, simChatChips(G, tab));
+  $("[data-xat-in]", box).placeholder = W ? `Mensaje privado a ${W.name}…` : tab === "ai" ? "Responde a los partidos…" : "Mensaje a todos los equipos…";
   // Pactes: només als xats privats i quan el Congrés ja és constituït
   const compose = $("[data-compose]", box);
   box.classList.toggle("composing", !!G.chatCompose && tab !== "all" && tab !== "ai");
@@ -89,15 +113,10 @@ function simChatPaint(G) {
   G.chatSeen = { ...(G.chatSeen || {}), [tab]: Date.now() };
   simMpStrip(G, d);
 }
-function simChatMsg(G, m) {
-  const me = simMpMe(), W = simMpWho(G, m.from), mine = m.from === me;
-  const pact = m.pact ? G.mpDoc.neg?.pacts?.[m.pact] : null;
-  return `<div class="simchat-m ${mine ? "me" : ""}" style="--pc:${W.color}">
-    ${mine ? "" : `<small><i></i><b>${esc(W.sig)}</b> ${esc(W.name)}</small>`}
-    <p>${esc(m.t)}</p>
-    ${mine || W.sys ? "" : amiFlagBtn(W.name, m.from, m.t)}
-    ${pact ? simPactCard(G, pact) : ""}
-  </div>`;
+// Qui escriu, per al xat: nom de la persona, sigles i color del partit
+function simChatWho(G, u) {
+  const W = simMpWho(G, u);
+  return { name: W.name, sig: W.sig, color: W.color, av: `<span class="xat-sig">${esc((W.sig || "?").slice(0, 3))}</span>` };
 }
 async function simChatSend(G, to, t, extra = {}) {
   const msg = { id: `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, from: simMpMe(), to, t, ts: Date.now(), ...extra };

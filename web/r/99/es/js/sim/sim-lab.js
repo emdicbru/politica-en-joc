@@ -64,6 +64,8 @@ const SimLab = (() => {
       return true;
     },
     async chat(code, msg) { room.chat = [...(room.chat || []), msg].slice(-150); emit(); return true; },
+    async react(code, id, e) { const m = (room?.chat || []).find((x) => x.id === id); if (!m) return null; m.r = { ...(m.r || {}) }; if (e) m.r[me()] = e; else delete m.r[me()]; emit(); return true; },
+    async delMsg(code, id) { if (!room) return null; room.chat = (room.chat || []).filter((x) => x.id !== id); emit(); return true; },
     async neg(code, p) { patch(p); emit(); return true; },
     async mine() { return room && room.status !== "done" ? [JSON.parse(JSON.stringify(room))] : []; },
     // Només al laboratori: afegeix un amic fictici a la sala
@@ -116,6 +118,11 @@ const SimLab = (() => {
         if (hit) later(`retret-${u}-${day}`, simLabWait(2500, 6000), () => say(u, uidOf(hit.party), P.taunt));
       }
     });
+    // De tant en tant reaccionen als missatges dels jugadors al xat general
+    (room.chat || []).filter((m) => m.to === "all" && !m.from.startsWith("bot-") && m.from !== "sys" && Date.now() - m.ts < 20000).forEach((m) => botsOf().forEach((u) => {
+      if (simHash(`${m.id}|${u}`) % 3) return;
+      later(`rx-${m.id}-${u}`, simLabWait(1200, 4000), () => { const x = (room.chat || []).find((y) => y.id === m.id); if (!x) return; x.r = { ...(x.r || {}), [u]: ["👍", "😂", "👏", "🔥"][simHash(u + m.id) % 4] }; emit(); });
+    }));
     if (room.neg) botsNeg(W);
     if (room.leg && !room.leg.end) botsLeg(W);
   }

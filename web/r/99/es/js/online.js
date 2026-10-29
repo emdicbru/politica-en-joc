@@ -61,7 +61,8 @@ const Online = {
     const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
     const j = sub.toJSON();
     const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(j.endpoint)))].map((x) => x.toString(16).padStart(2, "0")).join("");
-    await F.setDoc(F.doc(db, "push", hash), { sub: { endpoint: j.endpoint, keys: { p256dh: j.keys.p256dh, auth: j.keys.auth } }, topics, t: Date.now(), ua: /iphone|ipad/i.test(navigator.userAgent) ? "ios" : /android/i.test(navigator.userAgent) ? "android" : "web" });
+    // Amb sessió, el dispositiu queda lligat a l'usuari: hi arriben els avisos de missatges i trucades dels amics
+    await F.setDoc(F.doc(db, "push", hash), { sub: { endpoint: j.endpoint, keys: { p256dh: j.keys.p256dh, auth: j.keys.auth } }, topics, t: Date.now(), ua: /iphone|ipad/i.test(navigator.userAgent) ? "ios" : /android/i.test(navigator.userAgent) ? "android" : "web", ...(Online.user ? { uid: Online.user.uid } : {}) });
     return hash;
   },
   async pushUnsubscribe(id) {
@@ -858,7 +859,7 @@ async function loadMyDuels() {
   }).join("");
 }
 
-async function createDuel(fromCode = null, prevData = null, kind = prevData?.kind || "quiz") {
+async function createDuel(fromCode = null, prevData = null, kind = prevData?.kind || "quiz", go = true) {
   const uid = Online.user.uid;
   const code = genCode();
   const ok = await safe(() => F.setDoc(F.doc(db, "duels", code), {
@@ -871,8 +872,10 @@ async function createDuel(fromCode = null, prevData = null, kind = prevData?.kin
     if (fromCode && prevData) {
       patchMyDuel(F.doc(db, "duels", fromCode), uid, prevData, { rematch: code }).catch(() => {});
     }
-    location.hash = `#duel/${code}`;
+    if (go) location.hash = `#duel/${code}`;
+    return code;
   }
+  return null;
 }
 
 async function requestRematch(code) {
@@ -1666,22 +1669,53 @@ Online.amics = {
   },
   watchChat(id, cb) {
     const q = F.query(F.collection(db, "amistats", id, "missatges"), F.orderBy("ts", "asc"), F.limitToLast(150));
-    return F.onSnapshot(q, (s) => cb(s.docs.map((d) => { const x = d.data(); return { id: d.id, from: x.from, t: x.t, ts: x.ts?.seconds ? x.ts.seconds * 1000 : Date.now() }; })), (e) => { console.warn(e); cb(null); });
+    return F.onSnapshot(q, (s) => cb(s.docs.map((d) => { const x = d.data(); return { id: d.id, from: x.from, t: x.t, re: x.re || null, r: x.r || null, card: x.card || null, ts: x.ts?.seconds ? x.ts.seconds * 1000 : Date.now() }; })), (e) => { console.warn(e); cb(null); });
   },
-  async send(id, t) {
+  // extra: { re: { id, t, from } } (resposta) o { card: { k: "call" | "camp" | "duel", code } } (invitació)
+  async send(id, t, extra = {}) {
     const uid = Online.user.uid;
-    const ok = await safe(() => F.addDoc(F.collection(db, "amistats", id, "missatges"), { from: uid, t, ts: F.serverTimestamp() }), "No se ha podido enviar el mensaje");
+    const ok = await safe(() => F.addDoc(F.collection(db, "amistats", id, "missatges"), { from: uid, t, ts: F.serverTimestamp(), ...extra }), "No se ha podido enviar el mensaje");
     if (ok === null) return null;
-    await safe(() => F.updateDoc(amiRef(id), { last: { from: uid, t: t.slice(0, 120), ts: Date.now() }, [`read.${uid}`]: Date.now(), updatedAt: F.serverTimestamp() }));
+    await safe(() => F.updateDoc(amiRef(id), { last: { from: uid, t: t.slice(0, 120), ts: Date.now() }, [`read.${uid}`]: Date.now(), [`typing.${uid}`]: F.deleteField(), updatedAt: F.serverTimestamp() }));
+    if (!extra.card) Online.avisa("msg", id); // les invitacions ja avisen per la seva banda (trucada) o no cal
     return true;
   },
+  react(id, msg, emoji) { return safe(() => F.updateDoc(F.doc(db, "amistats", id, "missatges", msg), { [`r.${Online.user.uid}`]: emoji || F.deleteField() })); },
+  delMsg(id, msg) { return safe(() => F.deleteDoc(F.doc(db, "amistats", id, "missatges", msg)), "No se ha podido borrar"); },
+  typing(id) { return F.updateDoc(amiRef(id), { [`typing.${Online.user.uid}`]: Date.now() }).catch(() => {}); },
+  // Un duel nou per convidar-hi un amic des del xat (no hi entra: torna el codi)
+  newDuel(kind = "quiz") { return createDuel(null, null, kind, false); },
   read(id) { return safe(() => F.updateDoc(amiRef(id), { [`read.${Online.user.uid}`]: Date.now() })); },
+  // Trucades entre amics: amistats/{id}.call = { from, code (sala trucades/), video, st, ts }. st: ring (sona),
+  // ok (contestada), no (rebutjada), perduda (ningú no ha contestat) o fi (qui truca ha penjat abans)
+  async ring(id, code, video) {
+    const ok = await safe(() => F.updateDoc(amiRef(id), { call: { from: Online.user.uid, code, video: !!video, st: "ring", ts: Date.now() } }), "No se ha podido llamar");
+    if (ok !== null) Online.avisa("call", id);
+    return ok;
+  },
+  async callState(id, st) {
+    const ok = await safe(() => F.updateDoc(amiRef(id), { "call.st": st }));
+    if (ok !== null) Online.avisa("end", id);
+    return ok;
+  },
 };
 
 // ---------- Debat entre amics (simulador de debat, de 2 a 4 candidats) ----------
 // debats/{code}: players, seats.<uid> (nom i candidat), st (estat del debat, JSON, l'escriu l'amfitrió),
 // ch.<uid> (la tria de cada jugador: { k: "bloc:fase", v }), rd.<uid> (fins on ha mirat). Motor: debat-multi.js.
 const debRef = (code) => F.doc(db, "debats", code);
+// ---------- Avisos a l'instant (servei d'avisos, worker/avisos.js a Cloudflare) ----------
+// Demana al servei que enviï la notificació push a l'amic (missatge nou o trucada), encara que tingui l'app tancada.
+// El servei comprova la sessió i l'amistat i fa servir el que hi ha a Firestore; aquí només li diem quina amistat.
+Online.avisa = async (kind, fid) => {
+  if (!ready || !Online.user || !cfg?.avisosUrl || !auth?.currentUser?.getIdToken) return;
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await fetch(`${cfg.avisosUrl}/avisa`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ kind, fid }), keepalive: true });
+  } catch (e) { console.warn(e); }
+};
+Online.avisosOn = () => !!cfg?.avisosUrl;
+
 // ---------- Trucades i videotrucades entre amics (trucada.js) ----------
 // L'àudio i el vídeo van directament entre els navegadors (WebRTC). Firestore només fa de bústia per posar-los en contacte:
 // {campanyes|debats|trucades}/{code}/senyal/{id}: presència (in_<uid>: nom, sessió, micro, càmera) i missatges de connexió
@@ -1853,6 +1887,8 @@ Online.camp = {
   },
   // Xat dels equips: missatges a tothom o privats (to: uid)
   chat(code, msg) { return safe(() => F.setDoc(F.doc(db, "campanyes", code, "xat", msg.id), msg), "No se ha podido enviar el mensaje"); },
+  react(code, msg, emoji) { return safe(() => F.updateDoc(F.doc(db, "campanyes", code, "xat", msg), { [`r.${Online.user.uid}`]: emoji || F.deleteField() })); },
+  delMsg(code, msg) { return safe(() => F.deleteDoc(F.doc(db, "campanyes", code, "xat", msg)), "No se ha podido borrar"); },
   // Negociació: pactes i votacions (camps amb punts, p. ex. «neg.pacts.<id>»)
   neg(code, patch) { return safe(() => F.updateDoc(campRef(code), patch), "No se ha podido guardar"); },
   async mine() {

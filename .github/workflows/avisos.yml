@@ -1,0 +1,41 @@
+name: Desplega el servei d'avisos
+# Desplega worker/ (avisos de missatges i trucades entre amics) a Cloudflare Workers i hi posa els secrets.
+# Les claus no surten mai de GitHub: FIREBASE_SA, VAPID_PUBLIC i VAPID_PRIVATE són les mateixes que fa servir push.yml.
+# Cal tenir a GitHub els secrets CLOUDFLARE_API_TOKEN (plantilla «Edit Cloudflare Workers») i CLOUDFLARE_ACCOUNT_ID.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["worker/**", ".github/workflows/avisos.yml"]
+concurrency:
+  group: avisos
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Comprova els secrets
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "Falten CLOUDFLARE_API_TOKEN i CLOUDFLARE_ACCOUNT_ID"; exit 1; fi
+      - name: Desplega el Worker
+        working-directory: worker
+        run: npx --yes wrangler@3.90.0 deploy
+      - name: Posa els secrets al Worker
+        working-directory: worker
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+        run: |
+          printf '%s' "$FIREBASE_SA" | npx --yes wrangler@3.90.0 secret put FIREBASE_SA
+          printf '%s' "$VAPID_PUBLIC" | npx --yes wrangler@3.90.0 secret put VAPID_PUBLIC
+          printf '%s' "$VAPID_PRIVATE" | npx --yes wrangler@3.90.0 secret put VAPID_PRIVATE

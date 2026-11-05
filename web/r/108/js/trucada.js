@@ -9,7 +9,12 @@
 // qui els rep (rsid) per descartar els d'una connexió antiga. Cada connexió té sempre un canal d'àudio i un de vídeo:
 // encendre o apagar la càmera només canvia la pista (replaceTrack), sense tornar a negociar.
 
-const CALL_ICE = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
+// Tornen a ser només del Laboratori (v106, 30-10-2026): entre mòbils encara no van prou bé. Sense CALL_FROM no es veu el
+// botó 📞 enlloc; l'equip les prova amb la vista prèvia «trucada» del Centre de control.
+const CALL_FROM = Infinity;
+const callOn = () => Date.now() >= CALL_FROM || (typeof featPreview === "function" && featPreview("trucada"));
+
+const CALL_ICE = [{ urls:["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
 // Amb dades mòbils la connexió directa sovint no és possible: llavors l'àudio i el vídeo passen, xifrats, per un servidor
 // TURN de Cloudflare. Les credencials són temporals (Online.turn, servei d'avisos) i es guarden fins que caduquen.
 async function callIce() {
@@ -68,7 +73,7 @@ function callAttach(opts) {
   if (Call.room?.key === key) { Object.assign(Call.room, opts); callPaint(); return; }
   if (Call.joined) return; // ja és en una altra trucada: no la talla
   callDetach();
-  if (!opts.lab && !window.Online?.call?.ok()) return;
+  if (!callOn() || (!opts.lab && !window.Online?.call?.ok())) return;
   Call.room = { ...opts, key };
   Call.tr = opts.lab ? callLabTransport(opts.code) : window.Online.call.transport(opts.parent, opts.code);
   Call.me = Call.tr.uid;
@@ -377,4 +382,4 @@ function callBind(el) {
   });
 }
 // ask: obre la pregunta «amb veu o amb vídeo»; join: entra directament
-window.Call = { attach: callAttach, detach: callDetach, state: Call, join: callJoin, hangup: () => callHangup(), ask: () => { if (!Call.room || Call.joined) return; Call.asking = true; callPaint(); const el = $(".call-ui"); if (el) { el.dataset.ask = "1"; callPaint(); } } };
+window.Call = { on: callOn, attach: callAttach, detach: callDetach, state: Call, join: callJoin, hangup: () => callHangup(), ask: () => { if (!Call.room || Call.joined) return; Call.asking = true; callPaint(); const el = $(".call-ui"); if (el) { el.dataset.ask = "1"; callPaint(); } } };

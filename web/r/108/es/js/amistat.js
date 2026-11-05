@@ -175,7 +175,7 @@ async function renderAmics() {
           <button type="button" data-play="duel"><span aria-hidden="true">⚔️</span>Duelo</button>
           ${typeof simAmicsOn === "function" && simAmicsOn() ? `<button type="button" data-play="camp"><span aria-hidden="true">👥</span>Campaña</button>` : ""}
           ${typeof dbmOn === "function" && dbmOn() ? `<a href="#simulador/debat-amics"><span aria-hidden="true">🎙️</span>Debate</a>` : ""}
-          <button type="button" data-play="call"><span aria-hidden="true">📞</span>Llama</button>
+          ${window.Call?.on?.() ? `<button type="button" data-play="call"><span aria-hidden="true">📞</span>Llama</button>` : ""}
         </div></section>` : ""}
       ${friends.length ? `<section class="card amx-chats">
         <header class="amx-head"><h2 class="amx-h">Tus amigos <span class="amx-n soft">${friends.length}</span></h2><a class="btn sm amx-addbtn" href="#amics" data-goadd>+ Añadir</a></header>
@@ -292,6 +292,7 @@ function amiChatClose() {
 }
 // Entra a una trucada amb un amic (sala trucades/{code}): video null = pregunta si amb veu o amb vídeo
 async function amiCallGo(code, p, uid, video, fid = null) {
+  if (!window.Call?.on?.()) { toast("Las llamadas aún están en pruebas. Pronto podrás usarlas."); return; }
   const r = await window.Online.call.join(code);
   if (r.err) { toast(r.err === "connexio" ? "No se ha podido conectar. Vuelve a intentarlo." : r.err); return; }
   const names = { [amiMe()]: window.Online.profile?.handle || "Tú", [uid]: p.name || "Jugador" };
@@ -320,8 +321,8 @@ function amiChat(root, uid) {
       <a class="xat-back" href="#amics" aria-label="Vuelve a los amigos">←</a>
       <span data-user="${esc(uid)}" tabindex="0" class="ami-chat-who">${amiAv(p, 40)}<span><b>${esc(name)}</b><small data-status>Amigos</small></span></span>
       <div class="xat-acts">
-        <button type="button" class="xat-act" data-inv="call" aria-label="Llamada de voz" title="Llamada de voz">📞</button>
-        <button type="button" class="xat-act" data-inv="video" aria-label="Videollamada" title="Videollamada">📹</button>
+        ${window.Call?.on?.() ? `<button type="button" class="xat-act" data-inv="call" aria-label="Llamada de voz" title="Llamada de voz">📞</button>
+        <button type="button" class="xat-act" data-inv="video" aria-label="Videollamada" title="Videollamada">📹</button>` : ""}
         <button type="button" class="xat-act" data-more aria-label="Más opciones" aria-haspopup="menu">⋯</button>
       </div>
     </header>
@@ -476,6 +477,7 @@ window.addEventListener("hashchange", () => {
 const AMI_RING_MS = 40000; // si en 40 s ningú no contesta, «no contesta» (trucada perduda)
 AMI.calls = {};
 function amiCalls(list) {
+  if (!window.Call?.on?.()) return; // trucades només al Laboratori: no sona res
   const me = amiMe();
   list.forEach((f) => {
     const c = f.call;

@@ -11,7 +11,7 @@ const CTL_ROLES = {
   propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
 };
 // Què cal per veure cada pestanya
-const CTL_TAB_ROLE = { resum: 1, usuaris: 1, registrats: 2, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4 };
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, registrats: 2, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4, locucio: 4 };
 let ctlRoleCache = { email: null, role: undefined, loading: false };
 function ctlRole() {
   const email = window.Online?.user?.email?.toLowerCase();
@@ -100,7 +100,7 @@ function ctlChanges() {
 }
 async function ctlCheckFile() {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
     ctlFile = r.ok ? await r.json() : { missing: true };
   } catch { ctlFile = { missing: true }; }
 }
@@ -174,7 +174,7 @@ function renderControlPage(fromLive = false) {
     ["General", [["resum", "🏠", "Resum"], ["usuaris", "📊", "Usuaris"], ["registrats", "👤", "Registrats"], ["errors", "🐞", "Errors", count(newErr)], ["equip", "👥", "Equip"]]],
     ["Contingut", [["noticies", "📰", "Notícies"], ["notif", "🔔", "Notificacions"], ["premsa", "📣", "Premsa"], ["anuncis", "💶", "Anuncis"]]],
     ["Especial del 29N", [["fases", "📅", "Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "📺", "Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "🎯", "Porra i pronòstics", dot(["Porra", "Pronòstics"])]]],
-    ["Eines", [["lab", "🧪", "Laboratori", count(labSoon)], ["ajuda", "❓", "Ajuda"]]],
+    ["Eines", [["lab", "🧪", "Laboratori", count(labSoon)], ["locucio", "🎙️", "Locució"], ["ajuda", "❓", "Ajuda"]]],
   ].map(([g, items]) => [g, items.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3))]).filter(([, items]) => items.length);
   const TABS = GROUPS.flatMap(([, items]) => items);
   let tab = sessionStorage.getItem("ctl-tab") || "resum";
@@ -284,6 +284,17 @@ function renderControlPage(fromLive = false) {
       </section>`)}
 
     ${panel("lab", ctlLabHtml())}
+
+    ${panel("locucio", `
+      <p class="ctl-intro">L'editor per posar la teva veu als vídeos de la sèrie. Només hi pots entrar tu.</p>
+      <section class="card ctl-helpbox">
+        <h2 class="section-title sm">Editor de locució</h2>
+        <ul><li>Obre el vídeo (la versió «sense veu» o la «amb so») i hi afegeixes les teves gravacions.</li>
+          <li>A la línia de temps pots moure, retallar i tallar cada tros, i ajustar-ne el volum.</li>
+          <li>Exporta en màxima qualitat: la imatge es copia tal qual i el so va en AAC a 320 kbps.</li>
+          <li>Tot passa al teu navegador: els fitxers no es pugen enlloc. El projecte es desa sol.</li></ul>
+        <a class="btn primary" href="/locucio/" target="_blank" rel="noopener">Obre l'editor de locució</a>
+      </section>`)}
 
     ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
     ${panel("registrats", tab === "registrats" && typeof ctlRegHtml === "function" ? ctlRegHtml() : "")}
@@ -429,7 +440,10 @@ function ctlLabItems() {
   if (typeof DAILY_V3_FROM === "undefined" || typeof DAILY_V2_FROM === "undefined" || typeof ESP_T === "undefined" || typeof PRON_OPEN === "undefined") return [];
   const [y, m, d] = DAILY_V2_FROM.split("-").map(Number);
   const [y3, m3, d3] = DAILY_V3_FROM.split("-").map(Number);
+  const [y4, m4, d4] = DAILY_V4_FROM.split("-").map(Number);
   return [
+    { id: "diari4", icon: "🧩", name: "Repte diari renovat", go: "#joc/diari", from: new Date(y4, m4 - 1, d4).getTime(),
+      desc: "Sense l'aritmètica del Congrés. Parelles reformulades (organisme i funció, partit i candidat…) i proves noves: troba l'error, classifica, quines eleccions són?, la llei d'Hondt i pinta la comunitat. Moltes més preguntes a tots els reptes." },
     { id: "diari3", icon: "🧠", name: "Repte diari amb dinàmiques noves", go: "#joc/diari", from: new Date(y3, m3 - 1, d3).getTime(),
       desc: "Cada dia, cinc proves especials triades entre nou: siluetes de províncies, aritmètica del Congrés, parelles de sigles, l'intrús, completa la frase, ordena, el mapa, el número i dibuixa-ho (encerclar els Països Catalans, Euskal Herria, Galícia… en un mapa sense províncies). La partida de prova no compta." },
     { id: "diari2", icon: "🧩", name: "Repte diari amb proves noves", go: "#joc/diari", from: new Date(y, m - 1, d).getTime(),
@@ -541,7 +555,7 @@ function ctlNotifHtml() {
         ${d.rep === "dies" ? `<div class="ctl-days">${CTL_WD.map(([n, t]) => `<label><input type="checkbox" data-pday="${n}" ${d.days.includes(n) ? "checked" : ""}> ${t}</label>`).join("")}</div>` : ""}
         ${d.rep !== "cap" ? `<label>Fins a (opcional) <input type="date" data-puntil value="${esc(d.until)}"></label>` : ""}
       </div>` : ""}
-      <div class="push-prev"><span aria-hidden="true"><img src="../img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
+      <div class="push-prev"><span aria-hidden="true"><img src="img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
       <div class="row"><button class="btn primary" type="button" data-psend ${d.title.trim() ? "" : "disabled"}>${d.when === "prog" ? "Programa l'avís" : "Envia l'avís"}</button></div>
     </section>
     <section class="card">

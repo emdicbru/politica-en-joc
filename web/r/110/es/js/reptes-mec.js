@@ -34,7 +34,9 @@ function orderItem(rng) {
     prompt = "De más a menos escaños en el Congreso del 23-J";
     how = list.map((x) => `${x.t}: ${x.v}`).join(" · ");
   } else {
-    for (let k = 0; k < 60; k++) { list = sample(EVENTS, 4, rng); if (new Set(list.map((e) => e.y)).size === 4) break; }
+    // Sense els fets de la quarta tanda: els reptes d'aquesta prova han de continuar sent iguals
+    const ev = EVENTS.filter((e) => e.since !== DAILY_V4_FROM);
+    for (let k = 0; k < 60; k++) { list = sample(ev, 4, rng); if (new Set(list.map((e) => e.y)).size === 4) break; }
     list = list.map((e) => ({ t: e.t, v: e.y }));
     list.sort((a, b) => a.v - b.v);
     prompt = "Del más antiguo al más reciente";
@@ -304,7 +306,7 @@ registerGame({
   desc: "Un mapa sin fronteras provinciales y un territorio: los Países Catalanes, Euskal Herria, Galicia, Andalucía… Repasa sus límites y descubre la precisión de tu dibujo.",
   rules: ["5 territorios", "Puntúa la precisión de cada dibujo", "Más del 85 %: dibujo aprobado", "Puedes hacer más de un trazo"],
   start(ctx) {
-    const list = sample(DRAW_TARGETS, 5), N = list.length, results = [], pcts = [];
+    const list = sample([...DRAW_TARGETS, ...DRAW_TARGETS_MES], 5), N = list.length, results = [], pcts = [];
     const avg = () => pcts.reduce((a, b) => a + b, 0) / pcts.length;
     let m = 0;
     ctx.hud([["m", "Territorio", `1/${N}`], ["p", "Precisión media", "–"]]);
@@ -646,6 +648,8 @@ function fillItem(rng) {
 
 // Proves especials del dia: cinc de les nou, triades amb la data (les mateixes a les tres partides i per a tothom)
 function dailySpecials(key) {
+  // Des de DAILY_V4_FROM, el conjunt nou de proves (reptes-diari4.js)
+  if (key >= DAILY_V4_FROM) return dailySpecials4(key);
   const all = [orderItem, mapItem, guessItem, drawItem, shapeItem, coalitionItem, (rng) => pairsItem(rng, key), oddItem, fillItem];
   return sample(all, 5, seededRng(hashString(`daily-mix-${key}`)));
 }

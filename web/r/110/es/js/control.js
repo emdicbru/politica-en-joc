@@ -440,7 +440,10 @@ function ctlLabItems() {
   if (typeof DAILY_V3_FROM === "undefined" || typeof DAILY_V2_FROM === "undefined" || typeof ESP_T === "undefined" || typeof PRON_OPEN === "undefined") return [];
   const [y, m, d] = DAILY_V2_FROM.split("-").map(Number);
   const [y3, m3, d3] = DAILY_V3_FROM.split("-").map(Number);
+  const [y4, m4, d4] = DAILY_V4_FROM.split("-").map(Number);
   return [
+    { id: "diari4", icon: "🧩", name: "Repte diari renovat", go: "#joc/diari", from: new Date(y4, m4 - 1, d4).getTime(),
+      desc: "Sense l'aritmètica del Congrés. Parelles reformulades (organisme i funció, partit i candidat…) i proves noves: troba l'error, classifica, quines eleccions són?, la llei d'Hondt i pinta la comunitat. Moltes més preguntes a tots els reptes." },
     { id: "diari3", icon: "🧠", name: "Repte diari amb dinàmiques noves", go: "#joc/diari", from: new Date(y3, m3 - 1, d3).getTime(),
       desc: "Cada dia, cinc proves especials triades entre nou: siluetes de províncies, aritmètica del Congrés, parelles de sigles, l'intrús, completa la frase, ordena, el mapa, el número i dibuixa-ho (encerclar els Països Catalans, Euskal Herria, Galícia… en un mapa sense províncies). La partida de prova no compta." },
     { id: "diari2", icon: "🧩", name: "Repte diari amb proves noves", go: "#joc/diari", from: new Date(y, m - 1, d).getTime(),

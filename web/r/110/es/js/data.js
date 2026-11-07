@@ -288,7 +288,7 @@ const QUESTIONS = [
     exp: "Se sortean entre las personas censadas en la sección, con dos suplentes para cada cargo. Los interventores, en cambio, los designan las candidaturas." },
   { hard: true, cat: "historia", q: "¿Quién fue el primer presidente de la Segunda República?",
     opts: ["Niceto Alcalá-Zamora", "Manuel Azaña", "Francisco Largo Caballero", "Juan Negrín"],
-    exp: "Va ser president de la República del 1931 al 1936. Azaña el va substituir." },
+    exp: "Fue presidente de la República de 1931 a 1936. Azaña lo sustituyó." },
   { hard: true, cat: "historia", q: "¿Quién fue la primera mujer ministra de España?",
     opts: ["Federica Montseny", "Clara Campoamor", "Victoria Kent", "Dolores Ibárruri"],
     exp: "La dirigente anarquista fue ministra de Sanidad en 1936, durante la Guerra Civil." },

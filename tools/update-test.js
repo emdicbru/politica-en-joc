@@ -71,6 +71,7 @@ Regles:
 ${whoIsWho()}
 - Com a molt 2 preguntes del tipus «qui ha dit / qui ha fet». Pregunta també pel QUÈ: què s'ha aprovat, quina mesura, quina xifra, on, quan, per què.
 - Les opcions incorrectes han de ser del mateix tipus que la correcta i diferents en cada pregunta: no repeteixis el mateix grup d'opcions (per exemple, sempre els mateixos quatre polítics).
+- Res de preguntes que demanin recordar xifres del sistema electoral: quants diputats o senadors elegeix una circumscripció, repartiments d'escons, la llei d'Hondt, barreres electorals o majories.
 - Res de loteries, successos, morbositat, ni preguntes «segons la notícia». Les de cultura s'han de poder respondre sense haver llegit cap notícia.
 - Enunciat clar i que s'entengui sol (sense «segons aquest titular»), de com a molt 130 caràcters.
 - 4 opcions curtes (màxim 40 caràcters), del mateix tipus i versemblants; la primera és la correcta. Cap opció com «Totes» o «Cap».
@@ -91,6 +92,8 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
     .filter((q) => !/\b(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara\.cat|vilaweb)\b/i.test(q.q))
     .filter((q) => q.k === "cultura" || new Set(q.src.map((i) => items[i].s)).size >= 2)
     .filter((q) => !/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?\b/i.test(q.q + " " + q.a.join(" ")))
+    // Res de recordar xifres del sistema electoral (escons per circumscripció, la llei d'Hondt, barreres, majories)
+    .filter((q) => { const bad = /\bhondt\b|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q); if (bad) log("descartada (sistema electoral de memòria):", q.q); return !bad; })
     .filter((q) => { const ok = q.k === "cultura" || grounded(q.a[0], q.src.map((i) => items[i].t)); if (!ok) log("descartada (la resposta no surt als titulars):", q.q); return ok; });
   // Cap joc d'opcions repetit (3 o més opcions en comú amb una pregunta anterior) i com a molt 2 de «qui»
   const kept = []; let who = 0;

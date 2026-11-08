@@ -165,19 +165,19 @@
     },
     {
      "k": "cultura",
-     "t": "politica",
-     "q": "Quants diputats elegeix la província de Valladolid al Congrés?",
+     "t": "internacional",
+     "q": "Com es diu el parlament d'Israel, que ha de donar la confiança al nou govern?",
      "a": [
-      "5",
-      "3",
-      "7",
-      "4"
+      "La Knesset",
+      "La Duma",
+      "El Sejm",
+      "El Majlis"
      ],
-     "exp": "Valladolid elegeix 5 dels 350 diputats. Feijóo s'ha fixat com a objectiu guanyar-hi un diputat més per al PP.",
-     "u": "https://www.abc.es/espana/castilla-leon/feijoo-encarga-pp-tercer-diputado-valladolid-demostrar-20261107160910-nt.html",
+     "exp": "La Knesset és el parlament unicameral d'Israel, amb 120 diputats. El candidat encarregat de formar govern n'ha d'obtenir la confiança.",
+     "u": "https://www.vilaweb.cat/noticies/el-president-disrael-encarrega-a-gadi-eisenkot-la-formacio-de-govern/",
      "s": [
-      "ABC",
-      "El Mundo"
+      "VilaWeb",
+      "Ara"
      ]
     }
    ]

@@ -3,7 +3,7 @@
 // 21-10-2026) són la reserva: l'app carrega les del dia de data/enquestes.json, que actualitza tools/update-polls.js.
 
 let POLL_SOURCE = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election";
-let POLL_UPDATED = "21 de octubre de 2026";
+let POLL_UPDATED = "21 d'octubre del 2026";
 
 // Escons de cada enquesta (els intervals s'han substituït pel punt mitjà i tot s'ajusta a 350).
 const PACTE_ORDER = ["podemos", "fa", "psoe", "bng", "bildu", "erc", "junts", "pnv", "cc", "altres", "upn", "pp", "vox", "salf"];
@@ -17,7 +17,7 @@ const PACTE_INFO = {
   junts: { sig: "Junts", color: "#20b8c8" },
   pnv: { sig: "PNV", color: "#3f8f45" },
   cc: { sig: "CC", color: "#f2d21b" },
-  altres: { sig: "Otros", color: "#9a9a9a" },
+  altres: { sig: "Altres", color: "#9a9a9a" },
   upn: { sig: "UPN", color: "#2b3f91" },
   pp: { sig: "PP", color: "#1e88d6" },
   vox: { sig: "Vox", color: "#5cbf2a" },
@@ -109,11 +109,11 @@ function pacteSeats() {
 
 const PACTE_PRESETS = [
   { k: "dreta", label: "PP + Vox", si: ["pp", "vox", "upn", "salf"] },
-  { k: "2023", label: "Bloque de la investidura de 2023", si: ["psoe", "fa", "podemos", "erc", "junts", "bildu", "pnv", "bng", "cc"] },
+  { k: "2023", label: "Bloc de la investidura 2023", si: ["psoe", "fa", "podemos", "erc", "junts", "bildu", "pnv", "bng", "cc"] },
   { k: "gran", label: "PP + PSOE", si: ["pp", "psoe", "upn"] },
 ];
 
-const STANCE_LABEL = { si: "Sí", abs: "Abstención", no: "No" };
+const STANCE_LABEL = { si: "Sí", abs: "Abstenció", no: "No" };
 const nextStance = (s) => (s === "si" ? "abs" : s === "abs" ? "no" : "si");
 
 // Aliances que descartem perquè no són plausibles (p. ex. Vox amb independentistes)
@@ -157,10 +157,10 @@ function renderPacte() {
   const sum = (st) => PACTE_ORDER.filter((id) => stanceOf(id) === st).reduce((a, id) => a + (seats[id] || 0), 0);
   const yes = sum("si"), abs = sum("abs"), no = sum("no");
   const verdict = yes >= 176
-    ? { cls: "ok", t: "Investidura aprobada en primera votación", d: `Con ${yes} votos a favor se supera la mayoría absoluta (176).` }
+    ? { cls: "ok", t: "Investidura aprovada en primera votació", d: `Amb ${yes} vots a favor se supera la majoria absoluta (176).` }
     : yes > no
-      ? { cls: "mid", t: "Investidura aprobada en segunda votación", d: `No llega a los 176, pero hay más síes (${yes}) que noes (${no}): basta con la mayoría simple, 48 horas después.` }
-      : { cls: "ko", t: "Investidura fallida", d: yes === 0 ? "Toca los partidos para decidir qué votarían." : `Hay más noes (${no}) que síes (${yes}). Habría que buscar otros apoyos u otro candidato; pasados dos meses de la primera votación sin investidura, se convocan elecciones.` };
+      ? { cls: "mid", t: "Investidura aprovada en segona votació", d: `No arriba als 176, però hi ha més sís (${yes}) que nos (${no}): n'hi ha prou amb la majoria simple, 48 hores després.` }
+      : { cls: "ko", t: "Investidura fallida", d: yes === 0 ? "Toca els partits per decidir què votarien." : `Hi ha més nos (${no}) que sís (${yes}). Caldria buscar altres suports o un altre candidat; passats dos mesos de la primera votació sense investidura, es convoquen eleccions.` };
 
   const majorities = minimalMajorities(seats);
   const pct = averagePct();
@@ -168,57 +168,57 @@ function renderPacte() {
 
   const blocked = pollsBlocked();
   root.innerHTML = `
-    ${blocked ? `<div class="pc-blackout"><b>Encuestas no disponibles</b><p>De acuerdo con el artículo 69.7 de la Ley Orgánica del Régimen Electoral General, no se pueden publicar ni difundir encuestas electorales durante los cinco días anteriores a la votación. Hasta el cierre de los colegios electorales, el pactómetro solo permite trabajar con un escenario propio, que parte de los resultados del 23 de julio de 2023.</p></div>` : ""}
-    <div class="pc-src" role="tablist" aria-label="Fuente de los escaños">
-      ${blocked ? "" : `<button class="pc-chip ${pacte.src === "avg" ? "on" : ""}" data-src="avg">Media de las encuestas</button>
+    ${blocked ? `<div class="pc-blackout"><b>Enquestes no disponibles</b><p>D'acord amb l'article 69.7 de la Llei orgànica del règim electoral general, no es poden publicar ni difondre enquestes electorals durant els cinc dies anteriors a la votació. Fins al tancament dels col·legis electorals, el pactòmetre només permet treballar amb un escenari propi, que parteix dels resultats del 23 de juliol de 2023.</p></div>` : ""}
+    <div class="pc-src" role="tablist" aria-label="Font dels escons">
+      ${blocked ? "" : `<button class="pc-chip ${pacte.src === "avg" ? "on" : ""}" data-src="avg">Mitjana de les enquestes</button>
       ${POLL_SEATS.map((p, i) => `<button class="pc-chip ${pacte.src === String(i) ? "on" : ""}" data-src="${i}">${p.n}<small>${p.d}</small></button>`).join("")}`}
-      <button class="pc-chip custom ${pacte.src === "custom" ? "on" : ""}" data-src="custom">✎ Mi escenario</button>
+      <button class="pc-chip custom ${pacte.src === "custom" ? "on" : ""}" data-src="custom">✎ El meu escenari</button>
     </div>
 
     <div class="pc-main">
       <div class="pc-hemi">
         ${hemicycleSVG(PACTE_ORDER.filter((id) => seats[id] > 0).map((id) => ({ id, seats: seats[id], color: PACTE_INFO[id].color })))}
-        <div class="pc-hemi-num"><b>${yes}</b><span>síes · hacen falta 176</span></div>
+        <div class="pc-hemi-num"><b>${yes}</b><span>sís · cal 176</span></div>
       </div>
-      <div class="pc-bar" aria-label="Síes, abstenciones y noes">
+      <div class="pc-bar" aria-label="Sís, abstencions i nos">
         <i class="y" style="width:${(yes / 350) * 100}%"></i><i class="a" style="width:${(abs / 350) * 100}%"></i><i class="n" style="width:${(no / 350) * 100}%"></i>
         <em style="left:${(176 / 350) * 100}%"><span>176</span></em>
       </div>
-      <div class="pc-count"><span class="y"><b>${yes}</b> Sí</span><span class="a"><b>${abs}</b> Abstención</span><span class="n"><b>${no}</b> No</span></div>
+      <div class="pc-count"><span class="y"><b>${yes}</b> Sí</span><span class="a"><b>${abs}</b> Abstenció</span><span class="n"><b>${no}</b> No</span></div>
       <div class="pc-verdict ${verdict.cls}"><b>${verdict.t}</b><p>${verdict.d}</p></div>
     </div>
 
-    <div class="pc-presets"><span>Pactos rápidos:</span>
+    <div class="pc-presets"><span>Pactes ràpids:</span>
       ${PACTE_PRESETS.map((p) => `<button class="btn ghost" data-preset="${p.k}">${p.label}</button>`).join("")}
-      <button class="btn ghost" data-preset="reset">Borrar</button>
+      <button class="btn ghost" data-preset="reset">Esborrar</button>
     </div>
 
     <div class="pc-parties">
       ${PACTE_ORDER.filter((id) => id !== "altres" || seats.altres > 0).map((id) => {
         const st = stanceOf(id), i = PACTE_INFO[id];
         return `<div class="pc-party ${st}" style="--pc:${i.color}">
-          <button class="pc-stance" data-stance="${id}" title="Cambia el sentido del voto" ${id === "altres" ? "disabled" : ""}>
-            <i></i><b>${i.sig}</b><span>${id === "altres" ? "Sin bloque" : STANCE_LABEL[st]}</span>
+          <button class="pc-stance" data-stance="${id}" title="Canvia el sentit del vot" ${id === "altres" ? "disabled" : ""}>
+            <i></i><b>${i.sig}</b><span>${id === "altres" ? "Sense bloc" : STANCE_LABEL[st]}</span>
           </button>
           <div class="pc-seats">
-            <button data-dec="${id}" aria-label="Menos escaños de ${i.sig}">−</button>
+            <button data-dec="${id}" aria-label="Menys escons de ${i.sig}">−</button>
             <strong>${seats[id] || 0}</strong>
-            <button data-inc="${id}" aria-label="Más escaños de ${i.sig}">+</button>
+            <button data-inc="${id}" aria-label="Més escons de ${i.sig}">+</button>
           </div>
         </div>`;
       }).join("")}
     </div>
-    <p class="pc-total ${total === 350 ? "" : "bad"}">${total === 350 ? "Total: 350 escaños" : `Total: ${total} escaños (tiene que haber 350)`} · toca un partido para cambiar su voto; usa − y + para crear tu escenario.</p>
+    <p class="pc-total ${total === 350 ? "" : "bad"}">${total === 350 ? "Total: 350 escons" : `Total: ${total} escons (n'hi ha de ser 350)`} · toca un partit per canviar-ne el vot; usa − i + per crear el teu escenari.</p>
 
-    <h3 class="sub-h">Mayorías posibles con estos escaños</h3>
-    <p class="muted pc-note">Combinaciones mínimas que suman 176 o más (si quitas un partido, ya no llegas). Solo hay alianzas plausibles: descartamos, por ejemplo, a Vox con independentistas o al PP con Bildu. Toca una para aplicarla.</p>
+    <h3 class="sub-h">Majories possibles amb aquests escons</h3>
+    <p class="muted pc-note">Combinacions mínimes que sumen 176 o més (si en treus un partit, ja no hi arribes). Només hi ha aliances plausibles: descartem, per exemple, Vox amb independentistes o el PP amb Bildu. Toca'n una per aplicar-la.</p>
     <div class="pc-majs">${majorities.length ? majorities.map((m, k) => `
       <button class="pc-maj" data-maj="${k}">
         <span class="pm-names">${m.members.map((id) => `<i style="--pc:${PACTE_INFO[id].color}">${PACTE_INFO[id].sig}</i>`).join("")}</span>
         <b>${m.total}</b>
-      </button>`).join("") : `<p class="muted">Ninguna combinación llega a los 176 con estos escaños.</p>`}</div>
+      </button>`).join("") : `<p class="muted">Cap combinació arriba als 176 amb aquests escons.</p>`}</div>
 
-    ${blocked ? "" : `<h3 class="sub-h">Intención de voto: media de las últimas ${POLL_PCT.length} encuestas</h3>`}
+    ${blocked ? "" : `<h3 class="sub-h">Intenció de vot: mitjana de les últimes ${POLL_PCT.length} enquestes</h3>`}
     ${blocked ? "" : `<div class="pc-pct">${pct.map((p) => `
       <div class="pc-pct-row" style="--pc:${PACTE_INFO[p.id].color}">
         <span class="n">${PACTE_INFO[p.id].sig}</span>
@@ -226,7 +226,7 @@ function renderPacte() {
         <b>${p.avg.toFixed(1).replace(".", ",")} %</b>
         <small>${p.min.toFixed(1).replace(".", ",")}–${p.max.toFixed(1).replace(".", ",")}</small>
       </div>`).join("")}</div>
-    <p class="src-note">Fuente: <a href="${POLL_SOURCE}" target="_blank" rel="noopener">Wikipedia, recopilación de encuestas</a> (consulta del ${POLL_UPDATED}). Las cifras de escaños son estimaciones de cada empresa demoscópica; cuando se expresan en horquilla, se ha tomado el valor central y el total se ha ajustado a 350. La media es aritmética y no ponderada. Las encuestas no constituyen un pronóstico.</p>`}`;
+    <p class="src-note">Font: <a href="${POLL_SOURCE}" target="_blank" rel="noopener">Viquipèdia, recull d'enquestes</a> (consulta del ${POLL_UPDATED}). Les xifres d'escons són estimacions de cada empresa demoscòpica; quan s'expressen en forquilla, s'ha pres el valor central i el total s'ha ajustat a 350. La mitjana és aritmètica i no ponderada. Les enquestes no constitueixen un pronòstic.</p>`}`;
 
   $$("[data-src]", root).forEach((b) => b.addEventListener("click", () => {
     const v = b.dataset.src;
@@ -273,16 +273,17 @@ function renderPacte() {
 // Enquestes al dia (data/enquestes.json, cada dia des de GitHub). Si no arriben o no quadren, es queden les d'aquí.
 (async () => {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "../data/"}enquestes.json?t=${Math.floor(Date.now() / 3600000)}`, { cache: "no-cache" });
+    const r = await fetch(`${window.PEJ_DATA || "data/"}enquestes.json?t=${Math.floor(Date.now() / 3600000)}`, { cache: "no-cache" });
     if (!r.ok) return;
     const j = await r.json();
     if (!Array.isArray(j.seats) || j.seats.length < 5 || !Array.isArray(j.pct) || j.pct.length < 6 || JSON.stringify(j.pctKeys) !== JSON.stringify(POLL_PCT_KEYS)) return;
     POLL_SEATS.splice(0, POLL_SEATS.length, ...j.seats);
     POLL_PCT.splice(0, POLL_PCT.length, ...j.pct);
     if (j.source) POLL_SOURCE = j.source;
-    if (j.updated) POLL_UPDATED = new Date(j.updated + "T12:00:00").toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+    if (j.updated) POLL_UPDATED = new Date(j.updated + "T12:00:00").toLocaleDateString("ca", { day: "numeric", month: "long", year: "numeric" });
     // Una enquesta triada pel número pot ser una altra amb la llista nova: es torna a la mitjana
     if (pacte.src !== "avg" && pacte.src !== "custom") pacte.src = "avg";
     renderPacte();
+    if (typeof renderHomeDia === "function") renderHomeDia();
   } catch { /* sense connexió: les enquestes d'aquí */ }
 })();

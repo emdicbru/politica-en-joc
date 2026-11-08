@@ -788,6 +788,7 @@ function renderNewsTicker() {
     <span class="ht-go" aria-hidden="true">→</span>
   </a>`;
   nxTick();
+  if (typeof renderHomeDia === "function") renderHomeDia();
 }
 
 // Punt vermell a la pestanya quan hi ha titulars nous des de l'última visita

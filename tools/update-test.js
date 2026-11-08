@@ -40,7 +40,8 @@ const TOPICS = ["campanya", "parlament", "politica", "economia", "habitatge", "j
 const arg = (k) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : null; };
 const DRY = process.argv.includes("--prova");
 const madrid = (d = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(d);
-const DAY = arg("dia") || madrid();
+// --dema: el test de demà (per provar el generador amb --prova quan el d'avui ja hi és)
+const DAY = arg("dia") || (process.argv.includes("--dema") ? madrid(new Date(Date.now() + 864e5)) : madrid());
 const BLACKOUT = [Date.parse("2026-11-24T00:00:00+01:00"), Date.parse("2026-11-29T21:00:00+01:00")];
 
 const log = (...a) => console.log("[test]", ...a);
@@ -60,9 +61,9 @@ const warn = (...a) => { const m = a.join(" ").replace(/\s+/g, " "); console.log
   const veda = Date.now() >= BLACKOUT[0] && Date.now() < BLACKOUT[1];
 
   const sys = `Ets l'editor del «Test d'actualitat» diari de Política en Joc, una app en català sobre política i les eleccions generals del 29 de novembre de 2026. Escrius en català correcte i neutral.
-Fes 18 preguntes de resposta múltiple:
-- 11 d'ACTUALITAT ("k":"actualitat"): sobre els TEMES i FETS dels titulars (què s'ha decidit, qui ha fet què, quina xifra, on ha passat). El fet ha d'aparèixer en almenys 2 mitjans diferents de la llista. MAI preguntis quin mitjà publica o titula una cosa, ni sobre els mitjans.
-- 7 de CULTURA GENERAL ("k":"cultura") lligades a algun tema dels titulars: història, geografia, institucions, ciència, economia o cultura que ajudin a entendre la notícia (exemple: si es parla d'una cimera del clima, «A quina ciutat es va signar l'acord sobre el clima del 2015?»). Només dades establertes i indiscutibles.
+Fes 14 preguntes de resposta múltiple:
+- 9 d'ACTUALITAT ("k":"actualitat"): sobre els TEMES i FETS dels titulars (què s'ha decidit, qui ha fet què, quina xifra, on ha passat). El fet ha d'aparèixer en almenys 2 mitjans diferents de la llista. MAI preguntis quin mitjà publica o titula una cosa, ni sobre els mitjans.
+- 5 de CULTURA GENERAL ("k":"cultura") lligades a algun tema dels titulars: història, geografia, institucions, ciència, economia o cultura que ajudin a entendre la notícia (exemple: si es parla d'una cimera del clima, «A quina ciutat es va signar l'acord sobre el clima del 2015?»). Només dades establertes i indiscutibles.
 Regles:
 - Neutralitat política estricta: res d'opinions, valoracions ni preguntes que afavoreixin o perjudiquin cap partit.
 - Res de sang, morbositat ni bromes sobre accidents o víctimes.${veda ? "\n- Estem en veda electoral: cap pregunta sobre enquestes ni sondejos." : ""}
@@ -75,7 +76,7 @@ ${whoIsWho()}
 - Res de loteries, successos, morbositat, ni preguntes «segons la notícia». Les de cultura s'han de poder respondre sense haver llegit cap notícia.
 - Enunciat clar i que s'entengui sol (sense «segons aquest titular»), de com a molt 130 caràcters.
 - 4 opcions curtes (màxim 40 caràcters), del mateix tipus i versemblants; la primera és la correcta. Cap opció com «Totes» o «Cap».
-- "exp": 1 o 2 frases que expliquin la resposta amb context.
+- "exp": una frase curta (màxim 160 caràcters) que expliqui la resposta amb context.
 - "t": un d'aquests temes: ${TOPICS.join(", ")}. "src": els números dels titulars en què es basa (per a les d'actualitat, almenys 2 de mitjans diferents; per a les de cultura, el de la notícia relacionada).
 - Varietat: temes diferents, no més de 2 preguntes sobre el mateix fet, i dificultat variada (algunes fàcils, algunes difícils).
 - Català normatiu (gènere i concordança: «el finançament», «la Generalitat»). Noms propis de persones tal com són; topònims en català (Canàries, Saragossa).
@@ -132,6 +133,6 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
   test.about = "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.";
   test.updated = DAY;
   log(`${questions.length} preguntes per al ${DAY} (${questions.filter((q) => q.k === "actualitat").length} d'actualitat, ${questions.filter((q) => q.k === "cultura").length} de cultura)`);
-  if (DRY) { console.log(JSON.stringify(test.days[DAY], null, 1)); return; }
+  if (DRY) { console.log(JSON.stringify(test.days[DAY], null, 1)); warn(`PROVA (${DAY}, no es desa): ` + questions.map((q, i) => `${i + 1}. [${q.k}] ${q.q} → ${q.a[0]} (${q.a.slice(1).join(" / ")})`).join(" || ").slice(0, 3800)); return; }
   fs.writeFileSync(OUT, JSON.stringify(test, null, 1) + "\n");
 })().catch((e) => { warn("error inesperat:", e.message); process.exit(0); });

@@ -28,10 +28,30 @@ async function askJson(messages, { warn = console.warn, max_tokens = 6000, tempe
         if (!cand) continue;
         try { const j = JSON.parse(cand); j.__model = used; return j; } catch { /* el següent */ }
       }
+      // Resposta tallada (s'ha acabat l'espai): es queden els elements de la llista que han arribat sencers
+      const cut = salvage(clean);
+      if (cut) { warn("IA: resposta tallada; se n'aprofiten", cut[Object.keys(cut)[0]].length, "elements"); cut.__model = used; return cut; }
       warn("IA: el model no ha tornat JSON:", clean.slice(0, 300));
     } catch (e) { warn("IA error:", e.message); }
   }
   return null;
 }
 
-module.exports = { askJson };
+// {"questions":[{…},{…},{… (tallat) → {"questions":[{…},{…}]}: es talla just després de l'últim objecte de la llista que
+// es tanca bé (comptant claus i cometes)
+function salvage(s) {
+  const m = s.match(/\{\s*"(\w+)"\s*:\s*\[/);
+  if (!m) return null;
+  let depth = 0, inStr = false, esc = false, lastEnd = -1;
+  for (let i = m.index + m[0].length; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === "{" || c === "[") depth++;
+    else if (c === "}" || c === "]") { depth--; if (depth === 0 && c === "}") lastEnd = i; if (depth < 0) break; }
+  }
+  if (lastEnd < 0) return null;
+  try { return JSON.parse(s.slice(m.index, lastEnd + 1) + "]}"); } catch { return null; }
+}
+
+module.exports = { askJson, salvage };

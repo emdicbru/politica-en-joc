@@ -12,7 +12,7 @@ function testLoad() {
   if (!testOn()) return Promise.resolve((testData = { days: {} }));
   return (testLoading ||= (async () => {
     try {
-      const r = await fetch(`${window.PEJ_DATA || "data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
+      const r = await fetch(`${window.PEJ_DATA || "../data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
       testData = r.ok ? await r.json() : { days: {} };
     } catch { testData = { days: {} }; }
     testLoading = null;
@@ -36,56 +36,58 @@ function testStreak() {
   }
 }
 const TEST_TOPIC = {
-  campanya: "Campanya", parlament: "Parlament", politica: "Política", economia: "Economia", habitatge: "Habitatge", justicia: "Justícia",
-  internacional: "Internacional", energia: "Energia", territori: "Territori", immigracio: "Immigració", societat: "Societat",
-  cultura: "Cultura", historia: "Història", geografia: "Geografia", ciencia: "Ciència",
+  campanya: "Campaña", parlament: "Parlamento", politica: "Política", economia: "Economía", habitatge: "Vivienda", justicia: "Justicia",
+  internacional: "Internacional", energia: "Energía", territori: "Territorio", immigracio: "Inmigración", societat: "Sociedad",
+  cultura: "Cultura", historia: "Historia", geografia: "Geografía", ciencia: "Ciencia",
 };
-const testKind = (q) => (q.k === "cultura" ? { ico: "🎓", t: "Cultura general" } : { ico: "📰", t: "Actualitat" });
+const testKind = (q) => (q.k === "cultura" ? { ico: "🎓", t: "Cultura general" } : { ico: "📰", t: "Actualidad" });
 
 // Targeta de l'Inici, sota la del repte diari
 function renderTestHero() {
   const box = $("#test-hero");
   if (!box) return;
-  if (!testOn()) { box.hidden = true; return; }
+  if (!testOn()) { box.hidden = true; if (typeof renderHjFoot === "function") renderHjFoot(); return; }
   box.hidden = false;
   const key = todayKey(), day = testDay(key), r = testResult(key);
-  if (!testData) { box.innerHTML = `<div class="th-load">Carregant el test d'actualitat…</div>`; testLoad().then(renderTestHero); return; }
+  if (!testData) { box.innerHTML = `<div class="jc-load">Cargando el test de actualidad…</div>`; testLoad().then(renderTestHero); return; }
   box.classList.toggle("done", !!r);
   const qs = day ? day.questions : [];
-  const chips = [...new Set(qs.map((q) => TEST_TOPIC[q.t] || "Actualitat"))].slice(0, 5);
+  const chips = [...new Set(qs.map((q) => TEST_TOPIC[q.t] || "Actualidad"))].slice(0, 5);
   const streak = testStreak();
+  const dd = new Date(key + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "long" });
   box.innerHTML = `
-    <div class="th-top"><span class="th-badge">📰 Test d'actualitat</span><span class="th-date">${day ? `${qs.length} preguntes d'avui` : "Es prepara cada matí"}</span></div>
-    <div class="th-main">
-      <div class="th-left">
-        ${r ? `<p class="th-kicker">El teu resultat d'avui</p>
-          <div class="th-score"><b>${r.hits}</b><span>/${r.n}</span></div>
-          <p class="th-sub">${fmtSecs(r.ms)}${streak > 1 ? ` · 🔥 ${streak} dies seguits` : ""}</p>
-          <div class="row"><button class="btn" data-test-share>Comparteix</button><a class="btn" href="#ranking" data-test-rank>Rànquing</a></div>`
-        : day ? `<h2 class="th-title">Has seguit les notícies?</h2>
-          <p class="th-sub">Preguntes sobre els temes d'aquests dies i de cultura general. Guanya qui n'encerta més.</p>
-          <a class="btn th-cta" href="#joc/actualitat"><span class="dh-play">▶</span> Fes el test</a>`
-        : `<h2 class="th-title">El test d'avui encara no és a punt</h2><p class="th-sub">Es prepara cada matí amb les notícies dels últims dies. Torna-hi d'aquí a una estona.</p>`}
-      </div>
-      <div class="th-right">
-        ${chips.length ? `<div class="th-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join("")}</div>` : ""}
-        ${r ? `<div class="th-grid" aria-label="Resultat">${[...r.grid].map((c) => `<i class="${c === "🟩" ? "ok" : "ko"}"></i>`).join("")}</div>` : ""}
-        <div class="dh-chips"><span><small>Ratxa</small><b>${streak} ${streak === 1 ? "dia" : "dies"}</b></span><span><small>Posició</small><b id="th-rank">—</b></span></div>
-      </div>
+    <div class="jc-top">
+      <span class="jc-badge"><i class="jc-live" aria-hidden="true"></i>${esc(dd)}</span>
+      <span class="jc-meta">Nuevo cada mañana a las <b>6:00</b></span>
+    </div>
+    <h2 class="jc-name">Test de actualidad</h2>
+    <p class="jc-sub">${r ? `¡Hecho! <b>${r.hits}/${r.n}</b> aciertos · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntas sobre lo que ha pasado estos días. ¿Cuánto sabes de la actualidad?` : `El test de hoy aún no está listo: se prepara cada mañana con las noticias de los últimos días.`}</p>
+    <div class="jc-row">${r ? `<div class="jc-grid" aria-label="Resultado">${[...r.grid].map((c) => `<i class="${c === "🟩" ? "ok" : "ko"}"></i>`).join("")}</div>`
+      : chips.length ? `<div class="jc-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join("")}</div>` : ""}</div>
+    <div class="jc-stats">
+      <span><small>Tu racha</small><b>${streak} ${streak === 1 ? "día" : "días"}</b></span>
+      <span><small>Posición</small><b id="th-rank">—</b></span>
+      <span><small>Aciertos</small><b>${r ? `${r.hits}/${r.n}` : "—"}</b></span>
+    </div>
+    <div class="jc-foot">
+      ${r ? `<button type="button" class="jc-play" data-test-share>Comparte</button>` : day ? `<a class="jc-play" href="#joc/actualitat"><span aria-hidden="true">▶</span> Juega</a>` : `<span class="jc-play off">Pronto</span>`}
+      <a class="jc-link" href="#ranking" data-test-rank>Ranking de hoy →</a>
     </div>`;
   $("[data-test-share]", box)?.addEventListener("click", () => testShare(key));
   // Des de l'Inici, el rànquing s'obre directament al del test
   $("[data-test-rank]", box)?.addEventListener("click", () => { window.__rankGame = "test"; });
   if (r) window.Online?.fillTestRank?.(key);
+  if (typeof renderHjFoot === "function") renderHjFoot();
 }
 
 async function testShare(key) {
   const r = testResult(key);
   if (!r) return;
-  const text = `Política en Joc · Test d'actualitat\n📰 ${r.hits}/${r.n} · ⏱ ${fmtSecs(r.ms)}\n${r.grid}\n${location.origin}${location.pathname}#joc/actualitat`;
+  const text = `Política en Joc · Test de actualidad
+📰 ${r.hits}/${r.n} · ⏱ ${fmtSecs(r.ms)}\n${r.grid}\n${location.origin}${location.pathname}#joc/actualitat`;
   try {
     if (navigator.share) await navigator.share({ text });
-    else { await navigator.clipboard.writeText(text); toast("Resultat copiat"); }
+    else { await navigator.clipboard.writeText(text); toast("Resultado copiado"); }
   } catch { /* cancel·lat */ }
 }
 
@@ -94,35 +96,35 @@ registerGame({
   cat: "daily",
   hidden: true, // s'hi arriba des de l'Inici
   backHref: "#inici",
-  tagline: "Has seguit les notícies d'aquests dies?",
-  kicker: "Cada dia, preguntes noves",
-  title: "Test d'actualitat",
+  tagline: "¿Has seguido las noticias de estos días?",
+  kicker: "Cada día, preguntas nuevas",
+  title: "Test de actualidad",
   color: "#3554ff",
   level: 1,
-  meta: "10 preguntes",
+  meta: "10 preguntas",
   icon: icon(`<path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2"/><path d="M7 9h7M7 13h7M7 16h4"/>`),
-  desc: "Preguntes sobre els temes de l'actualitat dels últims dies i de cultura general relacionada amb les notícies, iguals per a tothom i noves cada dia. Després de cada resposta, l'explicació. Guanya qui n'encerta més; si hi ha empat, qui ho fa més ràpid. Només compta la primera partida.",
-  rules: ["Fins a 10 preguntes", "Actualitat i cultura general", "Amb l'explicació de cada resposta", "Compta la primera partida"],
+  desc: "Preguntas sobre los temas de actualidad de los últimos días y de cultura general relacionada con las noticias, iguales para todos y nuevas cada día. Después de cada respuesta, la explicación. Gana quien acierta más; si hay empate, quien lo hace más rápido. Solo cuenta la primera partida.",
+  rules: ["Hasta 10 preguntas", "Actualidad y cultura general", "Con la explicación de cada respuesta", "Cuenta la primera partida"],
   gate() {
-    if (!testOn()) return { html: `<p class="muted">El test d'actualitat només és en català.</p>`, bind() {} };
-    if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) showIntro(GAMES.find((g) => g.id === "actualitat")); }); return { html: `<p class="muted">Carregant el test…</p>`, bind() {} }; }
-    if (!testDay()) return { html: `<p class="muted">El test d'avui encara no és a punt: es prepara cada matí. Torna-hi d'aquí a una estona.</p>`, bind() {} };
+    if (!testOn()) return { html: `<p class="muted">El test de actualidad solo está en catalán.</p>`, bind() {} };
+    if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) showIntro(GAMES.find((g) => g.id === "actualitat")); }); return { html: `<p class="muted">Cargando el test…</p>`, bind() {} }; }
+    if (!testDay()) return { html: `<p class="muted">El test de hoy aún no está listo: se prepara cada mañana. Vuelve dentro de un rato.</p>`, bind() {} };
     return null;
   },
   status() {
     const r = testResult();
-    return r ? `<span class="gc-status done">Fet · ${r.hits}/${r.n}</span>` : `<span class="gc-status new">Nou test</span>`;
+    return r ? `<span class="gc-status done">Hecho · ${r.hits}/${r.n}</span>` : `<span class="gc-status new">Test nuevo</span>`;
   },
   introExtra() {
     const r = testResult(), day = testDay();
     return `<div class="daily-box">
-      <div><small>Preguntes</small><strong>${day ? day.questions.length : "—"}</strong></div>
-      <div><small>Avui</small><strong>${r ? `${r.hits}/${r.n}` : "—"}</strong></div>
-    </div>${r ? `<p class="muted">Ja l'has fet avui: pots tornar-lo a fer, però al rànquing compta la primera partida.</p>` : ""}`;
+      <div><small>Preguntas</small><strong>${day ? day.questions.length : "—"}</strong></div>
+      <div><small>Hoy</small><strong>${r ? `${r.hits}/${r.n}` : "—"}</strong></div>
+    </div>${r ? `<p class="muted">Ya lo has hecho hoy: puedes repetirlo, pero en el ranking cuenta la primera partida.</p>` : ""}`;
   },
   start(ctx) {
     const key = todayKey(), day = testDay(key);
-    if (!day) { ctx.body.innerHTML = `<div class="card"><p>El test d'avui encara no és a punt.</p></div>`; return; }
+    if (!day) { ctx.body.innerHTML = `<div class="card"><p>El test de hoy aún no está listo.</p></div>`; return; }
     const first = !testResult(key);
     // L'ordre de les opcions és el mateix per a tothom
     const rng = seededRng(hashString(`test-${key}`));
@@ -131,7 +133,7 @@ registerGame({
     let i = 0, hits = 0, t0 = 0, paused = 0, pauseAt = 0, ended = false;
     const results = [], recap = [];
     const elapsed = () => (pauseAt || performance.now()) - t0 - paused;
-    ctx.hud([["q", "Pregunta", `1/${N}`], ["t", "Temps", "0,0"], ["e", "Encerts", "0"]]);
+    ctx.hud([["q", "Pregunta", `1/${N}`], ["t", "Tiempo", "0,0"], ["e", "Aciertos", "0"]]);
     ctx.countIn(() => {
       t0 = performance.now();
       ctx.every(100, () => { if (!ended) ctx.setHud("t", fmtTime(elapsed())); });
@@ -145,7 +147,7 @@ registerGame({
       ctx.body.innerHTML = "";
       const card = h(`<div class="card qcard test-card ${q.k === "cultura" ? "cul" : "act"}">
         ${progressDots(N, results, i)}
-        <div class="q-head"><div class="q-label"><span class="tq-kind">${kind.ico} ${kind.t}</span> · ${esc(TEST_TOPIC[q.t] || "Actualitat")}</div></div>
+        <div class="q-head"><div class="q-label"><span class="tq-kind">${kind.ico} ${kind.t}</span> · ${esc(TEST_TOPIC[q.t] || "Actualidad")}</div></div>
         <div class="q-text">${esc(q.q)}</div>
       </div>`);
       ctx.body.appendChild(card);
@@ -157,18 +159,18 @@ registerGame({
         else recap.push({ q: q.q, a: q.a[0], note: q.exp });
         // L'explicació, amb l'enllaç a la notícia si n'hi ha
         const exp = h(`<div class="tq-exp ${correct ? "ok" : "ko"}">
-          <b>${correct ? "Correcte!" : `La resposta és: ${esc(q.a[0])}`}</b>
+          <b>${correct ? "¡Correcto!" : `La respuesta es: ${esc(q.a[0])}`}</b>
           <p>${esc(q.exp)}</p>
-          <div class="tq-foot">${q.u ? `<a href="${esc(q.u)}" target="_blank" rel="noopener">Llegeix la notícia ↗</a>${q.s?.length ? `<small>${q.s.map(esc).join(" · ")}</small>` : ""}` : ""}
-            <button class="btn primary" type="button" data-next>${i + 1 < N ? "Següent" : "Veure el resultat"}</button></div>
-          <button class="linklike tq-rpt" type="button" data-rpt-q>Hi ha un error en aquesta pregunta?</button>
+          <div class="tq-foot">${q.u ? `<a href="${esc(q.u)}" target="_blank" rel="noopener">Lee la noticia ↗</a>${q.s?.length ? `<small>${q.s.map(esc).join(" · ")}</small>` : ""}` : ""}
+            <button class="btn primary" type="button" data-next>${i + 1 < N ? "Siguiente" : "Ver el resultado"}</button></div>
+          <button class="linklike tq-rpt" type="button" data-rpt-q>¿Hay un error en esta pregunta?</button>
         </div>`);
         card.appendChild(exp);
         const next = () => { off?.(); i++; render(); };
         const off = ctx.onKey((e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); next(); } });
         $("[data-next]", exp).addEventListener("click", next);
         // Avís d'error amb la pregunta ja escrita (js/report.js)
-        $("[data-rpt-q]", exp).addEventListener("click", () => { if (typeof openReport !== "function") return; openReport(); const ta = $("[data-rpt-text]"); if (ta) { ta.value = `Test d'actualitat del ${key} · «${q.q}» (resposta donada per bona: ${q.a[0]})
+        $("[data-rpt-q]", exp).addEventListener("click", () => { if (typeof openReport !== "function") return; openReport(); const ta = $("[data-rpt-text]"); if (ta) { ta.value = `Test de actualidad del ${key} · «${q.q}» (respuesta dada por buena: ${q.a[0]})
 `; ta.setSelectionRange(ta.value.length, ta.value.length); } });
         $("[data-next]", exp).focus({ preventScroll: true });
         exp.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -193,10 +195,10 @@ registerGame({
         score: hits, noRecord: true, xp,
         display: `${hits}/${N}`,
         ratio: hits / N,
-        unit: `${fmtSecs(ms)}${first ? "" : " · aquesta partida ja no compta per al rànquing"}`,
-        verdict: hits === N ? "Ple! Estàs al dia de tot." : hits >= N * 0.7 ? "Molt bé: segueixes l'actualitat de prop." : hits >= N * 0.4 ? "No està malament. Demà, més!" : "Avui costava. Llegeix les explicacions i demà hi tornes.",
+        unit: `${fmtSecs(ms)}${first ? "" : " · esta partida ya no cuenta para el ranking"}`,
+        verdict: hits === N ? "¡Pleno! Estás al día de todo." : hits >= N * 0.7 ? "Muy bien: sigues la actualidad de cerca." : hits >= N * 0.4 ? "No está mal. ¡Mañana, más!" : "Hoy costaba. Lee las explicaciones y mañana vuelves.",
         extraHtml: `<div class="daily-share"><div class="share-grid">${grid}</div>
-            <div class="daily-share-btns"><button class="btn primary" data-test-share>Comparteix el resultat</button><a class="btn ghost" href="#ranking" data-test-rank>Veure el rànquing</a></div></div>
+            <div class="daily-share-btns"><button class="btn primary" data-test-share>Comparte el resultado</button><a class="btn ghost" href="#ranking" data-test-rank>Ver el ranking</a></div></div>
           <div id="test-rank"></div>`,
         onShown(body) {
           $("[data-test-share]", body)?.addEventListener("click", () => testShare(key));

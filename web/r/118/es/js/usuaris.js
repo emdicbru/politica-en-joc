@@ -91,6 +91,14 @@ function ctlStatsHtml() {
   const avgDev = (S.dev || 0) / keys.length;
   const prevDev = prev.reduce((a, d) => a + (CTU.days[d]?.dev || 0), 0) / (prev.length || 1);
   const trend = prev.length && prevDev ? Math.round(((avgDev - prevDev) / prevDev) * 100) : null;
+  // Comptador propi (worker, stats/{dia}_w): persones diferents de cada dia, amb galetes o sense. Compta des del 8-11-2026.
+  const wDays = keys.filter((d) => CTU.days[d]?.u);
+  const wAvg = wDays.reduce((a, d) => a + CTU.days[d].u, 0) / (wDays.length || 1);
+  const wPrev = prev.filter((d) => CTU.days[d]?.u);
+  const wPrevAvg = wPrev.reduce((a, d) => a + CTU.days[d].u, 0) / (wPrev.length || 1);
+  const wTrend = wPrev.length && wDays.length ? Math.round(((wAvg - wPrevAvg) / wPrevAvg) * 100) : null;
+  const wDaily = all.slice(-Math.max(14, CTU.range)).map((d) => ({ d, u: CTU.days[d]?.u || 0, s: CTU.days[d]?.s || 0 }));
+  const wMax = Math.max(1, ...wDaily.map((x) => x.u));
   const daily = all.slice(-Math.max(14, CTU.range)).map((d) => ({ d, n: CTU.days[d]?.nous || 0, t: CTU.days[d]?.torna || 0 }));
   const dmax = Math.max(1, ...daily.map((x) => x.n + x.t));
   const hours = Array.from({ length: 24 }, (_, i) => S.h?.[String(i).padStart(2, "0")] || 0);
@@ -109,8 +117,9 @@ function ctlStatsHtml() {
       <button class="linklike" type="button" data-curefresh>↻ Actualitza (dades de ${Date.now() - CTU.at < 90e3 ? "fa un moment" : ctlRel(CTU.at).replace("d'aquí a", "fa")})</button>
     </div>
     <section class="ctl-status ctu-kpis">
-      <div class="ctl-st"><small>Actius avui</small><b>${ctuN(today.dev)}</b><span class="ctl-tag">dispositius</span></div>
-      <div class="ctl-st"><small>${CTU.range === 1 ? "Visites avui" : "Actius per dia"}</small><b>${CTU.range === 1 ? ctuN(S.ses) : ctuN(avgDev)}</b><span class="ctl-tag ${trend !== null && trend < 0 ? "warn" : ""}">${CTU.range === 1 ? "sessions" : trend === null ? "mitjana" : `${trend >= 0 ? "+" : ""}${trend} % vs. abans`}</span></div>
+      <div class="ctl-st"><small>Persones avui</small><b>${ctuN(today.u || 0)}</b><span class="ctl-tag">comptador propi · ${ctuN(today.s || 0)} visites</span></div>
+      <div class="ctl-st"><small>${CTU.range === 1 ? "Visites avui" : "Persones per dia"}</small><b>${CTU.range === 1 ? ctuN(S.s || 0) : ctuN(wAvg)}</b><span class="ctl-tag ${wTrend !== null && wTrend < 0 ? "warn" : ""}">${CTU.range === 1 ? "comptador propi" : wTrend === null ? `mitjana de ${wDays.length} ${wDays.length === 1 ? "dia" : "dies"} amb dades` : `${wTrend >= 0 ? "+" : ""}${wTrend} % vs. abans`}</span></div>
+      <div class="ctl-st"><small>Amb galetes acceptades</small><b>${CTU.range === 1 ? ctuN(today.dev) : ctuN(avgDev)}</b><span class="ctl-tag ${trend !== null && trend < 0 ? "warn" : ""}">${CTU.range === 1 ? "dispositius avui" : trend === null ? "dispositius per dia" : `${trend >= 0 ? "+" : ""}${trend} % vs. abans`}</span></div>
       <div class="ctl-st"><small>Nous</small><b>${ctuN(S.nous)}</b><span class="ctl-tag">${CTU.range === 1 ? "avui" : `en ${CTU.range} dies`}</span></div>
       <div class="ctl-st"><small>Tornen l'endemà</small><b>${ctuPct(ret1, retBase)}</b><span class="ctl-tag">dels nous</span></div>
       <div class="ctl-st"><small>Partides acabades</small><b>${ctuN(Object.values(S.f || {}).reduce((a, b) => a + b, 0))}</b><span class="ctl-tag">${ctuN(Object.values(S.g || {}).reduce((a, b) => a + b, 0))} començades</span></div>
@@ -120,8 +129,17 @@ function ctlStatsHtml() {
     </section>
 
     <section class="card ctu-card">
-      <h2 class="section-title sm">📈 Activitat diària</h2>
-      <p class="muted">Dispositius diferents que obren l'app cada dia. Es compta cada mòbil o ordinador un sol cop al dia.</p>
+      <h2 class="section-title sm">👥 Persones per dia</h2>
+      <p class="muted">El comptador propi: persones diferents que entren cada dia, hagin acceptat les galetes o no. Ho compta el servidor sense galetes (una empremta de la IP i del navegador que canvia cada dia) i no compta els robots. Qui comparteix connexió i navegador pot comptar com una sola persona. Comença el 8 de novembre de 2026.</p>
+      <div class="ctu-cols" style="--n:${wDaily.length}">${wDaily.map((x) => `<div class="ctu-col" title="${dayLbl(x.d)}: ${fmt(x.u)} persones, ${fmt(x.s)} visites">
+        <span class="ctu-cv">${x.u ? fmt(x.u) : ""}</span>
+        <div class="ctu-stack" style="height:${(x.u / wMax) * 100}%"><i class="torna" style="flex:1"></i></div>
+        <small>${dayLbl(x.d).replace(" ", "<br>")}</small></div>`).join("")}</div>
+    </section>
+
+    <section class="card ctu-card">
+      <h2 class="section-title sm">📈 Qui accepta les galetes: nous i tornen</h2>
+      <p class="muted">Només els dispositius que han acceptat l'estadística (sense galetes no se sap si algú és nou o torna). Per això aquí surten menys persones que al comptador propi.</p>
       <div class="ctu-legend"><span><i class="ctu-sw torna"></i>Tornen</span><span><i class="ctu-sw nous"></i>Nous</span></div>
       <div class="ctu-cols" style="--n:${daily.length}">${daily.map((x) => `<div class="ctu-col" title="${dayLbl(x.d)}: ${fmt(x.t + x.n)} actius (${fmt(x.n)} nous, ${fmt(x.t)} tornen)">
         <span class="ctu-cv">${x.n + x.t ? fmt(x.n + x.t) : ""}</span>

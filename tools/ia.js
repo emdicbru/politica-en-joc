@@ -26,7 +26,7 @@ async function askJson(messages, { warn = console.warn, max_tokens = 6000, tempe
       const clean = String(text).replace(/^[\s\S]*?<\/think>/, "");
       for (const cand of [clean, (clean.match(/```(?:json)?\s*([\s\S]*?)```/) || [])[1], (clean.match(/\{[\s\S]*\}/) || [])[0]]) {
         if (!cand) continue;
-        try { const j = JSON.parse(cand); j.__model = used; return j; } catch { /* el següent */ }
+        try { let j = JSON.parse(cand); if (Array.isArray(j)) j = { items: j }; if (j && typeof j === "object") { j.__model = used; return j; } } catch { /* el següent */ }
       }
       // Resposta tallada (s'ha acabat l'espai): es queden els elements de la llista que han arribat sencers
       const cut = salvage(clean);

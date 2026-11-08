@@ -83,7 +83,9 @@ ${whoIsWho()}
 ${recent.length ? `- No repeteixis aquestes preguntes dels últims dies:\n${recent.slice(0, 60).map((q) => "  · " + q).join("\n")}` : ""}
 Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta","…","…","…"],"exp":"…","t":"…","src":[1,2]}]}`;
   const draft = await askJson([{ role: "system", content: sys }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.4, max_tokens: 9000 });
-  if (!draft || !Array.isArray(draft.questions)) return warn("sense resposta vàlida de la IA (proposta)");
+  // La llista pot arribar sola o amb un altre nom: es fa servir la primera llista que hi hagi
+  if (draft && !Array.isArray(draft.questions)) draft.questions = Array.isArray(draft) ? [...draft] : Object.values(draft).find(Array.isArray);
+  if (!draft || !Array.isArray(draft.questions)) return warn("sense resposta vàlida de la IA (proposta):", draft ? JSON.stringify(draft).slice(0, 400) : "res");
   log("model", draft.__model, "· proposades", draft.questions.length);
 
   // Validació de forma
@@ -115,7 +117,8 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
   const checks = [];
   for (const model of VERIFY_MODELS) {
     const c = await askJson([{ role: "system", content: vsys }, { role: "user", content: `Fitxa de qui és qui:\n${whoIsWho()}\n\nTitulars:\n${list}\n\nPreguntes:\n${vq}` }], { warn, temperature: 0, max_tokens: 5000, model });
-    if (!c || !Array.isArray(c.answers)) return warn("sense resposta vàlida de la IA (verificació amb " + model + ")");
+    if (c && !Array.isArray(c.answers)) c.answers = Object.values(c).find(Array.isArray);
+    if (!c || !Array.isArray(c.answers)) return warn("sense resposta vàlida de la IA (verificació amb " + model + "):", c ? JSON.stringify(c).slice(0, 400) : "res");
     checks.push(c);
   }
   const good = cand.filter((q, i) => checks.every((c) => { const a = c.answers.find((x) => Number(x.i) === i); return a && a.valid === true && Number(a.choice) === shuffled[i].ok; }));

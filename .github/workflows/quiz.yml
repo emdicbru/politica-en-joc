@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "15 6 * * *"
   workflow_dispatch:
+  # També quan canvia el generador, per provar-lo de seguida
+  push:
+    branches: [main]
+    paths: ["tools/update-quiz.js"]
 permissions:
   contents: write
   models: read

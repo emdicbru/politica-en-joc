@@ -1,0 +1,28 @@
+name: Actualitza les enquestes
+# Dos cops al dia, les enquestes del pactòmetre (data/enquestes.json) a partir del recull de la Viquipèdia
+# (tools/update-polls.js). Sense claus: l'API de la Viquipèdia és pública. Durant la veda electoral no fa res.
+# Si la taula canvia de format o les xifres no quadren, no toca res i l'avís surt a la pàgina de l'execució.
+on:
+  schedule:
+    - cron: "40 7,19 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  enquestes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/update-polls.js
+      - name: Desa les enquestes si han canviat
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add data/enquestes.json
+          git diff --staged --quiet && exit 0
+          git commit -m "Enquestes actualitzades"
+          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 5; done
+          exit 1

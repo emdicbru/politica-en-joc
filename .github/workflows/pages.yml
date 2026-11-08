@@ -1,6 +1,6 @@
 name: Publica a GitHub Pages
 # Serveix els fitxers de l'app (web/r/<versió>/, els puja tools/publica.js) i les dades (data/: titulars, quiz i
-# resultats del 29N) des de GitHub Pages, perquè Firebase gratuït només hagi de servir la pàgina inicial.
+# resultats del 29N, enquestes) des de GitHub Pages, perquè Firebase gratuït només hagi de servir la pàgina inicial.
 # El repositori és públic: GitHub Pages i Actions no tenen cost.
 on:
   push:
@@ -8,7 +8,7 @@ on:
     paths: ["web/**", "data/**", ".github/workflows/pages.yml"]
   # Els titulars i el quiz els desa el bot amb el GITHUB_TOKEN, que no engega altres fluxos: per això s'escolten aquí
   workflow_run:
-    workflows: ["Actualitza els titulars", "Genera el quiz de l'actualitat"]
+    workflows: ["Actualitza els titulars", "Genera el quiz de l'actualitat", "Actualitza les enquestes"]
     types: [completed]
   workflow_dispatch:
 permissions:

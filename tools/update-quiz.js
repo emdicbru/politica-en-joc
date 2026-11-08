@@ -21,6 +21,8 @@ const token = process.env.GITHUB_TOKEN;
 
 const today = new Date().toISOString().slice(0, 10);
 const log = (...a) => console.log("[quiz]", ...a);
+// Quan no es genera res, l'avís surt a la pàgina de l'execució de GitHub Actions (es pot llegir sense entrar al registre)
+const warn = (...a) => { const m = a.join(" "); console.log(process.env.GITHUB_ACTIONS ? `::warning title=Quiz::${m.replace(/\s+/g, " ")}` : `[quiz] AVÍS: ${m}`); };
 
 async function ask(messages) {
   for (const model of MODELS) {
@@ -30,16 +32,16 @@ async function ask(messages) {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 3500, response_format: { type: "json_object" } }),
       });
-      if (!r.ok) { log(model, "HTTP", r.status, (await r.text()).slice(0, 200)); continue; }
+      if (!r.ok) { warn(model, "HTTP", r.status, (await r.text()).slice(0, 300)); continue; }
       const j = await r.json();
       return JSON.parse(j.choices[0].message.content);
-    } catch (e) { log(model, "error", e.message); }
+    } catch (e) { warn(model, "error", e.message); }
   }
   return null;
 }
 
 (async () => {
-  if (!token) { log("Sense GITHUB_TOKEN: no es genera res."); return; }
+  if (!token) { warn("Sense GITHUB_TOKEN: no es genera res."); return; }
   const news = JSON.parse(fs.readFileSync(NEWS, "utf8"));
   const quiz = JSON.parse(fs.readFileSync(QUIZ, "utf8"));
   if (quiz.updatedAuto === today) { log("Ja s'ha generat avui."); return; }
@@ -47,7 +49,7 @@ async function ask(messages) {
   // Titulars de les darreres 36 hores, sense repetits
   const since = Date.now() - 36 * 3600e3, seen = new Set();
   const items = news.items.filter((x) => x.d >= since && x.t && !seen.has(x.t) && seen.add(x.t)).slice(0, 110);
-  if (items.length < 15) { log("Massa pocs titulars:", items.length); return; }
+  if (items.length < 15) { warn("Massa pocs titulars:", items.length); return; }
   const list = items.map((x, i) => `${i}. [${x.s}] ${x.t}`).join("\n");
   const old = quiz.questions.filter((q) => Date.now() - new Date(q.d) < KEEP_DAYS * 864e5);
 
@@ -66,7 +68,7 @@ Respon només amb JSON: {"questions":[{"q":"...","a":["correcta","...","...","..
     { role: "system", content: sys },
     { role: "user", content: `Preguntes que ja existeixen (no les repeteixis):\n${old.map((q) => "- " + q.q).join("\n") || "(cap)"}\n\nTitulars d'avui (índex. [mitjà] titular):\n${list}\n\nFes fins a ${MAX_NEW} preguntes.` },
   ]);
-  if (!draft || !Array.isArray(draft.questions)) { log("Sense resposta vàlida: no es canvia res."); return; }
+  if (!draft || !Array.isArray(draft.questions)) { warn("Sense resposta vàlida de la IA: no es canvia res."); return; }
 
   // Validació mecànica
   const norm = (s) => String(s || "").trim().toLowerCase();
@@ -93,7 +95,7 @@ Respon només amb JSON: {"questions":[{"q":"...","a":["correcta","...","...","..
     { role: "system", content: `Ets un verificador. Per a cada pregunta, respon NOMÉS amb la informació dels titulars que l'acompanyen. Si els titulars no permeten saber la resposta amb seguretat, o si més d'una opció pot ser correcta, marca "ok": false. Respon només amb JSON: {"answers":[{"p":número,"letter":"A|B|C|D","ok":true|false}]}` },
     { role: "user", content: shuffled.map((s) => s.text).join("\n\n") },
   ]);
-  if (!check || !Array.isArray(check.answers)) { log("Sense verificació: no es canvia res."); return; }
+  if (!check || !Array.isArray(check.answers)) { warn("Sense verificació de la IA: no es canvia res."); return; }
   const good = cand.filter((q, i) => {
     const a = check.answers.find((x) => Number(x.p) === i);
     if (!a || a.ok !== true) return false;
@@ -117,4 +119,4 @@ Respon només amb JSON: {"questions":[{"q":"...","a":["correcta","...","...","..
   quiz.updatedAuto = today;
   fs.writeFileSync(QUIZ, JSON.stringify(quiz, null, 2) + "\n");
   log("noves", fresh.length, "total", quiz.questions.length);
-})().catch((e) => { console.error("[quiz] error inesperat:", e.message); process.exit(0); });
+})().catch((e) => { warn("error inesperat:", e.message); process.exit(0); });

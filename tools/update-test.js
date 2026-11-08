@@ -88,16 +88,25 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
   if (!draft || !Array.isArray(draft.questions)) return warn("sense resposta vàlida de la IA (proposta):", draft ? JSON.stringify(draft).slice(0, 400) : "res");
   log("model", draft.__model, "· proposades", draft.questions.length);
 
-  // Validació de forma
+  // Validació de forma. Els camps poden arribar amb altres noms (question, options…); es compta per què es descarta cada una
   const norm = (s) => String(s || "").trim();
-  let cand = draft.questions.map((q) => ({ k: q.k === "cultura" ? "cultura" : "actualitat", q: norm(q.q), a: (q.a || []).map(norm), exp: norm(q.exp), t: TOPICS.includes(q.t) ? q.t : q.k === "cultura" ? "cultura" : "politica", src: (q.src || []).map(Number).filter((i) => items[i]) }))
-    .filter((q) => q.q.length >= 15 && q.q.length <= 160 && q.a.length === 4 && q.a.every((x) => x && x.length <= 60) && new Set(q.a.map((x) => x.toLowerCase())).size === 4 && q.exp)
-    .filter((q) => !/\b(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara\.cat|vilaweb)\b/i.test(q.q))
-    .filter((q) => q.k === "cultura" || new Set(q.src.map((i) => items[i].s)).size >= 2)
-    .filter((q) => !/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?\b/i.test(q.q + " " + q.a.join(" ")))
-    // Res de recordar xifres del sistema electoral (escons per circumscripció, la llei d'Hondt, barreres, majories)
-    .filter((q) => { const bad = /\bhondt\b|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q); if (bad) log("descartada (sistema electoral de memòria):", q.q); return !bad; })
-    .filter((q) => { const ok = q.k === "cultura" || grounded(q.a[0], q.src.map((i) => items[i].t)); if (!ok) log("descartada (la resposta no surt als titulars):", q.q); return ok; });
+  const pickA = (q) => { const opts = q.a || q.options || q.opcions || q.answers || []; const ok = q.correct ?? q.answer ?? q.resposta; return (typeof ok === "string" && opts.includes(ok) ? [ok, ...opts.filter((x) => x !== ok)] : typeof ok === "number" && opts[ok] !== undefined ? [opts[ok], ...opts.filter((_, j) => j !== ok)] : opts).map(norm); };
+  const why = {}, no = (r) => { why[r] = (why[r] || 0) + 1; return false; };
+  let cand = draft.questions.map((q) => {
+    const k = (q.k || q.kind || q.tipus) === "cultura" ? "cultura" : "actualitat", t = q.t || q.topic || q.tema;
+    return { k, q: norm(q.q || q.question || q.pregunta), a: pickA(q), exp: norm(q.exp || q.explanation || q.explicacio), t: TOPICS.includes(t) ? t : k === "cultura" ? "cultura" : "politica", src: (q.src || q.sources || q.fonts || []).map(Number).filter((i) => items[i]) };
+  }).filter((q) => {
+    if (q.q.length < 15 || q.q.length > 160) return no("enunciat");
+    if (q.a.length !== 4 || !q.a.every((x) => x && x.length <= 60) || new Set(q.a.map((x) => x.toLowerCase())).size !== 4) return no("opcions");
+    if (!q.exp) return no("explicació");
+    if (/(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara.cat|vilaweb)/i.test(q.q)) return no("mitjans");
+    if (q.k !== "cultura" && new Set(q.src.map((i) => items[i].s)).size < 2) return no("menys de 2 mitjans");
+    if (/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?/i.test(q.q + " " + q.a.join(" "))) return no("tema vetat");
+    if (/hondt|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q)) return no("sistema electoral");
+    if (q.k !== "cultura" && !grounded(q.a[0], q.src.map((i) => items[i].t))) return no("resposta no als titulars");
+    return true;
+  });
+  if (Object.keys(why).length) warn("descartades:", JSON.stringify(why), "· exemple rebut:", JSON.stringify(draft.questions[0]).slice(0, 500));
   // Cap joc d'opcions repetit (3 o més opcions en comú amb una pregunta anterior) i com a molt 2 de «qui»
   const kept = []; let who = 0;
   for (const q of cand) {

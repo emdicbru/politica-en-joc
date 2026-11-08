@@ -115,14 +115,17 @@ export async function verifyGithubOidc(token, keys = null, now = Math.floor(Date
 async function ia(env, body) {
   const messages = Array.isArray(body.messages) ? body.messages.slice(0, 6).map((m) => ({ role: m.role === "system" ? "system" : "user", content: String(m.content || "").slice(0, 40000) })) : null;
   if (!messages || !messages.length) throw new Error("missatges");
-  const models = body.model && IA_MODELS.includes(body.model) ? [body.model] : IA_MODELS, errs = [];
+  const models = body.model && IA_MODELS.includes(body.model) ? [body.model, ...IA_MODELS.filter((m) => m !== body.model)] : IA_MODELS, errs = [];
   for (const model of models) {
     try {
-      const out = await env.AI.run(model, { messages, max_tokens: Math.min(8000, Number(body.max_tokens) || 4000), temperature: Math.min(1, Number(body.temperature) || 0.3) });
-      // Segons el model, el text arriba a «response» o en el format d'OpenAI
-      const text = typeof out?.response === "string" ? out.response : out?.choices?.[0]?.message?.content ?? (typeof out === "string" ? out : JSON.stringify(out?.response ?? out));
-      if (text && String(text).trim()) return { model, text: String(text) };
-      errs.push(`${model}: buit`);
+      const opts = { messages, max_tokens: Math.min(16000, Number(body.max_tokens) || 4000), temperature: Math.min(1, Number(body.temperature) || 0.3) };
+      // gpt-oss raona abans de respondre: amb poc raonament li queda espai per a la resposta
+      if (/gpt-oss/.test(model)) opts.reasoning_effort = "low";
+      const out = await env.AI.run(model, opts);
+      // Segons el model, el text arriba a «response» o en el format d'OpenAI (si «content» és buit, s'ha quedat sense espai)
+      const text = typeof out?.response === "string" ? out.response : typeof out?.choices?.[0]?.message?.content === "string" ? out.choices[0].message.content : typeof out === "string" ? out : "";
+      if (text.trim()) return { model, text };
+      errs.push(`${model}: sense resposta${out?.choices?.[0]?.message?.reasoning ? " (s'ha acabat l'espai raonant)" : ""}`);
     } catch (e) { errs.push(`${model}: ${e.message}`); }
   }
   throw new Error(errs.join(" · "));

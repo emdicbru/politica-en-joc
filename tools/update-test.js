@@ -18,9 +18,9 @@ const GEN_V = 2;
 const VERIFY_MODELS = ["@cf/openai/gpt-oss-120b", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
 // Fitxa de qui és qui (de les dades de l'app), perquè el model no s'equivoqui de càrrecs
 function whoIsWho() {
-  const src = fs.readFileSync(path.join(ROOT, "js", "content-diari.js"), "utf8");
-  const m = src.match(/const DAILY_CANDIDATES = (\[[\s\S]*?\]);/);
-  const cands = m ? JSON.parse(m[1]) : [];
+  // Els caps de llista del 29N (els mateixos que DAILY_CANDIDATES de js/content-diari.js, que no és al repositori de les eines)
+  const cands = [["PP", "Alberto Núñez Feijóo"], ["PSOE", "Pedro Sánchez"], ["Vox", "Santiago Abascal"], ["Frente Amplio", "Ada Colau"], ["Podemos", "Irene Montero"], ["ERC", "Gabriel Rufián"],
+    ["Junts", "Míriam Nogueras"], ["PNV", "Maribel Vaquero"], ["EH Bildu", "Oskar Matute"], ["BNG", "Néstor Rego"], ["CC", "Cristina Valido"]];
   return [
     ...cands.map(([p, n]) => `${n}: cap de llista de ${p} a les eleccions generals del 29N`),
     "Pedro Sánchez (PSOE): president del Govern d'Espanya", "Salvador Illa (PSC): president de la Generalitat de Catalunya",

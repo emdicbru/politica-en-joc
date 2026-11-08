@@ -13,6 +13,29 @@ const { askJson } = require("./ia.js");
 const ROOT = path.join(__dirname, "..");
 const NEWS = path.join(ROOT, "data", "news.json"), OUT = path.join(ROOT, "data", "test.json");
 const KEEP_DAYS = 21, MIN_Q = 8, MAX_Q = 10;
+// Versió del generador: si el test del dia el va fer una versió anterior, es torna a generar
+const GEN_V = 2;
+const VERIFY_MODELS = ["@cf/openai/gpt-oss-120b", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
+// Fitxa de qui és qui (de les dades de l'app), perquè el model no s'equivoqui de càrrecs
+function whoIsWho() {
+  const src = fs.readFileSync(path.join(ROOT, "js", "content-diari.js"), "utf8");
+  const m = src.match(/const DAILY_CANDIDATES = (\[[\s\S]*?\]);/);
+  const cands = m ? JSON.parse(m[1]) : [];
+  return [
+    ...cands.map(([p, n]) => `${n}: cap de llista de ${p} a les eleccions generals del 29N`),
+    "Pedro Sánchez (PSOE): president del Govern d'Espanya", "Salvador Illa (PSC): president de la Generalitat de Catalunya",
+    "Francina Armengol (PSOE): presidenta del Congrés", "Carlos Cuerpo: vicepresident primer i ministre d'Economia; també de Transports des del 3-11-2026",
+    "Isabel Díaz Ayuso (PP): presidenta de la Comunitat de Madrid", "Ada Colau: exalcaldessa de Barcelona (2015-2023)",
+  ].map((x) => "- " + x).join("\n");
+}
+// Text sense accents ni signes, per comparar la resposta amb els titulars
+const flat = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+// La resposta correcta d'una pregunta d'actualitat ha de sortir en algun dels titulars citats (paraules de 4 lletres o més, i les xifres)
+function grounded(answer, heads) {
+  const keys = flat(answer).split(" ").filter((w) => w.length >= 4 || /\d/.test(w));
+  if (!keys.length) return false;
+  return heads.some((h) => { const t = " " + flat(h) + " "; return keys.every((w) => t.includes(" " + w + " ") || t.includes(" " + w)); });
+}
 const TOPICS = ["campanya", "parlament", "politica", "economia", "habitatge", "justicia", "internacional", "energia", "territori", "immigracio", "societat", "cultura", "historia", "geografia", "ciencia"];
 const arg = (k) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : null; };
 const DRY = process.argv.includes("--prova");
@@ -25,7 +48,7 @@ const warn = (...a) => { const m = a.join(" ").replace(/\s+/g, " "); console.log
 
 (async () => {
   const test = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, "utf8")) : { days: {} };
-  if (test.days[DAY]) { log("El test de", DAY, "ja hi és."); return; }
+  if (test.days[DAY] && (test.days[DAY].v || 1) >= GEN_V) { log("El test de", DAY, "ja hi és."); return; }
   const news = JSON.parse(fs.readFileSync(NEWS, "utf8"));
   // Titulars dels últims 3 dies, sense repetits; es marca quantes fonts diferents expliquen cada tema
   const since = Date.now() - 72 * 3600e3, seen = new Set();
@@ -37,21 +60,27 @@ const warn = (...a) => { const m = a.join(" ").replace(/\s+/g, " "); console.log
   const veda = Date.now() >= BLACKOUT[0] && Date.now() < BLACKOUT[1];
 
   const sys = `Ets l'editor del «Test d'actualitat» diari de Política en Joc, una app en català sobre política i les eleccions generals del 29 de novembre de 2026. Escrius en català correcte i neutral.
-Fes 14 preguntes de resposta múltiple:
-- 9 d'ACTUALITAT ("k":"actualitat"): sobre els TEMES i FETS dels titulars (què s'ha decidit, qui ha fet què, quina xifra, on ha passat). El fet ha d'aparèixer en almenys 2 mitjans diferents de la llista. MAI preguntis quin mitjà publica o titula una cosa, ni sobre els mitjans.
-- 5 de CULTURA GENERAL ("k":"cultura") lligades a algun tema dels titulars: història, geografia, institucions, ciència, economia o cultura que ajudin a entendre la notícia (exemple: si es parla d'una cimera del clima, «A quina ciutat es va signar l'acord sobre el clima del 2015?»). Només dades establertes i indiscutibles.
+Fes 18 preguntes de resposta múltiple:
+- 11 d'ACTUALITAT ("k":"actualitat"): sobre els TEMES i FETS dels titulars (què s'ha decidit, qui ha fet què, quina xifra, on ha passat). El fet ha d'aparèixer en almenys 2 mitjans diferents de la llista. MAI preguntis quin mitjà publica o titula una cosa, ni sobre els mitjans.
+- 7 de CULTURA GENERAL ("k":"cultura") lligades a algun tema dels titulars: història, geografia, institucions, ciència, economia o cultura que ajudin a entendre la notícia (exemple: si es parla d'una cimera del clima, «A quina ciutat es va signar l'acord sobre el clima del 2015?»). Només dades establertes i indiscutibles.
 Regles:
 - Neutralitat política estricta: res d'opinions, valoracions ni preguntes que afavoreixin o perjudiquin cap partit.
 - Res de sang, morbositat ni bromes sobre accidents o víctimes.${veda ? "\n- Estem en veda electoral: cap pregunta sobre enquestes ni sondejos." : ""}
-- No t'inventis res. Si dubtes, no facis la pregunta.
+- No t'inventis res: ni noms, ni càrrecs, ni xifres. A les d'actualitat, la resposta correcta ha de sortir tal qual en algun dels titulars que cites. Si dubtes, no facis la pregunta.
+- Càrrecs i candidatures: fes servir aquesta fitxa i no n'atribueixis cap altre:
+${whoIsWho()}
+- Com a molt 2 preguntes del tipus «qui ha dit / qui ha fet». Pregunta també pel QUÈ: què s'ha aprovat, quina mesura, quina xifra, on, quan, per què.
+- Les opcions incorrectes han de ser del mateix tipus que la correcta i diferents en cada pregunta: no repeteixis el mateix grup d'opcions (per exemple, sempre els mateixos quatre polítics).
+- Res de loteries, successos, morbositat, ni preguntes «segons la notícia». Les de cultura s'han de poder respondre sense haver llegit cap notícia.
 - Enunciat clar i que s'entengui sol (sense «segons aquest titular»), de com a molt 130 caràcters.
 - 4 opcions curtes (màxim 40 caràcters), del mateix tipus i versemblants; la primera és la correcta. Cap opció com «Totes» o «Cap».
 - "exp": 1 o 2 frases que expliquin la resposta amb context.
 - "t": un d'aquests temes: ${TOPICS.join(", ")}. "src": els números dels titulars en què es basa (per a les d'actualitat, almenys 2 de mitjans diferents; per a les de cultura, el de la notícia relacionada).
 - Varietat: temes diferents, no més de 2 preguntes sobre el mateix fet, i dificultat variada (algunes fàcils, algunes difícils).
+- Català normatiu (gènere i concordança: «el finançament», «la Generalitat»). Noms propis de persones tal com són; topònims en català (Canàries, Saragossa).
 ${recent.length ? `- No repeteixis aquestes preguntes dels últims dies:\n${recent.slice(0, 60).map((q) => "  · " + q).join("\n")}` : ""}
 Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta","…","…","…"],"exp":"…","t":"…","src":[1,2]}]}`;
-  const draft = await askJson([{ role: "system", content: sys }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.4, max_tokens: 7000 });
+  const draft = await askJson([{ role: "system", content: sys }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.4, max_tokens: 9000 });
   if (!draft || !Array.isArray(draft.questions)) return warn("sense resposta vàlida de la IA (proposta)");
   log("model", draft.__model, "· proposades", draft.questions.length);
 
@@ -60,7 +89,18 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
   let cand = draft.questions.map((q) => ({ k: q.k === "cultura" ? "cultura" : "actualitat", q: norm(q.q), a: (q.a || []).map(norm), exp: norm(q.exp), t: TOPICS.includes(q.t) ? q.t : q.k === "cultura" ? "cultura" : "politica", src: (q.src || []).map(Number).filter((i) => items[i]) }))
     .filter((q) => q.q.length >= 15 && q.q.length <= 160 && q.a.length === 4 && q.a.every((x) => x && x.length <= 60) && new Set(q.a.map((x) => x.toLowerCase())).size === 4 && q.exp)
     .filter((q) => !/\b(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara\.cat|vilaweb)\b/i.test(q.q))
-    .filter((q) => q.k === "cultura" || new Set(q.src.map((i) => items[i].s)).size >= 2);
+    .filter((q) => q.k === "cultura" || new Set(q.src.map((i) => items[i].s)).size >= 2)
+    .filter((q) => !/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?\b/i.test(q.q + " " + q.a.join(" ")))
+    .filter((q) => { const ok = q.k === "cultura" || grounded(q.a[0], q.src.map((i) => items[i].t)); if (!ok) log("descartada (la resposta no surt als titulars):", q.q); return ok; });
+  // Cap joc d'opcions repetit (3 o més opcions en comú amb una pregunta anterior) i com a molt 2 de «qui»
+  const kept = []; let who = 0;
+  for (const q of cand) {
+    const set = new Set(q.a.map(flat));
+    if (kept.some((k) => k.a.filter((x) => set.has(flat(x))).length >= 3)) { log("descartada (opcions repetides):", q.q); continue; }
+    if (/^(qui|quin pol[ií]tic|quina pol[ií]tica|quin l[ií]der|quina l[ií]der|quin president|quina presidenta|quin ministre|quina ministra|quin alcalde|quina alcaldessa)\b/i.test(q.q) && ++who > 2) { log("descartada (massa preguntes de «qui»):", q.q); continue; }
+    kept.push(q);
+  }
+  cand = kept;
   log("vàlides de forma", cand.length);
   if (cand.length < MIN_Q) return warn("massa poques preguntes vàlides:", cand.length);
 
@@ -68,9 +108,13 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
   const shuffled = cand.map((q) => { const o = [...q.a].sort(() => Math.random() - 0.5); return { o, ok: o.indexOf(q.a[0]) }; });
   const vsys = `Ets un verificador de fets molt estricte. Per a cada pregunta, tria l'opció correcta (índex 0-3) fent servir els titulars i el teu coneixement, i digues si la pregunta és vàlida: certa, no ambigua (només una opció correcta), neutral i comprensible sola. Respon NOMÉS amb JSON: {"answers":[{"i":0,"choice":2,"valid":true,"why":"…"}]}`;
   const vq = cand.map((q, i) => `${i}. ${q.q}\n   ${shuffled[i].o.map((x, j) => `${j}) ${x}`).join("  ")}`).join("\n");
-  const check = await askJson([{ role: "system", content: vsys }, { role: "user", content: `Titulars:\n${list}\n\nPreguntes:\n${vq}` }], { warn, temperature: 0, max_tokens: 4000 });
-  if (!check || !Array.isArray(check.answers)) return warn("sense resposta vàlida de la IA (verificació)");
-  const good = cand.filter((q, i) => { const a = check.answers.find((x) => Number(x.i) === i); return a && a.valid === true && Number(a.choice) === shuffled[i].ok; });
+  const checks = [];
+  for (const model of VERIFY_MODELS) {
+    const c = await askJson([{ role: "system", content: vsys }, { role: "user", content: `Fitxa de qui és qui:\n${whoIsWho()}\n\nTitulars:\n${list}\n\nPreguntes:\n${vq}` }], { warn, temperature: 0, max_tokens: 5000, model });
+    if (!c || !Array.isArray(c.answers)) return warn("sense resposta vàlida de la IA (verificació amb " + model + ")");
+    checks.push(c);
+  }
+  const good = cand.filter((q, i) => checks.every((c) => { const a = c.answers.find((x) => Number(x.i) === i); return a && a.valid === true && Number(a.choice) === shuffled[i].ok; }));
   log("superen la verificació", good.length, "de", cand.length);
   if (good.length < MIN_Q) return warn("després de la verificació en queden massa poques:", good.length);
 
@@ -78,7 +122,7 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
   const act = good.filter((q) => q.k === "actualitat"), cul = good.filter((q) => q.k === "cultura");
   const pick = [...act.slice(0, Math.max(MAX_Q - Math.min(4, cul.length), 0)), ...cul.slice(0, 4)].slice(0, MAX_Q);
   const questions = pick.map((q) => ({ k: q.k, t: q.t, q: q.q, a: q.a, exp: q.exp, ...(q.src.length ? { u: items[q.src[0]].u, s: [...new Set(q.src.map((i) => items[i].s))].slice(0, 3) } : {}) }));
-  test.days[DAY] = { n: questions.length, model: draft.__model, questions };
+  test.days[DAY] = { v: GEN_V, n: questions.length, model: draft.__model, questions };
   // Només els últims dies
   const keep = madrid(new Date(Date.now() - KEEP_DAYS * 864e5));
   for (const d of Object.keys(test.days)) if (d < keep) delete test.days[d];

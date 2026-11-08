@@ -1,0 +1,178 @@
+{
+ "days": {
+  "2026-11-08": {
+   "n": 10,
+   "model": "@cf/openai/gpt-oss-120b",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Quin alcalde va prometre expropiar els fons buitre d’habitatge?",
+     "a": [
+      "Ada Colau",
+      "Pedro Sánchez",
+      "Alberto Núñez Feijóo",
+      "Santiago Abascal"
+     ],
+     "exp": "Ada Colau, líder del Front Amplio, va anunciar que el seu govern expropriarà els fons buitre destinats a l’habitatge.",
+     "u": "https://www.vilaweb.cat/noticies/colau-promet-expropiar-els-fons-voltor-dhabitatge/",
+     "s": [
+      "VilaWeb",
+      "eldiario.es"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quin líder polític va denunciar una \"nova invasió\" a les Illes Canàries?",
+     "a": [
+      "Santiago Abascal",
+      "Pedro Sánchez",
+      "Ada Colau",
+      "Alberto Núñez Feijóo"
+     ],
+     "exp": "Santiago Abascal, president de Vox, va afirmar que les Illes Canàries patien una nova invasió migratòria.",
+     "u": "https://www.eldebate.com/espana/20261108/abascal-denuncia-otra-invasion-canarias-lamenta-nuevo-gestion-migratoria-sanchez_478554.html",
+     "s": [
+      "El Debate",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "economia",
+     "q": "Quin president del PP va prometre que cap comunitat autònoma tindrà una finançament singular?",
+     "a": [
+      "Alberto Núñez Feijóo",
+      "Pedro Sánchez",
+      "Santiago Abascal",
+      "Ada Colau"
+     ],
+     "exp": "Feijóo assegurà que la reforma del finançament autonòmic eliminarà qualsevol acord singular com el pactat amb Catalunya.",
+     "u": "https://www.abc.es/espana/andalucia/feijoo-promete-ninguna-comunidad-financiacion-singular-pactada-20261107112344-nts.html",
+     "s": [
+      "ABC",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quin president del govern va convocar una comissió interministerial d’immigració després de l’arribada massiva a El Hierro?",
+     "a": [
+      "Pedro Sánchez",
+      "Alberto Núñez Feijóo",
+      "Santiago Abascal",
+      "Ada Colau"
+     ],
+     "exp": "El president del govern, Pedro Sánchez, va crear una comissió per gestionar la crisi migratòria a les Illes Canàries.",
+     "u": "https://www.elespanol.com/espana/politica/20261107/sanchez-reune-comision-inmigracion-abordar-crisis-migratoria-canarias-llegada-migrantes/1003744450211_0.html",
+     "s": [
+      "El Español",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quina presidenta autonòmica va afirmar que el PSOE té por de canviar la Moncloa per Soto del Real?",
+     "a": [
+      "Isabel Díaz Ayuso",
+      "Ada Colau",
+      "Pedro Sánchez",
+      "Alberto Núñez Feijóo"
+     ],
+     "exp": "Ayuso, presidenta de la Comunitat de Madrid, va dir que el PSOE tem substituir la Moncloa per la zona residencial de Soto del Real.",
+     "u": "https://www.abc.es/espana/comunidad-valenciana/ayuso-cuestiona-campana-miedo-psoe-temen-cambiar-20261107144349-nt.html",
+     "s": [
+      "ABC",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "economia",
+     "q": "Quin conseller de l'Hisenda va condicionar el suport al nou govern a la recaptació d'impostos a Catalunya?",
+     "a": [
+      "Joan Nogueras",
+      "Pedro Sánchez",
+      "Alberto Núñez Feijóo",
+      "Santiago Abascal"
+     ],
+     "exp": "El conseller de l'Hisenda, Joan Nogueras, va dir que el seu suport depèn de la gestió de la recaptació a Catalunya.",
+     "u": "https://www.ara.cat/politica/eleccions-generals/nogueras-posa-recaptacio-dels-impostos-catalunya-condicio-negociar-govern-l_25_5903203.html",
+     "s": [
+      "Ara",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "En quin any va ser assassinat Guillem Agulló?",
+     "a": [
+      "1993",
+      "1985",
+      "2001",
+      "1979"
+     ],
+     "exp": "Guillem Agulló, activista antifeixista, va ser assassinat el 1993 per grups d’extrema dreta.",
+     "u": "https://www.lavanguardia.com/local/valencia/20261107/11678791/sanchez-reune-padres-guillem-agullo-joven-antifascista-asesinado-1993-grupo-extrema-derecha-servimedia20261107.html",
+     "s": [
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "L’illa d’El Hierro forma part de quin arxipèlag?",
+     "a": [
+      "Illes Canàries",
+      "Illes Balears",
+      "Illes del Carib",
+      "Illes Açores"
+     ],
+     "exp": "El Hierro és la illa més occidental de les Illes Canàries, situades al territori espanyol al Atlàntic.",
+     "u": "https://www.20minutos.es/nacional/abascal-dice-hierro-vive-otra-invasion_7058602_0.html",
+     "s": [
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "economia",
+     "q": "Quina entitat gestiona la infraestructura ferroviària espanyola implicada en l’escàndol del bonus?",
+     "a": [
+      "ADIF",
+      "Renfe",
+      "FEVE",
+      "OTV"
+     ],
+     "exp": "ADIF (Administrador de Infraestructuras Ferroviarias) és l’organisme responsable de la infraestructura i va ser citat en l’escàndol del bonus.",
+     "u": "https://www.elmundo.es/espana/2026/11/07/6aef1a9efc6c83a47c8b4575.html",
+     "s": [
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "economia",
+     "q": "Quin era el premi màxim de La Primitiva indicat en les notícies?",
+     "a": [
+      "42.424 euros",
+      "10.000 euros",
+      "100.000 euros",
+      "5.000 euros"
+     ],
+     "exp": "Segons la notícia, el sorteig de La Primitiva va deixar un premi de 42.424 euros a Montilla.",
+     "u": "https://www.abc.es/espana/andalucia/cordoba/primitiva-deja-premio-42424-euros-montilla-20261107225424-nts.html",
+     "s": [
+      "ABC"
+     ]
+    }
+   ]
+  }
+ },
+ "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
+ "updated": "2026-11-08"
+}

@@ -87,6 +87,47 @@ export async function verifyIdToken(token, keys = null, now = Math.floor(Date.no
   return pay.sub;
 }
 
+// ---------- IA per al test i el quiz de l'actualitat (Cloudflare Workers AI) ----------
+// Només hi poden entrar les tasques de GitHub Actions del repositori de Política en Joc: porten un testimoni OIDC que
+// signa GitHub (sense cap clau compartida). La IA és la de Cloudflare (capa gratuïta, amb un límit diari).
+const GH_REPO_IA = "emdicbru/politica-en-joc", IA_AUD = "pej-ia";
+const IA_MODELS = ["@cf/openai/gpt-oss-120b", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
+let ghKeys = null, ghKeysAt = 0;
+async function githubKeys() {
+  if (ghKeys && Date.now() - ghKeysAt < 3600e3) return ghKeys;
+  const r = await fetch("https://token.actions.githubusercontent.com/.well-known/jwks");
+  if (!r.ok) throw new Error("claus de GitHub");
+  ghKeys = (await r.json()).keys; ghKeysAt = Date.now(); return ghKeys;
+}
+export async function verifyGithubOidc(token, keys = null, now = Math.floor(Date.now() / 1000)) {
+  const [h, p, s] = String(token || "").split(".");
+  if (!s) throw new Error("token");
+  const head = JSON.parse(new TextDecoder().decode(unb64u(h))), pay = JSON.parse(new TextDecoder().decode(unb64u(p)));
+  if (head.alg !== "RS256") throw new Error("alg");
+  const jwk = (keys || await githubKeys()).find((k) => k.kid === head.kid);
+  if (!jwk) throw new Error("kid");
+  const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+  if (!await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, unb64u(s), enc.encode(`${h}.${p}`))) throw new Error("signatura");
+  if (pay.iss !== "https://token.actions.githubusercontent.com" || pay.aud !== IA_AUD || pay.repository !== GH_REPO_IA) throw new Error("repositori");
+  if (!(pay.exp > now) || pay.iat > now + 300) throw new Error("caducat");
+  return pay;
+}
+async function ia(env, body) {
+  const messages = Array.isArray(body.messages) ? body.messages.slice(0, 6).map((m) => ({ role: m.role === "system" ? "system" : "user", content: String(m.content || "").slice(0, 40000) })) : null;
+  if (!messages || !messages.length) throw new Error("missatges");
+  const models = body.model && IA_MODELS.includes(body.model) ? [body.model] : IA_MODELS, errs = [];
+  for (const model of models) {
+    try {
+      const out = await env.AI.run(model, { messages, max_tokens: Math.min(8000, Number(body.max_tokens) || 4000), temperature: Math.min(1, Number(body.temperature) || 0.3) });
+      // Segons el model, el text arriba a «response» o en el format d'OpenAI
+      const text = typeof out?.response === "string" ? out.response : out?.choices?.[0]?.message?.content ?? (typeof out === "string" ? out : JSON.stringify(out?.response ?? out));
+      if (text && String(text).trim()) return { model, text: String(text) };
+      errs.push(`${model}: buit`);
+    } catch (e) { errs.push(`${model}: ${e.message}`); }
+  }
+  throw new Error(errs.join(" · "));
+}
+
 // ---------- Firestore amb la clau de servei ----------
 let gtoken = null, gtokenExp = 0;
 async function googleToken(env) {
@@ -260,7 +301,13 @@ export default {
   async fetch(req, env) {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc", turn: turnOn(env) });
+    if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc", turn: turnOn(env), ia: !!env.AI });
+    if (req.method === "POST" && url.pathname === "/ia") {
+      try { await verifyGithubOidc((req.headers.get("Authorization") || "").replace(/^Bearer /, "")); } catch (e) { return json(req, 401, { error: `accés: ${e.message}` }); }
+      if (!env.AI) return json(req, 503, { error: "sense IA" });
+      let body; try { body = await req.json(); } catch { return json(req, 400, { error: "petició" }); }
+      try { return json(req, 200, await ia(env, body)); } catch (e) { return json(req, 502, { error: e.message }); }
+    }
     if (req.method !== "POST" || (url.pathname !== "/avisa" && url.pathname !== "/turn")) return json(req, 404, { error: "no existeix" });
     let caller;
     try { caller = await verifyIdToken((req.headers.get("Authorization") || "").replace(/^Bearer /, "")); } catch (e) { return json(req, 401, { error: `sessió: ${e.message}` }); }

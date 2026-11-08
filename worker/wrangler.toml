@@ -9,3 +9,7 @@ workers_dev = true
 # Cada minut: si toca enviar alguna notificació (repte diari, ratxa, avisos programats), desperta push.yml a GitHub
 [triggers]
 crons = ["* * * * *"]
+
+# IA de Cloudflare (Workers AI) per generar el test i el quiz de l'actualitat (POST /ia, només des de GitHub Actions)
+[ai]
+binding = "AI"

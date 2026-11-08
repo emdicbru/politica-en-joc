@@ -57,6 +57,7 @@ function renderGames() {
 function renderHome() {
   if (typeof renderHomeEspecial === "function") renderHomeEspecial();
   renderDailyHero();
+  if (typeof renderTestHero === "function") renderTestHero();
   renderInstall();
   renderNewsTicker();
   const sim = $("#home-sim");
@@ -1041,19 +1042,37 @@ if (!store.get(ONBOARD_KEY, null)) {
 // Un sol cop per tanda (NOVETATS_ID). Qui entra per primer cop fa el tutorial, que ja ho explica, i no les veu.
 // No surten enmig d'una partida ni a les pàgines de control i avís legal: s'esperen a la pàgina següent.
 var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-11-06";
-const NOVETATS_HEAD = { t: "El reto diario se ha renovado", art: "diari", cta: "Juega el reto de hoy", href: "#joc/diari" };
-const NOVETATS = [
+let NOVETATS_HEAD = { t: "El reto diario se ha renovado", art: "diari", cta: "Juega el reto de hoy", href: "#joc/diari" };
+let NOVETATS = [
   { ico: "🔎", t: "Encuentra el error", d: "Una frase con un trozo falso: tócalo." },
   { ico: "🗂️", t: "Clasifica", d: "Lleva cada tarjeta a su columna, sin ningún fallo." },
   { ico: "🗳️", t: "¿Qué elecciones son?", d: "Adivínalas a partir del resultado de los partidos." },
   { ico: "🧮", t: "La ley d'Hondt", d: "Calcula cuántos escaños obtiene un partido con los votos en la mano." },
   { ico: "🗺️", t: "Pinta la comunidad", d: "Toca en el mapa todas sus provincias." },
 ];
-const NOVETATS_APP = [
+let NOVETATS_APP = [
   { ico: "📚", t: "Muchas más preguntas", d: "En todas las pruebas: Constitución, historia, política catalana, actualidad y más." },
   { ico: "🧩", t: "Parejas renovadas", d: "Ahora unes organismos con su función, partidos con candidatos o presidentes con sus años. Y adiós a la prueba de sumar mayorías." },
 ];
+// Des del 8-11-2026 (en català): el test d'actualitat, i el repte renovat a «I a més». En castellà, on el test no hi és, es
+// queda l'avís del repte renovat.
+let novetatsSet = false;
+function novetatsTest() {
+  if (novetatsSet || !(typeof testOn === "function" && testOn())) return;
+  novetatsSet = true;
+  NOVETATS_ID = "2026-11-08";
+  NOVETATS_HEAD = { t: "Nuevo: el test de actualidad", art: "diari", cta: "Haz el test de hoy", href: "#joc/actualitat" };
+  NOVETATS = [
+    { ico: "📰", t: "Cada día, preguntas nuevas", d: "Sobre los temas de actualidad de estos días y de cultura general relacionada con las noticias." },
+    { ico: "💡", t: "Con la explicación", d: "Después de cada respuesta, el contexto y el enlace a la noticia." },
+    { ico: "🏆", t: "Con su ranking", d: "Aparte del reto diario: gana quien acierta más y, si hay empate, quien va más rápido." },
+  ];
+  NOVETATS_APP = [
+    { ico: "🗓️", t: "El reto diario, renovado", d: "Pruebas nuevas (Encuentra el error, Clasifica, La ley d'Hondt, Pinta la comunidad…) y muchas más preguntas." },
+  ];
+}
 function novetatsMaybe() {
+  novetatsTest();
   if (todayKey() < DAILY_V4_FROM) return; // el repte renovat comença aquell dia: abans, l'avís prometria proves que encara no hi són
   if (store.get(NOVETATS_KEY, null) === NOVETATS_ID) return;
   if (!store.get(ONBOARD_KEY, null) && !(Progress.data.xp > 0)) return; // primera visita: ja hi ha el tutorial

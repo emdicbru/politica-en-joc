@@ -242,7 +242,7 @@ function espSimulacre(progress) {
 }
 
 // ---------- Estat de la pàgina ----------
-const Nit = { sel: null, party: null, map: "guanya", filter: null, all: false, coal: new Set() };
+const Nit = { sel: null, party: null, map: "guanya", filter: null, all: false, coal: new Set(), mov: { steps: null, cache: new Map(), i: null, play: null, loading: false } };
 const espCoal = Nit.coal;
 const nitLive = () => ["nit", "despres"].includes(espFase()) && espResultsMode() !== "off";
 
@@ -338,11 +338,14 @@ function nit3dLook(src) {
     return { color: nitParty(p.winner).color, h: Math.max(0.05, (share - 0.15) / 0.45) * grow };
   };
 }
-function nit3dMount(main, src) {
+function nit3dMount(main, src0) {
+  let src = src0;
   if (!src) return;
   if (!N3.mod) { nit3dLoad(); return; }
   // Hemicicle
-  const slot = $(".nt-congres .nt-hemi", main);
+  const inMov = Nit.tab === "moviola" && $("#nt-moviola .nt-hemi", main);
+  const slot = inMov || $(".nt-congres .nt-hemi", main);
+  if (inMov) src = nitMovData() || src;
   if (slot) {
     if (!N3.hemi) {
       N3.hemiHost = h(`<div class="n3-hemi" role="img" aria-label="Hemicicle del Congrés en 3D. Arrossega'l per girar-lo i toca un escó per veure'n el partit i la circumscripció."></div>`);
@@ -393,6 +396,7 @@ function renderNit(arg) {
       <p class="sim-fiction" data-src></p>
     </div>`;
   espBind(root);
+  root.addEventListener("click", (e) => { if (e.target.closest("[data-tv]")) nitTvOpen(); });
   root.addEventListener("click", async (e) => {
     if (!e.target.closest("[data-share]")) return;
     const t = nitLive() && Esp.data ? nitTitular(Esp.data) : null;
@@ -439,7 +443,7 @@ function espPaint(first = false) {
   $("[data-gov]", root).innerHTML = live && d ? nitGovHtml(d) : "";
   // Pestanyes: [id, títol, secció]
   const play = espPorraState() === "oberta" && !live ? "La teva porra" : "Les teves prediccions";
-  const tabs = live && d ? [["resultats", "El Congrés", "nt-congres"], ["joc", "Escons en joc", "nt-joc"], ["mapa", "Mapa", "nt-mapa"], ["majories", "Majories", "nt-majories"], ["hora", "Última hora", "nt-hora"], ["jugues", play, "nt-jugues"]]
+  const tabs = live && d ? [["resultats", "El Congrés", "nt-congres"], ["joc", "Escons en joc", "nt-joc"], ["mapa", "Mapa", "nt-mapa"], ["majories", "Majories", "nt-majories"], ["moviola", "La nit, pas a pas", "nt-moviola"], ["hora", "Última hora", "nt-hora"], ["jugues", play, "nt-jugues"]]
     : live ? [["espera", "Escrutini", "nt-espera"], ["jugues", play, "nt-jugues"]]
     : [["com", "Com seguir la nit", "nt-com"], ["joc", "Escons a vigilar", "nt-joc"], ["mapa", "Mapa del 2023", "nt-mapa"], ["congres", "El Congrés del 2023", "nt-congres"], ["jugues", play, "nt-jugues"]];
   if (!tabs.some(([id]) => id === Nit.tab)) Nit.tab = tabs[0][0];
@@ -467,8 +471,11 @@ function espPaint(first = false) {
     });
     simMapPick(svg, (i) => { Nit.sel = Nit.sel === i ? null : i; espPaint(); });
   }
-  // Hemicicle i mapa en 3D (si es pot)
+  // La moviola: l'historial de la nit i el moment triat
+  if (cur[0] === "moviola" && d) nitMovInit(main, d); else nitMovStop();
+  // Hemicicle i mapa en 3D (si es pot) i, si és obert, el mode TV
   nit3dMount(main, live ? d : ref);
+  if (NTV.el) nitTvPaint();
   // Columna de joc (la porra oberta no es repinta, perquè no es perdi el que s'està escrivint)
   $("[data-pred-box]", root).innerHTML = espPredHtml(d);
   if (typeof pronNitCard === "function") $("[data-pron-box]", root).innerHTML = pronNitCard(d);
@@ -488,7 +495,7 @@ function espPaint(first = false) {
 function nitHeroNight(f, d) {
   const t = d ? nitTitular(d) : null;
   const p23 = 66.6, part = d?.participacio;
-  return `<div class="nt-hero-top"><span class="esp-onair">${f === "nit" ? `<span class="dot-live"></span>En directe` : "Resultats"}</span>${d?.simulacre ? `<span class="esp-simtag">Simulacre · dades inventades</span>` : ""}<span class="esp-upd">${d ? `Actualitzat ${espAgo(d.actualitzat || Esp.fetchedAt)}` : ""}</span><button type="button" class="nt-share" data-share>Comparteix</button></div>
+  return `<div class="nt-hero-top"><span class="esp-onair">${f === "nit" ? `<span class="dot-live"></span>En directe` : "Resultats"}</span>${d?.simulacre ? `<span class="esp-simtag">Simulacre · dades inventades</span>` : ""}<span class="esp-upd">${d ? `Actualitzat ${espAgo(d.actualitzat || Esp.fetchedAt)}` : ""}</span>${d ? `<button type="button" class="nt-share nt-tvb" data-tv title="Pantalla completa per projectar">📺 Mode TV</button>` : ""}<button type="button" class="nt-share" data-share>Comparteix</button></div>
     <div class="nt-hero-main">
       <div class="nt-hero-t">
         <h1>${t ? esc(t.t1) : f === "nit" ? "Nit electoral" : "Resultats del 29N"}</h1>
@@ -649,10 +656,184 @@ function nitMainNight(d, ref) {
       </div>
     </section>
 
+    <section class="card nt-sec nt-moviola" id="nt-moviola">
+      <div class="nt-sec-h"><h2 class="section-title sm">🎞️ La nit, pas a pas</h2></div>
+      <p class="muted">Torna a veure com s'ha mogut el Congrés al llarg de l'escrutini. Prem ▶ o arrossega la barra.</p>
+      <div class="nt-mov" data-mov><p class="muted">Carregant l'historial de la nit…</p></div>
+      <div class="nt-mov-g">${nitHemi(d)}<div class="nt-mov-side" data-mov-side></div></div>
+    </section>
+
     <section class="card nt-sec nt-hora" id="nt-hora">
       <h2 class="section-title sm">⚡ Última hora</h2>
       <ol class="nt-feed">${Esp.feed.length ? Esp.feed.slice(0, 12).map((e) => `<li class="k-${e.kind}"><time>${new Date(e.t).toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}</time><span>${esc(e.text)}</span></li>`).join("") : `<li class="k-info"><span>Aquí sortiran els canvis de l'escrutini a mesura que arribin.</span></li>`}</ol>
     </section>`;
+}
+
+// ---------- Moviola ----------
+// L'historial: a la nit, data/historial.json (tools/nit-electoral.js); al simulacre, els mateixos càlculs del simulacre a
+// cada 2 % del recorregut fins al moment actual. Cada foto té els vots de les circumscripcions i aquí se'n treuen els escons.
+async function nitMovLoad(d) {
+  const M = Nit.mov;
+  if (M.loading) return;
+  M.loading = true;
+  let steps = [];
+  try {
+    if (espResultsMode() === "simulacre") {
+      const pv = espPreview(), start = (pv?.resultats === "simulacre" ? pv.simInici : 0) || Esp.cfg.simInici || Date.now();
+      const dur = ((pv?.resultats === "simulacre" ? pv.simDurada : 0) || Esp.cfg.simDurada || 20) * 60000;
+      const now = Math.max(0, Math.min(1, (Date.now() - start) / dur));
+      for (let p = 0.02; p < now; p += 0.02) steps.push(espSimulacre(p));
+    } else {
+      const r = await fetch(`${window.PEJ_DATA || "data/"}historial.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-cache" });
+      if (r.ok) steps = ((await r.json()).steps || []);
+    }
+  } catch { /* sense historial: només el moment actual */ }
+  // Sempre s'hi afegeix el moment actual
+  steps = steps.filter((s) => s.escrutat < d.escrutat);
+  M.steps = [...steps.map((raw) => ({ raw })), { d }];
+  M.cache.clear();
+  M.loading = false;
+}
+const nitMovAt = (k) => { const M = Nit.mov, s = M.steps?.[k]; if (!s) return null; if (s.d) return s.d; if (!M.cache.has(k)) M.cache.set(k, espCompute(s.raw)); return M.cache.get(k); };
+const nitMovData = () => { const M = Nit.mov; return M.steps ? nitMovAt(M.i ?? M.steps.length - 1) : null; };
+async function nitMovInit(main, d) {
+  const M = Nit.mov;
+  // L'últim pas és sempre el resultat d'ara: si ha arribat una actualització, es torna a carregar l'historial
+  if (!M.steps || M.steps[M.steps.length - 1].d !== d) { const wasEnd = M.i === null || (M.steps && M.i >= M.steps.length - 1); await nitMovLoad(d); if (wasEnd) M.i = null; }
+  if (!$("#nt-moviola", main)) return;
+  nitMovPaint(main);
+}
+function nitMovStop() { clearInterval(Nit.mov.play); Nit.mov.play = null; }
+// Gràfic: els escons de cada partit al llarg de l'escrutini, amb la línia de 176 i el moment triat
+function nitMovChart(steps, k) {
+  const ds = steps.map((_, j) => nitMovAt(j)), last = ds[ds.length - 1];
+  const ids = Object.keys(last.seats).filter((p) => last.seats[p] >= 4).sort((a, b) => last.seats[b] - last.seats[a]).slice(0, 7);
+  const W = 640, H = 220, L = 34, B = 26, top = Math.max(NIT_MAJ + 14, ...ds.flatMap((x) => ids.map((p) => x.seats[p] || 0)));
+  const X = (j) => L + (j / Math.max(1, ds.length - 1)) * (W - L - 10), Y = (v) => H - B - (v / top) * (H - B - 10);
+  const line = (p) => ds.map((x, j) => `${j ? "L" : "M"}${X(j).toFixed(1)} ${Y(x.seats[p] || 0).toFixed(1)}`).join("");
+  const ticks = [0, 50, 100, 150, 200, 250, 300].filter((v) => v <= top);
+  return `<svg class="nt-mov-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Escons de cada partit al llarg de l'escrutini">
+    ${ticks.map((v) => `<line x1="${L}" x2="${W - 10}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${L - 6}" y="${Y(v) + 4}" class="t" text-anchor="end">${v}</text>`).join("")}
+    <line x1="${L}" x2="${W - 10}" y1="${Y(NIT_MAJ)}" y2="${Y(NIT_MAJ)}" class="maj"/><text x="${W - 12}" y="${Y(NIT_MAJ) - 5}" class="t maj-t" text-anchor="end">176</text>
+    ${ids.map((p) => `<path d="${line(p)}" stroke="${nitParty(p).color}" class="l"/>`).join("")}
+    <line x1="${X(k)}" x2="${X(k)}" y1="6" y2="${H - B}" class="cur"/>
+    ${ids.map((p) => `<circle cx="${X(k)}" cy="${Y(ds[k].seats[p] || 0)}" r="4.5" fill="${nitParty(p).color}" class="dot"/>`).join("")}
+    <text x="${L}" y="${H - 6}" class="t">${espPct(ds[0].escrutat, 0)} escrutat</text><text x="${W - 10}" y="${H - 6}" class="t" text-anchor="end">${espPct(last.escrutat, 0)}</text>
+  </svg>`;
+}
+function nitMovPaint(main) {
+  const M = Nit.mov, box = $("[data-mov]", main);
+  if (!box || !M.steps) return;
+  const n = M.steps.length, k = M.i ?? n - 1, dk = nitMovAt(k), live = k === n - 1;
+  if (!$("input", box) || Number($("input", box).max) !== n - 1) {
+    box.innerHTML = `<div class="nt-mov-ctl"><button type="button" class="btn primary nt-mov-play" data-mov-play aria-label="Reprodueix la nit">▶</button>
+      <input type="range" min="0" max="${n - 1}" step="1" value="${k}" aria-label="Moment de l'escrutini" data-mov-range>
+      <span class="nt-mov-t" data-mov-t></span></div><div data-mov-chart></div>`;
+    $("[data-mov-range]", box).addEventListener("input", (e) => { nitMovStop(); nitMovGo(main, Number(e.target.value)); });
+    $("[data-mov-play]", box).addEventListener("click", () => {
+      if (M.play) return nitMovStop(), nitMovPaint(main);
+      if ((M.i ?? n - 1) >= n - 1) M.i = 0;
+      M.play = setInterval(() => { const j = (M.i ?? 0) + 1; if (j >= M.steps.length) { nitMovStop(); M.i = null; nitMovPaint(main); return; } nitMovGo(main, j); }, 650);
+      nitMovPaint(main);
+    });
+  }
+  $("[data-mov-range]", box).value = k;
+  $("[data-mov-play]", box).textContent = M.play ? "❚❚" : "▶";
+  $("[data-mov-t]", box).innerHTML = `<b>${espPct(dk.escrutat)}</b> escrutat${live ? " · <em>ara</em>" : ""}`;
+  $("[data-mov-chart]", box).innerHTML = nitMovChart(M.steps, k);
+  // Al costat: qui va primer en aquell moment i les dues opcions de govern
+  const side = $("[data-mov-side]", main), t = nitTitular(dk);
+  if (side) side.innerHTML = `${t ? `<p class="nt-mov-h">${esc(t.t1)}</p>` : ""}<ul class="nh-leg">${Object.keys(dk.seats).filter((p) => dk.seats[p]).sort((a, b) => dk.seats[b] - dk.seats[a]).slice(0, 8).map((p) => `<li style="--c:${nitParty(p).color}"><i></i>${esc(nitSig(p))}<b>${dk.seats[p]}</b></li>`).join("")}</ul>
+    ${NIT_GOV.map((g0) => { const g = nitGov(dk, g0); return `<p class="nt-mov-g1"><span>${g.core.map((p) => nitChip(p, "has")).join("<b>+</b>")}</span><strong>${g.sum}</strong><em class="${g.sum >= NIT_MAJ ? "up" : ""}">${g.sum >= NIT_MAJ ? "majoria" : `en falten ${NIT_MAJ - g.sum}`}</em></p>`; }).join("")}`;
+  // L'hemicicle d'aquell moment: el 3D salta a cada pas; el pla es torna a dibuixar
+  const slot = $("#nt-moviola .nt-hemi", main);
+  if (N3.hemi && slot?.classList.contains("is-3d")) N3.hemi.update(dk);
+  else if (slot) { slot.outerHTML = nitHemi(dk); if (N3.mod) nit3dMount(main, dk); }
+}
+function nitMovGo(main, j) { Nit.mov.i = j >= Nit.mov.steps.length - 1 ? null : j; nitMovPaint(main); }
+
+// ---------- Mode TV: pantalla completa per projectar ----------
+// L'hemicicle gran a l'esquerra i, a la dreta, panells que van passant sols (qui pot governar, el mapa i els escons a la
+// corda). A sota, l'última hora. S'actualitza amb el bucle en directe de sempre (espPaint → nitTvPaint).
+const NTV = { el: null, hemi: null, map: null, panel: 0, timer: null, clock: null };
+const NTV_PANELS = ["gov", "mapa", "corda"];
+function nitTvOpen() {
+  if (NTV.el) return;
+  const el = h(`<div class="ntv" role="dialog" aria-label="Nit electoral en mode TV">
+    <header class="ntv-top"><span class="ntv-logo">POLÍTICA EN JOC <b>· Nit electoral 29N</b></span><span class="esp-onair"><span class="dot-live"></span>En directe</span><span class="ntv-esc" data-tv-esc></span><span class="ntv-clock" data-tv-clock></span><button type="button" class="ntv-x" data-tv-x aria-label="Surt del mode TV">✕</button></header>
+    <div class="ntv-main">
+      <section class="ntv-left"><h2 class="ntv-h" data-tv-title></h2><div class="ntv-hemi" data-tv-hemi></div><ul class="ntv-leg" data-tv-leg></ul></section>
+      <section class="ntv-right"><div class="ntv-dots" data-tv-dots></div><div class="ntv-panel" data-tv-panel></div></section>
+    </div>
+    <footer class="ntv-tick"><span class="ntv-tick-k">⚡ Última hora</span><div class="ntv-tick-w"><div class="ntv-tick-t" data-tv-tick></div></div></footer>
+  </div>`);
+  document.body.appendChild(el);
+  NTV.el = el;
+  document.body.classList.add("ntv-on");
+  el.requestFullscreen?.().catch(() => {});
+  $("[data-tv-x]", el).addEventListener("click", nitTvClose);
+  el.addEventListener("keydown", (e) => { if (e.key === "Escape") nitTvClose(); if (e.key === "ArrowRight") nitTvNext(1); if (e.key === "ArrowLeft") nitTvNext(-1); });
+  document.addEventListener("fullscreenchange", nitTvFs);
+  if (N3.mod) NTV.hemi = N3.mod.hemi($("[data-tv-hemi]", el), { order: ESP_ORDER, color: (k) => nitParty(k).color, sig: nitSig, provName: nitProvName });
+  NTV.timer = setInterval(() => nitTvNext(1), 12000);
+  const tickClock = () => { const c = NTV.el && $("[data-tv-clock]", NTV.el); if (c) c.textContent = new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" }); };
+  tickClock(); NTV.clock = setInterval(tickClock, 1000);
+  nitTvPaint();
+  el.tabIndex = -1; el.focus();
+}
+// Si se surt de la pantalla completa (per exemple, amb Esc), es tanca el mode TV
+function nitTvFs() { if (!document.fullscreenElement && NTV.el) nitTvClose(); }
+function nitTvClose() {
+  if (!NTV.el) return;
+  clearInterval(NTV.timer); clearInterval(NTV.clock);
+  document.removeEventListener("fullscreenchange", nitTvFs);
+  NTV.hemi?.dispose(); NTV.map?.dispose(); NTV.hemi = NTV.map = null;
+  NTV.el.remove(); NTV.el = null;
+  document.body.classList.remove("ntv-on");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+// Canvi de panell (sol o a mà): el compte dels 12 segons torna a començar
+function nitTvNext(dir) { NTV.panel = (NTV.panel + dir + NTV_PANELS.length) % NTV_PANELS.length; clearInterval(NTV.timer); NTV.timer = setInterval(() => nitTvNext(1), 12000); nitTvPaint(true); }
+function nitTvPaint(panelOnly = false) {
+  const el = NTV.el, d = Esp.data;
+  if (!el) return;
+  if (!d) { $("[data-tv-panel]", el).innerHTML = `<p class="ntv-wait">Esperant les primeres dades de l'escrutini…</p>`; return; }
+  if (!panelOnly) {
+    const t = nitTitular(d);
+    $("[data-tv-title]", el).textContent = t ? t.t1 : "Nit electoral";
+    $("[data-tv-esc]", el).innerHTML = `<b>${espPct(d.escrutat)}</b> escrutat`;
+    const ids = Object.keys(d.seats).filter((k) => d.seats[k]).sort((a, b) => d.seats[b] - d.seats[a]).slice(0, 8);
+    $("[data-tv-leg]", el).innerHTML = ids.map((k) => {
+      const ref = ESP_2023[k]?.[0], df = ref === undefined ? null : d.seats[k] - ref;
+      return `<li style="--c:${nitParty(k).color}"><span>${esc(nitSig(k))}</span><b>${d.seats[k]}</b>${df ? `<small class="${df > 0 ? "up" : "down"}">${df > 0 ? "+" : "−"}${Math.abs(df)}</small>` : ""}</li>`;
+    }).join("");
+    if (NTV.hemi) NTV.hemi.update(d); else $("[data-tv-hemi]", el).innerHTML = nitHemi(d);
+    const feed = Esp.feed.length ? Esp.feed.slice(0, 8) : [{ text: "Segueix l'escrutini en directe a politicaenjoc.cat" }];
+    $("[data-tv-tick]", el).innerHTML = feed.map((e) => `<span>${esc(e.text)}</span>`).join("");
+  }
+  const which = NTV_PANELS[NTV.panel];
+  $("[data-tv-dots]", el).innerHTML = NTV_PANELS.map((p, j) => `<button type="button" class="${j === NTV.panel ? "on" : ""}" data-tv-go="${j}" aria-label="${["Qui pot governar", "El mapa", "Escons a la corda"][j]}"></button>`).join("");
+  $$("[data-tv-go]", el).forEach((b) => b.addEventListener("click", () => { NTV.panel = Number(b.dataset.tvGo); clearInterval(NTV.timer); NTV.timer = setInterval(() => nitTvNext(1), 12000); nitTvPaint(true); }));
+  const panel = $("[data-tv-panel]", el);
+  // El mapa es crea en arribar al seu panell i es desfà en marxar-ne
+  if (which !== "mapa" && NTV.map) { NTV.map.dispose(); NTV.map = null; }
+  if (which === "gov") panel.innerHTML = nitGovHtml(d);
+  else if (which === "mapa") {
+    if (!NTV.map) {
+      panel.innerHTML = `<h3 class="ntv-ph">Qui guanya a cada circumscripció</h3><div class="ntv-map" data-tv-map></div>`;
+      if (N3.mod) NTV.map = N3.mod.map($("[data-tv-map]", el), { provs: SIM_PROVS, label: (i) => esc(SIM_PROVS[i]?.name || "") });
+      else {
+        $("[data-tv-map]", el).innerHTML = simSpainMap("esp-map");
+        simPaintMap($("[data-tv-map] .sim-map", el), (i) => { const p = d.provs.find((x) => x.i === i), w = p?.winner ? nitParty(p.winner) : null; return { fill: w ? w.color : "var(--card)", ink: "#fff" }; });
+      }
+    }
+    // Al mode TV, el mapa sempre mostra qui guanya
+    const mode = Nit.map; Nit.map = "guanya"; const look = nit3dLook(d), all = SIM_PROVS.map((p) => [p.i, look(p.i)]); Nit.map = mode;
+    const byI = new Map(all);
+    NTV.map?.update((i) => byI.get(i));
+  } else {
+    panel.innerHTML = `<h3 class="ntv-ph">🎯 Escons a la corda <b>${d.ballen.length}</b></h3>${d.ballen.length ? `<div class="nt-duels">${d.ballen.slice(0, 4).map((p) => nitDuel(p)).join("")}</div>` : `<p class="ntv-wait">Ara mateix no balla cap escó.</p>`}`;
+  }
 }
 
 // ---------- Contingut: el dia (i abans) ----------

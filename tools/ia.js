@@ -2,10 +2,8 @@
 // L'accés és amb el testimoni OIDC que GitHub dona a cada execució (cal «permissions: id-token: write» al workflow):
 // no hi ha cap clau guardada enlloc.
 "use strict";
-const fs = require("fs"), path = require("path");
-
-const CFG = fs.readFileSync(path.join(__dirname, "..", "js", "firebase-config.js"), "utf8");
-const URL_IA = (CFG.match(/avisosUrl:\s*"([^"]+)"/) || [])[1] + "/ia";
+// L'adreça del servei d'avisos (la mateixa que avisosUrl a js/firebase-config.js). No és cap secret.
+const URL_IA = (process.env.AVISOS_URL || "https://pej-avisos.brudomingosola.workers.dev") + "/ia";
 
 async function oidc() {
   const u = process.env.ACTIONS_ID_TOKEN_REQUEST_URL, t = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;

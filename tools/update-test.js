@@ -61,9 +61,9 @@ const warn = (...a) => { const m = a.join(" ").replace(/\s+/g, " "); console.log
   const veda = Date.now() >= BLACKOUT[0] && Date.now() < BLACKOUT[1];
 
   const sys = `Ets l'editor del «Test d'actualitat» diari de Política en Joc, una app en català sobre política i les eleccions generals del 29 de novembre de 2026. Escrius en català correcte i neutral.
-Fes 14 preguntes de resposta múltiple:
-- 9 d'ACTUALITAT ("k":"actualitat"): sobre els TEMES i FETS dels titulars (què s'ha decidit, qui ha fet què, quina xifra, on ha passat). El fet ha d'aparèixer en almenys 2 mitjans diferents de la llista. MAI preguntis quin mitjà publica o titula una cosa, ni sobre els mitjans.
-- 5 de CULTURA GENERAL ("k":"cultura") lligades a algun tema dels titulars: història, geografia, institucions, ciència, economia o cultura que ajudin a entendre la notícia (exemple: si es parla d'una cimera del clima, «A quina ciutat es va signar l'acord sobre el clima del 2015?»). Només dades establertes i indiscutibles.
+Fes 16 preguntes de resposta múltiple:
+- 10 d'ACTUALITAT ("k":"actualitat"): sobre els TEMES i FETS dels titulars (què s'ha decidit, qui ha fet què, quina xifra, on ha passat). El fet ha d'aparèixer en almenys 2 mitjans diferents de la llista. MAI preguntis quin mitjà publica o titula una cosa, ni sobre els mitjans.
+- 6 de CULTURA GENERAL ("k":"cultura") lligades a algun tema dels titulars: història, geografia, institucions, ciència, economia o cultura que ajudin a entendre la notícia (exemple: si es parla d'una cimera del clima, «A quina ciutat es va signar l'acord sobre el clima del 2015?»). Només dades establertes i indiscutibles.
 Regles:
 - Neutralitat política estricta: res d'opinions, valoracions ni preguntes que afavoreixin o perjudiquin cap partit.
 - Res de sang, morbositat ni bromes sobre accidents o víctimes.${veda ? "\n- Estem en veda electoral: cap pregunta sobre enquestes ni sondejos." : ""}
@@ -100,7 +100,13 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
     if (q.a.length !== 4 || !q.a.every((x) => x && x.length <= 60) || new Set(q.a.map((x) => x.toLowerCase())).size !== 4) return no("opcions");
     if (!q.exp) return no("explicació");
     if (/(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara.cat|vilaweb)/i.test(q.q)) return no("mitjans");
-    if (q.k !== "cultura" && new Set(q.src.map((i) => items[i].s)).size < 2) return no("menys de 2 mitjans");
+    // Els titulars que expliquen el mateix fet: hi surt la resposta i alguna paraula clau de la pregunta
+    if (q.k !== "cultura") {
+      const keys = flat(q.q).split(" ").filter((w) => w.length >= 6);
+      const same = items.map((x, i) => i).filter((i) => grounded(q.a[0], [items[i].t]) && keys.some((w) => flat(items[i].t).includes(w)));
+      q.src = [...new Set([...q.src.filter((i) => grounded(q.a[0], [items[i].t])), ...same])];
+      if (new Set(q.src.map((i) => items[i].s)).size < 2) return no("menys de 2 mitjans");
+    }
     if (/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?/i.test(q.q + " " + q.a.join(" "))) return no("tema vetat");
     if (/hondt|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q)) return no("sistema electoral");
     if (q.k !== "cultura" && !grounded(q.a[0], q.src.map((i) => items[i].t))) return no("resposta no als titulars");

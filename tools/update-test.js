@@ -82,7 +82,7 @@ ${whoIsWho()}
 - Català normatiu (gènere i concordança: «el finançament», «la Generalitat»). Noms propis de persones tal com són; topònims en català (Canàries, Saragossa).
 ${recent.length ? `- No repeteixis aquestes preguntes dels últims dies:\n${recent.slice(0, 60).map((q) => "  · " + q).join("\n")}` : ""}
 Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta","…","…","…"],"exp":"…","t":"…","src":[1,2]}]}`;
-  const draft = await askJson([{ role: "system", content: sys }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.4, max_tokens: 9000 });
+  const draft = await askJson([{ role: "system", content: sys }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.4, max_tokens: 6000, model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" });
   // La llista pot arribar sola o amb un altre nom: es fa servir la primera llista que hi hagi
   if (draft && !Array.isArray(draft.questions)) draft.questions = Array.isArray(draft) ? [...draft] : Object.values(draft).find(Array.isArray);
   if (!draft || !Array.isArray(draft.questions)) return warn("sense resposta vàlida de la IA (proposta):", draft ? JSON.stringify(draft).slice(0, 400) : "res");

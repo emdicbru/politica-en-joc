@@ -673,7 +673,7 @@ async function exportMyData() {
 }
 
 async function deleteMyAccount() {
-  if (!confirm("Se eliminarán la cuenta y los datos asociados: perfil, resultados del reto diario, duelos, amistades y chats privados, campañas contra amigos y pertenencia a ligas. Esta acción no se puede deshacer. El progreso guardado en este dispositivo no se verá afectado.\n\n¿Quieres continuar?")) return;
+  if (!confirm("Se eliminarán la cuenta y los datos asociados: perfil, resultados del reto diario y del test de actualidad, duelos, amistades y chats privados, campañas contra amigos y pertenencia a ligas. Esta acción no se puede deshacer. El progreso guardado en este dispositivo no se verá afectado.\n\n¿Quieres continuar?")) return;
   const uid = Online.user.uid;
   closeRoom();
   Progress.onSave = null;
@@ -682,6 +682,7 @@ async function deleteMyAccount() {
   try {
     for (const k of dailyKeysSinceStart()) {
       await F.deleteDoc(F.doc(db, "dailies", k, "entries", uid)).catch(() => {});
+      await F.deleteDoc(F.doc(db, "tests", k, "entries", uid)).catch(() => {});
     }
     const duels = await F.getDocs(F.query(F.collection(db, "duels"), F.where("players", "array-contains", uid), F.limit(500)));
     for (const d of duels.docs) await F.deleteDoc(d.ref).catch(() => {});
@@ -1540,17 +1541,55 @@ Online.submitDaily = async (key, { ms, hits, errors, n = 1, f = null, f1 = null 
   await safe(() => F.updateDoc(ref, { ms, hits, errors, n, t: F.serverTimestamp() }), "No se ha podido publicar el tiempo");
 };
 
-async function worldTop(key, n = 50) {
-  const snap = await safe(() => F.getDocs(F.query(F.collection(db, "dailies", key, "entries"), F.orderBy("ms", "asc"), F.limit(n))));
+// Test d'actualitat: tests/{dia}/entries/{uid}: { uid, name, photo, hits, n, ms, sc, createdAt }. Només compta la primera
+// partida. sc = (n - hits) · 3.600.000 + ms: primer qui encerta més i, amb els mateixos encerts, qui ho fa més ràpid.
+Online.submitTest = async (key, { hits, n, ms }) => {
+  if (!ready || !Online.user || !Online.profile?.handle) return;
+  ms = Math.max(3000, Math.min(3599000, Math.round(ms)));
+  const ref = F.doc(db, "tests", key, "entries", Online.user.uid);
+  const snap = await safe(() => F.getDoc(ref), "No se ha podido publicar el resultado");
+  if (!snap || snap.exists()) return;
+  return safe(() => F.setDoc(ref, { ...me(), hits, n, ms, sc: (n - hits) * 3600000 + ms, createdAt: F.serverTimestamp() }), "No se ha podido publicar el resultado");
+};
+// Cada joc amb rànquing: on es desa, per quin camp s'ordena i com es pinta cada fila
+const RANK_GAMES = {
+  diari: { col: "dailies", by: "ms", href: "#joc/diari", name: "repte" },
+  test: { col: "tests", by: "sc", href: "#joc/actualitat", name: "test" },
+};
+let rankGame = "diari";
+async function worldTop(key, n = 50, g = RANK_GAMES.diari) {
+  const snap = await safe(() => F.getDocs(F.query(F.collection(db, g.col, key, "entries"), F.orderBy(g.by, "asc"), F.limit(n))));
   return snap ? snap.docs.map((d) => d.data()) : null;
 }
-async function myPosition(key) {
-  const mine = await safe(() => F.getDoc(F.doc(db, "dailies", key, "entries", Online.user.uid)));
+async function myPosition(key, g = RANK_GAMES.diari) {
+  const mine = await safe(() => F.getDoc(F.doc(db, g.col, key, "entries", Online.user.uid)));
   if (!mine?.exists()) return null;
-  const ms = mine.data().ms;
-  const c = await safe(() => F.getCountFromServer(F.query(F.collection(db, "dailies", key, "entries"), F.where("ms", "<", ms))));
+  const v = mine.data()[g.by];
+  const c = await safe(() => F.getCountFromServer(F.query(F.collection(db, g.col, key, "entries"), F.where(g.by, "<", v))));
   return c ? c.data().count + 1 : null;
 }
+// Resultat del test, per a la pantalla final: posició, percentil i els 5 primers
+Online.renderTestMini = async (box, key) => {
+  if (!box || !ready) return;
+  if (!Online.user) {
+    box.innerHTML = `<div class="card account-card"><div class="ac-ico">🏆</div><div class="ac-body"><b>Entra en el ranking del test</b><p>Inicia sesión para publicar tu resultado y compararte con todo el mundo.</p></div><button class="btn google-btn" data-signin>${googleIcon()} Continúa con Google</button>${legalNote()}</div>`;
+    $("[data-signin]", box).addEventListener("click", signIn);
+    return;
+  }
+  await new Promise((r) => setTimeout(r, 900));
+  const g = RANK_GAMES.test, top = await worldTop(key, 5, g), pos = await myPosition(key, g);
+  if (!top) return;
+  const total = await safe(() => F.getCountFromServer(F.collection(db, g.col, key, "entries")));
+  const n = total?.data().count || 0, pct = pos && n >= 5 ? Math.round((100 * (n - pos)) / (n - 1)) : null;
+  box.innerHTML = `${pct !== null ? `<div class="dsoc"><p class="dsoc-pct"><b>${pct} %</b><span>Has quedado por delante del ${pct} % de las ${fmt(n)} personas que han hecho el test hoy.</span></p></div>` : ""}
+    <h4 class="section-title sm" style="margin-top:0">Ranking del test de hoy${pos ? ` · eres el #${fmt(pos)}` : ""}</h4>${testRows(top)}`;
+};
+Online.fillTestRank = async (key) => {
+  const el = $("#th-rank");
+  if (!el || !ready || !Online.user) return;
+  const pos = await myPosition(key, RANK_GAMES.test);
+  if (pos && $("#th-rank")) $("#th-rank").textContent = `#${fmt(pos)}`;
+};
 
 Online.fillDailyRank = async (key) => {
   if (!$("#dh-rank") || !ready || !Online.user || !dailyResult(key)) return;
@@ -1932,6 +1971,17 @@ function rankRows(list) {
     </div>`).join("")}</div>`;
 }
 
+function testRows(list) {
+  if (!list.length) return `<p class="muted">Aún no lo ha hecho nadie. ¡Sé el primero!</p>`;
+  return `<div class="lb">${list.map((e, i) => `
+    <div class="lb-row ${e.uid === Online.user?.uid ? "me" : ""}" ${e.uid ? `data-user="${e.uid}" tabindex="0"` : ""}>
+      <b class="lb-pos">${i + 1}</b>${avatar(e, 34)}
+      <span class="lb-name">${esc(e.name || "Jugador")}<small>${fmtSecs(e.ms)}</small></span>
+      <strong>${e.hits}/${e.n}</strong>
+    </div>`).join("")}</div>`;
+}
+const rowsOf = (g) => (g === RANK_GAMES.test ? testRows : rankRows);
+
 Online.renderRanking = (root, arg) => {
   const key = todayKey();
   if (arg) sessionStorage.setItem("pendingLeague", arg.toUpperCase());
@@ -1954,15 +2004,26 @@ Online.renderRanking = (root, arg) => {
   }
   const pending = sessionStorage.getItem("pendingLeague");
   if (pending) { sessionStorage.removeItem("pendingLeague"); joinLeaguePrompt(root, pending); return; }
+  // Des de la targeta o el resultat del test, el rànquing s'obre al del test
+  if (window.__rankGame) { rankGame = window.__rankGame; window.__rankGame = null; }
+  // En castellà no hi ha test d'actualitat (les preguntes són en català)
+  const hasTest = window.PEJ_LANG !== "es";
+  if (!hasTest) rankGame = "diari";
+  if (rankGame === "test" && rankTab === "xp") rankTab = "world";
   root.innerHTML = `
+    ${hasTest ? `<div class="rk-games" role="tablist" aria-label="Joc">
+      <button class="rk-game ${rankGame === "diari" ? "on" : ""}" data-game="diari" role="tab"><span aria-hidden="true">🗓️</span><b>Reto diario</b><small>El más rápido</small></button>
+      <button class="rk-game ${rankGame === "test" ? "on" : ""}" data-game="test" role="tab"><span aria-hidden="true">📰</span><b>Test de actualidad</b><small>Quien acierta más</small></button>
+    </div>` : ""}
     <div class="rank-tabs">
       <button class="rank-tab ${rankTab === "world" ? "active" : ""}" data-tab="world">Mundial</button>
       <button class="rank-tab ${rankTab === "amics" ? "active" : ""}" data-tab="amics">Entre amigos</button>
       <button class="rank-tab ${rankTab === "friends" ? "active" : ""}" data-tab="friends">Ligas</button>
-      <button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiencia</button>
+      ${rankGame === "diari" ? `<button class="rank-tab ${rankTab === "xp" ? "active" : ""}" data-tab="xp">Experiencia</button>` : ""}
     </div>
     <div id="rank-body"><p class="muted">Cargando…</p></div>`;
-  $$("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
+  $("[data-tab]", root).forEach((b) => b.addEventListener("click", () => { rankTab = b.dataset.tab; Online.renderRanking(root); }));
+  $("[data-game]", root).forEach((b) => b.addEventListener("click", () => { rankGame = b.dataset.game; Online.renderRanking(root); }));
   if (rankTab === "world") renderWorld($("#rank-body"), key);
   else if (rankTab === "amics") renderFriendsRank($("#rank-body"), key);
   else if (rankTab === "xp") renderLeaderboard($("#rank-body"), true);
@@ -1981,43 +2042,45 @@ async function renderFriendsRank(box, key) {
     return;
   }
   const rows = await Promise.all(ids.map(async (u) => {
-    const [p, d] = await Promise.all([safe(() => F.getDoc(F.doc(db, "users", u))), safe(() => F.getDoc(F.doc(db, "dailies", key, "entries", u)))]);
+    const [p, d] = await Promise.all([safe(() => F.getDoc(F.doc(db, "users", u))), safe(() => F.getDoc(F.doc(db, RANK_GAMES[rankGame].col, key, "entries", u)))]);
     const P = p?.exists() ? p.data() : {};
     return { uid: u, name: P.name || "Jugador", photo: P.photo || "", xp: P.xp || 0, level: P.level || 1, day: d?.exists() ? d.data() : null };
   }));
   if (!box.isConnected) return;
-  const done = rows.filter((r) => r.day).sort((a, b) => a.day.ms - b.day.ms);
+  const g = RANK_GAMES[rankGame], isTest = g === RANK_GAMES.test;
+  const done = rows.filter((r) => r.day).sort((a, b) => a.day[g.by] - b.day[g.by]);
   const pending = rows.filter((r) => !r.day);
   const byXp = [...rows].sort((a, b) => b.xp - a.xp);
   const row = (r, i, right) => `<div class="lb-row ${r.uid === uid ? "me" : ""}" data-user="${esc(r.uid)}" tabindex="0"><b class="lb-pos">${i + 1}</b>${avatar(r, 34)}<span class="lb-name">${esc(r.name)}${r.uid === uid ? " · tú" : ""}</span><strong>${right}</strong></div>`;
   box.innerHTML = `<div class="rk-amics">
-    <section class="card"><h2 class="amx-h">Reto de hoy <small class="muted">#${dailyNumber(key)}</small></h2>
-      ${done.length ? `<div class="lb">${done.map((r, i) => row(r, i, `${fmtSecs(r.day.ms)}<small>${r.day.hits}/10</small>`)).join("")}</div>` : `<p class="muted">Nadie lo ha hecho todavía. <a href="#joc/diari">Sé el primero</a>!</p>`}
-      ${pending.length ? `<p class="rk-pending">Todavía no lo han hecho: ${pending.map((r) => `<span data-user="${esc(r.uid)}" tabindex="0">${esc(r.uid === uid ? "ti" : r.name)}</span>`).join(", ")}${pending.some((r) => r.uid === uid) ? ` · <a href="#joc/diari">Juega ahora</a>` : ""}</p>` : ""}
+    <section class="card"><h2 class="amx-h">${isTest ? "Test de actualidad de hoy" : `Reto de hoy <small class="muted">#${dailyNumber(key)}</small>`}</h2>
+      ${done.length ? `<div class="lb">${done.map((r, i) => row(r, i, isTest ? `${r.day.hits}/${r.day.n}<small>${fmtSecs(r.day.ms)}</small>` : `${fmtSecs(r.day.ms)}<small>${r.day.hits}/10</small>`)).join("")}</div>` : `<p class="muted">Nadie lo ha hecho todavía. <a href="${g.href}">Sé el primero</a>!</p>`}
+      ${pending.length ? `<p class="rk-pending">Todavía no lo han hecho: ${pending.map((r) => `<span data-user="${esc(r.uid)}" tabindex="0">${esc(r.uid === uid ? "ti" : r.name)}</span>`).join(", ")}${pending.some((r) => r.uid === uid) ? ` · <a href="${g.href}">Juega ahora</a>` : ""}</p>` : ""}
     </section>
     <section class="card"><h2 class="amx-h">Experiencia</h2><div class="lb">${byXp.map((r, i) => row(r, i, `${fmt(r.xp)} XP`)).join("")}</div></section>
   </div>`;
 }
 
 async function renderWorld(box, key) {
-  const top = await worldTop(key, 50);
+  const g = RANK_GAMES[rankGame], top = await worldTop(key, 50, g);
   if (!top) return;
-  const done = dailyResult(key);
-  const pos = done ? await myPosition(key) : null;
+  const done = rankGame === "test" ? (typeof testResult === "function" && testResult(key)) : dailyResult(key);
+  const pos = done ? await myPosition(key, g) : null;
+  const head = rankGame === "test" ? "Test de actualidad de hoy" : `Reto #${dailyNumber(key)}`;
   box.innerHTML = `
-    <p class="muted" style="margin-bottom:12px">Reto #${dailyNumber(key)} · ${pos ? `Eres el <b>#${fmt(pos)}</b> del mundo.` : done ? "" : `Todavía no lo has hecho. <a href="#joc/diari">Juega ahora</a>.`}</p>
-    ${rankRows(top)}`;
+    <p class="muted" style="margin-bottom:12px">${head} · ${pos ? `Eres el <b>#${fmt(pos)}</b> del mundo.` : done ? "" : `Todavía no lo has hecho. <a href="${g.href}">Juega ahora</a>.`}</p>
+    ${rowsOf(g)(top)}`;
 }
 
 // Temps d'avui dels membres d'una lliga (de 30 en 30, el límit de Firestore per a «in»)
-async function leagueEntries(lg, key) {
+async function leagueEntries(lg, key, g = RANK_GAMES.diari) {
   const entries = [];
   for (let i = 0; i < lg.members.length; i += 30) {
     const chunk = lg.members.slice(i, i + 30);
-    const snap = await safe(() => F.getDocs(F.query(F.collection(db, "dailies", key, "entries"), F.where("uid", "in", chunk))));
+    const snap = await safe(() => F.getDocs(F.query(F.collection(db, g.col, key, "entries"), F.where("uid", "in", chunk))));
     if (snap) entries.push(...snap.docs.map((d) => d.data()));
   }
-  return entries.sort((a, b) => a.ms - b.ms);
+  return entries.sort((a, b) => a[g.by] - b[g.by]);
 }
 
 async function myLeagues() {
@@ -2068,9 +2131,9 @@ async function renderLeagues(box, key) {
     </section>`);
     list.appendChild(sec);
     $("[data-invite]", sec).addEventListener("click", () => inviteLeague(lg));
-    const entries = await leagueEntries(lg, key);
+    const g = RANK_GAMES[rankGame], entries = await leagueEntries(lg, key, g);
     const missing = lg.members.length - entries.length;
-    $(".league-body", sec).innerHTML = rankRows(entries) +
+    $(".league-body", sec).innerHTML = rowsOf(g)(entries) +
       (missing > 0 ? `<p class="muted" style="margin-top:8px">${missing} ${missing === 1 ? "miembro aún no ha" : "miembros aún no han"} hecho el reto de hoy.</p>` : "");
   }
 }

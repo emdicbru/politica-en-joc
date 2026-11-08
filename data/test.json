@@ -1,71 +1,93 @@
 {
  "days": {
   "2026-11-08": {
+   "v": 2,
    "n": 10,
-   "model": "@cf/openai/gpt-oss-120b",
+   "model": "revisat a mà",
    "questions": [
     {
      "k": "actualitat",
-     "t": "habitatge",
-     "q": "Quin alcalde va prometre expropiar els fons buitre d’habitatge?",
+     "t": "politica",
+     "q": "Quina condició posa Míriam Nogueras (Junts) per negociar el pròxim govern espanyol?",
      "a": [
-      "Ada Colau",
-      "Pedro Sánchez",
-      "Alberto Núñez Feijóo",
-      "Santiago Abascal"
+      "La recaptació dels impostos a Catalunya",
+      "Un referèndum d'independència pactat",
+      "El traspàs complet de Rodalies",
+      "La presidència del Congrés"
      ],
-     "exp": "Ada Colau, líder del Front Amplio, va anunciar que el seu govern expropriarà els fons buitre destinats a l’habitatge.",
-     "u": "https://www.vilaweb.cat/noticies/colau-promet-expropiar-els-fons-voltor-dhabitatge/",
+     "exp": "La cap de llista de Junts condiciona el suport al nou govern que la Generalitat reculli i gestioni els impostos a Catalunya.",
+     "u": "https://www.ara.cat/politica/eleccions-generals/nogueras-posa-recaptacio-dels-impostos-catalunya-condicio-negociar-govern-l_25_5903203.html",
      "s": [
+      "Ara",
       "VilaWeb",
-      "eldiario.es"
+      "NacióDigital"
      ]
     },
     {
      "k": "actualitat",
-     "t": "politica",
-     "q": "Quin líder polític va denunciar una \"nova invasió\" a les Illes Canàries?",
+     "t": "habitatge",
+     "q": "Quina mesura d'habitatge ha promès Ada Colau, cap de llista de Frente Amplio?",
      "a": [
-      "Santiago Abascal",
-      "Pedro Sánchez",
-      "Ada Colau",
-      "Alberto Núñez Feijóo"
+      "Expropiar els fons voltor",
+      "Abaixar l'IVA de la compra de pisos",
+      "Prohibir tots els pisos turístics",
+      "Una hipoteca pública al 0 %"
      ],
-     "exp": "Santiago Abascal, president de Vox, va afirmar que les Illes Canàries patien una nova invasió migratòria.",
-     "u": "https://www.eldebate.com/espana/20261108/abascal-denuncia-otra-invasion-canarias-lamenta-nuevo-gestion-migratoria-sanchez_478554.html",
+     "exp": "En la presentació del Frente Amplio, Colau va prometre expropiar els fons voltor i apujar els impostos a les grans fortunes.",
+     "u": "https://www.vilaweb.cat/noticies/colau-promet-expropiar-els-fons-voltor-dhabitatge/",
      "s": [
-      "El Debate",
-      "20minutos"
+      "VilaWeb",
+      "eldiario.es",
+      "NacióDigital"
      ]
     },
     {
      "k": "actualitat",
      "t": "economia",
-     "q": "Quin president del PP va prometre que cap comunitat autònoma tindrà una finançament singular?",
+     "q": "Què ha promès Feijóo sobre el finançament de les comunitats autònomes?",
      "a": [
-      "Alberto Núñez Feijóo",
-      "Pedro Sánchez",
-      "Santiago Abascal",
-      "Ada Colau"
+      "Que cap comunitat tindrà finançament singular",
+      "Un concert econòmic per a cada comunitat",
+      "Condonar tot el deute autonòmic",
+      "Que l'Estat reculli tots els impostos"
      ],
-     "exp": "Feijóo assegurà que la reforma del finançament autonòmic eliminarà qualsevol acord singular com el pactat amb Catalunya.",
+     "exp": "El líder del PP es compromet a una reforma en què cap comunitat tingui un finançament singular com el pactat per a Catalunya.",
      "u": "https://www.abc.es/espana/andalucia/feijoo-promete-ninguna-comunidad-financiacion-singular-pactada-20261107112344-nts.html",
      "s": [
       "ABC",
-      "Europa Press"
+      "Europa Press",
+      "El Debate"
      ]
     },
     {
      "k": "actualitat",
      "t": "politica",
-     "q": "Quin president del govern va convocar una comissió interministerial d’immigració després de l’arribada massiva a El Hierro?",
+     "q": "Quin compromís ha pres Pedro Sánchez amb la família de Guillem Agulló?",
      "a": [
-      "Pedro Sánchez",
-      "Alberto Núñez Feijóo",
-      "Santiago Abascal",
-      "Ada Colau"
+      "Reconèixer-lo com a víctima del terrorisme",
+      "Posar el seu nom a una llei",
+      "Fer-li un homenatge al Congrés",
+      "Declarar-lo fill predilecte del País Valencià"
      ],
-     "exp": "El president del govern, Pedro Sánchez, va crear una comissió per gestionar la crisi migratòria a les Illes Canàries.",
+     "exp": "Sánchez es va reunir a València amb la família del jove assassinat el 1993 i es va comprometre a reconèixer-lo com a víctima del terrorisme.",
+     "u": "https://naciodigital.cat/politica/pedro-sanchez-es-compromet-a-reconeixer-guillem-agullo-com-a-victima-de-terrorisme.html",
+     "s": [
+      "NacióDigital",
+      "VilaWeb",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "immigracio",
+     "q": "Què ha convocat el Govern per l'arribada de milers de migrants a l'illa d'El Hierro?",
+     "a": [
+      "La Comissió Interministerial d'Immigració",
+      "El Consell de Seguretat Nacional",
+      "Una Conferència de Presidents",
+      "Una sessió extraordinària del Senat"
+     ],
+     "exp": "Sánchez va convocar d'urgència la Comissió Interministerial d'Immigració per abordar el repunt d'arribades a les Canàries.",
      "u": "https://www.elespanol.com/espana/politica/20261107/sanchez-reune-comision-inmigracion-abordar-crisis-migratoria-canarias-llegada-migrantes/1003744450211_0.html",
      "s": [
       "El Español",
@@ -74,100 +96,88 @@
     },
     {
      "k": "actualitat",
-     "t": "politica",
-     "q": "Quina presidenta autonòmica va afirmar que el PSOE té por de canviar la Moncloa per Soto del Real?",
+     "t": "campanya",
+     "q": "Quins dos candidats fan campanya junts contra el «vot útil» al PSOE?",
      "a": [
-      "Isabel Díaz Ayuso",
-      "Ada Colau",
-      "Pedro Sánchez",
-      "Alberto Núñez Feijóo"
+      "Gabriel Rufián i Irene Montero",
+      "Ada Colau i Néstor Rego",
+      "Míriam Nogueras i Oskar Matute",
+      "Maribel Vaquero i Cristina Valido"
      ],
-     "exp": "Ayuso, presidenta de la Comunitat de Madrid, va dir que el PSOE tem substituir la Moncloa per la zona residencial de Soto del Real.",
-     "u": "https://www.abc.es/espana/comunidad-valenciana/ayuso-cuestiona-campana-miedo-psoe-temen-cambiar-20261107144349-nt.html",
+     "exp": "Els caps de llista d'ERC i de Podemos han fet un acte conjunt a Madrid per demanar el vot a l'esquerra del PSOE sense «vot útil».",
+     "u": "https://naciodigital.cat/politica/rufian-i-montero-rebutgen-el-vot-util-de-sanchez-cal-sotmetre-el-psoe-des-de-lesquerra.html",
      "s": [
-      "ABC",
-      "20minutos"
+      "NacióDigital",
+      "Ara",
+      "infoLibre"
      ]
     },
     {
      "k": "actualitat",
-     "t": "economia",
-     "q": "Quin conseller de l'Hisenda va condicionar el suport al nou govern a la recaptació d'impostos a Catalunya?",
+     "t": "internacional",
+     "q": "A qui ha encarregat el president d'Israel de formar govern, en lloc de Netanyahu?",
      "a": [
-      "Joan Nogueras",
-      "Pedro Sánchez",
-      "Alberto Núñez Feijóo",
-      "Santiago Abascal"
+      "Gadi Eisenkot",
+      "Benny Gantz",
+      "Yair Lapid",
+      "Naftali Bennett"
      ],
-     "exp": "El conseller de l'Hisenda, Joan Nogueras, va dir que el seu suport depèn de la gestió de la recaptació a Catalunya.",
-     "u": "https://www.ara.cat/politica/eleccions-generals/nogueras-posa-recaptacio-dels-impostos-catalunya-condicio-negociar-govern-l_25_5903203.html",
+     "exp": "El president israelià ha encarregat a l'opositor Gadi Eisenkot de formar el nou govern i ha deixat de banda Benjamin Netanyahu.",
+     "u": "https://www.vilaweb.cat/noticies/el-president-disrael-encarrega-a-gadi-eisenkot-la-formacio-de-govern/",
      "s": [
-      "Ara",
-      "VilaWeb"
-     ]
-    },
-    {
-     "k": "cultura",
-     "t": "historia",
-     "q": "En quin any va ser assassinat Guillem Agulló?",
-     "a": [
-      "1993",
-      "1985",
-      "2001",
-      "1979"
-     ],
-     "exp": "Guillem Agulló, activista antifeixista, va ser assassinat el 1993 per grups d’extrema dreta.",
-     "u": "https://www.lavanguardia.com/local/valencia/20261107/11678791/sanchez-reune-padres-guillem-agullo-joven-antifascista-asesinado-1993-grupo-extrema-derecha-servimedia20261107.html",
-     "s": [
-      "La Vanguardia"
+      "VilaWeb",
+      "Ara"
      ]
     },
     {
      "k": "cultura",
      "t": "geografia",
-     "q": "L’illa d’El Hierro forma part de quin arxipèlag?",
+     "q": "Quina és l'illa més occidental de l'arxipèlag de les Canàries?",
      "a": [
-      "Illes Canàries",
-      "Illes Balears",
-      "Illes del Carib",
-      "Illes Açores"
+      "El Hierro",
+      "La Palma",
+      "La Gomera",
+      "Lanzarote"
      ],
-     "exp": "El Hierro és la illa més occidental de les Illes Canàries, situades al territori espanyol al Atlàntic.",
+     "exp": "El Hierro és la més petita de les illes principals i la més occidental. Aquests dies hi han arribat milers de migrants en pocs dies.",
      "u": "https://www.20minutos.es/nacional/abascal-dice-hierro-vive-otra-invasion_7058602_0.html",
      "s": [
-      "20minutos"
-     ]
-    },
-    {
-     "k": "cultura",
-     "t": "economia",
-     "q": "Quina entitat gestiona la infraestructura ferroviària espanyola implicada en l’escàndol del bonus?",
-     "a": [
-      "ADIF",
-      "Renfe",
-      "FEVE",
-      "OTV"
-     ],
-     "exp": "ADIF (Administrador de Infraestructuras Ferroviarias) és l’organisme responsable de la infraestructura i va ser citat en l’escàndol del bonus.",
-     "u": "https://www.elmundo.es/espana/2026/11/07/6aef1a9efc6c83a47c8b4575.html",
-     "s": [
+      "20minutos",
       "El Mundo"
      ]
     },
     {
      "k": "cultura",
-     "t": "economia",
-     "q": "Quin era el premi màxim de La Primitiva indicat en les notícies?",
+     "t": "historia",
+     "q": "Quin any es va inaugurar la línia d'alta velocitat Madrid-Sevilla, la primera d'Espanya?",
      "a": [
-      "42.424 euros",
-      "10.000 euros",
-      "100.000 euros",
-      "5.000 euros"
+      "1992",
+      "1986",
+      "1998",
+      "2002"
      ],
-     "exp": "Segons la notícia, el sorteig de La Primitiva va deixar un premi de 42.424 euros a Montilla.",
-     "u": "https://www.abc.es/espana/andalucia/cordoba/primitiva-deja-premio-42424-euros-montilla-20261107225424-nts.html",
+     "exp": "L'AVE Madrid-Sevilla es va inaugurar l'abril del 1992, coincidint amb l'Exposició Universal de Sevilla. Ara hi ha dues causes obertes sobre la línia.",
+     "u": "https://elpais.com/espana/2026-11-07/la-linea-madrid-sevilla-a-examen-dos-juzgados-y-dos-causas-de-la-fiscalia-europea-se-mantienen-activas.html",
      "s": [
+      "El País",
       "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "politica",
+     "q": "Quants diputats elegeix la província de Valladolid al Congrés?",
+     "a": [
+      "5",
+      "3",
+      "7",
+      "4"
+     ],
+     "exp": "Valladolid elegeix 5 dels 350 diputats. Feijóo s'ha fixat com a objectiu guanyar-hi un diputat més per al PP.",
+     "u": "https://www.abc.es/espana/castilla-leon/feijoo-encarga-pp-tercer-diputado-valladolid-demostrar-20261107160910-nt.html",
+     "s": [
+      "ABC",
+      "El Mundo"
      ]
     }
    ]

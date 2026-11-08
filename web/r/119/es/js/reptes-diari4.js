@@ -63,7 +63,8 @@ function pairs4Item(rng) {
 // ---------- Troba l'error ----------
 // {tros} es pot tocar i és cert; {fals=>cert} és el que s'ha de trobar
 function errorItem(rng) {
-  const raw = DAILY_ERRORS[Math.floor(rng() * DAILY_ERRORS.length)];
+  const errs = noSeats(DAILY_ERRORS);
+  const raw = errs[Math.floor(rng() * errs.length)];
   const wrong = raw.match(/\{([^{}]*)=>([^{}]*)\}/);
   const parts = raw.split(/(\{[^{}]*\})/).filter(Boolean);
   const fixed = raw.replace(/\{([^{}=]*)=>([^{}]*)\}/g, "$2").replace(/[{}]/g, "");
@@ -210,7 +211,9 @@ function ccaaMapItem(rng) {
 
 // ---------- Les proves d'abans, amb els bancs nous ----------
 function order4Item(rng) {
-  const roll = rng();
+  let roll = rng();
+  // Des de DAILY_NOSEATS_FROM, sense ordenar partits per escons ni províncies per diputats
+  if (dailyNoSeats && roll < 0.5) roll += 0.5;
   if (roll < 0.25) return orderItem(rng);
   const rank = (a, b) => a.v - b.v;
   let list, prompt, how;
@@ -267,8 +270,9 @@ function order4Item(rng) {
   };
 }
 function guess4Item(rng) {
-  if (rng() < 0.3) return guessItem(rng);
-  const x = DAILY_NUMBERS[Math.floor(rng() * DAILY_NUMBERS.length)];
+  if (!dailyNoSeats && rng() < 0.3) return guessItem(rng);
+  const nums = noSeats(DAILY_NUMBERS, (n) => n.q);
+  const x = nums[Math.floor(rng() * nums.length)];
   const start = Math.round((x.min + x.max) / 2);
   const tolTxt = x.tol ? `Vale la respuesta exacta o a ${x.tol} de distancia.` : "Tiene que ser la cifra exacta.";
   return {
@@ -341,6 +345,8 @@ function draw4Item(rng) {
 
 // Proves especials del dia, des de DAILY_V4_FROM: cinc de les tretze
 function dailySpecials4(key) {
-  const all = [order4Item, mapItem, guess4Item, draw4Item, shapeItem, odd4Item, key >= DAILY_FILLS_FROM ? fill4Item : fill4ItemAntic, pairs4Item, errorItem, sortItem, resultItem, dhondtItem, ccaaMapItem];
+  let all = [order4Item, mapItem, guess4Item, draw4Item, shapeItem, odd4Item, key >= DAILY_FILLS_FROM ? fill4Item : fill4ItemAntic, pairs4Item, errorItem, sortItem, resultItem, dhondtItem, ccaaMapItem];
+  // Des de DAILY_NOSEATS_FROM, sense la llei d'Hondt ni «Quines eleccions són?» (es reconeixen pels escons)
+  if (key >= DAILY_NOSEATS_FROM) all = all.filter((f) => f !== dhondtItem && f !== resultItem);
   return sample(all, 5, seededRng(hashString(`daily-mix-${key}`)));
 }

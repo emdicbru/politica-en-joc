@@ -7641,7 +7641,7 @@ body.ntv-on{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.ntv-tick-t{animation:none;padding-left:0}.ntv-panel{animation:none}}
 
 /* ---------- Portada v2 (v116): els dos jocs del dia en gran ---------- */
-.hj { position: relative; margin: -36px 0 34px; padding: 28px 0 40px; background: var(--ink); color: var(--card); box-shadow: 0 0 0 100vmax var(--ink); clip-path: inset(0 -100vmax); }
+.hj { position: relative; margin: 0 0 34px; padding: 28px 0 40px; background: var(--ink); color: var(--card); box-shadow: 0 0 0 100vmax var(--ink); clip-path: inset(0 -100vmax); }
 .hj-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 22px; }
 .hj-kick { margin: 0; font-family: var(--sans); font-size: .9rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--yellow); }
 .hj-cd { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-radius: 14px; border: 2px solid rgba(255, 250, 240, .25); background: rgba(255, 250, 240, .06); }
@@ -7695,7 +7695,9 @@ button.jc-play { animation: none; }
 .hj-bars i.on { background: var(--yellow); }
 .hj-msg { flex: 1; min-width: 220px; font-weight: 700; font-size: .95rem; }
 .hj-link { color: var(--yellow); font-weight: 800; font-size: .9rem; text-decoration: none; }
-#home-ticker { margin-bottom: 36px; }
+#home-ticker { margin-bottom: 18px; }
+.hh-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 40px; align-items: end; padding: 6px 0 28px; }
+.hh-top .lede { margin: 0 0 6px; }
 
 /* El dia polític */
 .home-dia { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 24px; margin-bottom: 44px; align-items: stretch; }
@@ -7745,7 +7747,8 @@ button.jc-play { animation: none; }
   .hj-grid, .home-dia { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 560px) {
-  .hj { margin-top: -24px; padding: 18px 0 28px; }
+  .hj { padding: 18px 0 28px; }
+  .hh-top { grid-template-columns: minmax(0, 1fr); padding: 0 0 18px; }
   .hj-head { margin-bottom: 16px; }
   .hj-kick { font-size: .74rem; }
   .hj-grid { gap: 22px; }
@@ -7771,3 +7774,24 @@ button.jc-play { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .jc-live, .jc-dots span, .jc-play, .hd-hemi circle { animation: none; }
 }
+
+/* Nit electoral: la portada és l'escrutini (especial.js posa .esp-nit-on) */
+#view-inici.esp-nit-on .hh-top { display: none; }
+.nh-esc b { white-space: nowrap; }
+
+/* Qui juga: preguntes opcionals d'edat i gènere (app.js, renderHomePerfil) */
+#home-perfil:empty { display: none; }
+.hp-card { display: flex; align-items: center; gap: 14px 22px; flex-wrap: wrap; margin: 0 0 34px; padding: 16px 20px; border: var(--bw) solid var(--ink); border-radius: 18px; background: var(--card); box-shadow: 5px 5px 0 var(--yellow); animation: viewIn .4s var(--ease); }
+.hp-card.done { box-shadow: 5px 5px 0 var(--ok); }
+.hp-txt { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hp-txt b, .hp-card.done b { font-family: var(--display); font-size: 1.05rem; }
+.hp-txt small, .hp-card.done small { color: var(--muted); font-size: .85rem; }
+.hp-q { flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.hp-q > span { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.hp-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.hp-opt { min-height: 44px; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 800; font-size: .9rem; cursor: pointer; }
+.hp-opt:hover { background: var(--yellow); }
+.hp-no { min-height: 44px; padding: 8px 6px; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: .85rem; text-decoration: underline; cursor: pointer; }
+.ctu-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.ctu-h3 { margin: 0 0 8px; font-size: .9rem; font-weight: 800; }
+@media (max-width: 620px) { .ctu-two { grid-template-columns: minmax(0, 1fr); } }

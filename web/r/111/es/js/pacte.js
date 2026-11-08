@@ -1,8 +1,9 @@
 // Pactòmetre: escenaris d'enquestes, mitjana i escenari propi.
-// Dades d'enquestes: Viquipèdia, «Opinion polling for the next Spanish general election» (consulta del 21-10-2026).
+// Dades d'enquestes: Viquipèdia, «Opinion polling for the 2026 Spanish general election». Les d'aquí (consulta del
+// 21-10-2026) són la reserva: l'app carrega les del dia de data/enquestes.json, que actualitza tools/update-polls.js.
 
-const POLL_SOURCE = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_next_Spanish_general_election";
-const POLL_UPDATED = "21 de octubre de 2026";
+let POLL_SOURCE = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election";
+let POLL_UPDATED = "21 de octubre de 2026";
 
 // Escons de cada enquesta (els intervals s'han substituït pel punt mitjà i tot s'ajusta a 350).
 const PACTE_ORDER = ["podemos", "fa", "psoe", "bng", "bildu", "erc", "junts", "pnv", "cc", "altres", "upn", "pp", "vox", "salf"];
@@ -268,3 +269,20 @@ function renderPacte() {
   // Ressalta al hemicicle els partits que voten sí
   $$(".pc-hemi circle", root).forEach((c) => { c.style.opacity = stanceOf(c.dataset.p) === "si" ? 1 : stanceOf(c.dataset.p) === "abs" ? 0.55 : 0.2; });
 }
+
+// Enquestes al dia (data/enquestes.json, cada dia des de GitHub). Si no arriben o no quadren, es queden les d'aquí.
+(async () => {
+  try {
+    const r = await fetch(`${window.PEJ_DATA || "../data/"}enquestes.json?t=${Math.floor(Date.now() / 3600000)}`, { cache: "no-cache" });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!Array.isArray(j.seats) || j.seats.length < 5 || !Array.isArray(j.pct) || j.pct.length < 6 || JSON.stringify(j.pctKeys) !== JSON.stringify(POLL_PCT_KEYS)) return;
+    POLL_SEATS.splice(0, POLL_SEATS.length, ...j.seats);
+    POLL_PCT.splice(0, POLL_PCT.length, ...j.pct);
+    if (j.source) POLL_SOURCE = j.source;
+    if (j.updated) POLL_UPDATED = new Date(j.updated + "T12:00:00").toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+    // Una enquesta triada pel número pot ser una altra amb la llista nova: es torna a la mitjana
+    if (pacte.src !== "avg" && pacte.src !== "custom") pacte.src = "avg";
+    renderPacte();
+  } catch { /* sense connexió: les enquestes d'aquí */ }
+})();

@@ -82,72 +82,86 @@ ${whoIsWho()}
 - Català normatiu (gènere i concordança: «el finançament», «la Generalitat»). Noms propis de persones tal com són; topònims en català (Canàries, Saragossa).
 ${recent.length ? `- No repeteixis aquestes preguntes dels últims dies:\n${recent.slice(0, 60).map((q) => "  · " + q).join("\n")}` : ""}
 Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta","…","…","…"],"exp":"…","t":"…","src":[1,2]}]}`;
-  const draft = await askJson([{ role: "system", content: sys }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.4, max_tokens: 6000, model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" });
-  // La llista pot arribar sola o amb un altre nom: es fa servir la primera llista que hi hagi
-  if (draft && !Array.isArray(draft.questions)) draft.questions = Array.isArray(draft) ? [...draft] : Object.values(draft).find(Array.isArray);
-  if (!draft || !Array.isArray(draft.questions)) return warn("sense resposta vàlida de la IA (proposta):", draft ? JSON.stringify(draft).slice(0, 400) : "res");
-  log("model", draft.__model, "· proposades", draft.questions.length);
+  // Fins a 3 rondes: a cada ronda la IA proposa preguntes, es filtren i es verifiquen; les bones s'acumulen (sense repetir-les)
+  const good = [];
+  let model = "";
+  for (let ronda = 1; ronda <= 3 && good.length < MAX_Q; ronda++) {
+    const fetes = good.map((q) => q.q);
+    const extra = fetes.length ? `\nJa tenim aquestes preguntes: no les repeteixis ni en facis sobre els mateixos fets:\n${fetes.map((q) => "  · " + q).join("\n")}` : "";
+    const r = await ronda1(extra);
+    if (r.model) model = r.model;
+    for (const q of r.good) if (!good.some((g) => flat(g.q) === flat(q.q)) && good.filter((g) => g.k === q.k).length < (q.k === "cultura" ? 4 : MAX_Q)) good.push(q);
+    log(`ronda ${ronda}: ${r.good.length} bones · en total ${good.length}`);
+  }
+  if (good.length < MIN_Q) return warn("després de 3 rondes en queden massa poques:", good.length);
 
-  // Validació de forma. Els camps poden arribar amb altres noms (question, options…); es compta per què es descarta cada una
-  const norm = (s) => String(s || "").trim();
-  const pickA = (q) => { const opts = q.a || q.options || q.opcions || q.answers || []; const ok = q.correct ?? q.answer ?? q.resposta; return (typeof ok === "string" && opts.includes(ok) ? [ok, ...opts.filter((x) => x !== ok)] : typeof ok === "number" && opts[ok] !== undefined ? [opts[ok], ...opts.filter((_, j) => j !== ok)] : opts).map(norm); };
-  const why = {}, no = (r) => { why[r] = (why[r] || 0) + 1; return false; };
-  let cand = draft.questions.map((q) => {
-    const k = (q.k || q.kind || q.tipus) === "cultura" ? "cultura" : "actualitat", t = q.t || q.topic || q.tema;
-    return { k, q: norm(q.q || q.question || q.pregunta), a: pickA(q), exp: norm(q.exp || q.explanation || q.explicacio), t: TOPICS.includes(t) ? t : k === "cultura" ? "cultura" : "politica", src: (q.src || q.sources || q.fonts || []).map(Number).filter((i) => items[i]) };
-  }).filter((q) => {
-    if (q.q.length < 15 || q.q.length > 160) return no("enunciat");
-    if (q.a.length !== 4 || !q.a.every((x) => x && x.length <= 60) || new Set(q.a.map((x) => x.toLowerCase())).size !== 4) return no("opcions");
-    if (!q.exp) return no("explicació");
-    if (/(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara.cat|vilaweb)/i.test(q.q)) return no("mitjans");
-    // Els titulars que expliquen el mateix fet: hi surt la resposta i alguna paraula clau de la pregunta
-    // Si la resposta és un nom o una xifra (el que la IA s'inventava), ha de sortir tal qual als titulars; si és un concepte
-    // (en català, i els titulars sovint en castellà), n'hi ha prou que els titulars citats siguin de 2 mitjans diferents
-    const literal = q.k !== "cultura" && /d|[A-ZÀ-ÚÇ]/.test(q.a[0]);
-    if (literal) {
-      const keys = flat(q.q).split(" ").filter((w) => w.length >= 6).map((w) => w.slice(0, 5));
-      const same = items.map((x, i) => i).filter((i) => grounded(q.a[0], [items[i].t]) && keys.some((w) => flat(items[i].t).includes(w)));
-      q.src = [...new Set([...q.src.filter((i) => grounded(q.a[0], [items[i].t])), ...same])];
+  // Una ronda: proposta, filtres i verificació a cegues amb els dos models
+  async function ronda1(extra) {
+    const draft = await askJson([{ role: "system", content: sys + extra }, { role: "user", content: `Data: ${DAY}. Titulars dels últims dies:\n${list}` }], { warn, temperature: 0.5, max_tokens: 6000, model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" });
+    // La llista pot arribar sola o amb un altre nom: es fa servir la primera llista que hi hagi
+    if (draft && !Array.isArray(draft.questions)) draft.questions = Array.isArray(draft) ? [...draft] : Object.values(draft).find(Array.isArray);
+    if (!draft || !Array.isArray(draft.questions)) { warn("sense resposta vàlida de la IA (proposta):", draft ? JSON.stringify(draft).slice(0, 400) : "res"); return { good: [] }; }
+    log("model", draft.__model, "· proposades", draft.questions.length);
+
+    // Validació de forma. Els camps poden arribar amb altres noms (question, options…); es compta per què es descarta cada una
+    const norm = (s) => String(s || "").trim();
+    const pickA = (q) => { const opts = q.a || q.options || q.opcions || q.answers || []; const ok = q.correct ?? q.answer ?? q.resposta; return (typeof ok === "string" && opts.includes(ok) ? [ok, ...opts.filter((x) => x !== ok)] : typeof ok === "number" && opts[ok] !== undefined ? [opts[ok], ...opts.filter((_, j) => j !== ok)] : opts).map(norm); };
+    const why = {}, no = (r) => { why[r] = (why[r] || 0) + 1; return false; };
+    let cand = draft.questions.map((q) => {
+      const k = (q.k || q.kind || q.tipus) === "cultura" ? "cultura" : "actualitat", t = q.t || q.topic || q.tema;
+      return { k, q: norm(q.q || q.question || q.pregunta), a: pickA(q), exp: norm(q.exp || q.explanation || q.explicacio), t: TOPICS.includes(t) ? t : k === "cultura" ? "cultura" : "politica", src: (q.src || q.sources || q.fonts || []).map(Number).filter((i) => items[i]) };
+    }).filter((q) => {
+      if (q.q.length < 15 || q.q.length > 160) return no("enunciat");
+      if (q.a.length !== 4 || !q.a.every((x) => x && x.length <= 60) || new Set(q.a.map((x) => x.toLowerCase())).size !== 4) return no("opcions");
+      if (!q.exp) return no("explicació");
+      if (/\b(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara\.cat|vilaweb)\b/i.test(q.q)) return no("mitjans");
+      // Si la resposta és un nom o una xifra (el que la IA s'inventava), ha de sortir tal qual en algun titular del mateix fet;
+      // si és un concepte (en català, i els titulars sovint en castellà), n'hi ha prou que els titulars citats siguin de 2 mitjans
+      const literal = q.k !== "cultura" && /\d|[A-ZÀ-ÚÇ]/.test(q.a[0]);
+      if (literal) {
+        const keys = flat(q.q).split(" ").filter((w) => w.length >= 6).map((w) => w.slice(0, 5));
+        const same = items.map((x, i) => i).filter((i) => grounded(q.a[0], [items[i].t]) && keys.some((w) => flat(items[i].t).includes(w)));
+        q.src = [...new Set([...q.src.filter((i) => grounded(q.a[0], [items[i].t])), ...same])];
+      }
+      if (q.k !== "cultura" && new Set(q.src.map((i) => items[i].s)).size < 2) return no(literal ? "nom o xifra en menys de 2 mitjans" : "menys de 2 mitjans");
+      if (/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|\bmort[ae]s?\b/i.test(q.q + " " + q.a.join(" "))) return no("tema vetat");
+      if (/\bhondt\b|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q)) return no("sistema electoral");
+      return true;
+    });
+    if (Object.keys(why).length) warn("descartades:", JSON.stringify(why), "· exemple rebut:", JSON.stringify(draft.questions[0]).slice(0, 300));
+    // Cap joc d'opcions repetit (3 o més opcions en comú amb una pregunta anterior) i com a molt 2 de «qui»
+    const kept = []; let who = good.filter((g) => /^(qui|quin|quina)\b/i.test(g.q)).length;
+    for (const q of cand) {
+      const set = new Set(q.a.map(flat));
+      if ([...good, ...kept].some((k) => k.a.filter((x) => set.has(flat(x))).length >= 3)) { log("descartada (opcions repetides):", q.q); continue; }
+      if (/^(qui|quin pol[ií]tic|quina pol[ií]tica|quin l[ií]der|quina l[ií]der|quin president|quina presidenta|quin ministre|quina ministra|quin alcalde|quina alcaldessa)\b/i.test(q.q) && ++who > 2) { log("descartada (massa preguntes de «qui»):", q.q); continue; }
+      kept.push(q);
     }
-    if (q.k !== "cultura" && new Set(q.src.map((i) => items[i].s)).size < 2) return no(literal ? "nom o xifra en menys de 2 mitjans" : "menys de 2 mitjans");
-    if (/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?/i.test(q.q + " " + q.a.join(" "))) return no("tema vetat");
-    if (/hondt|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q)) return no("sistema electoral");
-    if (literal && !grounded(q.a[0], q.src.map((i) => items[i].t))) return no("resposta no als titulars");
-    return true;
-  });
-  if (Object.keys(why).length) warn("descartades:", JSON.stringify(why), "· exemple rebut:", JSON.stringify(draft.questions[0]).slice(0, 500));
-  // Cap joc d'opcions repetit (3 o més opcions en comú amb una pregunta anterior) i com a molt 2 de «qui»
-  const kept = []; let who = 0;
-  for (const q of cand) {
-    const set = new Set(q.a.map(flat));
-    if (kept.some((k) => k.a.filter((x) => set.has(flat(x))).length >= 3)) { log("descartada (opcions repetides):", q.q); continue; }
-    if (/^(qui|quin pol[ií]tic|quina pol[ií]tica|quin l[ií]der|quina l[ií]der|quin president|quina presidenta|quin ministre|quina ministra|quin alcalde|quina alcaldessa)\b/i.test(q.q) && ++who > 2) { log("descartada (massa preguntes de «qui»):", q.q); continue; }
-    kept.push(q);
-  }
-  cand = kept;
-  log("vàlides de forma", cand.length);
-  if (cand.length < MIN_Q) return warn("massa poques preguntes vàlides:", cand.length);
+    cand = kept;
+    log("vàlides de forma", cand.length);
+    if (!cand.length) return { good: [], model: draft.__model };
 
-  // Verificació: la IA respon a cegues (opcions barrejades) i diu si la pregunta és clara i certa
-  const shuffled = cand.map((q) => { const o = [...q.a].sort(() => Math.random() - 0.5); return { o, ok: o.indexOf(q.a[0]) }; });
-  const vsys = `Ets un verificador de fets molt estricte. Per a cada pregunta, tria l'opció correcta (índex 0-3) fent servir els titulars i el teu coneixement, i digues si la pregunta és vàlida: certa, no ambigua (només una opció correcta), neutral i comprensible sola. Respon NOMÉS amb JSON: {"answers":[{"i":0,"choice":2,"valid":true,"why":"…"}]}`;
-  const vq = cand.map((q, i) => `${i}. ${q.q}\n   ${shuffled[i].o.map((x, j) => `${j}) ${x}`).join("  ")}`).join("\n");
-  const checks = [];
-  for (const model of VERIFY_MODELS) {
-    const c = await askJson([{ role: "system", content: vsys }, { role: "user", content: `Fitxa de qui és qui:\n${whoIsWho()}\n\nTitulars:\n${list}\n\nPreguntes:\n${vq}` }], { warn, temperature: 0, max_tokens: 5000, model });
-    if (c && !Array.isArray(c.answers)) c.answers = Object.values(c).find(Array.isArray);
-    if (!c || !Array.isArray(c.answers)) return warn("sense resposta vàlida de la IA (verificació amb " + model + "):", c ? JSON.stringify(c).slice(0, 400) : "res");
-    checks.push(c);
+    // Verificació: la IA respon a cegues (opcions barrejades) i diu si la pregunta és clara i certa
+    const shuffled = cand.map((q) => { const o = [...q.a].sort(() => Math.random() - 0.5); return { o, ok: o.indexOf(q.a[0]) }; });
+    const vsys = `Ets un verificador de fets molt estricte. Per a cada pregunta, tria l'opció correcta (índex 0-3) fent servir els titulars i el teu coneixement, i digues si la pregunta és vàlida: certa, no ambigua (només una opció correcta), neutral i comprensible sola. Respon NOMÉS amb JSON: {"answers":[{"i":0,"choice":2,"valid":true,"why":"…"}]}`;
+    const vq = cand.map((q, i) => `${i}. ${q.q}\n   ${shuffled[i].o.map((x, j) => `${j}) ${x}`).join("  ")}`).join("\n");
+    const checks = [];
+    for (const m of VERIFY_MODELS) {
+      const c = await askJson([{ role: "system", content: vsys }, { role: "user", content: `Fitxa de qui és qui:\n${whoIsWho()}\n\nTitulars:\n${list}\n\nPreguntes:\n${vq}` }], { warn, temperature: 0, max_tokens: 5000, model: m });
+      if (c && !Array.isArray(c.answers)) c.answers = Object.values(c).find(Array.isArray);
+      if (!c || !Array.isArray(c.answers)) { warn("sense resposta vàlida de la IA (verificació amb " + m + "):", c ? JSON.stringify(c).slice(0, 300) : "res"); return { good: [], model: draft.__model }; }
+      checks.push(c);
+    }
+    const ok = cand.filter((q, i) => checks.every((c) => { const a = c.answers.find((x) => Number(x.i) === i); return a && a.valid === true && Number(a.choice) === shuffled[i].ok; }));
+    log("superen la verificació", ok.length, "de", cand.length);
+    return { good: ok, model: draft.__model };
   }
-  const good = cand.filter((q, i) => checks.every((c) => { const a = c.answers.find((x) => Number(x.i) === i); return a && a.valid === true && Number(a.choice) === shuffled[i].ok; }));
-  log("superen la verificació", good.length, "de", cand.length);
-  if (good.length < MIN_Q) return warn("després de la verificació en queden massa poques:", good.length);
 
   // Barreja: unes 6 d'actualitat i unes 4 de cultura
   const act = good.filter((q) => q.k === "actualitat"), cul = good.filter((q) => q.k === "cultura");
   const pick = [...act.slice(0, Math.max(MAX_Q - Math.min(4, cul.length), 0)), ...cul.slice(0, 4)].slice(0, MAX_Q);
   const questions = pick.map((q) => ({ k: q.k, t: q.t, q: q.q, a: q.a, exp: q.exp, ...(q.src.length ? { u: items[q.src[0]].u, s: [...new Set(q.src.map((i) => items[i].s))].slice(0, 3) } : {}) }));
-  test.days[DAY] = { v: GEN_V, n: questions.length, model: draft.__model, questions };
+  test.days[DAY] = { v: GEN_V, n: questions.length, model, questions };
   // Només els últims dies
   const keep = madrid(new Date(Date.now() - KEEP_DAYS * 864e5));
   for (const d of Object.keys(test.days)) if (d < keep) delete test.days[d];

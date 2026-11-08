@@ -1,5 +1,5 @@
 name: Genera el quiz de l'actualitat
-# Un cop al dia, amb GitHub Models (capa gratuïta, amb el GITHUB_TOKEN; sense claus ni targeta).
+# Un cop al dia, amb la IA de Cloudflare a través del servei d'avisos (tools/ia.js; sense claus: testimoni OIDC).
 # El repositori és públic, així que GitHub Actions tampoc no té cost. Si s'arriba al límit gratuït, simplement no genera res.
 on:
   schedule:
@@ -8,10 +8,10 @@ on:
   # També quan canvia el generador, per provar-lo de seguida
   push:
     branches: [main]
-    paths: ["tools/update-quiz.js"]
+    paths: ["tools/update-quiz.js", "tools/ia.js"]
 permissions:
   contents: write
-  models: read
+  id-token: write
 jobs:
   quiz:
     runs-on: ubuntu-latest

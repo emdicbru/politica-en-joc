@@ -8,7 +8,7 @@ on:
     paths: ["web/**", "data/**", ".github/workflows/pages.yml"]
   # Els titulars i el quiz els desa el bot amb el GITHUB_TOKEN, que no engega altres fluxos: per això s'escolten aquí
   workflow_run:
-    workflows: ["Actualitza els titulars", "Genera el quiz de l'actualitat", "Actualitza les enquestes"]
+    workflows: ["Actualitza els titulars", "Genera el quiz de l'actualitat", "Actualitza les enquestes", "Genera el test d'actualitat"]
     types: [completed]
   workflow_dispatch:
 permissions:

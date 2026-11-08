@@ -1,63 +1,32 @@
 #!/usr/bin/env node
 // Genera les preguntes del quiz de l'actualitat (data/quiz.json) a partir dels titulars de data/news.json.
-// Fa servir GitHub Models amb el GITHUB_TOKEN del workflow: és gratuït (capa gratuïta amb límits diaris) i no
-// necessita cap clau ni targeta. Si el servei falla o s'arriba al límit, no toca res i el quiz es queda com estava.
+// Fa servir la IA de Cloudflare (tools/ia.js, gratuïta amb un límit diari). Si falla o s'arriba al límit, no toca res i el
+// quiz es queda com estava.
 //
 // Regles: preguntes sobre els fets, no sobre els mitjans; cada fet ha d'aparèixer en almenys 2 mitjans diferents;
 // una segona passada comprova que cada pregunta es pot respondre només amb els titulars citats.
-// Ús: GITHUB_TOKEN=... node tools/update-quiz.js
+// Ús (a GitHub Actions, amb permissions: id-token: write): node tools/update-quiz.js
 "use strict";
 const fs = require("fs"), path = require("path");
+const { askJson } = require("./ia.js");
 
 const ROOT = path.join(__dirname, "..");
 const NEWS = path.join(ROOT, "data", "news.json");
 const QUIZ = path.join(ROOT, "data", "quiz.json");
-const API = "https://models.github.ai/inference/chat/completions";
-const MODELS = ["openai/gpt-4.1", "openai/gpt-4.1-mini"];
 const TOPICS = ["enquestes", "habitatge", "immigracio", "justicia", "energia", "economia", "territori", "internacional", "campanya", "parlament", "politica"];
 const KEEP_DAYS = 10; // l'app fa servir cada pregunta 10 dies
 const MAX_NEW = 8;
-const token = process.env.GITHUB_TOKEN;
 
 const today = new Date().toISOString().slice(0, 10);
 const log = (...a) => console.log("[quiz]", ...a);
 // Quan no es genera res, l'avís surt a la pàgina de l'execució de GitHub Actions (es pot llegir sense entrar al registre)
 const warn = (...a) => { const m = a.join(" "); console.log(process.env.GITHUB_ACTIONS ? `::warning title=Quiz::${m.replace(/\s+/g, " ")}` : `[quiz] AVÍS: ${m}`); };
 
-async function ask(messages) {
-  for (const model of MODELS) {
-    try {
-      const r = await fetch(API, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
-        body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 3500, response_format: { type: "json_object" } }),
-      });
-      const txt = await r.text();
-      if (!r.ok) { warn(model, "HTTP", r.status, txt.slice(0, 300)); continue; }
-      let j; try { j = JSON.parse(txt); } catch { warn(model, "resposta del servei que no és JSON:", txt.slice(0, 300)); continue; }
-      // El model a vegades embolcalla el JSON amb text: es busca el bloc { … }
-      const c = String(j.choices?.[0]?.message?.content || "");
-      try { return JSON.parse(c); } catch { /* es prova d'extreure'l */ }
-      const m = c.match(/\{[\s\S]*\}/);
-      if (m) { try { return JSON.parse(m[0]); } catch { /* no és JSON */ } }
-      warn(model, "el model no ha tornat JSON:", c.slice(0, 300));
-    } catch (e) { warn(model, "error", e.message); }
-  }
-  return null;
-}
+// La IA és la de Cloudflare, a través del servei d'avisos (tools/ia.js). GitHub Models es va retirar el 30-7-2026.
+const ask = (messages) => askJson(messages, { warn, temperature: 0.2, max_tokens: 4000 });
 
 (async () => {
-  if (!token) { warn("Sense GITHUB_TOKEN: no es genera res."); return; }
-  // Diagnòstic (8-11-2026): el servei responia «OK» en lloc de JSON. Es comprova el catàleg de models i una crida mínima.
-  try {
-    const c = await fetch("https://models.github.ai/catalog/models", { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" } });
-    const ct = await c.text();
-    warn("catàleg:", c.status, c.headers.get("content-type") || "", ct.slice(0, 160));
-    const p = await fetch(API, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ model: "openai/gpt-4.1-mini", messages: [{ role: "user", content: "Respon només: hola" }] }) });
-    const pt = await p.text();
-    warn("prova mínima:", p.status, p.headers.get("content-type") || "", JSON.stringify(Object.fromEntries([...p.headers].filter(([k]) => /x-|server|via/.test(k)).slice(0, 6))), pt.slice(0, 200));
-  } catch (e) { warn("diagnòstic:", e.message); }
-  const news = JSON.parse(fs.readFileSync(NEWS, "utf8"));
+    const news = JSON.parse(fs.readFileSync(NEWS, "utf8"));
   const quiz = JSON.parse(fs.readFileSync(QUIZ, "utf8"));
   if (quiz.updatedAuto === today) { log("Ja s'ha generat avui."); return; }
 

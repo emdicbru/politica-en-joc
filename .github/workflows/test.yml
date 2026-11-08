@@ -1,0 +1,32 @@
+name: Genera el test d'actualitat
+# Cada matí, el test d'actualitat del dia (data/test.json) amb la IA de Cloudflare (tools/update-test.js, via el servei
+# d'avisos). S'executa cada hora entre les 5 i les 10 (UTC): si el del dia ja hi és, no fa res; si la IA falla, ho torna
+# a provar a l'hora següent. Sense claus: el servei d'avisos accepta el testimoni OIDC d'aquest repositori.
+on:
+  schedule:
+    - cron: "5 4-9 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["tools/update-test.js", "tools/ia.js"]
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/update-test.js
+      - name: Desa el test si ha canviat
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add data/test.json
+          git diff --staged --quiet && exit 0
+          git commit -m "Test d'actualitat del dia"
+          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 5; done
+          exit 1

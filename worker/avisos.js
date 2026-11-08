@@ -265,6 +265,48 @@ export async function turnBudget(env) {
   return true;
 }
 const turnDay = new Map(); // uid → { day, n }
+
+// ---------- Comptador de visites propi (sense galetes) ----------
+// Cada obertura de l'app envia POST /hit (navigator.sendBeacon). Al dispositiu no es desa res. Aquí es calcula una
+// empremta (SHA-256) de la IP i del navegador amb una sal que canvia cada dia i que surt de la clau secreta del servei:
+// no es pot refer sense la clau i no serveix per relacionar dies diferents. Amb l'empremta se sap si aquella persona ja
+// ha entrat avui. A Firestore només hi van l'empremta (vis/{dia}_{empremta}, que el cron esborra l'endemà) i els totals
+// del dia (stats/{dia}_w: u = persones diferents, s = visites; u_ca/u_es i s_ca/s_es per idioma). Els robots no compten.
+const BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|embedly|curl|wget|python|axios|node-fetch/i;
+const madridDay = (t = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date(t));
+const DOCS = `projects/${PROJECT}/databases/(default)/documents`;
+const sha256hex = async (s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+async function fsCommit(env, writes) {
+  return fetch(`${FS.replace(/\/documents$/, "/documents:commit")}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ writes }),
+  });
+}
+export async function countHit(env, ip, ua, lang) {
+  if (!ip || !ua || BOT_RE.test(ua) || !env.FIREBASE_SA) return "ignorat";
+  const day = madridDay();
+  const salt = await sha256hex(`${day}|${JSON.parse(env.FIREBASE_SA).private_key}|visites`);
+  const h = (await sha256hex(`${salt}|${ip}|${ua}`)).slice(0, 32);
+  const l = lang === "es" ? "es" : "ca";
+  const inc = (fields) => ({ transform: { document: `${DOCS}/stats/${day}_w`, fieldTransforms: fields.map((f) => ({ fieldPath: f, increment: { integerValue: "1" } })) } });
+  // Primera visita del dia: es crea l'empremta (només si no hi era) i se sumen la persona i la visita, tot alhora
+  const r = await fsCommit(env, [{ update: { name: `${DOCS}/vis/${day}_${h}`, fields: { d: { stringValue: day } } }, currentDocument: { exists: false } }, inc(["u", "s", `u_${l}`, `s_${l}`])]);
+  if (r.ok) return "nova";
+  await fsCommit(env, [inc(["s", `s_${l}`])]);
+  return "torna";
+}
+// Cada 10 minuts, s'esborren les empremtes dels dies anteriors (fins a 400 cada vegada)
+async function visCleanup(env) {
+  if (!env.FIREBASE_SA || new Date().getUTCMinutes() % 10 !== 3) return;
+  const r = await fetch(`${FS}:runQuery`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "vis" }], select: { fields: [{ fieldPath: "__name__" }] }, where: { fieldFilter: { field: { fieldPath: "d" }, op: "LESS_THAN", value: { stringValue: madridDay() } } }, limit: 400 } }),
+  });
+  const names = (await r.json()).map((x) => x.document?.name).filter(Boolean);
+  if (names.length) await fsCommit(env, names.map((name) => ({ delete: name })));
+}
 const turnOn = (env) => !!((env.TURN_KEY_ID && env.TURN_KEY_TOKEN) || env.TURN_API_URL || (env.TURN_URLS && env.TURN_USER && env.TURN_PASS));
 // Treu el port 53: els navegadors no hi poden connectar i allarga la cerca de camins
 export function turnServers(data) {
@@ -300,10 +342,22 @@ function cors(req) {
 const json = (req, status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...cors(req) } });
 
 export default {
-  async scheduled(event, env, ctx) { ctx.waitUntil(pushCron(env).catch((e) => console.warn(e))); },
-  async fetch(req, env) {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(pushCron(env).catch((e) => console.warn(e)));
+    ctx.waitUntil(visCleanup(env).catch((e) => console.warn(e)));
+  },
+  async fetch(req, env, ctx) {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url);
+    // Comptador de visites: només des de la web publicada (les proves en local no compten), sense sessió; respon de seguida i suma en segon pla
+    if (req.method === "POST" && url.pathname === "/hit") {
+      const o = req.headers.get("Origin") || "";
+      if (!ORIGINS.includes(o)) return new Response(null, { status: 403 });
+      let lang = "ca";
+      try { lang = JSON.parse((await req.text()) || "{}").l; } catch { /* sense cos */ }
+      ctx.waitUntil(countHit(env, req.headers.get("CF-Connecting-IP") || "", req.headers.get("User-Agent") || "", lang).catch((e) => console.warn(e)));
+      return new Response(null, { status: 204, headers: cors(req) });
+    }
     if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc", turn: turnOn(env), ia: !!env.AI });
     if (req.method === "POST" && url.pathname === "/ia") {
       try { await verifyGithubOidc((req.headers.get("Authorization") || "").replace(/^Bearer /, "")); } catch (e) { return json(req, 401, { error: `accés: ${e.message}` }); }

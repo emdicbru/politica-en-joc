@@ -29,7 +29,7 @@ async function ask(messages) {
     try {
       const r = await fetch(API, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
         body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 3500, response_format: { type: "json_object" } }),
       });
       const txt = await r.text();
@@ -48,6 +48,15 @@ async function ask(messages) {
 
 (async () => {
   if (!token) { warn("Sense GITHUB_TOKEN: no es genera res."); return; }
+  // Diagnòstic (8-11-2026): el servei responia «OK» en lloc de JSON. Es comprova el catàleg de models i una crida mínima.
+  try {
+    const c = await fetch("https://models.github.ai/catalog/models", { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" } });
+    const ct = await c.text();
+    warn("catàleg:", c.status, c.headers.get("content-type") || "", ct.slice(0, 160));
+    const p = await fetch(API, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ model: "openai/gpt-4.1-mini", messages: [{ role: "user", content: "Respon només: hola" }] }) });
+    const pt = await p.text();
+    warn("prova mínima:", p.status, p.headers.get("content-type") || "", JSON.stringify(Object.fromEntries([...p.headers].filter(([k]) => /x-|server|via/.test(k)).slice(0, 6))), pt.slice(0, 200));
+  } catch (e) { warn("diagnòstic:", e.message); }
   const news = JSON.parse(fs.readFileSync(NEWS, "utf8"));
   const quiz = JSON.parse(fs.readFileSync(QUIZ, "utf8"));
   if (quiz.updatedAuto === today) { log("Ja s'ha generat avui."); return; }

@@ -32,9 +32,15 @@ async function ask(messages) {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 3500, response_format: { type: "json_object" } }),
       });
-      if (!r.ok) { warn(model, "HTTP", r.status, (await r.text()).slice(0, 300)); continue; }
-      const j = await r.json();
-      return JSON.parse(j.choices[0].message.content);
+      const txt = await r.text();
+      if (!r.ok) { warn(model, "HTTP", r.status, txt.slice(0, 300)); continue; }
+      let j; try { j = JSON.parse(txt); } catch { warn(model, "resposta del servei que no és JSON:", txt.slice(0, 300)); continue; }
+      // El model a vegades embolcalla el JSON amb text: es busca el bloc { … }
+      const c = String(j.choices?.[0]?.message?.content || "");
+      try { return JSON.parse(c); } catch { /* es prova d'extreure'l */ }
+      const m = c.match(/\{[\s\S]*\}/);
+      if (m) { try { return JSON.parse(m[0]); } catch { /* no és JSON */ } }
+      warn(model, "el model no ha tornat JSON:", c.slice(0, 300));
     } catch (e) { warn(model, "error", e.message); }
   }
   return null;

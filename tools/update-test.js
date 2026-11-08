@@ -101,15 +101,18 @@ Respon NOMÉS amb JSON: {"questions":[{"k":"actualitat","q":"…","a":["correcta
     if (!q.exp) return no("explicació");
     if (/(diari|mitjà|titular|publica|segons el|la vanguardia|el país|ara.cat|vilaweb)/i.test(q.q)) return no("mitjans");
     // Els titulars que expliquen el mateix fet: hi surt la resposta i alguna paraula clau de la pregunta
-    if (q.k !== "cultura") {
-      const keys = flat(q.q).split(" ").filter((w) => w.length >= 6);
+    // Si la resposta és un nom o una xifra (el que la IA s'inventava), ha de sortir tal qual als titulars; si és un concepte
+    // (en català, i els titulars sovint en castellà), n'hi ha prou que els titulars citats siguin de 2 mitjans diferents
+    const literal = q.k !== "cultura" && /d|[A-ZÀ-ÚÇ]/.test(q.a[0]);
+    if (literal) {
+      const keys = flat(q.q).split(" ").filter((w) => w.length >= 6).map((w) => w.slice(0, 5));
       const same = items.map((x, i) => i).filter((i) => grounded(q.a[0], [items[i].t]) && keys.some((w) => flat(items[i].t).includes(w)));
       q.src = [...new Set([...q.src.filter((i) => grounded(q.a[0], [items[i].t])), ...same])];
-      if (new Set(q.src.map((i) => items[i].s)).size < 2) return no("menys de 2 mitjans");
     }
+    if (q.k !== "cultura" && new Set(q.src.map((i) => items[i].s)).size < 2) return no(literal ? "nom o xifra en menys de 2 mitjans" : "menys de 2 mitjans");
     if (/loteria|primitiva|bonoloto|euromilions|segons la not[ií]cia|en les not[ií]cies|assassina|mort[ae]s?/i.test(q.q + " " + q.a.join(" "))) return no("tema vetat");
     if (/hondt|quants (diputats|senadors|escons)|escons (elegeix|t[eé]|reparteix)|barrera electoral|majoria absoluta/i.test(q.q)) return no("sistema electoral");
-    if (q.k !== "cultura" && !grounded(q.a[0], q.src.map((i) => items[i].t))) return no("resposta no als titulars");
+    if (literal && !grounded(q.a[0], q.src.map((i) => items[i].t))) return no("resposta no als titulars");
     return true;
   });
   if (Object.keys(why).length) warn("descartades:", JSON.stringify(why), "· exemple rebut:", JSON.stringify(draft.questions[0]).slice(0, 500));

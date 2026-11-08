@@ -271,7 +271,10 @@ const turnDay = new Map(); // uid → { day, n }
 // empremta (SHA-256) de la IP i del navegador amb una sal que canvia cada dia i que surt de la clau secreta del servei:
 // no es pot refer sense la clau i no serveix per relacionar dies diferents. Amb l'empremta se sap si aquella persona ja
 // ha entrat avui. A Firestore només hi van l'empremta (vis/{dia}_{empremta}, que el cron esborra l'endemà) i els totals
-// del dia (stats/{dia}_w: u = persones diferents, s = visites; u_ca/u_es i s_ca/s_es per idioma). Els robots no compten.
+// del dia (stats/{dia}_w: u = persones diferents, s = visites; u_ca/u_es i s_ca/s_es per idioma; reg.{codi} = persones per
+// territori, amb la comunitat autònoma o el país que Cloudflare dedueix de la IP: ES_CT, ES_MD…, FR). Els robots no compten.
+// POST /perfil: la resposta opcional i anònima d'edat i gènere (perfil.edat_*, perfil.gen_*, perfil.n). Una per persona i
+// dia (perf/{dia}_{empremta}, que el cron també esborra); no es lliga a cap compte ni a cap visita.
 const BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|embedly|curl|wget|python|axios|node-fetch/i;
 const madridDay = (t = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date(t));
 const DOCS = `projects/${PROJECT}/databases/(default)/documents`;
@@ -283,26 +286,52 @@ async function fsCommit(env, writes) {
     body: JSON.stringify({ writes }),
   });
 }
-export async function countHit(env, ip, ua, lang) {
+export async function countHit(env, ip, ua, lang, cf = {}) {
   if (!ip || !ua || BOT_RE.test(ua) || !env.FIREBASE_SA) return "ignorat";
   const day = madridDay();
   const salt = await sha256hex(`${day}|${JSON.parse(env.FIREBASE_SA).private_key}|visites`);
   const h = (await sha256hex(`${salt}|${ip}|${ua}`)).slice(0, 32);
+  const reg = cfRegion(cf);
   const l = lang === "es" ? "es" : "ca";
   const inc = (fields) => ({ transform: { document: `${DOCS}/stats/${day}_w`, fieldTransforms: fields.map((f) => ({ fieldPath: f, increment: { integerValue: "1" } })) } });
   // Primera visita del dia: es crea l'empremta (només si no hi era) i se sumen la persona i la visita, tot alhora
-  const r = await fsCommit(env, [{ update: { name: `${DOCS}/vis/${day}_${h}`, fields: { d: { stringValue: day } } }, currentDocument: { exists: false } }, inc(["u", "s", `u_${l}`, `s_${l}`])]);
+  const r = await fsCommit(env, [{ update: { name: `${DOCS}/vis/${day}_${h}`, fields: { d: { stringValue: day } } }, currentDocument: { exists: false } }, inc(["u", "s", `u_${l}`, `s_${l}`, ...(reg ? [`reg.${reg}`] : [])])]);
   if (r.ok) return "nova";
   await fsCommit(env, [inc(["s", `s_${l}`])]);
   return "torna";
 }
+// Territori: a Espanya, la comunitat autònoma (codi ISO, p. ex. ES_CT); fora, només el país
+function cfRegion(cf) {
+  const c = String(cf?.country || "").toUpperCase();
+  if (!/^[A-Z]{2}$/.test(c)) return "";
+  if (c !== "ES") return c;
+  const r = String(cf?.regionCode || "").toUpperCase();
+  return /^[A-Z]{1,3}$/.test(r) ? `ES_${r}` : "ES";
+}
+const PERFIL_EDAT = ["m18", "a18", "a30", "a45", "a65", "nsnc"], PERFIL_GEN = ["dona", "home", "nobin", "nsnc"];
+export async function countPerfil(env, ip, ua, body) {
+  const e = PERFIL_EDAT.includes(body?.e) ? body.e : null, g = PERFIL_GEN.includes(body?.g) ? body.g : null;
+  if (!ip || !ua || BOT_RE.test(ua) || !env.FIREBASE_SA || (!e && !g)) return "ignorat";
+  const day = madridDay();
+  const salt = await sha256hex(`${day}|${JSON.parse(env.FIREBASE_SA).private_key}|perfil`);
+  const h = (await sha256hex(`${salt}|${ip}|${ua}`)).slice(0, 32);
+  const fields = ["perfil.n", ...(e ? [`perfil.edat_${e}`] : []), ...(g ? [`perfil.gen_${g}`] : [])];
+  const r = await fsCommit(env, [
+    { update: { name: `${DOCS}/perf/${day}_${h}`, fields: { d: { stringValue: day } } }, currentDocument: { exists: false } },
+    { transform: { document: `${DOCS}/stats/${day}_w`, fieldTransforms: fields.map((f) => ({ fieldPath: f, increment: { integerValue: "1" } })) } },
+  ]);
+  return r.ok ? "desat" : "repetit";
+}
 // Cada 10 minuts, s'esborren les empremtes dels dies anteriors (fins a 400 cada vegada)
 async function visCleanup(env) {
   if (!env.FIREBASE_SA || new Date().getUTCMinutes() % 10 !== 3) return;
+  for (const col of ["vis", "perf"]) await cleanCol(env, col);
+}
+async function cleanCol(env, col) {
   const r = await fetch(`${FS}:runQuery`, {
     method: "POST",
     headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "vis" }], select: { fields: [{ fieldPath: "__name__" }] }, where: { fieldFilter: { field: { fieldPath: "d" }, op: "LESS_THAN", value: { stringValue: madridDay() } } }, limit: 400 } }),
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: col }], select: { fields: [{ fieldPath: "__name__" }] }, where: { fieldFilter: { field: { fieldPath: "d" }, op: "LESS_THAN", value: { stringValue: madridDay() } } }, limit: 400 } }),
   });
   const names = (await r.json()).map((x) => x.document?.name).filter(Boolean);
   if (names.length) await fsCommit(env, names.map((name) => ({ delete: name })));
@@ -355,7 +384,15 @@ export default {
       if (!ORIGINS.includes(o)) return new Response(null, { status: 403 });
       let lang = "ca";
       try { lang = JSON.parse((await req.text()) || "{}").l; } catch { /* sense cos */ }
-      ctx.waitUntil(countHit(env, req.headers.get("CF-Connecting-IP") || "", req.headers.get("User-Agent") || "", lang).catch((e) => console.warn(e)));
+      ctx.waitUntil(countHit(env, req.headers.get("CF-Connecting-IP") || "", req.headers.get("User-Agent") || "", lang, req.cf || {}).catch((e) => console.warn(e)));
+      return new Response(null, { status: 204, headers: cors(req) });
+    }
+    // Edat i gènere (opcionals i anònims): una resposta per persona i dia
+    if (req.method === "POST" && url.pathname === "/perfil") {
+      if (!ORIGINS.includes(req.headers.get("Origin") || "")) return new Response(null, { status: 403 });
+      let body = {};
+      try { body = JSON.parse((await req.text()) || "{}"); } catch { /* sense cos */ }
+      ctx.waitUntil(countPerfil(env, req.headers.get("CF-Connecting-IP") || "", req.headers.get("User-Agent") || "", body).catch((e) => console.warn(e)));
       return new Response(null, { status: 204, headers: cors(req) });
     }
     if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc", turn: turnOn(env), ia: !!env.AI });

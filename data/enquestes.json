@@ -1,7 +1,7 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1384566806,
+ "revid": 1384699873,
  "seats": [
   {
    "n": "SocioMétrica / El Español",
@@ -18,6 +18,25 @@
     "pnv": 3,
     "bng": 2,
     "cc": 1,
+    "podemos": 0,
+    "salf": 0
+   }
+  },
+  {
+   "n": "SW Demoscopia / La Séptima",
+   "d": "26 oct–7 nov",
+   "s": {
+    "pp": 117.5,
+    "psoe": 129,
+    "vox": 61,
+    "fa": 12.5,
+    "erc": 10.5,
+    "junts": 4,
+    "bildu": 7,
+    "pnv": 2.5,
+    "bng": 2,
+    "cc": 1,
+    "altres": 2.5,
     "podemos": 0,
     "salf": 0
    }
@@ -79,20 +98,57 @@
    }
   },
   {
-   "n": "SW Demoscopia / La Séptima",
-   "d": "26 oct–6 nov",
+   "n": "GAD3 / Vocento",
+   "d": "3–5 nov",
    "s": {
-    "pp": 118.5,
-    "psoe": 129,
-    "vox": 60.5,
-    "fa": 12.5,
-    "erc": 10.5,
-    "junts": 4,
+    "pp": 136,
+    "psoe": 103,
+    "vox": 63,
+    "fa": 7,
+    "altres": 8,
+    "erc": 12,
+    "junts": 5,
+    "bildu": 8,
+    "pnv": 4,
+    "bng": 2,
+    "cc": 1,
+    "podemos": 1,
+    "salf": 0
+   }
+  },
+  {
+   "n": "NC Report / La Razón",
+   "d": "2–5 nov",
+   "s": {
+    "pp": 139,
+    "psoe": 100,
+    "vox": 68,
+    "fa": 9.5,
+    "erc": 7.5,
+    "junts": 8.5,
     "bildu": 6.5,
+    "pnv": 4.5,
+    "bng": 2,
+    "cc": 1,
+    "altres": 2.5,
+    "podemos": 0.5
+   }
+  },
+  {
+   "n": "40dB / Prisa",
+   "d": "2–4 nov",
+   "s": {
+    "pp": 132.5,
+    "psoe": 119,
+    "vox": 61,
+    "fa": 6,
+    "altres": 6,
+    "erc": 10,
+    "junts": 3,
+    "bildu": 7,
     "pnv": 3,
     "bng": 2,
     "cc": 1,
-    "altres": 3,
     "podemos": 0,
     "salf": 0
    }
@@ -112,54 +168,6 @@
     "pnv": 4,
     "bng": 2,
     "cc": 1,
-    "podemos": 1,
-    "salf": 0
-   }
-  },
-  {
-   "n": "Target Point / El Debate",
-   "d": "28–30 oct",
-   "s": {
-    "pp": 133,
-    "psoe": 101,
-    "vox": 70,
-    "fa": 10,
-    "podemos": 1,
-    "salf": 0
-   }
-  },
-  {
-   "n": "NC Report / La Razón",
-   "d": "26–29 oct",
-   "s": {
-    "pp": 141,
-    "psoe": 101,
-    "vox": 67,
-    "fa": 9.5,
-    "erc": 7.5,
-    "junts": 8.5,
-    "bildu": 6.5,
-    "pnv": 4.5,
-    "bng": 2,
-    "cc": 1,
-    "altres": 2.5,
-    "podemos": 0.5
-   }
-  },
-  {
-   "n": "Hamalgama Métrica / Vozpópuli",
-   "d": "22–28 oct",
-   "s": {
-    "pp": 137,
-    "psoe": 106,
-    "vox": 70,
-    "fa": 7,
-    "erc": 7,
-    "junts": 7,
-    "bildu": 7,
-    "pnv": 4,
-    "bng": 2,
-    "altres": 2,
     "podemos": 1,
     "salf": 0
    }
@@ -189,6 +197,18 @@
    1.6,
    0.8,
    2.2
+  ],
+  [
+   28.7,
+   31,
+   17.3,
+   7.6,
+   1.7,
+   2.5,
+   1.2,
+   1.4,
+   0.8,
+   2.1
   ],
   [
    29.8,
@@ -227,16 +247,16 @@
    null
   ],
   [
-   28.8,
-   30.8,
-   17.2,
-   7.7,
-   1.8,
-   2.5,
-   1.2,
-   1.3,
-   0.8,
-   2.1
+   31.9,
+   25.9,
+   18.6,
+   6,
+   1.4,
+   2.7,
+   1.4,
+   1.5,
+   0.9,
+   1.3
   ],
   [
    31.5,
@@ -249,6 +269,30 @@
    null,
    null,
    null
+  ],
+  [
+   33,
+   25.6,
+   19.3,
+   6.9,
+   2.4,
+   2,
+   1.8,
+   1.4,
+   0.9,
+   null
+  ],
+  [
+   31.9,
+   29.9,
+   18,
+   3.9,
+   1.2,
+   null,
+   null,
+   null,
+   null,
+   2
   ],
   [
    29.7,
@@ -285,43 +329,7 @@
    null,
    null,
    2.6
-  ],
-  [
-   33,
-   25.6,
-   19.3,
-   6.9,
-   2.4,
-   2,
-   1.8,
-   1.4,
-   0.9,
-   null
-  ],
-  [
-   32.4,
-   26.4,
-   19.9,
-   5.4,
-   2.2,
-   1.9,
-   1.7,
-   1.3,
-   0.9,
-   1.8
-  ],
-  [
-   28.3,
-   27.6,
-   20.8,
-   7.8,
-   2.6,
-   null,
-   null,
-   null,
-   null,
-   2.4
   ]
  ],
- "updated": "2026-11-08"
+ "updated": "2026-11-09"
 }

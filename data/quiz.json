@@ -1,7 +1,63 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-08",
+  "updated": "2026-11-09",
   "questions": [
+    {
+      "d": "2026-11-09",
+      "t": "justicia",
+      "q": "Quina acció ha considerat el govern espanyol respecte a TikTok a causa d'una investigació d'abusos sexuals infantils?",
+      "a": [
+        "Estudiar la suspensió de TikTok",
+        "Proposar una nova llei de privacitat per a xarxes socials",
+        "Incrementar la fiscalitat a les xarxes socials",
+        "Crear una comissió de cultura digital per a regular TikTok"
+      ],
+      "exp": "El govern ha anunciat que estudia la possibilitat de suspendre TikTok a Espanya a causa d'una investigació sobre suposats casos d'abusos sexuals infantils.",
+      "u": "https://www.elespanol.com/espana/politica/20261109/partidos-canarios-pactan-exigir-sanchez-frontex-proximo-gobierno-poder-juzgar-mafias-homicidio/1003744450997_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-09",
+      "t": "justicia",
+      "q": "Quina mesura ha demanat el govern espanyol a la Fiscalia relacionada amb TikTok?",
+      "a": [
+        "Obrir una investigació per presumptes casos d'abús sexual infantil",
+        "Imposar multes a usuaris per contingut inapropiat",
+        "Crear una campanya educativa sobre seguretat en línia",
+        "Prohibir l'ús de TikTok a menors de 16 anys"
+      ],
+      "exp": "El Govern ha sol·licitat a la Fiscalia que investigui possibles casos d'abusos sexuals infantils detectats a TikTok.",
+      "u": "https://www.elmundo.es/espana/2026/11/09/6af1a1d1e9cf4a0d5f8b4583.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-09",
+      "t": "internacional",
+      "q": "Quina acció ha pres Delcy Rodríguez contra Víctor de Aldama?",
+      "a": [
+        "Ha presentat una querella per presumptes injúries",
+        "L'ha nomenat conseller del govern",
+        "L'ha convidat a un debat parlamentari",
+        "L'ha felicitat per la seva gestió"
+      ],
+      "exp": "Delcy Rodríguez ha interposat una querella contra Víctor de Aldama per suposades injúries i difamació.",
+      "u": "https://www.eldebate.com/espana/20261109/delcy-rodriguez-denuncia-aldama-injurias-vincularla-financiacion-psoe_478822.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-09",
+      "t": "campanya",
+      "q": "Quina declaració ha fet Pedro Sánchez respecte a la huelga general del 11‑N?",
+      "a": [
+        "Ha animat la mobilització social i la huelga",
+        "Ha condemnat la huelga com a il·legal",
+        "Ha mantingut una postura neutral",
+        "Ha proposat una nova data per a la huelga"
+      ],
+      "exp": "Pedro Sánchez ha defensat i animat la mobilització social i la huelga general prevista per al 11 de novembre.",
+      "u": "https://www.abc.es/espana/pedro-sanchez-defiende-movilizacion-social-dos-dias-20261109115018-nt.html",
+      "auto": true
+    },
     {
       "d": "2026-11-08",
       "t": "politica",
@@ -115,5 +171,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-08"
+  "updatedAuto": "2026-11-09"
 }

@@ -396,6 +396,7 @@ registerGame({
   desc: "10 pruebas variadas (preguntas, verdadero o falso, ordenar, el mapa, dibujar territorios…), iguales para todo el mundo y nuevas cada día. No hay límite de tiempo: el cronómetro corre y gana quien lo resuelve más rápido. Cada error suma 10 segundos. Puedes jugar hasta 3 partidas al día, cada una con pruebas nuevas: en el ranking cuenta la mejor.",
   rules: ["10 retos", "Cronómetro en marcha", "Error: +10 s", "Cuenta la mejor de 3 partidas"],
   gate: () => dailyGate(),
+  quick: () => !dailyResult() && !dailyGate(),
   status() {
     const r = dailyResult();
     return r ? `<span class="gc-status done">Hecho · ${fmtSecs(r.ms)}</span>` : `<span class="gc-status new">Nuevo reto</span>`;

@@ -7796,7 +7796,7 @@ button.jc-play { animation: none; }
 .ctu-h3 { margin: 0 0 8px; font-size: .9rem; font-weight: 800; }
 @media (max-width: 620px) { .ctu-two { grid-template-columns: minmax(0, 1fr); } }
 
-/* ---------- A qui t'assembles? (assembla.js) ---------- */
+/* ---------- Test d'afinitat política (assembla.js) ---------- */
 .home-asb { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 18px; margin: 8px 0 20px; padding: 20px 24px; border: var(--bw) solid var(--ink); border-radius: 20px; background: linear-gradient(120deg, #ffcf3d, #ffb13d); color: var(--ink); box-shadow: var(--hard); text-decoration: none; }
 .home-asb-k { grid-column: 1; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .home-asb b { grid-column: 1; font-family: var(--display); font-size: clamp(1.3rem, 4vw, 1.9rem); line-height: 1.1; }
@@ -7833,3 +7833,141 @@ button.jc-play { animation: none; }
 .asb-acts { display: flex; gap: 10px; flex-wrap: wrap; }
 .home-wa { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: -8px 0 20px; padding: 14px 20px; border: var(--bw) solid var(--ink); border-radius: 16px; background: #25d366; color: var(--ink); text-decoration: none; box-shadow: var(--hard); }
 .home-wa b { font-family: var(--display); font-size: 1.05rem; }
+
+/* =========================================================
+   Jocs del dia: mode concentració i un món propi per a cada joc (v121)
+   Repte diari: lila fosc i cronòmetre · Test d'actualitat: el diari · Test d'afinitat política: groc i targetes
+   ========================================================= */
+body:has(#view-joc:not([hidden])[data-game="diari"]),
+body:has(#view-joc:not([hidden])[data-game="actualitat"]),
+body:has(#view-joc:not([hidden])[data-game="assembla"]) { --play-bg: #24135c; }
+body:has(#view-joc:not([hidden])[data-game="actualitat"]) { --play-bg: #f1e9d8; }
+body:has(#view-joc:not([hidden])[data-game="assembla"]) { --play-bg: #ffcf3d; }
+/* Sense menú, sense avisos: només el joc */
+body:has(#view-joc:not([hidden])[data-game="diari"]) :is(.topbar, .tabbar, #consent, .ticker, #install-bar, .notif-ask),
+body:has(#view-joc:not([hidden])[data-game="actualitat"]) :is(.topbar, .tabbar, #consent, .ticker, #install-bar, .notif-ask),
+body:has(#view-joc:not([hidden])[data-game="assembla"]) :is(.topbar, .tabbar, #consent, .ticker, #install-bar, .notif-ask) { display: none !important; }
+body:has(#view-joc:not([hidden])[data-game="diari"]),
+body:has(#view-joc:not([hidden])[data-game="actualitat"]),
+body:has(#view-joc:not([hidden])[data-game="assembla"]) { background: var(--play-bg); }
+body:has(#view-joc:not([hidden])[data-game="diari"]) main,
+body:has(#view-joc:not([hidden])[data-game="actualitat"]) main,
+body:has(#view-joc:not([hidden])[data-game="assembla"]) main { padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: 40px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) { max-width: 620px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .stage-head { margin-bottom: 14px; gap: 10px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .stage-title h2 { font-size: 1.05rem; text-shadow: none; letter-spacing: -.01em; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .hud { gap: 6px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .hud-item { box-shadow: none; padding: 4px 10px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .choice { min-height: 58px; font-size: 1.05rem; font-weight: 800; border-radius: 16px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .count-in span { font-size: clamp(5rem, 30vw, 9rem); }
+
+/* ---------- Repte diari: fosc, cronòmetre gran ---------- */
+#view-joc[data-game="diari"] { color: #fffaf0; }
+#view-joc[data-game="diari"] .stage-title h2 { color: #c9b8ff; }
+#view-joc[data-game="diari"] .icon-btn.back { background: transparent; border-color: rgba(255,250,240,.45); color: #fffaf0; box-shadow: none; }
+#view-joc[data-game="diari"] .hud-item { background: rgba(255,250,240,.1); border-color: rgba(255,250,240,.25); color: #fffaf0; }
+#view-joc[data-game="diari"] .hud-item small { color: #c9b8ff; }
+#view-joc[data-game="diari"] .hud-item.warn { background: #ff4b2b; }
+#view-joc[data-game="diari"] .count-in span { color: #ffcf3d; text-shadow: 6px 6px 0 #0d0730; }
+#view-joc[data-game="diari"] .qcard { background: transparent; border: 0; box-shadow: none; padding: 4px 0; color: #fffaf0; }
+#view-joc[data-game="diari"] .qcard .q-text { font-size: clamp(1.5rem, 6.4vw, 2rem); line-height: 1.15; color: #fffaf0; }
+#view-joc[data-game="diari"] .q-head { align-items: center; }
+#view-joc[data-game="diari"] .q-label { display: inline-block; padding: 5px 12px; border-radius: 999px; background: #ffcf3d; color: #17173d; font-weight: 800; }
+#view-joc[data-game="diari"] .daily-clock { font-family: var(--display); font-weight: 900; font-size: clamp(1.9rem, 9vw, 2.6rem); color: #fffaf0; letter-spacing: -.02em; background: none; box-shadow: none; padding: 0; }
+#view-joc[data-game="diari"] .hud-item[data-hud="t"] { display: none; }
+#view-joc[data-game="diari"] .progress-dots i { border: 0; height: 7px; background: rgba(255,250,240,.2); }
+#view-joc[data-game="diari"] .progress-dots i.ok { background: #45d483; }
+#view-joc[data-game="diari"] .progress-dots i.ko { background: #ff6b4a; }
+#view-joc[data-game="diari"] .progress-dots i.cur { background: #ffcf3d; }
+#view-joc[data-game="diari"] .choice { background: #fffaf0; color: #17173d; border: 0; box-shadow: 0 5px 0 #0d0730; }
+#view-joc[data-game="diari"] .choice:hover:not(:disabled) { background: #fff4d4; box-shadow: 0 5px 0 #0d0730; }
+#view-joc[data-game="diari"] .choice:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #0d0730; }
+#view-joc[data-game="diari"] .choice .key { background: #24135c; color: #fffaf0; border: 0; }
+#view-joc[data-game="diari"] .muted, #view-joc[data-game="diari"] .q-text.small { color: #d8ccff; }
+#view-joc[data-game="diari"] .card:not(.qcard) { color: var(--ink); }
+
+/* ---------- Test d'actualitat: el diari del dia ---------- */
+#view-joc[data-game="actualitat"] .stage-title h2 { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; font-weight: 900; font-size: 1.3rem; text-transform: none; }
+#view-joc[data-game="actualitat"] .stage-head { border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+#view-joc[data-game="actualitat"] .test-card { border-radius: 6px; border-width: 0; box-shadow: 0 1px 0 var(--ink), 5px 7px 0 rgba(23,23,61,.15); padding: 20px 18px; }
+#view-joc[data-game="actualitat"] .test-card .q-text { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; font-weight: 900; font-size: clamp(1.45rem, 6vw, 1.9rem); line-height: 1.15; letter-spacing: -.005em; }
+#view-joc[data-game="actualitat"] .tq-kind { display: inline-block; padding: 3px 9px; background: #3554ff; color: #fffaf0; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+#view-joc[data-game="actualitat"] .test-card.cul .tq-kind { background: #7b3fe4; }
+#view-joc[data-game="actualitat"] .progress-dots i { border: 0; border-radius: 0; height: 5px; background: rgba(23,23,61,.15); }
+#view-joc[data-game="actualitat"] .progress-dots i.ok { background: #0f7a43; }
+#view-joc[data-game="actualitat"] .progress-dots i.ko { background: #d7263d; }
+#view-joc[data-game="actualitat"] .progress-dots i.cur { background: var(--ink); }
+#view-joc[data-game="actualitat"] .choice { box-shadow: none; border-width: 2px; }
+#view-joc[data-game="actualitat"] .tq-exp { border-radius: 18px; background: var(--ink); color: #fffaf0; border: 0; padding: 16px 18px; }
+#view-joc[data-game="actualitat"] .tq-exp b { color: #45d483; text-transform: uppercase; letter-spacing: .06em; font-size: .8rem; }
+#view-joc[data-game="actualitat"] .tq-exp.ko b { color: #ff9d85; }
+#view-joc[data-game="actualitat"] .tq-exp p { font-size: 1rem; line-height: 1.45; }
+#view-joc[data-game="actualitat"] .tq-exp a { color: #ffcf3d; }
+#view-joc[data-game="actualitat"] .tq-exp small { color: #c7c5e0; }
+#view-joc[data-game="actualitat"] .result { border-radius: 6px; }
+#view-joc[data-game="actualitat"] .result-score { font-family: "Source Serif 4", Georgia, serif; }
+
+/* ---------- Test d'afinitat política: targeta gran ---------- */
+#view-joc[data-game="assembla"] .stage-title h2 { text-shadow: none; }
+#view-joc[data-game="assembla"] .asb { gap: 14px; }
+#view-joc[data-game="assembla"] .asb-q { padding: 26px 22px; border: var(--bw) solid var(--ink); border-radius: 26px; background: #fffaf0; box-shadow: 0 7px 0 var(--ink); min-height: 7.5em; display: flex; align-items: center; font-size: clamp(1.35rem, 5.6vw, 1.8rem); }
+#view-joc[data-game="assembla"] .asb-t { background: var(--ink); }
+#view-joc[data-game="assembla"] .asb-prog { background: rgba(23,23,61,.18); }
+#view-joc[data-game="assembla"] .asb-prog i { background: var(--ink); }
+#view-joc[data-game="assembla"] .asb-o { min-height: 54px; box-shadow: 0 4px 0 var(--ink); }
+#view-joc[data-game="assembla"] .result { background: #fffaf0; }
+
+/* ---------- Següent joc del dia (al final de cada un) ---------- */
+.nd-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 18px 0 4px; padding: 16px 18px; border: var(--bw) solid var(--ink); border-radius: 20px; text-align: left; text-decoration: none; color: #fffaf0; box-shadow: var(--hard-sm); }
+.nd-card span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nd-card small { font-size: .74rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+.nd-card b { font-family: var(--display); font-size: 1.2rem; line-height: 1.15; }
+.nd-card em { font-style: normal; font-size: .9rem; opacity: .9; }
+.nd-card i { font-style: normal; font-size: 1.6rem; font-weight: 900; }
+.nd-card:hover { transform: translateY(-2px); }
+.nd-diari { background: #24135c; }
+.nd-test { background: #3554ff; }
+.nd-asb { background: #ffcf3d; color: var(--ink); }
+.nd-done { margin: 16px 0 0; font-weight: 800; }
+/* Resultat dels jocs del dia: primer la nota, compartir i el joc següent; la resta, després */
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 30px 20px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > * { order: 8; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .stamp-result { order: 0; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .result-score { order: 1; margin: 0; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .result-sub { order: 2; margin: 0; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .result-verdict { order: 3; margin: 4px 0 0; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > :is(.daily-share, .asb-res) { order: 4; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > :is(.nd-card, .nd-done) { order: 5; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .result-badges { order: 6; justify-content: center; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .row.center { order: 7; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .recap { order: 20; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .row.center .btn { flex: 1; font-size: .95rem; padding-block: 10px; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .result > .row.center .btn.primary { background: var(--card); color: var(--ink); }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) :is([data-test-share], [data-share-result], [data-share], [data-asb-share], .daily-share .btn.primary) { background: #25d366; color: var(--ink); font-size: 1.1rem; min-height: 56px; width: 100%; }
+#view-joc:is([data-game="diari"], [data-game="actualitat"], [data-game="assembla"]) .daily-share-btns { display: grid; gap: 8px; }
+
+/* ---------- Podi del test d'afinitat política i portada del test (v122) ---------- */
+.asb-pod { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; margin-top: 4px; }
+.asb-pc { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.asb-pc > b { font-family: var(--display); font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.asb-pb { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: var(--bw) solid var(--ink); border-radius: 16px 16px 6px 6px; background: var(--pc); box-shadow: inset 0 0 0 100vmax rgba(23,23,61,.12); color: #fffaf0; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+.asb-pb strong { font-family: var(--display); font-size: 1.35rem; }
+.asb-pb span { font-weight: 800; font-size: .85rem; }
+.asb-pc.p1 .asb-pb { height: 150px; } .asb-pc.p1 .asb-pb strong { font-size: 1.7rem; }
+.asb-pc.p2 .asb-pb { height: 110px; } .asb-pc.p3 .asb-pb { height: 84px; }
+.asb-why { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: var(--bw) solid var(--ink); border-radius: 18px; background: #fffaf0; }
+.asb-why small { font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #6e6a82); }
+.asb-why p { margin: 0; display: flex; align-items: baseline; gap: 8px; font-weight: 700; font-size: .95rem; }
+.asb-why i { flex: none; width: 10px; height: 10px; border-radius: 5px; background: #0f7a43; } .asb-why i.ko { background: #d7263d; }
+.asb-all { margin: 4px 0 -6px; font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.tp { text-align: left; margin: 12px 0 6px; padding: 16px 16px 12px; background: #fffdf7; border: 1px solid rgba(23,23,61,.2); border-radius: 4px; box-shadow: 4px 6px 0 rgba(23,23,61,.12); color: var(--ink); font-family: "Source Serif 4", Georgia, "Times New Roman", serif; }
+.tp-mast { display: flex; flex-direction: column; align-items: center; gap: 2px; padding-bottom: 8px; border-bottom: 3px double var(--ink); text-align: center; }
+.tp-mast small { font-family: var(--body, system-ui); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+.tp-mast b { font-weight: 900; font-size: 1.5rem; letter-spacing: -.01em; }
+.tp-h { margin: 12px 0 8px; font-weight: 900; font-size: clamp(1.4rem, 6vw, 1.8rem); line-height: 1.1; }
+.tp-l { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tp-l li { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(23,23,61,.15); font-size: .95rem; line-height: 1.3; }
+.tp-l i { flex: none; font-style: normal; font-weight: 900; font-family: var(--body, system-ui); color: #0f7a43; }
+.tp-l li.ko i { color: #d7263d; } .tp-l li.ko span { color: var(--muted, #6e6a82); }
+#view-joc:is([data-game="actualitat"]) .result > .tp { order: 3; }
+#view-joc[data-game="actualitat"] .result > :is(.daily-share) { order: 4; }

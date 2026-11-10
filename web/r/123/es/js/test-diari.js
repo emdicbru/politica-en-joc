@@ -12,7 +12,7 @@ function testLoad() {
   if (!testOn()) return Promise.resolve((testData = { days: {} }));
   return (testLoading ||= (async () => {
     try {
-      const r = await fetch(`${window.PEJ_DATA || "data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
+      const r = await fetch(`${window.PEJ_DATA || "../data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
       testData = r.ok ? await r.json() : { days: {} };
     } catch { testData = { days: {} }; }
     testLoading = null;
@@ -36,11 +36,11 @@ function testStreak() {
   }
 }
 const TEST_TOPIC = {
-  campanya: "Campanya", parlament: "Parlament", politica: "Política", economia: "Economia", habitatge: "Habitatge", justicia: "Justícia",
-  internacional: "Internacional", energia: "Energia", territori: "Territori", immigracio: "Immigració", societat: "Societat",
-  cultura: "Cultura", historia: "Història", geografia: "Geografia", ciencia: "Ciència",
+  campanya: "Campaña", parlament: "Parlamento", politica: "Política", economia: "Economía", habitatge: "Vivienda", justicia: "Justicia",
+  internacional: "Internacional", energia: "Energía", territori: "Territorio", immigracio: "Inmigración", societat: "Sociedad",
+  cultura: "Cultura", historia: "Historia", geografia: "Geografía", ciencia: "Ciencia",
 };
-const testKind = (q) => (q.k === "cultura" ? { ico: "🎓", t: "Cultura general" } : { ico: "📰", t: "Actualitat" });
+const testKind = (q) => (q.k === "cultura" ? { ico: "🎓", t: "Cultura general" } : { ico: "📰", t: "Actualidad" });
 
 // Targeta de l'Inici, sota la del repte diari
 function renderTestHero() {
@@ -49,29 +49,29 @@ function renderTestHero() {
   if (!testOn()) { box.hidden = true; if (typeof renderHjFoot === "function") renderHjFoot(); return; }
   box.hidden = false;
   const key = todayKey(), day = testDay(key), r = testResult(key);
-  if (!testData) { box.innerHTML = `<div class="jc-load">Carregant el test d'actualitat…</div>`; testLoad().then(renderTestHero); return; }
+  if (!testData) { box.innerHTML = `<div class="jc-load">Cargando el test de actualidad…</div>`; testLoad().then(renderTestHero); return; }
   box.classList.toggle("done", !!r);
   const qs = day ? day.questions : [];
-  const chips = [...new Set(qs.map((q) => TEST_TOPIC[q.t] || "Actualitat"))].slice(0, 5);
+  const chips = [...new Set(qs.map((q) => TEST_TOPIC[q.t] || "Actualidad"))].slice(0, 5);
   const streak = testStreak();
-  const dd = new Date(key + "T12:00:00").toLocaleDateString("ca-ES", { day: "numeric", month: "long" });
+  const dd = new Date(key + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "long" });
   box.innerHTML = `
     <div class="jc-top">
       <span class="jc-badge"><i class="jc-live" aria-hidden="true"></i>${esc(dd)}</span>
-      <span class="jc-meta">Nou cada matí a les <b>6:00</b></span>
+      <span class="jc-meta">Nuevo cada mañana a las <b>6:00</b></span>
     </div>
-    <h2 class="jc-name">Test d'actualitat</h2>
-    <p class="jc-sub">${r ? `Fet! <b>${r.hits}/${r.n}</b> encerts · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntes sobre el que ha passat aquests dies. Quant en saps, de l'actualitat?` : `El test d'avui encara no és a punt: es prepara cada matí amb les notícies dels últims dies.`}</p>
-    <div class="jc-row">${r ? `<div class="jc-grid" aria-label="Resultat">${[...r.grid].map((c) => `<i class="${c === "🟩" ? "ok" : "ko"}"></i>`).join("")}</div>`
+    <h2 class="jc-name">Test de actualidad</h2>
+    <p class="jc-sub">${r ? `¡Hecho! <b>${r.hits}/${r.n}</b> aciertos · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntas sobre lo que ha pasado estos días. ¿Cuánto sabes de la actualidad?` : `El test de hoy aún no está listo: se prepara cada mañana con las noticias de los últimos días.`}</p>
+    <div class="jc-row">${r ? `<div class="jc-grid" aria-label="Resultado">${[...r.grid].map((c) => `<i class="${c === "🟩" ? "ok" : "ko"}"></i>`).join("")}</div>`
       : chips.length ? `<div class="jc-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join("")}</div>` : ""}</div>
     <div class="jc-stats">
-      <span><small>La teva ratxa</small><b>${streak} ${streak === 1 ? "dia" : "dies"}</b></span>
-      <span><small>Posició</small><b id="th-rank">—</b></span>
-      <span><small>Encerts</small><b>${r ? `${r.hits}/${r.n}` : "—"}</b></span>
+      <span><small>Tu racha</small><b>${streak} ${streak === 1 ? "día" : "días"}</b></span>
+      <span><small>Posición</small><b id="th-rank">—</b></span>
+      <span><small>Aciertos</small><b>${r ? `${r.hits}/${r.n}` : "—"}</b></span>
     </div>
     <div class="jc-foot">
-      ${r ? `<button type="button" class="jc-play" data-test-share>Comparteix</button>` : day ? `<a class="jc-play" href="#joc/actualitat"><span aria-hidden="true">▶</span> Juga</a>` : `<span class="jc-play off">Aviat</span>`}
-      <a class="jc-link" href="#ranking" data-test-rank>Rànquing d'avui →</a>
+      ${r ? `<button type="button" class="jc-play" data-test-share>Comparte</button>` : day ? `<a class="jc-play" href="#joc/actualitat"><span aria-hidden="true">▶</span> Juega</a>` : `<span class="jc-play off">Pronto</span>`}
+      <a class="jc-link" href="#ranking" data-test-rank>Ranking de hoy →</a>
     </div>`;
   $("[data-test-share]", box)?.addEventListener("click", () => testShare(key));
   // Des de l'Inici, el rànquing s'obre directament al del test
@@ -91,19 +91,19 @@ function testShareCanvas(key, r) {
   c.fillStyle = "rgba(23,23,61,.08)";
   for (let x = 6; x < W; x += 18) for (let y = 6; y < H; y += 18) { c.beginPath(); c.arc(x, y, 1.6, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = BLUE; c.fillRect(0, 0, W, 150);
-  c.fillStyle = CARD; c.font = display(46); c.textAlign = "left"; c.fillText("TEST D'ACTUALITAT", 60, 95);
+  c.fillStyle = CARD; c.font = display(46); c.textAlign = "left"; c.fillText("TEST DE ACTUALIDAD", 60, 95);
   const [y, m, dd] = key.split("-").map(Number);
   c.font = sans(30, 700); c.textAlign = "right";
-  c.fillText(new Date(y, m - 1, dd).toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "ca-ES", { day: "numeric", month: "long" }), W - 60, 93);
+  c.fillText(new Date(y, m - 1, dd).toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "es-ES", { day: "numeric", month: "long" }), W - 60, 93);
   c.fillStyle = INK; round(72, 222, W - 132, 900, 40); c.fill();
   c.fillStyle = CARD; round(60, 210, W - 132, 900, 40); c.fill(); c.strokeStyle = INK; c.lineWidth = 6; c.stroke();
-  c.textAlign = "center"; c.fillStyle = "#6e6a82"; c.font = sans(34, 700); c.fillText("Encerts", W / 2 - 6, 320);
+  c.textAlign = "center"; c.fillStyle = "#6e6a82"; c.font = sans(34, 700); c.fillText("Aciertos", W / 2 - 6, 320);
   c.fillStyle = INK; c.font = display(190); c.fillText(`${r.hits}/${r.n}`, W / 2 - 6, 510);
   c.font = sans(40, 700); c.fillStyle = "#3a3a63"; c.fillText(`⏱ ${fmtSecs(r.ms)}`, W / 2 - 6, 590);
   const cells = (r.grid || "").match(/🟩|🟥|⬜/g) || [], sz = 70, gap = 14, x0 = W / 2 - 6 - (cells.length * (sz + gap) - gap) / 2;
   cells.forEach((g, i) => { c.fillStyle = g === "🟩" ? "#45d483" : g === "🟥" ? "#ff6b4a" : "#d9d2c0"; round(x0 + i * (sz + gap), 650, sz, sz, 14); c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke(); });
-  c.font = display(48); c.fillStyle = INK; c.fillText("Has seguit les notícies?", W / 2 - 6, 860);
-  c.font = sans(34, 600); c.fillStyle = "#6e6a82"; c.fillText("Preguntes noves cada matí a les 6:00", W / 2 - 6, 930);
+  c.font = display(48); c.fillStyle = INK; c.fillText("¿Has seguido las noticias?", W / 2 - 6, 860);
+  c.font = sans(34, 600); c.fillStyle = "#6e6a82"; c.fillText("Preguntas nuevas cada mañana a las 6:00", W / 2 - 6, 930);
   c.fillStyle = INK; c.font = display(40); c.fillText("Política en Joc", W / 2, 1230);
   c.font = sans(30, 600); c.fillStyle = "#3a3a63"; c.fillText(location.host || "politicaenjoc.cat", W / 2, 1280);
   return cv;
@@ -118,9 +118,10 @@ async function shareCanvas(cv, name, text) {
     if (navigator.share) { await navigator.share({ text }); return; }
   } catch (e) { if (e?.name === "AbortError") return; }
   if (blob) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-  try { await navigator.clipboard.writeText(text); toast("Imatge descarregada i text copiat"); } catch { toast("Imatge descarregada"); }
+  try { await navigator.clipboard.writeText(text); toast("Imagen descargada y texto copiado"); } catch { toast("Imagen descargada"); }
 }
-const testShareText = (r) => `Política en Joc · Test d'actualitat\n📰 ${r.hits}/${r.n} · ⏱ ${fmtSecs(r.ms)}\n${r.grid}\n${location.origin}${location.pathname}#joc/actualitat`;
+const testShareText = (r) => `Política en Joc · Test de actualidad
+📰 ${r.hits}/${r.n} · ⏱ ${fmtSecs(r.ms)}\n${r.grid}\n${location.origin}${location.pathname}#joc/actualitat`;
 async function testShare(key) {
   const r = testResult(key);
   if (!r) return;
@@ -132,35 +133,36 @@ registerGame({
   cat: "daily",
   hidden: true, // s'hi arriba des de l'Inici
   backHref: "#inici",
-  tagline: "Has seguit les notícies d'aquests dies?",
-  kicker: "Cada dia, preguntes noves",
-  title: "Test d'actualitat",
+  tagline: "¿Has seguido las noticias de estos días?",
+  kicker: "Cada día, preguntas nuevas",
+  title: "Test de actualidad",
   color: "#3554ff",
   level: 1,
-  meta: "10 preguntes",
+  meta: "10 preguntas",
   icon: icon(`<path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2"/><path d="M7 9h7M7 13h7M7 16h4"/>`),
-  desc: "Preguntes sobre els temes de l'actualitat dels últims dies i de cultura general relacionada amb les notícies, iguals per a tothom i noves cada dia. Després de cada resposta, l'explicació. Guanya qui n'encerta més; si hi ha empat, qui ho fa més ràpid. Només compta la primera partida.",
-  rules: ["Fins a 10 preguntes", "Actualitat i cultura general", "Amb l'explicació de cada resposta", "Compta la primera partida"],
+  desc: "Preguntas sobre los temas de actualidad de los últimos días y de cultura general relacionada con las noticias, iguales para todos y nuevas cada día. Después de cada respuesta, la explicación. Gana quien acierta más; si hay empate, quien lo hace más rápido. Solo cuenta la primera partida.",
+  rules: ["Hasta 10 preguntas", "Actualidad y cultura general", "Con la explicación de cada respuesta", "Cuenta la primera partida"],
   gate() {
-    if (!testOn()) return { html: `<p class="muted">El test d'actualitat només és en català.</p>`, bind() {} };
-    if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) showIntro(GAMES.find((g) => g.id === "actualitat")); }); return { html: `<p class="muted">Carregant el test…</p>`, bind() {} }; }
-    if (!testDay()) return { html: `<p class="muted">El test d'avui encara no és a punt: es prepara cada matí. Torna-hi d'aquí a una estona.</p>`, bind() {} };
+    if (!testOn()) return { html: `<p class="muted">El test de actualidad solo está en catalán.</p>`, bind() {} };
+    if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) { const g = GAMES.find((x) => x.id === "actualitat"); g.quick() ? startGame(g) : showIntro(g); } }); return { html: `<p class="muted">Cargando el test…</p>`, bind() {} }; }
+    if (!testDay()) return { html: `<p class="muted">El test de hoy aún no está listo: se prepara cada mañana. Vuelve dentro de un rato.</p>`, bind() {} };
     return null;
   },
+  quick() { return testOn() && !!testData && !!testDay() && !testResult(); },
   status() {
     const r = testResult();
-    return r ? `<span class="gc-status done">Fet · ${r.hits}/${r.n}</span>` : `<span class="gc-status new">Nou test</span>`;
+    return r ? `<span class="gc-status done">Hecho · ${r.hits}/${r.n}</span>` : `<span class="gc-status new">Test nuevo</span>`;
   },
   introExtra() {
     const r = testResult(), day = testDay();
     return `<div class="daily-box">
-      <div><small>Preguntes</small><strong>${day ? day.questions.length : "—"}</strong></div>
-      <div><small>Avui</small><strong>${r ? `${r.hits}/${r.n}` : "—"}</strong></div>
-    </div>${r ? `<p class="muted">Ja l'has fet avui: pots tornar-lo a fer, però al rànquing compta la primera partida.</p>` : ""}`;
+      <div><small>Preguntas</small><strong>${day ? day.questions.length : "—"}</strong></div>
+      <div><small>Hoy</small><strong>${r ? `${r.hits}/${r.n}` : "—"}</strong></div>
+    </div>${r ? `<p class="muted">Ya lo has hecho hoy: puedes repetirlo, pero en el ranking cuenta la primera partida.</p>` : ""}`;
   },
   start(ctx) {
     const key = todayKey(), day = testDay(key);
-    if (!day) { ctx.body.innerHTML = `<div class="card"><p>El test d'avui encara no és a punt.</p></div>`; return; }
+    if (!day) { ctx.body.innerHTML = `<div class="card"><p>El test de hoy aún no está listo.</p></div>`; return; }
     const first = !testResult(key);
     // L'ordre de les opcions és el mateix per a tothom
     const rng = seededRng(hashString(`test-${key}`));
@@ -169,7 +171,7 @@ registerGame({
     let i = 0, hits = 0, t0 = 0, paused = 0, pauseAt = 0, ended = false;
     const results = [], recap = [];
     const elapsed = () => (pauseAt || performance.now()) - t0 - paused;
-    ctx.hud([["q", "Pregunta", `1/${N}`], ["t", "Temps", "0,0"], ["e", "Encerts", "0"]]);
+    ctx.hud([["q", "Pregunta", `1/${N}`], ["t", "Tiempo", "0,0"], ["e", "Aciertos", "0"]]);
     ctx.countIn(() => {
       t0 = performance.now();
       ctx.every(100, () => { if (!ended) ctx.setHud("t", fmtTime(elapsed())); });
@@ -183,7 +185,7 @@ registerGame({
       ctx.body.innerHTML = "";
       const card = h(`<div class="card qcard test-card ${q.k === "cultura" ? "cul" : "act"}">
         ${progressDots(N, results, i)}
-        <div class="q-head"><div class="q-label"><span class="tq-kind">${kind.ico} ${kind.t}</span> · ${esc(TEST_TOPIC[q.t] || "Actualitat")}</div></div>
+        <div class="q-head"><div class="q-label"><span class="tq-kind">${kind.ico} ${kind.t}</span> · ${esc(TEST_TOPIC[q.t] || "Actualidad")}</div></div>
         <div class="q-text">${esc(q.q)}</div>
       </div>`);
       ctx.body.appendChild(card);
@@ -195,22 +197,34 @@ registerGame({
         else recap.push({ q: q.q, a: q.a[0], note: q.exp });
         // L'explicació, amb l'enllaç a la notícia si n'hi ha
         const exp = h(`<div class="tq-exp ${correct ? "ok" : "ko"}">
-          <b>${correct ? "Correcte!" : `La resposta és: ${esc(q.a[0])}`}</b>
+          <b>${correct ? "¡Correcto!" : `La respuesta es: ${esc(q.a[0])}`}</b>
           <p>${esc(q.exp)}</p>
-          <div class="tq-foot">${q.u ? `<a href="${esc(q.u)}" target="_blank" rel="noopener">Llegeix la notícia ↗</a>${q.s?.length ? `<small>${q.s.map(esc).join(" · ")}</small>` : ""}` : ""}
-            <button class="btn primary" type="button" data-next>${i + 1 < N ? "Següent" : "Veure el resultat"}</button></div>
-          <button class="linklike tq-rpt" type="button" data-rpt-q>Hi ha un error en aquesta pregunta?</button>
+          <div class="tq-foot">${q.u ? `<a href="${esc(q.u)}" target="_blank" rel="noopener">Lee la noticia ↗</a>${q.s?.length ? `<small>${q.s.map(esc).join(" · ")}</small>` : ""}` : ""}
+            <button class="btn primary" type="button" data-next>${i + 1 < N ? "Siguiente" : "Ver el resultado"}</button></div>
+          <button class="linklike tq-rpt" type="button" data-rpt-q>¿Hay un error en esta pregunta?</button>
         </div>`);
         card.appendChild(exp);
         const next = () => { off?.(); i++; render(); };
         const off = ctx.onKey((e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); next(); } });
         $("[data-next]", exp).addEventListener("click", next);
         // Avís d'error amb la pregunta ja escrita (js/report.js)
-        $("[data-rpt-q]", exp).addEventListener("click", () => { if (typeof openReport !== "function") return; openReport(); const ta = $("[data-rpt-text]"); if (ta) { ta.value = `Test d'actualitat del ${key} · «${q.q}» (resposta donada per bona: ${q.a[0]})
+        $("[data-rpt-q]", exp).addEventListener("click", () => { if (typeof openReport !== "function") return; openReport(); const ta = $("[data-rpt-text]"); if (ta) { ta.value = `Test de actualidad del ${key} · «${q.q}» (respuesta dada por buena: ${q.a[0]})
 `; ta.setSelectionRange(ta.value.length, ta.value.length); } });
         $("[data-next]", exp).focus({ preventScroll: true });
         exp.scrollIntoView({ block: "nearest", behavior: "smooth" });
       });
+    }
+    // «La teva portada»: el resultat com la primera pàgina d'un diari, amb cada pregunta com un titular
+    function portada() {
+      let dia = key;
+      try { dia = new Date(`${key}T12:00:00`).toLocaleDateString(document.documentElement.lang || "ca", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { /* data tal qual */ }
+      const tit = hits === N ? "Lo sabe todo" : hits >= N * 0.7 ? "Sigue la actualidad de cerca" : hits >= N * 0.4 ? "Al día, a medias" : "Mañana, la revancha";
+      const li = items.map(({ q }, k) => `<li class="${results[k] ? "ok" : "ko"}"><i>${results[k] ? "✓" : "✗"}</i><span>${esc(q.q)}</span></li>`).join("");
+      return `<div class="tp">
+          <div class="tp-mast"><small>${esc(dia)}</small><b>Tu portada</b></div>
+          <h3 class="tp-h">${hits} de ${N}: ${esc(tit)}</h3>
+          <ul class="tp-l">${li}</ul>
+        </div>`;
     }
     function end() {
       if (ended) return;
@@ -231,10 +245,10 @@ registerGame({
         score: hits, noRecord: true, xp,
         display: `${hits}/${N}`,
         ratio: hits / N,
-        unit: `${fmtSecs(ms)}${first ? "" : " · aquesta partida ja no compta per al rànquing"}`,
-        verdict: hits === N ? "Ple! Estàs al dia de tot." : hits >= N * 0.7 ? "Molt bé: segueixes l'actualitat de prop." : hits >= N * 0.4 ? "No està malament. Demà, més!" : "Avui costava. Llegeix les explicacions i demà hi tornes.",
-        extraHtml: `<div class="daily-share"><div class="share-grid">${grid}</div>
-            <div class="daily-share-btns"><button class="btn primary" data-test-share>Comparteix el resultat</button><a class="btn ghost" href="#ranking" data-test-rank>Veure el rànquing</a></div></div>
+        unit: `${fmtSecs(ms)}${first ? "" : " · esta partida ya no cuenta para el ranking"}`,
+        verdict: hits === N ? "¡Pleno! Estás al día de todo." : hits >= N * 0.7 ? "Muy bien: sigues la actualidad de cerca." : hits >= N * 0.4 ? "No está mal. ¡Mañana, más!" : "Hoy costaba. Lee las explicaciones y mañana vuelves.",
+        extraHtml: `${portada()}<div class="daily-share"><div class="share-grid">${grid}</div>
+            <div class="daily-share-btns"><button class="btn primary" data-test-share>Comparte el resultado</button><a class="btn ghost" href="#ranking" data-test-rank>Ver el ranking</a></div></div>
           <div id="test-rank"></div>`,
         onShown(body) {
           $("[data-test-share]", body)?.addEventListener("click", () => testShare(key));

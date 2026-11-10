@@ -74,13 +74,13 @@ function renderHome() {
       <div class="home-games-row">${list.slice(0, 6).map((g, k) => gameCard(g, k)).join("")}</div>`;
   }
   if (typeof renderHomeApren === "function") renderHomeApren();
-  // Especial 29N: el test d'afinitat «A qui t'assembles?» (assembla.js), amb el resultat si ja s'ha fet
+  // Especial 29N: el test d'afinitat política (assembla.js), amb el resultat si ja s'ha fet
   const asb = $("#home-assembla");
   if (asb && typeof ASSEMBLA_KEY !== "undefined") {
     const r = store.get(ASSEMBLA_KEY, null), top = r && r.top && r.top[0] && PARTIES.find((p) => p.id === r.top[0][0]);
     asb.innerHTML = `<a class="home-asb" href="#joc/assembla">
       <span class="home-asb-k">Especial 29N</span>
-      <b>A qui t'assembles?</b>
+      <b>Test d'afinitat política</b>
       <small>${top ? `El teu resultat: coincideixes un ${r.top[0][1]} % amb ${esc(top.sig)}. Torna-hi o compara'l amb els amics.` : "20 temes de la campanya i descobreix amb quins partits coincideixes més. En 3 minuts."}</small>
       <span class="home-asb-go">${top ? "Torna-hi" : "Fes el test"} →</span></a>`;
   }
@@ -95,6 +95,24 @@ function renderHome() {
       <button type="button" class="btn google-btn" data-signin-cta>Continua amb Google</button>
     </section>`;
   }
+}
+
+// Al final de cada joc del dia, el següent que encara no s'ha fet: repte → test d'actualitat → Test d'afinitat política
+function nextDailyCard(id) {
+  if (!["diari", "actualitat", "assembla"].includes(id)) return "";
+  const done = { diari: !!dailyResult(), actualitat: typeof testResult === "function" && !!testResult(), assembla: !!store.get(typeof ASSEMBLA_KEY !== "undefined" ? ASSEMBLA_KEY : "", null) };
+  const testOk = typeof testDay === "function" && testOn?.() && !!testDay();
+  const nDone = (done.diari ? 1 : 0) + (done.actualitat ? 1 : 0);
+  const C = {
+    diari: { href: "#joc/diari", k: "Repte diari", t: "10 proves contra el rellotge", cls: "nd-diari" },
+    actualitat: { href: "#joc/actualitat", k: "Test d'actualitat", t: "10 preguntes sobre les notícies d'avui", cls: "nd-test" },
+    assembla: { href: "#joc/assembla", k: "Test d'afinitat política", t: "20 temes de la campanya, en 3 minuts", cls: "nd-asb" },
+  };
+  const order = ["diari", "actualitat", "assembla"].filter((g) => g !== id && !done[g] && (g !== "actualitat" || testOk));
+  const nx = order[0];
+  if (!nx) return `<p class="nd-done">Avui ja ho tens tot fet. Demà, repte i test nous!</p>`;
+  const c = C[nx], kicker = nx === "assembla" ? "Especial 29N" : `Següent · ${nDone} de 2 fets avui`;
+  return `<a class="nd-card ${c.cls}" href="${c.href}"><span><small>${kicker}</small><b>${c.k}</b><em>${c.t}</em></span><i aria-hidden="true">→</i></a>`;
 }
 
 // Enllaç del canal de WhatsApp de Política en Joc (buit: no se'n mostra res)

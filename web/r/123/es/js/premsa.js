@@ -106,7 +106,7 @@ async function prHome(root, onlyNotes) {
   const cards = [
     ["kit", "🎨", "Kit de prensa", "Logotipos, colores, tipografías, capturas de la app y textos para describirla, listos para descargar."],
     ["dades", "📊", "Datos del 29N", "Escaños por circunscripción, resultados de 2023, escaños a vigilar, encuestas y calendario, en CSV, JSON y calendario."],
-    ["widgets", "🧩", "Widgets para tu web", "El test «¿A quién te pareces?», la pregunta del día, las encuestas, el pactómetro, el repartidor de escaños, el calendario y la cuenta atrás, para insertar en un artículo con dos líneas de código."],
+    ["widgets", "🧩", "Widgets para tu web", "El test de afinidad política, la pregunta del día, las encuestas, el pactómetro, el repartidor de escaños, el calendario y la cuenta atrás, para insertar en un artículo con dos líneas de código."],
     ["guies", "📚", "Guías y explicadores", "Cómo se vota, cómo se reparten los escaños, qué pasa después: capítulos cortos para enlazar o citar."],
     ["faq", "❓", "Preguntas frecuentes", "Quién hay detrás, de dónde salen los datos, cómo se tratan las encuestas y cómo se puede usar el material."],
     ["notes", "📰", "Notas de prensa", "Todas las notas enviadas, con las fotos."],
@@ -343,7 +343,7 @@ const PR_WIDGETS = [
   { w: "pactometre", t: "Pactómetro", d: "¿Quién puede sumar 176 escaños? Los lectores tocan los partidos y ven si hay investidura, con la media de las encuestas. Durante los cinco días en que la ley no permite publicar encuestas, pasa solo a los escaños de 2023." },
   { w: "escons", t: "Repartidor de escaños", d: "Cómo se reparten los escaños de una circunscripción con la ley D'Hondt. Parte de los votos de 2023 y, al mover los porcentajes, dice de quién es el último escaño y cuántos votos faltan para quitárselo.", prov: true },
   { w: "compte", t: "Cuenta atrás del 29N", d: "Los días que faltan para votar, con el reto del día. El día de las elecciones pasa a la jornada y al escrutinio en directo.", h: 300 },
-  { w: "assembla", t: "¿A quién te pareces?", d: "El test de afinidad del 29N: 20 afirmaciones sobre vivienda, impuestos, modelo territorial o inmigración, y con qué partidos coincide cada lector. Neutral, con las posiciones de los programas y de las votaciones en el Congreso.", h: 560 },
+  { w: "assembla", t: "Test de afinidad política", d: "El test de afinidad del 29N: 20 afirmaciones sobre vivienda, impuestos, modelo territorial o inmigración, y con qué partidos coincide cada lector. Neutral, con las posiciones de los programas y de las votaciones en el Congreso.", h: 560 },
   { w: "pregunta", t: "La pregunta del día", d: "Una pregunta del test de actualidad, nueva cada día (y distinta cada hora), que los lectores responden al momento con la explicación. Ideal junto a las noticias de la campaña.", h: 460 },
   { w: "enquestes", t: "¿Qué dicen las encuestas?", d: "La media de las encuestas en escaños, partido a partido, con el mínimo y el máximo y la línea de los 176. Se actualiza sola cada día.", h: 560 },
   { w: "calendari", t: "Calendario electoral", d: "Las fechas clave hasta el 29N (campaña, voto por correo, jornada de reflexión y votación), con lo que toca hoy y los días que faltan.", h: 760 },
@@ -354,7 +354,7 @@ function renderWidgets(root) {
   const code = (w, prov) => `<div class="pej-widget" data-w="${w}"${prov ? ` data-prov="${prov}"` : ""}></div>\n<script async src="${origin}/widget/embed.js"></script>`;
   root.innerHTML = `<div class="pr pr-wg">
     <h1 class="page-title">Widgets para tu web</h1>
-    <p class="lede">Pon el test «¿A quién te pareces?», la pregunta del día, las encuestas, el pactómetro y más widgets del 29N dentro de un artículo. Copia el código y pégalo donde quieras que aparezca: se adapta al ancho y al alto de la página.</p>
+    <p class="lede">Pon el test de afinidad política, la pregunta del día, las encuestas, el pactómetro y más widgets del 29N dentro de un artículo. Copia el código y pégalo donde quieras que aparezca: se adapta al ancho y al alto de la página.</p>
     ${prNav("widgets")}
     <div class="card pr-wg-terms">
       <p><b>Gratuitos</b> para medios, blogs, entidades y centros educativos. Las únicas condiciones son que la marca de Política en Joc se vea y que no se modifique su contenido.</p>

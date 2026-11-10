@@ -71,7 +71,7 @@ function assemblaCanvas(rows) {
     round(x0, y + 52, bw, 30, 15); c.fillStyle = "#ece4d2"; c.fill();
     round(x0, y + 52, Math.max(30, (bw * r.pct) / 100), 30, 15); c.fillStyle = r.color; c.fill();
   });
-  c.textAlign = "center"; c.font = sans(36, 600); c.fillStyle = "#6e6a82"; c.fillText("I tu, a qui t'assembles?", W / 2, 1200);
+  c.textAlign = "center"; c.font = sans(36, 600); c.fillStyle = "#6e6a82"; c.fillText("I tu, amb qui coincideixes?", W / 2, 1200);
   c.fillStyle = INK; c.font = display(40); c.fillText("Política en Joc", W / 2, 1265);
   c.font = sans(30, 600); c.fillStyle = "#3a3a63"; c.fillText((location.host || "politicaenjoc.cat") + "/#joc/assembla", W / 2, 1310);
   return cv;
@@ -79,7 +79,7 @@ function assemblaCanvas(rows) {
 
 async function assemblaShare(rows) {
   const top = rows[0];
-  const text = `🗳️ Al test «A qui t'assembles?» de Política en Joc coincideixo un ${top.pct} % amb ${top.sig}. I tu?`;
+  const text = `🗳️ Al test d'afinitat política de Política en Joc coincideixo un ${top.pct} % amb ${top.sig}. I tu?`;
   const url = `${location.origin}${location.pathname}#joc/assembla`;
   const cv = assemblaCanvas(rows);
   const blob = await new Promise((res) => cv.toBlob(res, "image/png"));
@@ -112,14 +112,25 @@ function assemblaResult(ctx, ans) {
     }).join("");
     return `<ul class="asb-dl">${rowsH}</ul>`;
   };
-  const extraHtml = `<div class="asb-res">
-      <div class="asb-bars">${rows.map((r) => `<details class="asb-row" style="--pc:${r.color}"><summary><b>${esc(r.sig)}</b><span class="asb-bar"><i style="width:${r.pct}%"></i></span><em>${r.pct} %</em></summary>${detail(r)}</details>`).join("")}</div>
+  // Podi dels tres partits més propers i, per al primer, on hi coincideixes i on no
+  const top = rows.slice(0, 3), j0 = ASSEMBLA_PARTIES.indexOf(rows[0].id);
+  // Per temes: la distància mitjana de les afirmacions de cada tema (un tema no surt mai a les dues llistes)
+  const byT = {};
+  answered.forEach((x) => { if (x.it.p[j0] === null) return; (byT[x.it.t] ||= []).push(Math.abs(x.a.v - x.it.p[j0])); });
+  const temes = Object.entries(byT).map(([t, l]) => [t, l.reduce((a, b) => a + b, 0) / l.length]);
+  const pick = (fn, ord) => temes.filter(([, d]) => fn(d)).sort((a, b) => ord * (a[1] - b[1])).slice(0, 4).map(([t]) => t).join(", ");
+  const yes = pick((d) => d <= 1.25, 1), no = pick((d) => d >= 2.5, -1);
+  const podium = `<div class="asb-pod">${[top[1], top[0], top[2]].map((r, k) => r ? `<div class="asb-pc p${[2, 1, 3][k]}" style="--pc:${r.color}"><b>${esc(r.sig)}</b><div class="asb-pb"><strong>${r.pct} %</strong><span>${["2n", "1r", "3r"][k]}</span></div></div>` : "<div></div>").join("")}</div>
+      ${yes || no ? `<div class="asb-why"><small>On hi coincideixes amb ${esc(rows[0].sig)}</small>
+        ${yes ? `<p><i class="ok"></i>${esc(yes)}</p>` : ""}${no ? `<p><i class="ko"></i>Hi discrepes: ${esc(no)}</p>` : ""}</div>` : ""}`;
+  const extraHtml = `<div class="asb-res">${podium}
+      <p class="asb-all">Tots els partits</p><div class="asb-bars">${rows.map((r) => `<details class="asb-row" style="--pc:${r.color}"><summary><b>${esc(r.sig)}</b><span class="asb-bar"><i style="width:${r.pct}%"></i></span><em>${r.pct} %</em></summary>${detail(r)}</details>`).join("")}</div>
       <p class="muted asb-note">Toca un partit per veure en què hi coincideixes i en què no. Les posicions surten dels programes, del que han votat al Congrés i de les seves declaracions públiques; on no són clares, aquella afirmació no compta. És orientatiu: no és cap recomanació de vot. CC i SALF no hi surten perquè tenen poques posicions públiques sobre aquests temes.</p>
       <div class="asb-acts"><button class="btn primary" type="button" data-asb-share>Comparteix el resultat</button><a class="btn ghost" href="#apren/partits">Compara els partits</a></div>
     </div>`;
   ctx.finish({
     score: rows[0].pct, display: `${rows[0].pct} %`, noRecord: true, xp: 40,
-    verdict: `T'assembles més a ${rows[0].sig}${rows[1] ? `, i després a ${rows[1].sig}` : ""}.`,
+    verdict: `Coincideixes més amb ${rows[0].sig}${rows[1] ? `, i després amb ${rows[1].sig}` : ""}.`,
     extraHtml,
     onShown(body) { $("[data-asb-share]", body)?.addEventListener("click", () => assemblaShare(rows)); },
   });
@@ -128,9 +139,11 @@ function assemblaResult(ctx, ans) {
 registerGame({
   id: "assembla",
   cat: "parlament",
+  autostart: true,
+  backHref: "#inici",
   tagline: "20 temes de la campanya: amb quin partit coincideixes més?",
   kicker: "Especial 29N",
-  title: "A qui t'assembles?",
+  title: "Test d'afinitat política",
   level: 1,
   meta: "20 afirmacions",
   icon: icon(`<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 20a5 5 0 0110 0M11 20a5 5 0 0110 0"/>`),

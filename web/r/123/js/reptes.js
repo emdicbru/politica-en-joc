@@ -396,6 +396,7 @@ registerGame({
   desc: "10 proves variades (preguntes, cert o fals, ordenar, el mapa, dibuixar territoris…), iguals per a tothom i noves cada dia. No hi ha límit de temps: el cronòmetre corre i guanya qui ho resol més ràpid. Cada error suma 10 segons. Pots jugar fins a 3 partides al dia, cadascuna amb proves noves: al rànquing compta la millor.",
   rules: ["10 reptes", "Cronòmetre en marxa", "Error: +10 s", "Compta el millor de 3 partides"],
   gate: () => dailyGate(),
+  quick: () => !dailyResult() && !dailyGate(),
   status() {
     const r = dailyResult();
     return r ? `<span class="gc-status done">Fet · ${fmtSecs(r.ms)}</span>` : `<span class="gc-status new">Nou repte</span>`;

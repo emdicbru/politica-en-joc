@@ -390,7 +390,8 @@ function openGame(game) {
     $("#stage-body").innerHTML = window.Online.gateHtml();
     return;
   }
-  game.autostart ? startGame(game) : showIntro(game);
+  // Els jocs del dia (repte, test, afinitat) comencen directament si encara no s'han fet avui: sense pantalla d'instruccions
+  game.autostart || game.quick?.() ? startGame(game) : showIntro(game);
 }
 
 function showIntro(game) {
@@ -537,6 +538,7 @@ function showResult(game, result) {
       </div>
       ${window.Online?.guestNote?.() || ""}
       ${result.extraHtml || ""}
+      ${typeof nextDailyCard === "function" ? nextDailyCard(game.id) : ""}
       ${typeof notifResultNote === "function" ? notifResultNote(game) : ""}
       ${typeof coffeeResultNote === "function" ? coffeeResultNote(isRecord || (ratio !== null && ratio >= 0.6)) : ""}
       ${recap}

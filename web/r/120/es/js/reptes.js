@@ -187,7 +187,8 @@ const binary = (label, prompt, options, correctIndex, explainText, recapQ) =>
   ({ label, prompt, options, correctIndex, binary: true, explain: explainText, recapQ, recapA: options[correctIndex] });
 
 function tfItem(rng, key = null) {
-  const s = makeStatement(rng, key);
+  let s = makeStatement(rng, key);
+  for (let i = 0; i < 30 && dailyNoSeats && NOSEATS_RE.test(`${s.text} ${s.exp}`); i++) s = makeStatement(rng, key);
   return binary("¿Cierto o falso?", `<div class="q-text">${esc(s.text)}</div>`, ["✕ Falso", "✓ Cierto"], s.truth ? 1 : 0, s.exp, s.text);
 }
 function matchItem(rng, key = null) {
@@ -202,7 +203,8 @@ function matchItem(rng, key = null) {
     yes ? `${a.name} y «${t}» hacen match.` : `${a.name} y «${t}» no hacen match.`, `${a.name} + ${t}`);
 }
 function versusItem(rng, key = null) {
-  const mode = ["prov", "party", "event"][Math.floor(rng() * 3)];
+  const modes = dailyNoSeats ? ["event"] : ["prov", "party", "event"];
+  const mode = modes[Math.floor(rng() * modes.length)];
   const two = (arr, ok) => {
     for (let i = 0; i < 50; i++) {
       const [x, y] = sample(arr, 2, rng);
@@ -211,7 +213,7 @@ function versusItem(rng, key = null) {
     return sample(arr, 2, rng);
   };
   if (mode === "event") {
-    const [a, b] = two(EVENTS.filter((e) => !key || !e.since || e.since <= key), (x, y) => x.y !== y.y);
+    const [a, b] = two(noSeats(EVENTS.filter((e) => !key || !e.since || e.since <= key), (e) => `${e.t} ${e.d || ""}`), (x, y) => x.y !== y.y);
     return binary("¿Qué pasó antes?", `<div class="q-text small">Toca el hecho más antiguo</div>`,
       [a.t, b.t], a.y < b.y ? 0 : 1, `${a.t}: ${a.y}. ${b.t}: ${b.y}.`, `${a.t} / ${b.t}`);
   }
@@ -228,17 +230,23 @@ function versusItem(rng, key = null) {
 // Les 10 proves del repte. La partida 1 és la de tothom (la que compta per al rànquing); la 2a i la 3a del dia tenen
 // proves noves: cap no repeteix la pregunta d'una partida anterior d'aquell dia.
 function dailyItems(key, attempt = 1) {
+  const prev = dailyNoSeats;
+  dailyNoSeats = key >= DAILY_NOSEATS_FROM;
+  try { return dailyItemsGen(key, attempt); } finally { dailyNoSeats = prev; }
+}
+function dailyItemsGen(key, attempt = 1) {
   // Vista prèvia del repte nou (Laboratori): el de la primera data en què entra
   if (featPreview("diari4") && key < DAILY_V4_FROM) key = DAILY_V4_FROM;
   const avail = (arr) => arr.filter((x) => !x.since || x.since <= key);
-  const Q = avail(QUESTIONS);
+  const Q = noSeats(avail(QUESTIONS).filter((q) => !dailyNoSeats || q.cat !== "sistema"), (q) => `${q.q} ${(q.opts || []).join(" ")}`);
+  const EV = noSeats(avail(EVENTS), (e) => `${e.t} ${e.d || ""}`);
   const easy = Q.filter((q) => !q.hard), hard = Q.filter((q) => q.hard);
   // Des de DAILY_V3_FROM: cinc proves clàssiques i cinc d'especials que canvien cada dia (reptes-mec.js)
   const gens = key >= DAILY_V3_FROM || featPreview("diari3") ? [
     (rng) => questionRound(sample(easy, 1, rng)[0], rng),
     (rng) => (rng() < 0.5 ? tfItem(rng, key) : versusItem(rng, key)),
     (rng) => (rng() < 0.5 ? matchItem(rng, key) : quoteRound(pickQuote(rng), rng)),
-    (rng) => (rng() < 0.5 ? yearRound(sample(avail(EVENTS), 1, rng)[0], rng) : figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES))),
+    (rng) => (rng() < 0.5 ? yearRound(sample(EV, 1, rng)[0], rng) : figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES))),
     (rng) => questionRound(sample(hard, 1, rng)[0], rng),
     ...dailySpecials(key),
   ]
@@ -248,7 +256,7 @@ function dailyItems(key, attempt = 1) {
     (rng) => (rng() < 0.5 ? tfItem(rng, key) : versusItem(rng, key)),
     (rng) => matchItem(rng, key),
     (rng) => quoteRound(pickQuote(rng), rng),
-    (rng) => yearRound(sample(avail(EVENTS), 1, rng)[0], rng),
+    (rng) => yearRound(sample(EV, 1, rng)[0], rng),
     (rng) => figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES)),
     (rng) => orderItem(rng),
     (rng) => mapItem(rng),
@@ -260,7 +268,7 @@ function dailyItems(key, attempt = 1) {
     (rng) => matchItem(rng),
     (rng) => quoteRound(pickQuote(rng), rng),
     (rng) => versusItem(rng, key),
-    (rng) => yearRound(sample(avail(EVENTS), 1, rng)[0], rng),
+    (rng) => yearRound(sample(EV, 1, rng)[0], rng),
     (rng) => figureRound(sample(avail(FIGURES), 1, rng)[0], rng, avail(FIGURES)),
     (rng) => tfItem(rng, key),
     (rng) => matchItem(rng),
@@ -367,6 +375,8 @@ function dailyShareText(key, r) {
 async function shareDaily(key) {
   const r = dailyResult(key);
   if (!r) return;
+  // Amb imatge (la mateixa del final del repte), que és el que més es comparteix a WhatsApp i Instagram
+  if (typeof shareDailyImage === "function") return shareDailyImage(key);
   const text = dailyShareText(key, r);
   try {
     if (navigator.share) await navigator.share({ text });

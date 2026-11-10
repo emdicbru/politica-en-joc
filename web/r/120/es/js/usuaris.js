@@ -76,6 +76,34 @@ function ctuFunnels(fn) {
   }).join("") || `<p class="muted">Encara no hi ha dades.</p>`;
 }
 
+// Qui entra (comptador propi, stats/{dia}_w): el territori de cada persona (Cloudflare, a partir de la IP) i les respostes
+// opcionals d'edat i gènere (POST /perfil)
+const CTU_CCAA = { AN: "Andalusia", AR: "Aragó", AS: "Astúries", CN: "Canàries", CB: "Cantàbria", CL: "Castella i Lleó", CM: "Castella-la Manxa", CT: "Catalunya", CE: "Ceuta", EX: "Extremadura", GA: "Galícia", IB: "Illes Balears", RI: "La Rioja", MD: "Madrid", ML: "Melilla", MC: "Múrcia", NC: "Navarra", PV: "País Basc", VC: "C. Valenciana" };
+const CTU_EDAT = { m18: "Menys de 18", a18: "18-29", a30: "30-44", a45: "45-64", a65: "65 o més" };
+const CTU_GEN = { dona: "Dona", home: "Home", nobin: "No binari", nsnc: "Prefereix no dir-ho" };
+function ctuWhoHtml(S) {
+  let country = (k) => k;
+  try { const dn = new Intl.DisplayNames(["ca"], { type: "region" }); country = (k) => dn.of(k) || k; } catch { /* sense noms */ }
+  const reg = S.reg || {};
+  const regNames = Object.fromEntries(Object.keys(reg).map((k) => [k, k.startsWith("ES_") ? CTU_CCAA[k.slice(3)] || k : k === "ES" ? "Espanya (sense comunitat)" : `🌍 ${country(k)}`]));
+  const regTot = Object.values(reg).reduce((a, b) => a + b, 0);
+  const cat = reg.ES_CT || 0, abroad = Object.entries(reg).filter(([k]) => k !== "ES" && !k.startsWith("ES_")).reduce((a, [, v]) => a + v, 0);
+  const pf = S.perfil || {};
+  const pick = (pre) => Object.fromEntries(Object.entries(pf).filter(([k]) => k.startsWith(pre)).map(([k, v]) => [k.slice(pre.length), v]));
+  const edat = pick("edat_"), gen = pick("gen_");
+  const n = pf.n || 0;
+  return `<section class="card ctu-card">
+      <h2 class="section-title sm">🗺️ D'on entren</h2>
+      <p class="muted">Persones diferents per territori (comunitat autònoma o país), segons la IP: és aproximat (les connexions mòbils o les VPN poden sortir en un altre lloc). ${regTot ? `Catalunya: <b>${ctuPct(cat, regTot)}</b> · fora d'Espanya: <b>${ctuPct(abroad, regTot)}</b>.` : "Compta des del 8 de novembre de 2026."}</p>
+      ${ctuBars(reg, regNames, { max: 14 })}
+    </section>
+    <section class="card ctu-card">
+      <h2 class="section-title sm">🧑‍🤝‍🧑 Edat i gènere</h2>
+      <p class="muted">Respostes voluntàries i anònimes a la pregunta de l'Inici (només la veu qui ja ha jugat el repte o el test). <b>${fmt(n)}</b> ${n === 1 ? "resposta" : "respostes"} en aquest període: no representa tothom, només qui respon.</p>
+      <div class="ctu-two"><div><h3 class="ctu-h3">Edat</h3>${ctuBars(edat, CTU_EDAT)}</div><div><h3 class="ctu-h3">Gènere</h3>${ctuBars(gen, CTU_GEN)}</div></div>
+    </section>`;
+}
+
 function ctlStatsHtml() {
   if (!CTU.days) { ctuLoad(); return `<div class="card"><p class="muted">Carregant les dades…</p></div>`; }
   const all = ctuDayList(30);
@@ -91,6 +119,14 @@ function ctlStatsHtml() {
   const avgDev = (S.dev || 0) / keys.length;
   const prevDev = prev.reduce((a, d) => a + (CTU.days[d]?.dev || 0), 0) / (prev.length || 1);
   const trend = prev.length && prevDev ? Math.round(((avgDev - prevDev) / prevDev) * 100) : null;
+  // Comptador propi (worker, stats/{dia}_w): persones diferents de cada dia, amb galetes o sense. Compta des del 8-11-2026.
+  const wDays = keys.filter((d) => CTU.days[d]?.u);
+  const wAvg = wDays.reduce((a, d) => a + CTU.days[d].u, 0) / (wDays.length || 1);
+  const wPrev = prev.filter((d) => CTU.days[d]?.u);
+  const wPrevAvg = wPrev.reduce((a, d) => a + CTU.days[d].u, 0) / (wPrev.length || 1);
+  const wTrend = wPrev.length && wDays.length ? Math.round(((wAvg - wPrevAvg) / wPrevAvg) * 100) : null;
+  const wDaily = all.slice(-Math.max(14, CTU.range)).map((d) => ({ d, u: CTU.days[d]?.u || 0, s: CTU.days[d]?.s || 0 }));
+  const wMax = Math.max(1, ...wDaily.map((x) => x.u));
   const daily = all.slice(-Math.max(14, CTU.range)).map((d) => ({ d, n: CTU.days[d]?.nous || 0, t: CTU.days[d]?.torna || 0 }));
   const dmax = Math.max(1, ...daily.map((x) => x.n + x.t));
   const hours = Array.from({ length: 24 }, (_, i) => S.h?.[String(i).padStart(2, "0")] || 0);
@@ -109,8 +145,9 @@ function ctlStatsHtml() {
       <button class="linklike" type="button" data-curefresh>↻ Actualitza (dades de ${Date.now() - CTU.at < 90e3 ? "fa un moment" : ctlRel(CTU.at).replace("d'aquí a", "fa")})</button>
     </div>
     <section class="ctl-status ctu-kpis">
-      <div class="ctl-st"><small>Actius avui</small><b>${ctuN(today.dev)}</b><span class="ctl-tag">dispositius</span></div>
-      <div class="ctl-st"><small>${CTU.range === 1 ? "Visites avui" : "Actius per dia"}</small><b>${CTU.range === 1 ? ctuN(S.ses) : ctuN(avgDev)}</b><span class="ctl-tag ${trend !== null && trend < 0 ? "warn" : ""}">${CTU.range === 1 ? "sessions" : trend === null ? "mitjana" : `${trend >= 0 ? "+" : ""}${trend} % vs. abans`}</span></div>
+      <div class="ctl-st"><small>Persones avui</small><b>${ctuN(today.u || 0)}</b><span class="ctl-tag">comptador propi · ${ctuN(today.s || 0)} visites</span></div>
+      <div class="ctl-st"><small>${CTU.range === 1 ? "Visites avui" : "Persones per dia"}</small><b>${CTU.range === 1 ? ctuN(S.s || 0) : ctuN(wAvg)}</b><span class="ctl-tag ${wTrend !== null && wTrend < 0 ? "warn" : ""}">${CTU.range === 1 ? "comptador propi" : wTrend === null ? `mitjana de ${wDays.length} ${wDays.length === 1 ? "dia" : "dies"} amb dades` : `${wTrend >= 0 ? "+" : ""}${wTrend} % vs. abans`}</span></div>
+      <div class="ctl-st"><small>Amb galetes acceptades</small><b>${CTU.range === 1 ? ctuN(today.dev) : ctuN(avgDev)}</b><span class="ctl-tag ${trend !== null && trend < 0 ? "warn" : ""}">${CTU.range === 1 ? "dispositius avui" : trend === null ? "dispositius per dia" : `${trend >= 0 ? "+" : ""}${trend} % vs. abans`}</span></div>
       <div class="ctl-st"><small>Nous</small><b>${ctuN(S.nous)}</b><span class="ctl-tag">${CTU.range === 1 ? "avui" : `en ${CTU.range} dies`}</span></div>
       <div class="ctl-st"><small>Tornen l'endemà</small><b>${ctuPct(ret1, retBase)}</b><span class="ctl-tag">dels nous</span></div>
       <div class="ctl-st"><small>Partides acabades</small><b>${ctuN(Object.values(S.f || {}).reduce((a, b) => a + b, 0))}</b><span class="ctl-tag">${ctuN(Object.values(S.g || {}).reduce((a, b) => a + b, 0))} començades</span></div>
@@ -120,8 +157,19 @@ function ctlStatsHtml() {
     </section>
 
     <section class="card ctu-card">
-      <h2 class="section-title sm">📈 Activitat diària</h2>
-      <p class="muted">Dispositius diferents que obren l'app cada dia. Es compta cada mòbil o ordinador un sol cop al dia.</p>
+      <h2 class="section-title sm">👥 Persones per dia</h2>
+      <p class="muted">El comptador propi: persones diferents que entren cada dia, hagin acceptat les galetes o no. Ho compta el servidor sense galetes (una empremta de la IP i del navegador que canvia cada dia) i no compta els robots. Qui comparteix connexió i navegador pot comptar com una sola persona. Comença el 8 de novembre de 2026.</p>
+      <div class="ctu-cols" style="--n:${wDaily.length}">${wDaily.map((x) => `<div class="ctu-col" title="${dayLbl(x.d)}: ${fmt(x.u)} persones, ${fmt(x.s)} visites">
+        <span class="ctu-cv">${x.u ? fmt(x.u) : ""}</span>
+        <div class="ctu-stack" style="height:${(x.u / wMax) * 100}%"><i class="torna" style="flex:1"></i></div>
+        <small>${dayLbl(x.d).replace(" ", "<br>")}</small></div>`).join("")}</div>
+    </section>
+
+    ${ctuWhoHtml(S)}
+
+    <section class="card ctu-card">
+      <h2 class="section-title sm">📈 Qui accepta les galetes: nous i tornen</h2>
+      <p class="muted">Només els dispositius que han acceptat l'estadística (sense galetes no se sap si algú és nou o torna). Per això aquí surten menys persones que al comptador propi.</p>
       <div class="ctu-legend"><span><i class="ctu-sw torna"></i>Tornen</span><span><i class="ctu-sw nous"></i>Nous</span></div>
       <div class="ctu-cols" style="--n:${daily.length}">${daily.map((x) => `<div class="ctu-col" title="${dayLbl(x.d)}: ${fmt(x.t + x.n)} actius (${fmt(x.n)} nous, ${fmt(x.t)} tornen)">
         <span class="ctu-cv">${x.n + x.t ? fmt(x.n + x.t) : ""}</span>

@@ -7774,3 +7774,62 @@ button.jc-play { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .jc-live, .jc-dots span, .jc-play, .hd-hemi circle { animation: none; }
 }
+
+/* Nit electoral: la portada és l'escrutini (especial.js posa .esp-nit-on) */
+#view-inici.esp-nit-on .hh-top { display: none; }
+.nh-esc b { white-space: nowrap; }
+
+/* Qui juga: preguntes opcionals d'edat i gènere (app.js, renderHomePerfil) */
+#home-perfil:empty { display: none; }
+.hp-card { display: flex; align-items: center; gap: 14px 22px; flex-wrap: wrap; margin: 0 0 34px; padding: 16px 20px; border: var(--bw) solid var(--ink); border-radius: 18px; background: var(--card); box-shadow: 5px 5px 0 var(--yellow); animation: viewIn .4s var(--ease); }
+.hp-card.done { box-shadow: 5px 5px 0 var(--ok); }
+.hp-txt { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hp-txt b, .hp-card.done b { font-family: var(--display); font-size: 1.05rem; }
+.hp-txt small, .hp-card.done small { color: var(--muted); font-size: .85rem; }
+.hp-q { flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.hp-q > span { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.hp-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.hp-opt { min-height: 44px; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 800; font-size: .9rem; cursor: pointer; }
+.hp-opt:hover { background: var(--yellow); }
+.hp-no { min-height: 44px; padding: 8px 6px; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: .85rem; text-decoration: underline; cursor: pointer; }
+.ctu-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.ctu-h3 { margin: 0 0 8px; font-size: .9rem; font-weight: 800; }
+@media (max-width: 620px) { .ctu-two { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- A qui t'assembles? (assembla.js) ---------- */
+.home-asb { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 18px; margin: 8px 0 20px; padding: 20px 24px; border: var(--bw) solid var(--ink); border-radius: 20px; background: linear-gradient(120deg, #ffcf3d, #ffb13d); color: var(--ink); box-shadow: var(--hard); text-decoration: none; }
+.home-asb-k { grid-column: 1; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.home-asb b { grid-column: 1; font-family: var(--display); font-size: clamp(1.3rem, 4vw, 1.9rem); line-height: 1.1; }
+.home-asb small { grid-column: 1; font-size: .95rem; font-weight: 600; }
+.home-asb-go { grid-column: 2; grid-row: 1 / span 3; padding: 12px 18px; border: var(--bw) solid var(--ink); border-radius: 14px; background: var(--ink); color: #fff; font-weight: 800; white-space: nowrap; }
+.home-asb:hover .home-asb-go { transform: translateY(-2px); }
+@media (max-width: 560px) { .home-asb { grid-template-columns: 1fr; } .home-asb-go { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 8px; } }
+.asb { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding: 8px 0 20px; }
+.asb-prog { height: 8px; border-radius: 4px; background: rgba(23,23,61,.12); overflow: hidden; }
+.asb-prog i { display: block; height: 100%; background: var(--red); transition: width .25s; }
+.asb-t { align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: var(--ink); color: #fff; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.asb-q { margin: 0; font-family: var(--display); font-size: clamp(1.25rem, 4.2vw, 1.8rem); line-height: 1.25; min-height: 3.8em; }
+.asb-opts { display: grid; gap: 10px; }
+.asb-o { font: inherit; font-weight: 800; font-size: 1.05rem; padding: 14px 16px; border: var(--bw) solid var(--ink); border-radius: 14px; background: #fffaf0; color: var(--ink); cursor: pointer; text-align: left; box-shadow: 0 3px 0 var(--ink); }
+.asb-o:hover { transform: translateY(-1px); }
+.asb-o.on, .asb-o:active { background: var(--ink); color: #fff; }
+.asb-o[data-v="2"] { border-left: 10px solid #0f9d58; } .asb-o[data-v="1"] { border-left: 10px solid #7ccf9a; } .asb-o[data-v="0"] { border-left: 10px solid #b9b4a6; }
+.asb-o[data-v="-1"] { border-left: 10px solid #ff9d85; } .asb-o[data-v="-2"] { border-left: 10px solid #ff4b2b; }
+.asb-imp { display: flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; }
+.asb-nav { display: flex; justify-content: space-between; }
+.asb-res { display: flex; flex-direction: column; gap: 14px; text-align: left; margin-top: 10px; }
+.asb-bars { display: flex; flex-direction: column; gap: 8px; }
+.asb-row summary { display: grid; grid-template-columns: 96px 1fr 54px; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.asb-row summary::-webkit-details-marker { display: none; }
+.asb-row summary b { font-family: var(--display); font-size: .9rem; white-space: nowrap; }
+.asb-bar { height: 16px; border-radius: 8px; background: rgba(23,23,61,.1); overflow: hidden; }
+.asb-bar i { display: block; height: 100%; border-radius: 8px; background: var(--pc); }
+.asb-row summary em { font-style: normal; font-weight: 800; text-align: right; }
+.asb-dl { list-style: none; margin: 8px 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.asb-d { padding: 8px 10px; border-radius: 10px; border-left: 6px solid #b9b4a6; background: rgba(23,23,61,.05); font-size: .9rem; }
+.asb-d.ok { border-left-color: #0f9d58; } .asb-d.ko { border-left-color: #ff4b2b; }
+.asb-d b { display: block; } .asb-d span { color: var(--muted, #6e6a82); }
+.asb-note { font-size: .85rem; }
+.asb-acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.home-wa { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: -8px 0 20px; padding: 14px 20px; border: var(--bw) solid var(--ink); border-radius: 16px; background: #25d366; color: var(--ink); text-decoration: none; box-shadow: var(--hard); }
+.home-wa b { font-family: var(--display); font-size: 1.05rem; }

@@ -78,6 +78,16 @@ const Stats = (() => {
     flushing = false;
   }
 
+  // Comptador propi de visites (worker/avisos.js, POST /hit): no fa servir galetes ni desa res al dispositiu. El servei
+  // distingeix les persones de cada dia amb una empremta de la IP i del navegador que canvia cada dia; aquí només
+  // s'envia l'idioma. Es respecta la tria de no comptar les visites.
+  function hit() {
+    try {
+      const u = window.FIREBASE_CONFIG?.avisosUrl;
+      if (u && navigator.sendBeacon && !(typeof Esp !== "undefined" && Esp.cfg?.statsOff)) navigator.sendBeacon(`${u}/hit`, JSON.stringify({ l: document.documentElement.lang === "es" ? "es" : "ca" }));
+    } catch { /* sense xarxa */ }
+  }
+
   // Una «sessió» és cada cop que s'obre l'app, o quan s'hi torna després de 30 minuts fora
   let hiddenAt = 0;
   function session() {
@@ -87,6 +97,7 @@ const Stats = (() => {
     add("ses");
     add("h", 1, madridHour());
     devDay();
+    hit();
     // Un cop per sessió
     if (!mem.started) {
       mem.started = day;

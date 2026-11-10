@@ -1,6 +1,13 @@
 // Tercera ampliació de continguts, pensada per al repte diari (també l'aprofiten els minijocs). Amb «since», no entra als
 // reptes diaris fins a DAILY_V4_FROM, perquè el repte d'un dia ja començat no canviï. La primera opció és la correcta.
 const DAILY_V4_FROM = "2026-11-06";
+// Des del 9-11-2026, el repte diari no té proves de la llei d'Hondt ni de memoritzar escons o diputats (quants en va
+// treure un partit, quants n'elegeix una província, quina majoria cal...). Els minijocs les conserven. dailyItems()
+// activa dailyNoSeats mentre prepara les proves d'un dia a partir d'aquesta data.
+const DAILY_NOSEATS_FROM = "2026-11-09";
+let dailyNoSeats = false;
+const NOSEATS_RE = /hondt|\besc(ó|ons)|diputa(t|ts|da|des)\b|majoria absoluta|repartiment|quants vots|sistema electoral|circumscripci/i;
+const noSeats = (arr, txt = (x) => String(x)) => (dailyNoSeats ? arr.filter((x) => !NOSEATS_RE.test(txt(x))) : arr);
 
 QUESTIONS.push(...[
   // --- Constitució ---

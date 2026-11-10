@@ -106,7 +106,7 @@ async function prHome(root, onlyNotes) {
   const cards = [
     ["kit", "🎨", "Kit de premsa", "Logotips, colors, tipografies, captures de l'app i textos per descriure-la, a punt per descarregar."],
     ["dades", "📊", "Dades del 29N", "Escons per circumscripció, resultats del 2023, escons a vigilar, enquestes i calendari, en CSV, JSON i calendari."],
-    ["widgets", "🧩", "Widgets per a la teva web", "El pactòmetre, el repartidor d'escons i el compte enrere, per incrustar en un article amb dues línies de codi."],
+    ["widgets", "🧩", "Widgets per a la teva web", "El test «A qui t'assembles?», la pregunta del dia, les enquestes, el pactòmetre, el repartidor d'escons, el calendari i el compte enrere, per incrustar en un article amb dues línies de codi."],
     ["guies", "📚", "Guies i explicadors", "Com es vota, com es reparteixen els escons, què passa després: capítols curts per enllaçar o citar."],
     ["faq", "❓", "Preguntes freqüents", "Qui hi ha darrere, d'on surten les dades, com es tracten les enquestes i com es pot fer servir el material."],
     ["notes", "📰", "Notes de premsa", "Totes les notes enviades, amb les fotos."],
@@ -310,7 +310,7 @@ function prGuies(root) {
     <section class="card pr-sec">
       <h2>Eines per explicar-ho</h2>
       <div class="pr-links">${(typeof AP_TOOLS !== "undefined" ? AP_TOOLS : []).map((t) => `<a class="pr-linkc" href="${t.href || `#apren/${t.slug}`}"><b>${esc(t.title)}</b><span>${esc(t.text)}</span></a>`).join("")}
-        <a class="pr-linkc" href="#premsa/widgets"><b>Widgets per a la teva web</b><span>Pactòmetre, repartidor d'escons i compte enrere.</span></a></div>
+        <a class="pr-linkc" href="#premsa/widgets"><b>Widgets per a la teva web</b><span>Test d'afinitat, pregunta del dia, enquestes, pactòmetre i més.</span></a></div>
     </section>
     ${prContact()}
   </div>`;
@@ -342,7 +342,11 @@ function prFaq(root) {
 const PR_WIDGETS = [
   { w: "pactometre", t: "Pactòmetre", d: "Qui pot sumar 176 escons? Els lectors toquen els partits i veuen si hi ha investidura, amb la mitjana de les enquestes. Durant els cinc dies en què la llei no permet publicar enquestes, passa sol als escons del 2023." },
   { w: "escons", t: "Repartidor d'escons", d: "Com es reparteixen els escons d'una circumscripció amb la Llei d'Hondt. Parteix dels vots del 2023, i en moure els percentatges diu de qui és l'últim escó i quants vots falten per prendre'l.", prov: true },
-  { w: "compte", t: "Compte enrere del 29N", d: "Els dies que falten per votar, amb el repte del dia. El dia de les eleccions passa a la jornada i a l'escrutini en directe." },
+  { w: "compte", t: "Compte enrere del 29N", d: "Els dies que falten per votar, amb el repte del dia. El dia de les eleccions passa a la jornada i a l'escrutini en directe.", h: 300 },
+  { w: "assembla", t: "A qui t'assembles?", d: "El test d'afinitat del 29N: 20 afirmacions sobre habitatge, impostos, model territorial o immigració, i amb quins partits coincideix cada lector. Neutral, amb les posicions dels programes i de les votacions al Congrés.", h: 560 },
+  { w: "pregunta", t: "La pregunta del dia", d: "Una pregunta del test d'actualitat, nova cada dia (i diferent a cada hora), que els lectors responen al moment amb l'explicació. Ideal al costat de les notícies de la campanya.", h: 460 },
+  { w: "enquestes", t: "Què diuen les enquestes?", d: "La mitjana de les enquestes en escons, partit a partit, amb el mínim i el màxim i la ratlla dels 176. S'actualitza sola cada dia.", h: 560 },
+  { w: "calendari", t: "Calendari electoral", d: "Les dates clau fins al 29N (campanya, vot per correu, jornada de reflexió i votació), amb el que toca avui i els dies que falten.", h: 760 },
 ];
 function renderWidgets(root) {
   const origin = /^https?:\/\/(localhost|127\.)/.test(location.origin) ? location.origin : "https://politicaenjoc.cat";
@@ -350,7 +354,7 @@ function renderWidgets(root) {
   const code = (w, prov) => `<div class="pej-widget" data-w="${w}"${prov ? ` data-prov="${prov}"` : ""}></div>\n<script async src="${origin}/widget/embed.js"></script>`;
   root.innerHTML = `<div class="pr pr-wg">
     <h1 class="page-title">Widgets per a la teva web</h1>
-    <p class="lede">Posa el pactòmetre, el repartidor d'escons o el compte enrere del 29N dins d'un article. Copia el codi i enganxa'l on vulguis que surti: s'adapta a l'amplada i a l'alçada de la pàgina.</p>
+    <p class="lede">Posa el test «A qui t'assembles?», la pregunta del dia, les enquestes, el pactòmetre i més widgets del 29N dins d'un article. Copia el codi i enganxa'l on vulguis que surti: s'adapta a l'amplada i a l'alçada de la pàgina.</p>
     ${prNav("widgets")}
     <div class="card pr-wg-terms">
       <p><b>Gratuïts</b> per a mitjans, blogs, entitats i centres educatius. Les úniques condicions són que la marca de Política en Joc es vegi i que no se'n modifiqui el contingut.</p>
@@ -361,7 +365,7 @@ function renderWidgets(root) {
       <h2>${x.t}</h2>
       <p>${x.d}</p>
       ${x.prov && provs.length ? `<label class="pr-wg-prov">Circumscripció <select data-wg-prov>${provs.map((p) => `<option value="${p.code}" ${p.code === "B" ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>` : ""}
-      <div class="pr-wg-prev"><iframe src="/widget/?w=${x.w}${x.prov ? "&prov=B" : ""}&id=prev-${x.w}" title="${x.t}" loading="lazy" style="height:${x.w === "compte" ? 300 : 620}px"></iframe></div>
+      <div class="pr-wg-prev"><iframe src="/widget/?w=${x.w}${x.prov ? "&prov=B" : ""}&id=prev-${x.w}" title="${x.t}" loading="lazy" style="height:${x.h || 620}px"></iframe></div>
       <div class="pr-wg-code"><pre><code data-wg-code>${esc(code(x.w, x.prov ? "B" : ""))}</code></pre><button class="btn" type="button" data-wg-copy>Copia el codi</button></div>
     </section>`).join("")}
     ${prContact()}

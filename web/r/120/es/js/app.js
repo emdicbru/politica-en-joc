@@ -61,6 +61,7 @@ function renderHome() {
   renderInstall();
   renderNewsTicker();
   renderHomeDia();
+  renderHomePerfil();
   const sim = $("#home-sim");
   if (sim && typeof simDuoHtml === "function") {
     sim.innerHTML = `<section class="home-simduo"><div class="section-head"><div><p class="kicker">Vívelo desde dentro</p><h2 class="section-title">Simuladores</h2></div><a class="home-more" href="#simulador">Verlos</a></div>${simDuoHtml("home")}</section>`;
@@ -73,6 +74,18 @@ function renderHome() {
       <div class="home-games-row">${list.slice(0, 6).map((g, k) => gameCard(g, k)).join("")}</div>`;
   }
   if (typeof renderHomeApren === "function") renderHomeApren();
+  // Especial 29N: el test d'afinitat «A qui t'assembles?» (assembla.js), amb el resultat si ja s'ha fet
+  const asb = $("#home-assembla");
+  if (asb && typeof ASSEMBLA_KEY !== "undefined") {
+    const r = store.get(ASSEMBLA_KEY, null), top = r && r.top && r.top[0] && PARTIES.find((p) => p.id === r.top[0][0]);
+    asb.innerHTML = `<a class="home-asb" href="#joc/assembla">
+      <span class="home-asb-k">Especial 29N</span>
+      <b>¿A quién te pareces?</b>
+      <small>${top ? `Tu resultado: coincides un ${r.top[0][1]} % con ${esc(top.sig)}. Vuelve a intentarlo o compáralo con tus amigos.` : "20 temas de la campaña y descubre con qué partidos coincides más. En 3 minutos."}</small>
+      <span class="home-asb-go">${top ? "Otra vez" : "Haz el test"} →</span></a>`;
+  }
+  // Canal de WhatsApp (quan n'hi hagi): el repte i el test de cada matí, al mòbil
+  if (asb && WA_CHANNEL) asb.insertAdjacentHTML("beforeend", `<a class="home-wa" href="${WA_CHANNEL}" target="_blank" rel="noopener"><b>📲 Sigue el canal de WhatsApp</b><small>Cada mañana, el reto y el test de actualidad en el móvil.</small></a>`);
   // Qui encara no té usuari: una franja curta per crear-lo
   const guest = $("#home-guest");
   if (guest) {
@@ -84,11 +97,53 @@ function renderHome() {
   }
 }
 
+// Enllaç del canal de WhatsApp de Política en Joc (buit: no se'n mostra res)
+const WA_CHANNEL = "";
+
+// Qui juga: dues preguntes opcionals i anònimes (edat i gènere), d'un toc, a qui ja ha fet el repte o el test.
+// Les respostes van al comptador del servei d'avisos (POST /perfil), que només en suma els totals del dia: no es lliguen
+// a cap persona, compte ni visita. Al dispositiu només es desa que ja s'ha respost o dit que no (r29n-perfil), mai la resposta.
+const PERFIL_KEY = "r29n-perfil";
+const PERFIL_EDAT = [["m18", "Menos de 18"], ["a18", "18-29"], ["a30", "30-44"], ["a45", "45-64"], ["a65", "65 o más"]];
+const PERFIL_GEN = [["dona", "Mujer"], ["home", "Hombre"], ["nobin", "No binario"], ["nsnc", "Prefiero no decirlo"]];
+let perfilStep = { e: null };
+function renderHomePerfil() {
+  const el = $("#home-perfil");
+  if (!el) return;
+  const played = !!dailyResult(todayKey()) || (typeof testResult === "function" && !!testResult(todayKey())) || Object.keys(Progress.data.daily?.scores || {}).length > 0;
+  if (store.get(PERFIL_KEY, null) || !played || !window.FIREBASE_CONFIG?.avisosUrl || (typeof Stats !== "undefined" && Stats.off())) { el.innerHTML = ""; return; }
+  const step2 = !!perfilStep.e;
+  el.innerHTML = `<section class="hp-card" aria-label="Quién juega">
+    <div class="hp-txt"><b>¿Nos ayudas a saber quién juega?</b><small>${step2 ? "Y la última:" : "Dos preguntas anónimas, de un toque. No se vinculan a ti ni a tu cuenta."}</small></div>
+    <div class="hp-q"><span>${step2 ? "Género" : "¿Qué edad tienes?"}</span><div class="hp-opts">${(step2 ? PERFIL_GEN : PERFIL_EDAT).map(([k, t]) => `<button type="button" class="hp-opt" data-perfil="${k}">${esc(t)}</button>`).join("")}</div></div>
+    <button type="button" class="hp-no" data-perfil-no>No, gracias</button>
+  </section>`;
+}
+function perfilSend(data) {
+  try {
+    const u = window.FIREBASE_CONFIG?.avisosUrl;
+    if (u && (data.e || data.g) && navigator.sendBeacon) navigator.sendBeacon(`${u}/perfil`, JSON.stringify(data));
+  } catch { /* sense xarxa */ }
+  store.set(PERFIL_KEY, { at: Date.now() });
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-perfil], [data-perfil-no]");
+  if (!b || !b.closest("#home-perfil")) return;
+  if (b.hasAttribute("data-perfil-no")) { perfilSend({ e: perfilStep.e }); perfilStep = { e: null }; renderHomePerfil(); return; }
+  if (!perfilStep.e) { perfilStep.e = b.dataset.perfil; renderHomePerfil(); return; }
+  perfilSend({ e: perfilStep.e, g: b.dataset.perfil });
+  perfilStep = { e: null };
+  $("#home-perfil").innerHTML = `<section class="hp-card done"><b>¡Gracias!</b><small>Nos ayuda a hacer una app para todo el mundo.</small></section>`;
+  setTimeout(() => { if ($("#home-perfil .hp-card.done")) $("#home-perfil").innerHTML = ""; }, 4000);
+});
+
 // «El dia polític»: la mitjana de les enquestes en un hemicicle i les notícies de les quals parlen més mitjans
 function renderHomeDia() {
   const el = $("#home-dia");
   if (!el) return;
-  const polls = typeof averageSeats === "function" && typeof hemicycleSVG === "function" && !(typeof pollsBlocked === "function" && pollsBlocked()) && POLL_SEATS.length;
+  // Les enquestes no surten durant la veda (pollsBlocked) ni des que hi ha resultats (la nit electoral i després)
+  const results = typeof espFase === "function" && ["nit", "despres"].includes(espFase());
+  const polls = !results && typeof averageSeats === "function" && typeof hemicycleSVG === "function" && !(typeof pollsBlocked === "function" && pollsBlocked()) && POLL_SEATS.length;
   const stories = typeof nxTopStories === "function" && typeof newsData !== "undefined" && newsData ? nxTopStories(3) : [];
   if (!polls && !stories.length) { el.innerHTML = ""; return; }
   let pols = "";

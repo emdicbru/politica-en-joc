@@ -74,15 +74,22 @@ function renderHome() {
       <div class="home-games-row">${list.slice(0, 6).map((g, k) => gameCard(g, k)).join("")}</div>`;
   }
   if (typeof renderHomeApren === "function") renderHomeApren();
-  // Especial 29N: el test d'afinitat «A qui t'assembles?» (assembla.js), amb el resultat si ja s'ha fet
+  // Especial 29N: el test d'afinitat política (assembla.js), amb el resultat si ja s'ha fet
   const asb = $("#home-assembla");
   if (asb && typeof ASSEMBLA_KEY !== "undefined") {
     const r = store.get(ASSEMBLA_KEY, null), top = r && r.top && r.top[0] && PARTIES.find((p) => p.id === r.top[0][0]);
     asb.innerHTML = `<a class="home-asb" href="#joc/assembla">
       <span class="home-asb-k">Especial 29N</span>
-      <b>A qui t'assembles?</b>
+      <b>Test d'afinitat política</b>
       <small>${top ? `El teu resultat: coincideixes un ${r.top[0][1]} % amb ${esc(top.sig)}. Torna-hi o compara'l amb els amics.` : "20 temes de la campanya i descobreix amb quins partits coincideixes més. En 3 minuts."}</small>
       <span class="home-asb-go">${top ? "Torna-hi" : "Fes el test"} →</span></a>`;
+  }
+  if (asb) {
+    const mini = [...PARTIES].sort((p, q) => q.seats - p.seats).slice(0, 8).map((p) => `<i style="--pc:${p.color};left:${6 + p.x * 8.8}%;top:${88 - p.y * 8}%"></i>`).join("");
+    asb.insertAdjacentHTML("beforeend", `<a class="home-cmp" href="#apren/partits">
+      <span class="home-cmp-map" aria-hidden="true">${mini}</span>
+      <span class="home-cmp-t"><small>Comparador de partits</small><b>12 partits, cara a cara</b><em>El mapa ideològic, què proposa cadascú tema a tema i qui són els caps de llista.</em></span>
+      <span class="home-asb-go">Compara →</span></a>`);
   }
   // Canal de WhatsApp (quan n'hi hagi): el repte i el test de cada matí, al mòbil
   if (asb && WA_CHANNEL) asb.insertAdjacentHTML("beforeend", `<a class="home-wa" href="${WA_CHANNEL}" target="_blank" rel="noopener"><b>📲 Segueix el canal de WhatsApp</b><small>Cada matí, el repte i el test d'actualitat al mòbil.</small></a>`);
@@ -97,7 +104,7 @@ function renderHome() {
   }
 }
 
-// Al final de cada joc del dia, el següent que encara no s'ha fet: repte → test d'actualitat → A qui t'assembles?
+// Al final de cada joc del dia, el següent que encara no s'ha fet: repte → test d'actualitat → Test d'afinitat política
 function nextDailyCard(id) {
   if (!["diari", "actualitat", "assembla"].includes(id)) return "";
   const done = { diari: !!dailyResult(), actualitat: typeof testResult === "function" && !!testResult(), assembla: !!store.get(typeof ASSEMBLA_KEY !== "undefined" ? ASSEMBLA_KEY : "", null) };
@@ -106,7 +113,7 @@ function nextDailyCard(id) {
   const C = {
     diari: { href: "#joc/diari", k: "Repte diari", t: "10 proves contra el rellotge", cls: "nd-diari" },
     actualitat: { href: "#joc/actualitat", k: "Test d'actualitat", t: "10 preguntes sobre les notícies d'avui", cls: "nd-test" },
-    assembla: { href: "#joc/assembla", k: "A qui t'assembles?", t: "20 temes de la campanya, en 3 minuts", cls: "nd-asb" },
+    assembla: { href: "#joc/assembla", k: "Test d'afinitat política", t: "20 temes de la campanya, en 3 minuts", cls: "nd-asb" },
   };
   const order = ["diari", "actualitat", "assembla"].filter((g) => g !== id && !done[g] && (g !== "actualitat" || testOk));
   const nx = order[0];
@@ -834,6 +841,7 @@ function renderPartyMap() {
   const py = (y) => H - B - M - (y / 10) * (H - T - B - 2 * M);
   const rad = (s) => Math.max(13, 8 + Math.sqrt(s) * 2.6);
   const sorted = [...PARTIES].sort((p, q) => q.seats - p.seats); // els grans a sota
+  const me = cmpMe();
   $("#party-map").innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa ideològic orientatiu dels partits">
       <rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" rx="14" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/>
@@ -852,8 +860,9 @@ function renderPartyMap() {
           ${sel ? `<circle cx="${px(p.x) + rad(p.seats) * .72}" cy="${py(p.y) - rad(p.seats) * .72}" r="10" fill="var(--ink)"/><text x="${px(p.x) + rad(p.seats) * .72}" y="${py(p.y) - rad(p.seats) * .72 + 4}" text-anchor="middle" class="pm-sel">${sel}</text>` : ""}
         </g>`;
       }).join("")}
+      ${me?.pos && typeof assemblaYouMark === "function" ? assemblaYouMark(px, py, me.pos, 15) : ""}
     </svg>
-    <p class="pm-cap">La mida de cada bombolla és proporcional als escons del 2023. Toca un partit per afegir-lo al comparador.</p>`;
+    <p class="pm-cap">La mida de cada bombolla és proporcional als escons del 2023. Toca un partit per afegir-lo al comparador.${me?.pos ? " <b>TU</b> és la teva posició segons el test d'afinitat." : ""}</p>`;
   $$(".pm-dot").forEach((g) => {
     const go = () => pickParty(g.dataset.id);
     g.addEventListener("click", go);
@@ -875,7 +884,8 @@ function renderCompare() {
   const A = partyById(cmpSel.a), B = partyById(cmpSel.b);
   $("#cmp-pick").innerHTML = PARTIES.map((p) => {
     const sel = p.id === cmpSel.a ? "A" : p.id === cmpSel.b ? "B" : "";
-    return `<button class="pchip ${sel ? "on" : ""}" data-id="${p.id}" style="--pc:${p.color}"><i></i>${p.sig}${sel ? `<b>${sel}</b>` : ""}</button>`;
+    const af = cmpAff(p.id);
+    return `<button class="pchip ${sel ? "on" : ""}" data-id="${p.id}" style="--pc:${p.color}"><i></i>${p.sig}${af != null ? `<small class="pc-af">${af} %</small>` : ""}${sel ? `<b>${sel}</b>` : ""}</button>`;
   }).join("");
   $$(".pchip").forEach((b) => b.addEventListener("click", () => pickParty(b.dataset.id)));
 
@@ -1005,7 +1015,34 @@ function cmpShowTab(k) {
 }
 $$("[data-cmptab]").forEach((b) => b.addEventListener("click", () => { Sfx.play("pick"); cmpShowTab(b.dataset.cmptab); }));
 
+// El resultat del test d'afinitat (assembla.js), si se n'ha fet
+function cmpMe() { try { return typeof ASSEMBLA_KEY !== "undefined" ? store.get(ASSEMBLA_KEY, null) : null; } catch { return null; } }
+function cmpAff(id) { const me = cmpMe(), r = me && (me.all || me.top || []).find((x) => x[0] === id); return r ? r[1] : null; }
+function renderCmpYou() {
+  const el = $("#cmp-you");
+  if (!el) return;
+  const me = cmpMe(), top = me && (me.top || []).map(([id, pct]) => ({ p: partyById(id), pct })).filter((x) => x.p);
+  if (!top || !top.length) {
+    el.innerHTML = `<a class="cmp-cta" href="#joc/assembla"><span><small>Test d'afinitat política</small><b>On ets tu en aquest mapa?</b><em>Respon 20 afirmacions i et situem entre els partits. En 3 minuts.</em></span><i>→</i></a>`;
+    return;
+  }
+  const pos = me.pos, lab = pos && typeof assemblaXLabel === "function" ? [pos.x != null ? assemblaXLabel(pos.x) : null, pos.y != null ? assemblaYLabel(pos.y) : null].filter(Boolean).join(" · ") : "";
+  el.innerHTML = `<div class="cmp-me">
+      <div class="cmp-me-h"><small>El teu test d'afinitat</small>${lab ? `<b>${esc(lab)}</b>` : ""}</div>
+      <div class="cmp-me-top">${top.map((x, k) => `<button type="button" data-me="${x.p.id}" style="--pc:${x.p.color}"><em>${k + 1}</em><b>${esc(x.p.sig)}</b><span>${x.pct} %</span></button>`).join("")}</div>
+      <div class="cmp-me-acts">${top[1] ? `<button type="button" class="btn primary" data-me-cmp>Compara ${esc(top[0].p.sig)} i ${esc(top[1].p.sig)}</button>` : ""}<a class="btn ghost" href="#joc/assembla">Torna a fer el test</a></div>
+    </div>`;
+  $$("[data-me]", el).forEach((b) => b.addEventListener("click", () => pickParty(b.dataset.me)));
+  $("[data-me-cmp]", el)?.addEventListener("click", () => {
+    cmpSel.a = top[0].p.id; cmpSel.b = top[1].p.id; cmpSel.next = "b";
+    Sfx.play("pick"); renderParties(); cmpShowTab("cara");
+    $(".cmp-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+addEventListener("hashchange", () => { if (location.hash === "#apren/partits") renderParties(); });
+
 function renderParties() {
+  renderCmpYou();
   renderPartyMap();
   renderCompare();
   if (!$("#cand-grid").children.length) renderCandidates();

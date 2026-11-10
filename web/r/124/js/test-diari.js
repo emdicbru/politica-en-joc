@@ -213,6 +213,18 @@ registerGame({
         exp.scrollIntoView({ block: "nearest", behavior: "smooth" });
       });
     }
+    // «La teva portada»: el resultat com la primera pàgina d'un diari, amb cada pregunta com un titular
+    function portada() {
+      let dia = key;
+      try { dia = new Date(`${key}T12:00:00`).toLocaleDateString(document.documentElement.lang || "ca", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { /* data tal qual */ }
+      const tit = hits === N ? "Ho sap tot" : hits >= N * 0.7 ? "Segueix l'actualitat de prop" : hits >= N * 0.4 ? "Al dia, a mitges" : "Demà, la revenja";
+      const li = items.map(({ q }, k) => `<li class="${results[k] ? "ok" : "ko"}"><i>${results[k] ? "✓" : "✗"}</i><span>${esc(q.q)}</span></li>`).join("");
+      return `<div class="tp">
+          <div class="tp-mast"><small>${esc(dia)}</small><b>La teva portada</b></div>
+          <h3 class="tp-h">${hits} de ${N}: ${esc(tit)}</h3>
+          <ul class="tp-l">${li}</ul>
+        </div>`;
+    }
     function end() {
       if (ended) return;
       ended = true;
@@ -234,7 +246,7 @@ registerGame({
         ratio: hits / N,
         unit: `${fmtSecs(ms)}${first ? "" : " · aquesta partida ja no compta per al rànquing"}`,
         verdict: hits === N ? "Ple! Estàs al dia de tot." : hits >= N * 0.7 ? "Molt bé: segueixes l'actualitat de prop." : hits >= N * 0.4 ? "No està malament. Demà, més!" : "Avui costava. Llegeix les explicacions i demà hi tornes.",
-        extraHtml: `<div class="daily-share"><div class="share-grid">${grid}</div>
+        extraHtml: `${portada()}<div class="daily-share"><div class="share-grid">${grid}</div>
             <div class="daily-share-btns"><button class="btn primary" data-test-share>Comparteix el resultat</button><a class="btn ghost" href="#ranking" data-test-rank>Veure el rànquing</a></div></div>
           <div id="test-rank"></div>`,
         onShown(body) {

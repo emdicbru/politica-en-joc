@@ -181,8 +181,185 @@
      ]
     }
    ]
+  },
+  "2026-11-10": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina entitat organitzarà els debats electorals del 29-N, segons l'acord entre PSOE i PP?",
+     "a": [
+      "L'Acadèmia de Televisió",
+      "La Junta Electoral Central",
+      "El Congrés dels Diputats",
+      "Corporació RTVE"
+     ],
+     "exp": "PSOE i PP van pactar que els debats es facin a l'Acadèmia de Televisió, un terreny neutral, després d'un mes de negociació.",
+     "u": "https://www.elespanol.com/espana/politica/20261109/pp-acepta-academia-television-organice-debates-electorales-veto-psoe-cadenas-privadas/1003744451834_0.html",
+     "s": [
+      "El Español",
+      "ABC",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Quin nou títol oficial ha creat el Govern espanyol per facilitar l'accés a ajudes i prestacions?",
+     "a": [
+      "El de família monoparental",
+      "El de jove emancipat",
+      "El de llogater vulnerable",
+      "El de cuidador familiar"
+     ],
+     "exp": "El Consell de Ministres ha creat un títol oficial de família monoparental, que dona accés prioritari a ajudes i beneficis.",
+     "u": "https://www.elmundo.es/espana/2026/11/10/6af2d25621efa04a508b45a5.html",
+     "s": [
+      "El Mundo",
+      "20minutos",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quin dia de novembre han convocat els sindicats una vaga general que afecta també Rodalies?",
+     "a": [
+      "L'11 de novembre",
+      "El 13 de novembre",
+      "El 17 de novembre",
+      "El 20 de novembre"
+     ],
+     "exp": "La vaga general està convocada per a l'11-N, i el Govern ha avisat que actuarà si no es compleixen els serveis mínims a Rodalies.",
+     "u": "https://www.lavanguardia.com/politica/20261110/11680643/illa-promete-actuar-incumplimiento-servicios-minimos-rodalies.html",
+     "s": [
+      "La Vanguardia",
+      "VilaWeb",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quin programa de TVE va ser entrevistat Santiago Abascal, amb una audiència molt alta?",
+     "a": [
+      "La Revuelta",
+      "Telediario",
+      "59 segundos",
+      "La noche en 24 horas"
+     ],
+     "exp": "Abascal va ser entrevistat per David Broncano a «La Revuelta», que va esdevenir l'edició més vista del programa.",
+     "u": "https://www.ara.cat/media/tv/programes/l-entrevista-d-abascal-revuelta-mes-vista-historia-programa-4-8-milions-d-espectadors_25_5905895.html",
+     "s": [
+      "Ara",
+      "La Vanguardia",
+      "El País"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "justicia",
+     "q": "Quin tribunal ha de resoldre el recurs del Govern central contra la «prioritat nacional» a la Comunitat Valenciana?",
+     "a": [
+      "El Tribunal Constitucional",
+      "El Tribunal Suprem",
+      "L'Audiència Nacional",
+      "El TSJ de la Comunitat Valenciana"
+     ],
+     "exp": "El Govern central ha portat al Tribunal Constitucional la norma de «prioritat nacional» aprovada pel PP i Vox al País Valencià.",
+     "u": "https://www.lavanguardia.com/local/valencia/20261110/11680732/gobierno-lleva-constitucional-prioridad-nacional-pp-vox-valencia.html",
+     "s": [
+      "La Vanguardia",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina organització empresarial va organitzar un debat electoral al qual Rufián no va assistir?",
+     "a": [
+      "Pimec",
+      "Foment del Treball",
+      "Cecot",
+      "Cambra de Comerç de Barcelona"
+     ],
+     "exp": "Rufián va lamentar no haver anat al debat de Pimec, perquè el seu partit li va dir que no hi participés.",
+     "u": "https://www.ara.cat/politica/eleccions-generals/rufian-m-hagues-agradat-debat-pimec-partit-em-dir-no_1_5906052.html",
+     "s": [
+      "Ara",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "societat",
+     "q": "De quin país és el papa Lleó XIV, que ha criticat l'austeritat del govern argentí?",
+     "a": [
+      "Dels Estats Units",
+      "D'Itàlia",
+      "D'Argentina",
+      "De Polònia"
+     ],
+     "exp": "Lleó XIV, primer papa nord-americà, ha visitat Argentina, terra del seu predecessor Francesc, i ha criticat l'austeritat de Milei.",
+     "u": "https://www.vilaweb.cat/noticies/papa-lleo-visita-argentina-milei-austeritat/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin és l'únic estat sobirà africà que té l'espanyol com a llengua oficial?",
+     "a": [
+      "Guinea Equatorial",
+      "Guinea-Bissau",
+      "Gabon",
+      "Angola"
+     ],
+     "exp": "Guinea Equatorial, antiga colònia espanyola, és l'únic estat africà amb l'espanyol com a llengua oficial. El jutge Pedraz ha declarat en rebel·lia el fill d'Obiang.",
+     "u": "https://elpais.com/espana/2026-11-10/el-juez-pedraz-declara-en-rebeldia-al-hijo-de-obiang-y-cierra-el-sumario-por-secuestro-y-torturas-a-cuatro-opositores.html",
+     "s": [
+      "El País"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "El riu Tajo, que dona nom al trasvasament Tajo-Segura, desemboca a l'Atlàntic a prop de quina ciutat?",
+     "a": [
+      "Lisboa",
+      "Porto",
+      "Setúbal",
+      "Faro"
+     ],
+     "exp": "El Tajo desemboca a l'oceà Atlàntic formant l'estuari de Lisboa, capital de Portugal.",
+     "u": "https://www.abc.es/espana/comunidad-valenciana/alicante/llorca-advierte-gobierno-bloqueo-trasvase-tajosegura-causa-20261110131705-nt.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "Quin gènere musical canta la portuguesa Carminho, que ha actuat al Liceu?",
+     "a": [
+      "Fado",
+      "Flamenc",
+      "Bossa nova",
+      "Tango"
+     ],
+     "exp": "Carminho és una de les veus més destacades del fado, gènere tradicional portuguès declarat Patrimoni Immaterial de la Humanitat.",
+     "u": "https://www.ara.cat/cultura/musica/carminho-ofereix-gran-nit-contrastos-emocionals-liceu_1_5905766.html",
+     "s": [
+      "Ara"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": "2026-11-08"
+ "updated": 1794314619696
 }

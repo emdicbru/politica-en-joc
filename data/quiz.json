@@ -1,7 +1,63 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-09",
+  "updated": "2026-11-10",
   "questions": [
+    {
+      "d": "2026-11-10",
+      "t": "immigracio",
+      "q": "Què ha declarat oficialment el Govern espanyol com a emergència a les Illes Canàries a causa de l’arribada massiva de migrants?",
+      "a": [
+        "Ha declarat una emergència migratòria i ha anunciat ajudes econòmiques per a El Hierro",
+        "Ha declarat una emergència sanitària i ha imposat quarantena a totes les illes",
+        "Ha declarat una emergència climàtica i ha mobilitzat l'exèrcit per a la neteja de platges",
+        "Ha declarat una emergència econòmica i ha reduït els impostos a les illes"
+      ],
+      "exp": "El Govern ha declarat una emergència migratòria a les Illes Canàries després de l'arribada de 7.500 persones, anunciant mesures d'ajuda econòmica per a El Hierro. (fonts 20 i 25)",
+      "u": "https://www.20minutos.es/nacional/clavijo-cifra-7-500-los-inmigrantes-llegados-canarias-noviembre-gobierno-anuncia-ayudas-economicas-para-hierro_7059290_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-10",
+      "t": "politica",
+      "q": "Quina nova prestació ha creat el Govern espanyol per a les famílies monoparentals?",
+      "a": [
+        "Un títol oficial que prioritza l'accés a ajudes i beneficis",
+        "Un augment del 10 % en la pensió mínima",
+        "Una reducció del lloguer per a famílies amb un fill",
+        "Un crèdit fiscal per a la compra de vivenda"
+      ],
+      "exp": "El Govern ha aprovat la creació d'un títol oficial per a famílies monoparentals que facilita l'accés prioritari a ajudes i beneficis socials. (fonts 41 i 70)",
+      "u": "https://www.ara.cat/societat/govern-espanyol-crea-titol-families-monoparentals-reforcar-prestacions_1_5905960.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-10",
+      "t": "territori",
+      "q": "Quin ministre ha assegurat que el Govern actuarà davant el no compliment dels serveis mínims a Rodalies?",
+      "a": [
+        "Miquel Illa",
+        "Núria Ventura",
+        "Pedro Sánchez",
+        "Alberto Núñez Feijóo"
+      ],
+      "exp": "El ministre de Transports, Miquel Illa, ha declarat que el Govern prendrà mesures si Rodalies no garanteix els serveis mínims. (fonts 0 i 55)",
+      "u": "https://www.eldebate.com/espana/cataluna/20261110/illa-asegura-govern-actuara-ante-incumplimiento-servicios-minimos-rodalies_479243.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-10",
+      "t": "justicia",
+      "q": "A quin òrgan constitucional ha portat el Govern la qüestió de la prioritat nacional a la Comunitat Valenciana?",
+      "a": [
+        "Al Tribunal Constitucional",
+        "Al Tribunal Suprem",
+        "Al Consell de Ministres",
+        "Al Parlament Europeu"
+      ],
+      "exp": "El Govern ha presentat al Tribunal Constitucional la demanda relativa a la prioritat nacional a la Comunitat Valenciana. (fonts 23 i 28)",
+      "u": "https://www.eldebate.com/espana/comunidad-valenciana/20261110/gobierno-lleva-constitucional-prioridad-nacional-veto-burka-proteccion-nonatos-comunidad-valenciana_479180.html",
+      "auto": true
+    },
     {
       "d": "2026-11-09",
       "t": "justicia",
@@ -171,5 +227,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-09"
+  "updatedAuto": "2026-11-10"
 }

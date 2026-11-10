@@ -76,6 +76,34 @@ function ctuFunnels(fn) {
   }).join("") || `<p class="muted">Encara no hi ha dades.</p>`;
 }
 
+// Qui entra (comptador propi, stats/{dia}_w): el territori de cada persona (Cloudflare, a partir de la IP) i les respostes
+// opcionals d'edat i gènere (POST /perfil)
+const CTU_CCAA = { AN: "Andalusia", AR: "Aragó", AS: "Astúries", CN: "Canàries", CB: "Cantàbria", CL: "Castella i Lleó", CM: "Castella-la Manxa", CT: "Catalunya", CE: "Ceuta", EX: "Extremadura", GA: "Galícia", IB: "Illes Balears", RI: "La Rioja", MD: "Madrid", ML: "Melilla", MC: "Múrcia", NC: "Navarra", PV: "País Basc", VC: "C. Valenciana" };
+const CTU_EDAT = { m18: "Menys de 18", a18: "18-29", a30: "30-44", a45: "45-64", a65: "65 o més" };
+const CTU_GEN = { dona: "Dona", home: "Home", nobin: "No binari", nsnc: "Prefereix no dir-ho" };
+function ctuWhoHtml(S) {
+  let country = (k) => k;
+  try { const dn = new Intl.DisplayNames(["ca"], { type: "region" }); country = (k) => dn.of(k) || k; } catch { /* sense noms */ }
+  const reg = S.reg || {};
+  const regNames = Object.fromEntries(Object.keys(reg).map((k) => [k, k.startsWith("ES_") ? CTU_CCAA[k.slice(3)] || k : k === "ES" ? "Espanya (sense comunitat)" : `🌍 ${country(k)}`]));
+  const regTot = Object.values(reg).reduce((a, b) => a + b, 0);
+  const cat = reg.ES_CT || 0, abroad = Object.entries(reg).filter(([k]) => k !== "ES" && !k.startsWith("ES_")).reduce((a, [, v]) => a + v, 0);
+  const pf = S.perfil || {};
+  const pick = (pre) => Object.fromEntries(Object.entries(pf).filter(([k]) => k.startsWith(pre)).map(([k, v]) => [k.slice(pre.length), v]));
+  const edat = pick("edat_"), gen = pick("gen_");
+  const n = pf.n || 0;
+  return `<section class="card ctu-card">
+      <h2 class="section-title sm">🗺️ D'on entren</h2>
+      <p class="muted">Persones diferents per territori (comunitat autònoma o país), segons la IP: és aproximat (les connexions mòbils o les VPN poden sortir en un altre lloc). ${regTot ? `Catalunya: <b>${ctuPct(cat, regTot)}</b> · fora d'Espanya: <b>${ctuPct(abroad, regTot)}</b>.` : "Compta des del 8 de novembre de 2026."}</p>
+      ${ctuBars(reg, regNames, { max: 14 })}
+    </section>
+    <section class="card ctu-card">
+      <h2 class="section-title sm">🧑‍🤝‍🧑 Edat i gènere</h2>
+      <p class="muted">Respostes voluntàries i anònimes a la pregunta de l'Inici (només la veu qui ja ha jugat el repte o el test). <b>${fmt(n)}</b> ${n === 1 ? "resposta" : "respostes"} en aquest període: no representa tothom, només qui respon.</p>
+      <div class="ctu-two"><div><h3 class="ctu-h3">Edat</h3>${ctuBars(edat, CTU_EDAT)}</div><div><h3 class="ctu-h3">Gènere</h3>${ctuBars(gen, CTU_GEN)}</div></div>
+    </section>`;
+}
+
 function ctlStatsHtml() {
   if (!CTU.days) { ctuLoad(); return `<div class="card"><p class="muted">Carregant les dades…</p></div>`; }
   const all = ctuDayList(30);
@@ -136,6 +164,8 @@ function ctlStatsHtml() {
         <div class="ctu-stack" style="height:${(x.u / wMax) * 100}%"><i class="torna" style="flex:1"></i></div>
         <small>${dayLbl(x.d).replace(" ", "<br>")}</small></div>`).join("")}</div>
     </section>
+
+    ${ctuWhoHtml(S)}
 
     <section class="card ctu-card">
       <h2 class="section-title sm">📈 Qui accepta les galetes: nous i tornen</h2>

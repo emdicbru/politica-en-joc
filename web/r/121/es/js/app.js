@@ -3,7 +3,7 @@
 // ---------- Sala de jocs ----------
 let gameFilter = "all";
 
-const DIFF_LABEL = ["", "Accessible", "Exigent", "Expert"];
+const DIFF_LABEL = ["", "Accesible", "Exigente", "Experto"];
 
 function gameCard(g, i, featured = false, hero = false) {
   const best = Progress.data.best[g.id];
@@ -13,7 +13,7 @@ function gameCard(g, i, featured = false, hero = false) {
     <a class="game-card ${featured ? "featured" : ""} ${hero ? "gc-hero" : ""}" href="#joc/${g.id}" style="--c:${g.color};--i:${i}">
       <div class="gc-art">
         <span class="gc-num">${String(GAMES.indexOf(g) + 1).padStart(2, "0")}</span>
-        <span class="gc-level" title="Dificultat: ${DIFF_LABEL[g.level]}">${[1, 2, 3].map((n) => `<i class="${n <= g.level ? "on" : ""}"></i>`).join("")}</span>
+        <span class="gc-level" title="Dificultad: ${DIFF_LABEL[g.level]}">${[1, 2, 3].map((n) => `<i class="${n <= g.level ? "on" : ""}"></i>`).join("")}</span>
         ${ART[g.id] ? ART[g.id]() : ""}
       </div>
       <div class="gc-body">
@@ -23,7 +23,7 @@ function gameCard(g, i, featured = false, hero = false) {
         <div class="gc-meta">
           <span class="gc-chip">${g.meta}</span>
           <span class="gc-chip soft">${DIFF_LABEL[g.level]}</span>
-          ${best !== undefined ? `<span class="gc-best">Rècord <b>${fmt(best)}</b></span>` : ""}
+          ${best !== undefined ? `<span class="gc-best">Récord <b>${fmt(best)}</b></span>` : ""}
         </div>
       </div>
       <span class="gc-play" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 1l9 5-9 5z" fill="currentColor"/></svg></span>
@@ -47,7 +47,7 @@ function renderGames() {
     const html = groupCards(games, i);
     i += games.length;
     return `<section class="game-group" style="--c:${cat.color}">
-      <div class="group-head"><span class="group-dot"></span><h3>${cat.name}</h3><p>${cat.desc}</p><span class="group-count">${games.length} jocs</span></div>
+      <div class="group-head"><span class="group-dot"></span><h3>${cat.name}</h3><p>${cat.desc}</p><span class="group-count">${games.length} juegos</span></div>
       <div class="games-grid">${html}</div>
     </section>`;
   }).join("");
@@ -61,28 +61,99 @@ function renderHome() {
   renderInstall();
   renderNewsTicker();
   renderHomeDia();
+  renderHomePerfil();
   const sim = $("#home-sim");
   if (sim && typeof simDuoHtml === "function") {
-    sim.innerHTML = `<section class="home-simduo"><div class="section-head"><div><p class="kicker">Viu-ho des de dins</p><h2 class="section-title">Simuladors</h2></div><a class="home-more" href="#simulador">Veure'ls</a></div>${simDuoHtml("home")}</section>`;
+    sim.innerHTML = `<section class="home-simduo"><div class="section-head"><div><p class="kicker">Vívelo desde dentro</p><h2 class="section-title">Simuladores</h2></div><a class="home-more" href="#simulador">Verlos</a></div>${simDuoHtml("home")}</section>`;
     simDuoBind(sim);
   }
   const games = $("#home-games");
   if (games) {
     const list = GAMES.filter((g) => !g.hidden && g.cat !== "daily");
-    games.innerHTML = `<div class="section-head"><div><p class="kicker">${list.length} jocs</p><h2 class="section-title">Minijocs</h2></div><a class="home-more" href="#jocs">Tots els minijocs</a></div>
+    games.innerHTML = `<div class="section-head"><div><p class="kicker">${list.length} juegos</p><h2 class="section-title">Minijuegos</h2></div><a class="home-more" href="#jocs">Todos los minijuegos</a></div>
       <div class="home-games-row">${list.slice(0, 6).map((g, k) => gameCard(g, k)).join("")}</div>`;
   }
   if (typeof renderHomeApren === "function") renderHomeApren();
+  // Especial 29N: el test d'afinitat «A qui t'assembles?» (assembla.js), amb el resultat si ja s'ha fet
+  const asb = $("#home-assembla");
+  if (asb && typeof ASSEMBLA_KEY !== "undefined") {
+    const r = store.get(ASSEMBLA_KEY, null), top = r && r.top && r.top[0] && PARTIES.find((p) => p.id === r.top[0][0]);
+    asb.innerHTML = `<a class="home-asb" href="#joc/assembla">
+      <span class="home-asb-k">Especial 29N</span>
+      <b>¿A quién te pareces?</b>
+      <small>${top ? `Tu resultado: coincides un ${r.top[0][1]} % con ${esc(top.sig)}. Vuelve a intentarlo o compáralo con tus amigos.` : "20 temas de la campaña y descubre con qué partidos coincides más. En 3 minutos."}</small>
+      <span class="home-asb-go">${top ? "Otra vez" : "Haz el test"} →</span></a>`;
+  }
+  // Canal de WhatsApp (quan n'hi hagi): el repte i el test de cada matí, al mòbil
+  if (asb && WA_CHANNEL) asb.insertAdjacentHTML("beforeend", `<a class="home-wa" href="${WA_CHANNEL}" target="_blank" rel="noopener"><b>📲 Sigue el canal de WhatsApp</b><small>Cada mañana, el reto y el test de actualidad en el móvil.</small></a>`);
   // Qui encara no té usuari: una franja curta per crear-lo
   const guest = $("#home-guest");
   if (guest) {
     const left = window.Online?.isGuest?.() ? window.Online.guestLeft() : null;
     guest.innerHTML = left == null ? "" : `<section class="home-strip">
-      <div><b>Que no se't perdi la ratxa</b><small>Desa el progrés, entra als rànquings i repta els amics. ${left ? `Et ${left === 1 ? "queda 1 partida" : `queden ${left} partides`} sense usuari.` : "Ja has gastat les partides de prova."}</small></div>
-      <button type="button" class="btn google-btn" data-signin-cta>Continua amb Google</button>
+      <div><b>Que no se te pierda la racha</b><small>Guarda tu progreso, entra en los rankings y reta a tus amigos. ${left ? `Te ${left === 1 ? "queda 1 partida" : `quedan ${left} partidas`} sin usuario.` : "Ya has gastado las partidas de prueba."}</small></div>
+      <button type="button" class="btn google-btn" data-signin-cta>Continuar con Google</button>
     </section>`;
   }
 }
+
+// Al final de cada joc del dia, el següent que encara no s'ha fet: repte → test d'actualitat → A qui t'assembles?
+function nextDailyCard(id) {
+  if (!["diari", "actualitat", "assembla"].includes(id)) return "";
+  const done = { diari: !!dailyResult(), actualitat: typeof testResult === "function" && !!testResult(), assembla: !!store.get(typeof ASSEMBLA_KEY !== "undefined" ? ASSEMBLA_KEY : "", null) };
+  const testOk = typeof testDay === "function" && testOn?.() && !!testDay();
+  const nDone = (done.diari ? 1 : 0) + (done.actualitat ? 1 : 0);
+  const C = {
+    diari: { href: "#joc/diari", k: "Reto diario", t: "10 pruebas contra el reloj", cls: "nd-diari" },
+    actualitat: { href: "#joc/actualitat", k: "Test de actualidad", t: "10 preguntas sobre las noticias de hoy", cls: "nd-test" },
+    assembla: { href: "#joc/assembla", k: "¿A quién te pareces?", t: "20 temas de la campaña, en 3 minutos", cls: "nd-asb" },
+  };
+  const order = ["diari", "actualitat", "assembla"].filter((g) => g !== id && !done[g] && (g !== "actualitat" || testOk));
+  const nx = order[0];
+  if (!nx) return `<p class="nd-done">Hoy ya lo tienes todo hecho. ¡Mañana, reto y test nuevos!</p>`;
+  const c = C[nx], kicker = nx === "assembla" ? "Especial 29N" : `Siguiente · ${nDone} de 2 hechos hoy`;
+  return `<a class="nd-card ${c.cls}" href="${c.href}"><span><small>${kicker}</small><b>${c.k}</b><em>${c.t}</em></span><i aria-hidden="true">→</i></a>`;
+}
+
+// Enllaç del canal de WhatsApp de Política en Joc (buit: no se'n mostra res)
+const WA_CHANNEL = "";
+
+// Qui juga: dues preguntes opcionals i anònimes (edat i gènere), d'un toc, a qui ja ha fet el repte o el test.
+// Les respostes van al comptador del servei d'avisos (POST /perfil), que només en suma els totals del dia: no es lliguen
+// a cap persona, compte ni visita. Al dispositiu només es desa que ja s'ha respost o dit que no (r29n-perfil), mai la resposta.
+const PERFIL_KEY = "r29n-perfil";
+const PERFIL_EDAT = [["m18", "Menos de 18"], ["a18", "18-29"], ["a30", "30-44"], ["a45", "45-64"], ["a65", "65 o más"]];
+const PERFIL_GEN = [["dona", "Mujer"], ["home", "Hombre"], ["nobin", "No binario"], ["nsnc", "Prefiero no decirlo"]];
+let perfilStep = { e: null };
+function renderHomePerfil() {
+  const el = $("#home-perfil");
+  if (!el) return;
+  const played = !!dailyResult(todayKey()) || (typeof testResult === "function" && !!testResult(todayKey())) || Object.keys(Progress.data.daily?.scores || {}).length > 0;
+  if (store.get(PERFIL_KEY, null) || !played || !window.FIREBASE_CONFIG?.avisosUrl || (typeof Stats !== "undefined" && Stats.off())) { el.innerHTML = ""; return; }
+  const step2 = !!perfilStep.e;
+  el.innerHTML = `<section class="hp-card" aria-label="Quién juega">
+    <div class="hp-txt"><b>¿Nos ayudas a saber quién juega?</b><small>${step2 ? "Y la última:" : "Dos preguntas anónimas, de un toque. No se vinculan a ti ni a tu cuenta."}</small></div>
+    <div class="hp-q"><span>${step2 ? "Género" : "¿Qué edad tienes?"}</span><div class="hp-opts">${(step2 ? PERFIL_GEN : PERFIL_EDAT).map(([k, t]) => `<button type="button" class="hp-opt" data-perfil="${k}">${esc(t)}</button>`).join("")}</div></div>
+    <button type="button" class="hp-no" data-perfil-no>No, gracias</button>
+  </section>`;
+}
+function perfilSend(data) {
+  try {
+    const u = window.FIREBASE_CONFIG?.avisosUrl;
+    if (u && (data.e || data.g) && navigator.sendBeacon) navigator.sendBeacon(`${u}/perfil`, JSON.stringify(data));
+  } catch { /* sense xarxa */ }
+  store.set(PERFIL_KEY, { at: Date.now() });
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-perfil], [data-perfil-no]");
+  if (!b || !b.closest("#home-perfil")) return;
+  if (b.hasAttribute("data-perfil-no")) { perfilSend({ e: perfilStep.e }); perfilStep = { e: null }; renderHomePerfil(); return; }
+  if (!perfilStep.e) { perfilStep.e = b.dataset.perfil; renderHomePerfil(); return; }
+  perfilSend({ e: perfilStep.e, g: b.dataset.perfil });
+  perfilStep = { e: null };
+  $("#home-perfil").innerHTML = `<section class="hp-card done"><b>¡Gracias!</b><small>Nos ayuda a hacer una app para todo el mundo.</small></section>`;
+  setTimeout(() => { if ($("#home-perfil .hp-card.done")) $("#home-perfil").innerHTML = ""; }, 4000);
+});
 
 // «El dia polític»: la mitjana de les enquestes en un hemicicle i les notícies de les quals parlen més mitjans
 function renderHomeDia() {
@@ -98,19 +169,19 @@ function renderHomeDia() {
     const seats = averageSeats();
     const big = ["pp", "psoe", "vox", "fa", "erc", "junts", "bildu", "pnv"];
     const rest = PACTE_ORDER.filter((id) => !big.includes(id)).reduce((t, id) => t + (seats[id] || 0), 0);
-    const legend = [...big.filter((id) => seats[id] > 0).map((id) => [PACTE_INFO[id].sig, seats[id], PACTE_INFO[id].color]), ...(rest ? [["Altres", rest, "#9a9a9a"]] : [])];
-    pols = `<aside class="hd-pols" aria-label="El pols de la campanya">
-      <div class="hd-head"><div><p class="kicker">El pols de la campanya</p><h2 class="hd-title">Així quedaria el Congrés</h2></div><span class="hd-n">${POLL_SEATS.length} enquestes</span></div>
-      <div class="hd-hemi">${hemicycleSVG(PACTE_ORDER.filter((id) => seats[id] > 0).map((id) => ({ id, seats: seats[id], color: PACTE_INFO[id].color })))}<div class="hd-maj"><b>176</b><span>per a la majoria</span></div></div>
+    const legend = [...big.filter((id) => seats[id] > 0).map((id) => [PACTE_INFO[id].sig, seats[id], PACTE_INFO[id].color]), ...(rest ? [["Otros", rest, "#9a9a9a"]] : [])];
+    pols = `<aside class="hd-pols" aria-label="El pulso de la campaña">
+      <div class="hd-head"><div><p class="kicker">El pulso de la campaña</p><h2 class="hd-title">Así quedaría el Congreso</h2></div><span class="hd-n">${POLL_SEATS.length} encuestas</span></div>
+      <div class="hd-hemi">${hemicycleSVG(PACTE_ORDER.filter((id) => seats[id] > 0).map((id) => ({ id, seats: seats[id], color: PACTE_INFO[id].color })))}<div class="hd-maj"><b>176</b><span>para la mayoría</span></div></div>
       <div class="hd-legend">${legend.map(([s, n, c]) => `<span><i style="background:${c}"></i>${esc(s)} <b>${n}</b></span>`).join("")}</div>
-      <div class="hd-end"><small>Mitjana d'enquestes publicades. No són un pronòstic.</small><a class="btn" href="#apren/pactometre">Fes el teu pacte →</a></div>
+      <div class="hd-end"><small>Media de encuestas publicadas. No son un pronóstico.</small><a class="btn" href="#apren/pactometre">Haz tu pacto →</a></div>
     </aside>`;
   }
   const temes = stories.length ? `<div class="hd-news">
-      <div class="hd-head"><h2 class="section-title">De què es parla</h2><a class="home-more" href="#noticies">Totes les notícies</a></div>
+      <div class="hd-head"><h2 class="section-title">De qué se habla</h2><a class="home-more" href="#noticies">Todas las noticias</a></div>
       ${stories.map((s) => { const t = nwTopic(s.topic); return `<a class="hd-story" href="#noticies" style="--tc:${t.c}">
         <span class="hd-bar" aria-hidden="true"></span>
-        <span class="hd-txt"><small>${esc(t.label)} · ${s.n} mitjans</small><b>${esc(s.items[0].t)}</b></span>
+        <span class="hd-txt"><small>${esc(t.label)} · ${s.n} medios</small><b>${esc(s.items[0].t)}</b></span>
         <span class="hd-go" aria-hidden="true">→</span></a>`; }).join("")}
     </div>` : "";
   el.innerHTML = `<section class="home-dia ${pols && temes ? "" : "solo"}">${pols}${temes}</section>`;
@@ -137,7 +208,7 @@ function renderSound() {
   b.innerHTML = Sfx.on
     ? `<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>`
     : `<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
-  b.setAttribute("aria-label", Sfx.on ? "Silencia el so" : "Activa el so");
+  b.setAttribute("aria-label", Sfx.on ? "Silencia el sonido" : "Activa el sonido");
   b.classList.toggle("off", !Sfx.on);
 }
 $("#sound-btn").addEventListener("click", () => { Sfx.toggle(); renderSound(); Sfx.play("pick"); });
@@ -145,7 +216,7 @@ $("#sound-btn").addEventListener("click", () => { Sfx.toggle(); renderSound(); S
 // ---------- Perfil ----------
 // Capçalera amb la targeta del jugador i quatre pestanyes: Resum (el dia a dia), Assoliments, Rècords i Ajustos
 // (compte, app, privadesa i el que es toca poc). La pestanya oberta es recorda durant la sessió.
-const PF_TABS = [["resum", "Resum"], ["assoliments", "Assoliments"], ["records", "Rècords"], ["ajustos", "Ajustos"]];
+const PF_TABS = [["resum", "Resumen"], ["assoliments", "Logros"], ["records", "Récords"], ["ajustos", "Ajustes"]];
 let pfTab = (() => { try { return sessionStorage.getItem("pf-tab") || "resum"; } catch { return "resum"; } })();
 let pfAchFilter = "tots";
 
@@ -166,23 +237,23 @@ function pfHero(d) {
   return `<section class="card pf-hero">
     <div class="pf-id">${pic}
       <div class="pf-who">
-        <h2>${esc(me?.name || "Jugador convidat")}</h2>
+        <h2>${esc(me?.name || "Jugador invitado")}</h2>
         ${title ? `<span class="shop-ti">${esc(title)}</span>` : ""}
-        <p class="pf-lvl"><b>Nivell ${i + 1} · ${cur.name}</b><span>${next ? `${fmt(d.xp)} XP · en falten ${fmt(next.xp - d.xp)} per a ${next.name}` : `${fmt(d.xp)} XP · nivell màxim`}</span></p>
+        <p class="pf-lvl"><b>Nivel ${i + 1} · ${cur.name}</b><span>${next ? `${fmt(d.xp)} XP · te faltan ${fmt(next.xp - d.xp)} para ${next.name}` : `${fmt(d.xp)} XP · nivel máximo`}</span></p>
         <div class="xpbar"><div style="width:${pct}%"></div></div>
       </div>
     </div>
     <div class="pf-stats">
-      <a href="#botiga"><b>${fmt(coins)}</b><small>🪙 monedes</small></a>
-      <div><b>${dailyStreakNow(d.daily).streak}</b><small>🔥 dies de ratxa</small></div>
-      <div><b>${fmt(plays)}</b><small>🎮 partides</small></div>
-      <button type="button" data-pftab="assoliments"><b>${unlocked}/${ACHIEVEMENTS.length}</b><small>★ assoliments</small></button>
+      <a href="#botiga"><b>${fmt(coins)}</b><small>🪙 monedas</small></a>
+      <div><b>${dailyStreakNow(d.daily).streak}</b><small>🔥 días de racha</small></div>
+      <div><b>${fmt(plays)}</b><small>🎮 partidas</small></div>
+      <button type="button" data-pftab="assoliments"><b>${unlocked}/${ACHIEVEMENTS.length}</b><small>★ logros</small></button>
     </div>
     <div class="pf-actions">
-      ${me ? `<button class="btn" type="button" data-pfedit>Edita el perfil</button>` : guest ? `<button class="btn google-btn" type="button" data-signin-cta>${typeof googleIconSvg === "function" ? googleIconSvg() : ""} Crea l'usuari</button>` : ""}
-      <a class="btn primary" href="#botiga">🪙 Botiga</a>
+      ${me ? `<button class="btn" type="button" data-pfedit>Edita el perfil</button>` : guest ? `<button class="btn google-btn" type="button" data-signin-cta>${typeof googleIconSvg === "function" ? googleIconSvg() : ""} Crea el usuario</button>` : ""}
+      <a class="btn primary" href="#botiga">🪙 Tienda</a>
     </div>
-    ${guest ? `<p class="muted pf-guest">Sense usuari, el progrés només es desa en aquest dispositiu. Amb l'usuari el tens a tot arreu i pots jugar al rànquing, a les lligues i als duels.</p>` : ""}
+    ${guest ? `<p class="muted pf-guest">Sin usuario, el progreso solo se guarda en este dispositivo. Con el usuario lo tienes en todas partes y puedes jugar en el ranking, en las ligas y en los duelos.</p>` : ""}
   </section>`;
 }
 
@@ -195,27 +266,27 @@ function pfResum(d) {
   return `
     <section class="card pf-today ${today ? "done" : ""}">
       <span class="pf-today-i" aria-hidden="true">${today ? "✅" : "🗳️"}</span>
-      <div><b>${today ? "Repte d'avui fet" : "Encara no has fet el repte d'avui"}</b>
-        <p>${today ? `${today.hits}/10 encerts · ${typeof fmtSecs === "function" ? fmtSecs(today.ms) : ""}. Demà n'hi haurà un de nou.` : d.daily.streak ? `Fes-lo per mantenir la ratxa de ${d.daily.streak} ${d.daily.streak === 1 ? "dia" : "dies"}.` : "10 proves contra el rellotge. Comença una ratxa!"}</p></div>
-      ${today ? `<a class="btn" href="#ranking">Rànquing</a>` : `<a class="btn primary" href="#joc/diari">Juga</a>`}
+      <div><b>${today ? "Reto de hoy hecho" : "Aún no has hecho el reto de hoy"}</b>
+        <p>${today ? `${today.hits}/10 aciertos · ${typeof fmtSecs === "function" ? fmtSecs(today.ms) : ""}. Mañana habrá uno nuevo.` : d.daily.streak ? `Hazlo para mantener la racha de ${d.daily.streak} ${d.daily.streak === 1 ? "día" : "días"}.` : "10 pruebas contra el reloj. ¡Empieza una racha!"}</p></div>
+      ${today ? `<a class="btn" href="#ranking">Ranking</a>` : `<a class="btn primary" href="#joc/diari">Juega</a>`}
     </section>
     <div class="pf-grid">
       <section class="card pf-box">
-        <h3>🎯 Pròxims assoliments</h3>
-        ${pending.length ? `<ul class="pf-list">${pending.map((a) => `<li><b>${a.name}</b><small>${a.desc}</small></li>`).join("")}</ul><button class="linklike" type="button" data-pftab="assoliments">Tots els assoliments →</button>` : `<p class="muted">Els tens tots. Ets una llegenda.</p>`}
+        <h3>🎯 Próximos logros</h3>
+        ${pending.length ? `<ul class="pf-list">${pending.map((a) => `<li><b>${a.name}</b><small>${a.desc}</small></li>`).join("")}</ul><button class="linklike" type="button" data-pftab="assoliments">Todos los logros →</button>` : `<p class="muted">Los tienes todos. Eres una leyenda.</p>`}
       </section>
       <section class="card pf-box">
-        <h3>⭐ Darrers aconseguits</h3>
-        ${recent.length ? `<ul class="pf-list">${recent.map((a) => `<li class="on"><b>${a.name}</b><small>${a.desc}</small></li>`).join("")}</ul>` : `<p class="muted">Juga la primera partida i aconseguiràs el primer.</p>`}
+        <h3>⭐ Últimos conseguidos</h3>
+        ${recent.length ? `<ul class="pf-list">${recent.map((a) => `<li class="on"><b>${a.name}</b><small>${a.desc}</small></li>`).join("")}</ul>` : `<p class="muted">Juega la primera partida y conseguirás el primero.</p>`}
       </section>
       <section class="card pf-box">
-        <h3>🎮 Els teus jocs</h3>
-        ${top.length ? `<ul class="pf-list">${top.map((g) => `<li><a href="#joc/${g.id}"><b>${g.title}</b></a><small>${fmt(d.plays[g.id])} ${d.plays[g.id] === 1 ? "partida" : "partides"}${d.best[g.id] !== undefined ? ` · rècord ${fmt(d.best[g.id])}` : ""}</small></li>`).join("")}</ul><button class="linklike" type="button" data-pftab="records">Tots els rècords →</button>` : `<p class="muted">Encara no has jugat cap partida. <a href="#jocs">Tria un joc</a></p>`}
+        <h3>🎮 Tus juegos</h3>
+        ${top.length ? `<ul class="pf-list">${top.map((g) => `<li><a href="#joc/${g.id}"><b>${g.title}</b></a><small>${fmt(d.plays[g.id])} ${d.plays[g.id] === 1 ? "partida" : "partidas"}${d.best[g.id] !== undefined ? ` · récord ${fmt(d.best[g.id])}` : ""}</small></li>`).join("")}</ul><button class="linklike" type="button" data-pftab="records">Todos los récords →</button>` : `<p class="muted">Aún no has jugado ninguna partida. <a href="#jocs">Elige un juego</a></p>`}
       </section>
       <section class="card pf-box" id="pf-rank">
-        <h3>🏆 Rànquing</h3>
-        ${window.Online?.meInfo?.() ? `<p class="muted">Calculant la teva posició…</p>` : `<p class="muted">Crea l'usuari per entrar al rànquing d'experiència i competir cada dia al repte.</p>`}
-        <a class="linklike" href="#ranking">Obre el rànquing →</a>
+        <h3>🏆 Ranking</h3>
+        ${window.Online?.meInfo?.() ? `<p class="muted">Calculando tu posición…</p>` : `<p class="muted">Crea el usuario para entrar en el ranking de experiencia y competir cada día en el reto.</p>`}
+        <a class="linklike" href="#ranking">Abre el ranking →</a>
       </section>
     </div>
     ${next ? "" : ""}`;
@@ -226,13 +297,13 @@ function pfAssoliments(d) {
   const list = ACHIEVEMENTS.filter((a) => (pfAchFilter === "fets" ? d.ach[a.id] : pfAchFilter === "pendents" ? !d.ach[a.id] : true));
   const i = Progress.levelIndex();
   return `
-    <div class="pf-filter">${[["tots", `Tots (${ACHIEVEMENTS.length})`], ["fets", `Aconseguits (${got})`], ["pendents", `Pendents (${ACHIEVEMENTS.length - got})`]].map(([k, t]) => `<button type="button" class="${pfAchFilter === k ? "on" : ""}" data-pfach="${k}">${t}</button>`).join("")}</div>
-    <p class="muted">Cada assoliment et dona 50 monedes.</p>
+    <div class="pf-filter">${[["tots", `Todos (${ACHIEVEMENTS.length})`], ["fets", `Conseguidos (${got})`], ["pendents", `Pendientes (${ACHIEVEMENTS.length - got})`]].map(([k, t]) => `<button type="button" class="${pfAchFilter === k ? "on" : ""}" data-pfach="${k}">${t}</button>`).join("")}</div>
+    <p class="muted">Cada logro te da 50 monedas.</p>
     <div class="ach-grid">${list.map((a) => `
       <div class="ach ${d.ach[a.id] ? "on" : ""}">
         <span class="ach-ico">${d.ach[a.id] ? "★" : "?"}</span>
         <div><b>${a.name}</b><small>${a.desc}</small></div>
-      </div>`).join("") || `<p class="muted">No n'hi ha cap.</p>`}</div>
+      </div>`).join("") || `<p class="muted">No hay ninguno.</p>`}</div>
     <h2 class="section-title sm">Carrera</h2>
     <div class="ladder">${LEVELS.map((l, k) => `<div class="rung ${k < i ? "done" : k === i ? "cur" : ""}"><b>${k + 1}</b><span>${l.name}</span><small>${fmt(l.xp)} XP</small></div>`).join("")}</div>`;
 }
@@ -250,13 +321,13 @@ function pfRecords(d) {
   const played = (g) => d.plays[g.id] || d.best[g.id] !== undefined;
   const cats = Object.entries(GAME_CATS).map(([k, c]) => [c.name, GAMES.filter((g) => g.cat === k && !g.hidden)]);
   const other = GAMES.filter((g) => !GAME_CATS[g.cat] && !g.hidden);
-  if (other.length) cats.push(["Altres", other]);
+  if (other.length) cats.push(["Otros", other]);
   return cats.filter(([, gs]) => gs.length).map(([name, gs]) => {
     const yes = gs.filter(played), no = gs.filter((g) => !played(g));
     return `<section class="pf-rec">
       <h2 class="section-title sm">${name}</h2>
       ${yes.length ? `<div class="records">${yes.map(row).join("")}</div>` : ""}
-      ${no.length ? `<details class="pf-unplayed"${yes.length ? "" : " open"}><summary>${no.length} ${no.length === 1 ? "joc" : "jocs"} encara sense jugar</summary><div class="records">${no.map(row).join("")}</div></details>` : ""}
+      ${no.length ? `<details class="pf-unplayed"${yes.length ? "" : " open"}><summary>${no.length} ${no.length === 1 ? "joc" : "juegos"} todavía sin jugar</summary><div class="records">${no.map(row).join("")}</div></details>` : ""}
     </section>`;
   }).join("");
 }
@@ -266,30 +337,30 @@ function pfAjustos() {
   const admin = typeof ctlIsAdmin === "function" && ctlIsAdmin();
   return `
     <section class="pf-set">
-      <h2 class="section-title sm">Compte</h2>
+      <h2 class="section-title sm">Atención</h2>
       <div id="account-box"></div>
     </section>
     <section class="pf-set">
-      <h2 class="section-title sm">L'app</h2>
+      <h2 class="section-title sm">La app</h2>
       <div id="notif-card"></div>
       <div id="install-card"></div>
-      <div class="card pf-row"><span aria-hidden="true">🌐</span><div><b>Idioma</b><p>L'app en català o en castellà. El progrés és el mateix.</p></div>${langLinks("lang-sw lang-sw-lg")}</div>
-      <div class="card pf-row"><span aria-hidden="true">🔊</span><div><b>So</b><p>Efectes de so dels jocs.</p></div><button class="btn" type="button" data-pfsound>${Sfx.on ? "Silencia" : "Activa"}</button></div>
-      <div class="card pf-row"><span aria-hidden="true">🐞</span><div><b>Alguna cosa no funciona?</b><p>Explica'ns què ha passat i ho arreglarem.</p></div><button class="btn" type="button" data-report>Avisa d'un error</button></div>
+      <div class="card pf-row"><span aria-hidden="true">🌐</span><div><b>Idioma</b><p>La app en catalán o en castellano. El progreso es el mismo.</p></div>${langLinks("lang-sw lang-sw-lg")}</div>
+      <div class="card pf-row"><span aria-hidden="true">🔊</span><div><b>Sonido</b><p>Efectos de sonido de los juegos.</p></div><button class="btn" type="button" data-pfsound>${Sfx.on ? "Silencia" : "Activa"}</button></div>
+      <div class="card pf-row"><span aria-hidden="true">🐞</span><div><b>¿Algo no funciona?</b><p>Explícanos qué ha pasado y lo arreglaremos.</p></div><button class="btn" type="button" data-report>Avisa de un error</button></div>
     </section>
     <section class="pf-set">
-      <h2 class="section-title sm">Privadesa</h2>
-      <div class="card pf-row"><span aria-hidden="true">📊</span><div><b>Estadística anònima</b><p>Les teves visites sumen a uns comptadors anònims que ens ajuden a millorar l'app. ${statsOff ? "Ara no es compten." : ""}</p></div><button class="btn" type="button" data-stats-toggle>${statsOff ? "Torna a comptar les meves visites" : "No comptis les meves visites"}</button></div>
-      <p class="muted">Més informació a la <a href="#legal/privacitat">política de privadesa</a> i a la <a href="#legal/cookies">de galetes</a>.</p>
+      <h2 class="section-title sm">Privacidad</h2>
+      <div class="card pf-row"><span aria-hidden="true">📊</span><div><b>Estadística anónima</b><p>Tus visitas suman a unos contadores anónimos que nos ayudan a mejorar la app. ${statsOff ? "Ahora no se cuentan." : ""}</p></div><button class="btn" type="button" data-stats-toggle>${statsOff ? "Vuelve a contar mis visitas" : "No cuentes mis visitas"}</button></div>
+      <p class="muted">Más información en la <a href="#legal/privacitat">política de privacidad</a> y en la <a href="#legal/cookies">de cookies</a>.</p>
     </section>
     ${typeof COFFEE_URL !== "undefined" && COFFEE_URL ? `<section class="pf-set">
-      <h2 class="section-title sm">Dona suport</h2>
-      <div class="card coffee-card"><span class="coffee-cup" aria-hidden="true">☕</span><div><b>T'agrada Política en Joc?</b><p>És gratuïta. Si vols donar-hi un cop de mà, pots convidar-me a un cafè.</p></div>${coffeeLink("Convida'm a un cafè", "btn")}</div>
+      <h2 class="section-title sm">Apoya el proyecto</h2>
+      <div class="card coffee-card"><span class="coffee-cup" aria-hidden="true">☕</span><div><b>¿Te gusta Política en Joc?</b><p>Es gratuita. Si quieres echar una mano, puedes invitarme a un café.</p></div>${coffeeLink("Invítame a un café", "btn")}</div>
     </section>` : ""}
-    ${admin ? `<section class="pf-set"><h2 class="section-title sm">Equip</h2><a class="card pf-row" href="#control"><span aria-hidden="true">🎛️</span><div><b>Centre de control</b><p>Usuaris, notificacions i l'especial del 29N.</p></div><span class="btn">Obre</span></a></section>` : ""}
+    ${admin ? `<section class="pf-set"><h2 class="section-title sm">Equipo</h2><a class="card pf-row" href="#control"><span aria-hidden="true">🎛️</span><div><b>Centro de control</b><p>Usuarios, notificaciones y el especial del 29N.</p></div><span class="btn">Abre</span></a></section>` : ""}
     <section class="pf-set pf-danger">
-      <h2 class="section-title sm">Zona perillosa</h2>
-      <div class="card pf-row"><span aria-hidden="true">🗑️</span><div><b>Esborra el progrés</b><p>Esborra l'XP, els rècords i els assoliments d'aquest dispositiu.${window.Online?.meInfo?.() ? " Amb usuari, el progrés desat al núvol es tornaria a recuperar." : ""}</p></div><button class="btn ghost danger" type="button" id="reset-progress">Esborra</button></div>
+      <h2 class="section-title sm">Zona peligrosa</h2>
+      <div class="card pf-row"><span aria-hidden="true">🗑️</span><div><b>Borra el progreso</b><p>Borra la XP, los récords y los logros de este dispositivo.${window.Online?.meInfo?.() ? " Con usuario, el progreso guardado en la nube se volvería a recuperar." : ""}</p></div><button class="btn ghost danger" type="button" id="reset-progress">Borra</button></div>
     </section>`;
 }
 
@@ -318,10 +389,10 @@ function renderProfile() {
     if (typeof renderNotif === "function") renderNotif();
     $("[data-pfsound]")?.addEventListener("click", () => { Sfx.toggle(); renderSound(); Sfx.play("pick"); renderProfile(); });
     $("#reset-progress").addEventListener("click", () => {
-      if (confirm("Segur que vols esborrar tot el progrés, els rècords i els assoliments?")) {
+      if (confirm("¿Seguro que quieres borrar todo el progreso, los récords y los logros?")) {
         Progress.reset();
         renderProfile();
-        toast("Progrés esborrat");
+        toast("Progreso borrado");
       }
     });
   }
@@ -329,7 +400,7 @@ function renderProfile() {
     window.Online.myRank().then((r) => {
       const box = $("#pf-rank p");
       if (!box) return;
-      box.innerHTML = r ? `Ets el número <b>${fmt(r.pos)}</b> de ${fmt(r.total)} en experiència.` : "No s'ha pogut calcular la teva posició.";
+      box.innerHTML = r ? `Eres el número <b>${fmt(r.pos)}</b> de ${fmt(r.total)} en experiencia.` : "No se ha podido calcular tu posición.";
     });
   }
 }
@@ -348,23 +419,23 @@ function renderHeroHemicycle() {
   }));
   $("#hero-hemi").innerHTML = `<svg viewBox="-1.04 -1.04 2.08 1.08">${circles.join("")}</svg>`;
   $("#hemi-legend").innerHTML = `
-    <p class="legend-title">Congrés de la XV legislatura · eleccions del 23-J</p>
+    <p class="legend-title">Congreso de la XV legislatura · elecciones del 23-J</p>
     <div class="legend-items">${[...parties].sort((a, b) => b.seats - a.seats).map((p) =>
       `<span class="legend-item"><i style="background:${p.color}"></i>${p.name} <b>${p.seats}</b></span>`).join("")}</div>`;
 }
 
 // ---------- Portada: repte diari ----------
 const SLOT_LABEL = (label) =>
-  /Cert o fals|Verdadero o falso|Cierto o falso/.test(label) ? "Cert o fals" :
+  /Cert o fals|Verdadero o falso|Cierto o falso/.test(label) ? "Verdadero o falso" :
   /Match/.test(label) ? "Match" :
   /Qui ho va dir|Quién lo dijo/.test(label) ? "Frase" :
-  /En quin any|En qué año/.test(label) ? "Any" :
-  /Qui és|Quién es/.test(label) ? "Qui és?" :
+  /En quin any|En qué año/.test(label) ? "Año" :
+  /Qui és|Quién es/.test(label) ? "¿Quién es?" :
   /Ordena/.test(label) ? "Ordena" :
   /On és|Dónde está/.test(label) ? "Mapa" :
   /Endevina el número|Adivina el número/.test(label) ? "Número" :
-  /Dibuixa|Dibuja/.test(label) ? "Dibuixa" :
-  /abans|antes|Congrés del 23-J|Congreso del 23-J|Diputats|Diputados/.test(label) ? "Duel" : "Pregunta";
+  /Dibuixa|Dibuja/.test(label) ? "Dibuja" :
+  /abans|antes|Congrés del 23-J|Congreso del 23-J|Diputats|Diputados/.test(label) ? "Duelo" : "Pregunta";
 
 function renderDailyHero() {
   const box = $("#daily-hero");
@@ -373,7 +444,7 @@ function renderDailyHero() {
   const r = dailyResult(key);
   const d = Progress.data.daily;
   const items = dailyItems(key);
-  const dateRaw = new Date().toLocaleDateString("ca-ES", { weekday: "long", day: "numeric", month: "long" });
+  const dateRaw = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   const date = dateRaw.charAt(0).toUpperCase() + dateRaw.slice(1);
   const grid = r ? [...r.grid] : [];
   const dateEl = $("#hj-date");
@@ -383,23 +454,23 @@ function renderDailyHero() {
   box.classList.toggle("done", !!r);
   box.innerHTML = `
     <div class="jc-top">
-      <span class="jc-badge"><i class="jc-live" aria-hidden="true"></i>Núm. ${dailyNumber(key)}</span>
-      <span class="jc-meta">Nou repte en <b id="dh-next">--:--:--</b></span>
+      <span class="jc-badge"><i class="jc-live" aria-hidden="true"></i>N.º ${dailyNumber(key)}</span>
+      <span class="jc-meta">Nuevo reto en <b id="dh-next">--:--:--</b></span>
     </div>
-    <h2 class="jc-name">Repte diari</h2>
-    <p class="jc-sub">${r ? `Fet! <b>${fmtSecs(r.ms)}</b> · ${r.hits}/10 encerts · ${r.errors} ${r.errors === 1 ? "error" : "errors"}` : `10 proves contra el rellotge. Cada error suma <b>+10 s</b>: guanya qui el fa més ràpid.`}</p>
-    <div class="jc-row jc-dots" aria-label="Les 10 proves d'avui">${items.map((it, i) => {
+    <h2 class="jc-name">Reto diario</h2>
+    <p class="jc-sub">${r ? `¡Hecho! <b>${fmtSecs(r.ms)}</b> · ${r.hits}/10 aciertos · ${r.errors} ${r.errors === 1 ? "error" : "errores"}` : `10 pruebas contra el reloj. Cada error suma <b>+10 s</b>: gana quien lo hace más rápido.`}</p>
+    <div class="jc-row jc-dots" aria-label="Las 10 pruebas de hoy">${items.map((it, i) => {
       const st = r ? (grid[i] === "🟩" ? "ok" : "ko") : "";
       return `<span class="${st}" style="--i:${i}" title="${SLOT_LABEL(it.label)}">${i + 1}</span>`;
     }).join("")}</div>
     <div class="jc-stats">
-      <span><small>La teva ratxa</small><b>${streak} ${streak === 1 ? "dia" : "dies"}</b></span>
-      <span><small>Posició</small><b id="dh-rank">—</b></span>
-      <span><small>${r ? "Temps d'avui" : "Millor temps"}</small><b>${r ? fmtSecs(r.ms) : best < Infinity ? fmtSecs(best) : "—"}</b></span>
+      <span><small>Tu racha</small><b>${streak} ${streak === 1 ? "día" : "días"}</b></span>
+      <span><small>Posición</small><b id="dh-rank">—</b></span>
+      <span><small>${r ? "Tiempo de hoy" : "Mejor tiempo"}</small><b>${r ? fmtSecs(r.ms) : best < Infinity ? fmtSecs(best) : "—"}</b></span>
     </div>
     <div class="jc-foot">
-      ${r ? `<button type="button" class="jc-play" data-share-hero>Comparteix</button>` : `<a class="jc-play" href="#joc/diari"><span aria-hidden="true">▶</span> Juga</a>`}
-      <a class="jc-link" href="#ranking">Rànquing d'avui →</a>
+      ${r ? `<button type="button" class="jc-play" data-share-hero>Comparte</button>` : `<a class="jc-play" href="#joc/diari"><span aria-hidden="true">▶</span> Juega</a>`}
+      <a class="jc-link" href="#ranking">Ranking de hoy →</a>
     </div>`;
   $("[data-share-hero]", box)?.addEventListener("click", () => shareDaily(key));
   window.Online?.fillDailyRank?.(key);
@@ -415,8 +486,8 @@ function renderHjFoot() {
   const done = [!!dailyResult(todayKey()), test && typeof testResult === "function" && !!testResult(todayKey())];
   const total = test ? 2 : 1, n = done.filter(Boolean).length;
   el.innerHTML = `<span class="hj-bars" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${done[i] ? "on" : ""}"></i>`).join("")}</span>
-    <span class="hj-msg">${n === total ? (total === 2 ? "Avui ja has fet els dos jocs. Demà, més!" : "Ja has fet el repte d'avui. Demà, més!") : `${n} de ${total} ${total === 2 ? "fets avui. Fes-los tots dos cada dia per mantenir la ratxa." : "fet avui."}`}</span>
-    <a class="hj-link" href="#ranking">Veure els rànquings →</a>`;
+    <span class="hj-msg">${n === total ? (total === 2 ? "Hoy ya has hecho los dos juegos. ¡Mañana, más!" : "Ya has hecho el reto de hoy. ¡Mañana, más!") : `${n} de ${total} ${total === 2 ? "hechos hoy. Hazlos los dos cada día para mantener la racha." : "hecho hoy."}`}</span>
+    <a class="hj-link" href="#ranking">Ver los rankings →</a>`;
 }
 
 // Compte enrere fins al tancament dels col·legis (29-11-2026, 20:00 a Madrid)
@@ -427,7 +498,7 @@ function tickHjCountdown() {
   if (left <= 0) { el.hidden = true; return; }
   el.hidden = false;
   const z = (v) => String(v).padStart(2, "0");
-  el.innerHTML = `<small>Falten per al 29N</small><b>${Math.floor(left / 864e5)}<i> d </i>${z(Math.floor(left / 36e5) % 24)}<i> h </i>${z(Math.floor(left / 6e4) % 60)}<i> min</i></b>`;
+  el.innerHTML = `<small>Faltan para el 29N</small><b>${Math.floor(left / 864e5)}<i> d </i>${z(Math.floor(left / 36e5) % 24)}<i> h </i>${z(Math.floor(left / 6e4) % 60)}<i> min</i></b>`;
 }
 
 function tickNextDaily() {
@@ -449,18 +520,18 @@ function renderRankingView(arg) {
     .filter(([, v]) => v && typeof v === "object")
     .sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, 14);
   $("#ranking-root").innerHTML = `
-    <div class="rank-tabs"><button class="rank-tab active">Mundial</button><button class="rank-tab" disabled>Amics</button></div>
+    <div class="rank-tabs"><button class="rank-tab active">Mundial</button><button class="rank-tab" disabled>Amigos</button></div>
     <div class="card rank-off">
       <div class="gc-icon" style="--c:var(--blue)">${icon(`<path d="M8 21V11H3v10zM15 21V5h-5v16zM21 21v-7h-5v7z"/>`)}</div>
-      <h3>El rànquing mundial s'activarà aviat</h3>
-      <p>Quan l'app estigui publicada podràs comparar el teu temps amb tothom i crear lligues amb els teus amics. Mentrestant, aquí tens els teus temps.</p>
+      <h3>El ranking mundial se activará pronto</h3>
+      <p>Cuando la app esté publicada podrás comparar tu tiempo con todo el mundo y crear ligas con tus amigos. Mientras tanto, aquí tienes tus tiempos.</p>
     </div>
-    <h2 class="section-title sm">Els teus reptes</h2>
+    <h2 class="section-title sm">Tus retos</h2>
     ${scores.length ? `<div class="lb">${scores.map(([k, v]) => `
       <div class="lb-row"><b class="lb-pos">#${dailyNumber(k)}</b>
-        <span class="lb-name">${new Date(k + "T12:00").toLocaleDateString("ca-ES", { day: "numeric", month: "short" })}<small>${v.grid}</small></span>
+        <span class="lb-name">${new Date(k + "T12:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" })}<small>${v.grid}</small></span>
         <strong>${fmtSecs(v.ms)}</strong></div>`).join("")}</div>`
-      : `<p class="muted">Encara no has fet cap repte diari. <a href="#joc/diari">Fes el d'avui!</a></p>`}`;
+      : `<p class="muted">Aún no has hecho ningún reto diario. <a href="#joc/diari">¡Haz el de hoy!</a></p>`}`;
 }
 
 
@@ -696,13 +767,13 @@ function renderDuelView(code) {
   $("#duel-root").innerHTML = `
     <div class="card online-off">
       <div class="gc-icon" style="--c:var(--blue)">${icon(`<path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/>`)}</div>
-      <h3>Els duels necessiten connexió</h3>
-      <p>Per reptar amics cal obrir l'app des de la seva adreça web (no fent doble clic a l'arxiu) i tenir connexió a internet.</p>
+      <h3>Los duelos necesitan conexión</h3>
+      <p>Para retar a amigos hay que abrir la app desde su dirección web (no haciendo doble clic en el archivo) y tener conexión a internet.</p>
     </div>`;
 }
 $("#account-btn").addEventListener("click", () => {
   if (window.Online) return window.Online.accountClick();
-  toast("Inicia sessió només funciona amb l'app publicada a internet");
+  toast("Iniciar sesión solo funciona con la app publicada en internet");
 });
 
 // ---------- Compte enrere ----------
@@ -711,14 +782,14 @@ function tickCountdown() {
   const set = (sel, v) => { const el = $(sel); if (el) el.textContent = v; };
   if (diff <= 0) {
     const c = $(".ap-count");
-    if (c) c.innerHTML = "<b>Avui es vota!</b> Els col·legis són oberts de 9 a 20 h.";
-    set("#hero-days", "avui es vota");
+    if (c) c.innerHTML = "<b>¡Hoy se vota!</b> Los colegios están abiertos de 9 a 20 h.";
+    set("#hero-days", "hoy se vota");
     return;
   }
   const s = Math.floor(diff / 1000);
   const days = Math.floor(s / 86400);
   set("#cd-d", days);
-  set("#hero-days", `falten ${days} dies`);
+  set("#hero-days", `faltan ${days} días`);
   set("#cd-h", String(Math.floor((s % 86400) / 3600)).padStart(2, "0"));
   set("#cd-m", String(Math.floor((s % 3600) / 60)).padStart(2, "0"));
   set("#cd-s", String(s % 60).padStart(2, "0"));
@@ -733,7 +804,7 @@ function countUp(el) {
   (function step(t) {
     const k = Math.min(1, (t - t0) / 1100);
     const v = target * (1 - Math.pow(1 - k, 3));
-    el.textContent = v.toLocaleString("ca-ES", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
+    el.textContent = v.toLocaleString("es-ES", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
     if (k < 1) requestAnimationFrame(step);
   })(t0);
 }
@@ -764,15 +835,15 @@ function renderPartyMap() {
   const rad = (s) => Math.max(13, 8 + Math.sqrt(s) * 2.6);
   const sorted = [...PARTIES].sort((p, q) => q.seats - p.seats); // els grans a sota
   $("#party-map").innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa ideològic orientatiu dels partits">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa ideológico orientativo de los partidos">
       <rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" rx="14" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/>
       <rect x="${L}" y="${T}" width="${(W - L - R) / 2}" height="${(H - T - B) / 2}" rx="14" fill="rgba(255,75,43,.06)"/>
       <rect x="${L + (W - L - R) / 2}" y="${T}" width="${(W - L - R) / 2}" height="${(H - T - B) / 2}" fill="rgba(53,84,255,.05)"/>
       <path d="M${px(5)} ${T}V${H - B}M${L} ${py(5)}H${W - R}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 6" opacity=".5"/>
-      <text x="${L + 10}" y="${H - B + 30}" class="ax">← Esquerra</text>
-      <text x="${W - R - 10}" y="${H - B + 30}" class="ax" text-anchor="end">Dreta →</text>
-      <text x="${L - 14}" y="${T + 14}" class="ax" transform="rotate(-90 ${L - 14} ${T + 14})" text-anchor="end">Sobiranisme ↑</text>
-      <text x="${L - 14}" y="${H - B - 4}" class="ax" transform="rotate(-90 ${L - 14} ${H - B - 4})" text-anchor="start">Centralisme</text>
+      <text x="${L + 10}" y="${H - B + 30}" class="ax">← Izquierda</text>
+      <text x="${W - R - 10}" y="${H - B + 30}" class="ax" text-anchor="end">Derecha →</text>
+      <text x="${L - 14}" y="${T + 14}" class="ax" transform="rotate(-90 ${L - 14} ${T + 14})" text-anchor="end">Soberanismo ↑</text>
+      <text x="${L - 14}" y="${H - B - 4}" class="ax" transform="rotate(-90 ${L - 14} ${H - B - 4})" text-anchor="start">Centralismo</text>
       ${sorted.map((p) => {
         const sel = p.id === cmpSel.a ? "A" : p.id === cmpSel.b ? "B" : "";
         return `<g class="pm-dot ${sel ? "sel" : ""}" data-id="${p.id}" tabindex="0" role="button" aria-label="${p.sig}">
@@ -782,7 +853,7 @@ function renderPartyMap() {
         </g>`;
       }).join("")}
     </svg>
-    <p class="pm-cap">La mida de cada bombolla és proporcional als escons del 2023. Toca un partit per afegir-lo al comparador.</p>`;
+    <p class="pm-cap">El tamaño de cada burbuja es proporcional a los escaños de 2023. Toca un partido para añadirlo al comparador.</p>`;
   $$(".pm-dot").forEach((g) => {
     const go = () => pickParty(g.dataset.id);
     g.addEventListener("click", go);
@@ -813,31 +884,31 @@ function renderCompare() {
       <header class="cmp-head"><span class="cmp-side">${side}</span><b>${p.sig}</b><small>${p.name}</small></header>
       <div class="cmp-cand">
         ${personPhoto(p.cand.name, p.color, "lg")}
-        <div><small>Cap de llista al 29N</small><h4>${p.cand.name}</h4><p>${p.cand.info}</p></div>
+        <div><small>Cabeza de lista el 29N</small><h4>${p.cand.name}</h4><p>${p.cand.info}</p></div>
       </div>
       ${PARTY_ARGS[p.id] ? `<div class="cmp-core"><small>Idea central</small><q>${PARTY_ARGS[p.id].core}</q><p>${PARTY_ARGS[p.id].about}</p></div>` : ""}
       <dl class="cmp-rows">
-        <div><dt>Líder del partit</dt><dd>${p.leader ? `${p.leader.name} <span class="muted">· ${p.leader.role}</span>` : `<span class="muted">Coalició sense un líder únic</span>`}</dd></div>
-        <div><dt>Escons el 2023</dt><dd><span class="big">${p.seats}</span><span class="seatbar"><i style="width:${(p.seats / 350) * 100}%"></i><em></em></span></dd></div>
-        <div><dt>Vots el 2023</dt><dd>${p.votes != null ? `<span class="big">${String(p.votes).replace(".", ",")} %</span>` : `<span class="muted">No es va presentar sol</span>`}</dd></div>
-        <div><dt>Ideari</dt><dd class="chips">${p.ideas.map((x) => `<span>${x}</span>`).join("")}</dd></div>
-        <div><dt>Model territorial</dt><dd>${p.territory || `<span class="muted">Sense posició destacada</span>`}</dd></div>
-        ${PARTY_EXTRA[p.id] ? `<div><dt>Propostes estrella</dt><dd><ul class="stars">${PARTY_EXTRA[p.id].stars.map((x) => `<li>${x}</li>`).join("")}</ul></dd></div>` : ""}
+        <div><dt>Líder del partido</dt><dd>${p.leader ? `${p.leader.name} <span class="muted">· ${p.leader.role}</span>` : `<span class="muted">Coalición sin un líder único</span>`}</dd></div>
+        <div><dt>Escaños en 2023</dt><dd><span class="big">${p.seats}</span><span class="seatbar"><i style="width:${(p.seats / 350) * 100}%"></i><em></em></span></dd></div>
+        <div><dt>Votos en 2023</dt><dd>${p.votes != null ? `<span class="big">${String(p.votes).replace(".", ",")} %</span>` : `<span class="muted">No se presentó solo</span>`}</dd></div>
+        <div><dt>Ideario</dt><dd class="chips">${p.ideas.map((x) => `<span>${x}</span>`).join("")}</dd></div>
+        <div><dt>Modelo territorial</dt><dd>${p.territory || `<span class="muted">Sin posición destacada</span>`}</dd></div>
+        ${PARTY_EXTRA[p.id] ? `<div><dt>Propuestas estrella</dt><dd><ul class="stars">${PARTY_EXTRA[p.id].stars.map((x) => `<li>${x}</li>`).join("")}</ul></dd></div>` : ""}
         <div><dt>Investidura de Sánchez (2023)</dt><dd>${voteBadge(p.inv)}</dd></div>
-        <div><dt>Llei d'amnistia (2024)</dt><dd>${voteBadge(p.amn)}</dd></div>
-        ${p.note ? `<div><dt>A tenir en compte</dt><dd class="muted">${p.note}</dd></div>` : ""}
+        <div><dt>Ley de amnistía (2024)</dt><dd>${voteBadge(p.amn)}</dd></div>
+        ${p.note ? `<div><dt>A tener en cuenta</dt><dd class="muted">${p.note}</dd></div>` : ""}
       </dl>
       <details class="cmp-more">
-        <summary>Més dades del partit</summary>
+        <summary>Más datos del partido</summary>
         <dl class="cmp-rows">
           ${PARTY_EXTRA[p.id] ? `
-          <div><dt>Història</dt><dd>${PARTY_EXTRA[p.id].hist}</dd></div>
-          <div><dt>On governa</dt><dd>${PARTY_EXTRA[p.id].gov}</dd></div>
-          <div><dt>On és més fort</dt><dd>${PARTY_EXTRA[p.id].strong}</dd></div>
-          <div><dt>Aliances</dt><dd>${PARTY_EXTRA[p.id].allies}</dd></div>
-          <div><dt>Competeix amb</dt><dd>${PARTY_EXTRA[p.id].vs}</dd></div>` : ""}
-          <div><dt>Grup europeu</dt><dd>${p.euro}</dd></div>
-          <div><dt>Fundació</dt><dd>${p.founded}</dd></div>
+          <div><dt>Historia</dt><dd>${PARTY_EXTRA[p.id].hist}</dd></div>
+          <div><dt>Dónde gobierna</dt><dd>${PARTY_EXTRA[p.id].gov}</dd></div>
+          <div><dt>Dónde es más fuerte</dt><dd>${PARTY_EXTRA[p.id].strong}</dd></div>
+          <div><dt>Alianzas</dt><dd>${PARTY_EXTRA[p.id].allies}</dd></div>
+          <div><dt>Compite con</dt><dd>${PARTY_EXTRA[p.id].vs}</dd></div>` : ""}
+          <div><dt>Grupo europeo</dt><dd>${p.euro}</dd></div>
+          <div><dt>Fundación</dt><dd>${p.founded}</dd></div>
         </dl>
       </details>
       <div class="cmp-news" data-party="${p.id}" style="--pc:${p.color}"></div>
@@ -857,15 +928,15 @@ function renderCompare() {
   renderFace(A, B);
   if (typeof fillPartyNews === "function") fillPartyNews();
   const argA = PARTY_ARGS[A.id] || {}, argB = PARTY_ARGS[B.id] || {};
-  const cell = (p, txt) => `<div class="args-cell" style="--pc:${p.color}"><b>${p.sig}</b>${txt ? `<p>${txt}</p>` : `<p class="muted">Sense proposta destacada en aquest tema.</p>`}</div>`;
+  const cell = (p, txt) => `<div class="args-cell" style="--pc:${p.color}"><b>${p.sig}</b>${txt ? `<p>${txt}</p>` : `<p class="muted">Sin propuesta destacada en este tema.</p>`}</div>`;
   $("#args").innerHTML = `
-    <div class="args-head"><h3>Què proposen, tema a tema</h3><p><span style="--pc:${A.color}">${A.sig}</span> vs <span style="--pc:${B.color}">${B.sig}</span></p></div>
+    <div class="args-head"><h3>Qué proponen, tema a tema</h3><p><span style="--pc:${A.color}">${A.sig}</span> vs <span style="--pc:${B.color}">${B.sig}</span></p></div>
     ${ARG_AREAS.map((ar) => `
       <div class="args-row">
         <div class="args-label"><svg viewBox="0 0 24 24">${ar.icon}</svg><span>${ar.label}</span></div>
         ${cell(A, argA[ar.k])}${cell(B, argB[ar.k])}
       </div>`).join("")}
-    <p class="src-note">Resum a partir dels programes electorals del 2023 i de les posicions públiques de cada partit. Els programes del 29N poden introduir canvis.</p>`;
+    <p class="src-note">Resumen a partir de los programas electorales de 2023 y de las posiciones públicas de cada partido. Los programas del 29N pueden introducir cambios.</p>`;
 }
 
 // Cara a cara: distància ideològica, evolució d'escons i coincidències
@@ -879,14 +950,14 @@ function renderFace(A, B) {
       <i class="fx-dot" style="--v:${a * 10}%;--pc:${A.color}">A</i><i class="fx-dot" style="--v:${b * 10}%;--pc:${B.color}">B</i></div></div>`;
   const dist = Math.min(100, Math.round(Math.hypot(Math.abs(A.x - B.x), Math.abs(A.y - B.y)) * 10));
   const same = [];
-  if (A.inv !== "—" && B.inv !== "—") same.push(A.inv === B.inv ? `Van votar igual la investidura de Sánchez (${A.inv})` : "Van votar diferent la investidura de Sánchez");
-  if (A.amn !== "—" && B.amn !== "—") same.push(A.amn === B.amn ? `Van votar igual la llei d'amnistia (${A.amn})` : "Van votar diferent la llei d'amnistia");
-  if (A.euro === B.euro && !["—", "No inscrits"].includes(A.euro)) same.push(`Comparteixen grup europeu (${A.euro})`);
+  if (A.inv !== "—" && B.inv !== "—") same.push(A.inv === B.inv ? `Votaron igual en la investidura de Sánchez (${A.inv})` : "Votaron distinto en la investidura de Sánchez");
+  if (A.amn !== "—" && B.amn !== "—") same.push(A.amn === B.amn ? `Votaron igual en la ley de amnistía (${A.amn})` : "Votaron distinto en la ley de amnistía");
+  if (A.euro === B.euro && !["—", "No inscritos"].includes(A.euro)) same.push(`Comparten grupo europeo (${A.euro})`);
   const common = A.ideas.filter((x) => B.ideas.includes(x));
-  if (common.length) same.push(`Ideari en comú: ${common.join(", ")}`);
+  if (common.length) same.push(`Ideario en común: ${common.join(", ")}`);
   const evo = (p) => {
     const s19 = SEATS_2019[p.id];
-    if (s19 == null) return `<span class="muted">Sense dades comparables</span>`;
+    if (s19 == null) return `<span class="muted">Sin datos comparables</span>`;
     const d = p.seats - s19;
     return `<b>${s19} → ${p.seats}</b> <span class="delta ${d > 0 ? "up" : d < 0 ? "down" : ""}">${d > 0 ? "+" : ""}${d}</span>`;
   };
@@ -895,18 +966,18 @@ function renderFace(A, B) {
     <div class="face-head"><h3>Cara a cara</h3><p><span style="--pc:${A.color}">${A.sig}</span> vs <span style="--pc:${B.color}">${B.sig}</span></p></div>
     <div class="face-grid">
       <div class="face-card">
-        <h4>Distància ideològica</h4>
+        <h4>Distancia ideológica</h4>
         <div class="dist"><div class="dist-bar"><i style="width:${dist}%"></i></div><b>${dist}/100</b></div>
-        <p class="muted">${dist < 25 ? "Molt a prop en el mapa ideològic." : dist < 55 ? "Posicions diferents però amb punts de contacte." : "Posicions molt allunyades."}</p>
-        ${axis("Eix esquerra–dreta", "Esquerra", "Dreta", A.x, B.x)}
-        ${axis("Eix territorial", "Centralisme", "Sobiranisme", A.y, B.y)}
+        <p class="muted">${dist < 25 ? "Muy cerca en el mapa ideológico." : dist < 55 ? "Posiciones distintas pero con puntos de contacto." : "Posiciones muy alejadas."}</p>
+        ${axis("Eje izquierda–derecha", "Izquierda", "Derecha", A.x, B.x)}
+        ${axis("Eje territorial", "Centralismo", "Soberanismo", A.y, B.y)}
       </div>
       <div class="face-card">
-        <h4>Escons 2019 → 2023</h4>
+        <h4>Escaños 2019 → 2023</h4>
         <div class="evo"><span style="--pc:${A.color}"><em>${A.sig}</em>${evo(A)}</span><span style="--pc:${B.color}"><em>${B.sig}</em>${evo(B)}</span></div>
-        <h4>Coincidències i diferències</h4>
-        <ul class="same">${same.length ? same.map((x) => `<li>${x}</li>`).join("") : "<li>No hi ha dades de votacions comparables.</li>"}</ul>
-        <p class="muted">Tots dos tenen proposta en ${both} de ${ARG_AREAS.length} àrees (taula de sota).</p>
+        <h4>Coincidencias y diferencias</h4>
+        <ul class="same">${same.length ? same.map((x) => `<li>${x}</li>`).join("") : "<li>No hay datos de votaciones comparables.</li>"}</ul>
+        <p class="muted">Ambos tienen propuesta en ${both} de ${ARG_AREAS.length} áreas (tabla de abajo).</p>
       </div>
     </div>`;
 }
@@ -941,12 +1012,12 @@ function renderParties() {
 }
 
 // ---------- Aprèn: simulador lliure ----------
-const SIM_EXAMPLE = [["Partit A", 120000], ["Partit B", 95000], ["Partit C", 40000], ["Partit D", 22000], ["Partit E", 7500]];
+const SIM_EXAMPLE = [["Partido A", 120000], ["Partido B", 95000], ["Partido C", 40000], ["Partido D", 22000], ["Partido E", 7500]];
 
 function addSimParty(name = "", votes = "") {
   const row = h(`<div class="h-party">
-    <input type="text" class="p-name" placeholder="Nom de la candidatura" value="${esc(name)}">
-    <input type="number" class="p-votes" min="0" placeholder="Vots" value="${votes}">
+    <input type="text" class="p-name" placeholder="Nombre de la candidatura" value="${esc(name)}">
+    <input type="number" class="p-votes" min="0" placeholder="Votos" value="${votes}">
     <button class="del" aria-label="Elimina">×</button>
   </div>`);
   $(".del", row).addEventListener("click", () => row.remove());
@@ -977,7 +1048,7 @@ function calcSim() {
   const res = $("#h-result");
   res.hidden = false;
   if (!parties.length) {
-    res.innerHTML = `<p class="sim-note">Afegeix almenys una candidatura amb vots.</p>`;
+    res.innerHTML = `<p class="sim-note">Añade al menos una candidatura con votos.</p>`;
     return;
   }
   const valid = parties.reduce((s, p) => s + p.votes, 0) + blank;
@@ -990,17 +1061,17 @@ function calcSim() {
   const seatSquares = winners.map((w) => `<i style="background:${colorOf(elig[w.pi])}" title="${esc(elig[w.pi].name)}"></i>`).join("");
 
   res.innerHTML = `
-    <div class="sim-seats" aria-label="Escons repartits">${seatSquares}</div>
+    <div class="sim-seats" aria-label="Escaños repartidos">${seatSquares}</div>
     <div class="sim-bars">${parties.map((p) => {
       const k = elig.indexOf(p);
-      return `<div class="sim-bar ${k < 0 ? "out" : ""}" title="${fmt(p.votes)} vots (${((p.votes / valid) * 100).toFixed(2)} %)">
+      return `<div class="sim-bar ${k < 0 ? "out" : ""}" title="${fmt(p.votes)} votos (${((p.votes / valid) * 100).toFixed(2)} %)">
         <span>${esc(p.name)}</span>
         <div class="track"><div style="width:${Math.max(2, (p.votes / maxV) * 100)}%;background:${k < 0 ? "" : colorOf(p)}"></div></div>
         <strong>${k < 0 ? 0 : won[k]}</strong>
       </div>`;
     }).join("")}</div>
-    <p class="sim-note">Vots vàlids: ${fmt(valid)} (${fmt(blank)} en blanc) · Llindar del ${threshold} %: ${fmt(Math.ceil(min))} vots${
-      elig.length < parties.length ? ` · Queden fora: ${parties.filter((p) => !elig.includes(p)).map((p) => esc(p.name)).join(", ")}` : ""}</p>
+    <p class="sim-note">Votos válidos: ${fmt(valid)} (${fmt(blank)} en blanco) · Umbral del ${threshold} %: ${fmt(Math.ceil(min))} votos${
+      elig.length < parties.length ? ` · Se quedan fuera: ${parties.filter((p) => !elig.includes(p)).map((p) => esc(p.name)).join(", ")}` : ""}</p>
     ${elig.length ? quotientTable(elig.map((p) => p.name), elig.map((p) => p.votes), seats, winners) : ""}`;
 }
 
@@ -1043,13 +1114,13 @@ document.addEventListener("contextmenu", (e) => { if (e.target.closest("a, butto
 // ---------- Primera visita: què hi ha a l'app ----------
 const ONBOARD_KEY = "r29n-onboard";
 const ONBOARD = [
-  { t: "Benvingut/da a Política en Joc", d: "Aprèn com funcionen les eleccions del 29N jugant. Et presentem el que hi trobaràs en un minut.", art: "simulador" },
-  { t: "Inici i repte diari", d: "Cada dia, un repte nou de 10 proves amb cronòmetre: preguntes, ordenar, trobar províncies al mapa, dibuixar territoris com els Països Catalans o Euskal Herria… Fes ratxa (tens un comodí per setmana) i compara't amb tothom.", art: "diari" },
-  { t: "Notícies", d: "Els titulars de política dels principals mitjans, al minut: el dia en 1 minut, la mateixa notícia explicada per diversos mitjans, el termòmetre de campanya i un quiz cada setmana.", art: "verificador" },
-  { t: "Minijocs", d: "Contrarellotge, Verificador, Fes majoria, Endevina l'any… Partides ràpides que donen XP per pujar de nivell, de Votant fins a President.", art: "contrarellotge" },
-  { t: "Simuladors", d: "Funda el teu partit i guanya unes eleccions amb les regles de veritat, o planta cara als candidats en un debat electoral en 3D.", art: "simulador" },
-  { t: "Amics", d: "Afegeix els teus amics, xateja-hi i truca'ls, i repta'ls a duels, campanyes i debats. I compara't amb ells i amb tothom al rànquing del repte diari.", art: "majoria" },
-  { t: "Aprèn", d: "La guia del 29N en capítols curts que es llegeixen pas a pas, a pantalla completa: com es vota, què hi ha en joc, les ideologies… I el comparador de partits, el pactòmetre i el diccionari.", art: "paraula" },
+  { t: "Bienvenido/a a Política en Joc", d: "Aprende cómo funcionan las elecciones del 29N jugando. Te presentamos lo que encontrarás en un minuto.", art: "simulador" },
+  { t: "Inicio y reto diario", d: "Cada día, un reto nuevo de 10 pruebas con cronómetro: preguntas, ordenar, encontrar provincias en el mapa, dibujar territorios como los Países Catalanes o Euskal Herria… Haz racha (tienes un comodín por semana) y compárate con todo el mundo.", art: "diari" },
+  { t: "Noticias", d: "Los titulares de política de los principales medios, al minuto: el día en 1 minuto, la misma noticia explicada por varios medios, el termómetro de campaña y un quiz cada semana.", art: "verificador" },
+  { t: "Minijuegos", d: "Contrarreloj, Verificador, Haz mayoría, Adivina el año… Partidas rápidas que dan XP para subir de nivel, de Votante a Presidente.", art: "contrarellotge" },
+  { t: "Simuladores", d: "Funda tu partido y gana unas elecciones con las reglas de verdad, o plántales cara a los candidatos en un debate electoral en 3D.", art: "simulador" },
+  { t: "Amigos", d: "Añade a tus amigos, chatea y llámalos, y rétalos a duelos, campañas y debates. Y compárate con ellos y con todo el mundo en el ranking del reto diario.", art: "majoria" },
+  { t: "Aprende", d: "La guía del 29N en capítulos cortos que se leen paso a paso, a pantalla completa: cómo se vota, qué está en juego, las ideologías… Y el comparador de partidos, el pactómetro y el diccionario.", art: "paraula" },
 ];
 function showOnboarding() {
   // Mentre hi hagi l'avís de la Lliga de pronòstics (o estigui oberta), en surt una diapositiva abans de l'última
@@ -1058,13 +1129,13 @@ function showOnboarding() {
   if (lliga) slides.push(lliga);
   // Al mòbil (o si el navegador ja ofereix instal·lar-la): una pantalla per tenir-la a la pantalla d'inici
   const ik = insKind();
-  if (ik && (insMobile() || ik === "prompt")) slides.push({ install: true, t: "Tingues-la a mà", d: "Instal·la Política en Joc a la pantalla d'inici: és gratis i no cal passar per cap botiga d'apps.", art: "simulador" });
+  if (ik && (insMobile() || ik === "prompt")) slides.push({ install: true, t: "Tenla a mano", d: "Instala Política en Joc en la pantalla de inicio: es gratis y no hace falta pasar por ninguna tienda de apps.", art: "simulador" });
   let k = 0;
-  const box = h(`<div class="onb" role="dialog" aria-modal="true" aria-label="Què hi ha a Política en Joc"><div class="onb-card card">
+  const box = h(`<div class="onb" role="dialog" aria-modal="true" aria-label="Qué hay en Política en Joc"><div class="onb-card card">
     <div class="onb-art" data-art></div>
     <div class="onb-body"><p class="kicker" data-n></p><h3 data-t></h3><p data-d></p><div data-extra></div>
       <div class="onb-dots" data-dots></div>
-      <div class="row"><button class="btn ghost" data-skip>Salta</button><button class="btn primary" data-next>Següent</button></div></div>
+      <div class="row"><button class="btn ghost" data-skip>Saltar</button><button class="btn primary" data-next>Siguiente</button></div></div>
   </div></div>`);
   document.body.appendChild(box);
   const N = slides.length + 1;
@@ -1074,11 +1145,11 @@ function showOnboarding() {
     window.Stats?.step?.("onb", last ? "ultima" : s.install ? "instal" : String(k + 1));
     $("[data-art]", box).innerHTML = ART[last ? "match" : s.art] ? ART[last ? "match" : s.art]() : "";
     $("[data-n]", box).textContent = `${k + 1} de ${N}`;
-    $("[data-t]", box).textContent = last ? "El teu usuari" : s.t;
-    $("[data-d]", box).textContent = last ? "Pots començar a jugar ara mateix. Quan et creïs l'usuari amb Google, ho tindràs tot desat i podràs jugar amb els altres." : s.d;
-    $("[data-extra]", box).innerHTML = !last && s.install ? `<div class="ins-onb">${INS_WHY}${insHow(insKind() || ik)}</div>` : !last && s.steps ? `<ol class="esp-avis-steps">${s.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>` : last && window.Online?.isGuest?.() ? `<ul class="pitch-list compact">${["Progrés i assoliments desats a tots els dispositius", "Rànquing, lligues i duels amb amics", "Nom d'usuari i foto de perfil"].map((x) => `<li><span aria-hidden="true">✓</span><div><b>${x}</b></div></li>`).join("")}</ul><button class="btn google-btn" data-signin-cta>${googleIconSvg()} Crea l'usuari amb Google</button><small class="onb-note">Sense usuari pots fer 3 partides de prova.</small>` : "";
+    $("[data-t]", box).textContent = last ? "Tu usuario" : s.t;
+    $("[data-d]", box).textContent = last ? "Puedes empezar a jugar ahora mismo. Cuando te crees el usuario con Google, lo tendrás todo guardado y podrás jugar con los demás." : s.d;
+    $("[data-extra]", box).innerHTML = !last && s.install ? `<div class="ins-onb">${INS_WHY}${insHow(insKind() || ik)}</div>` : !last && s.steps ? `<ol class="esp-avis-steps">${s.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>` : last && window.Online?.isGuest?.() ? `<ul class="pitch-list compact">${["Progreso y logros guardados en todos los dispositivos", "Ranking, ligas y duelos con amigos", "Nombre de usuario y foto de perfil"].map((x) => `<li><span aria-hidden="true">✓</span><div><b>${x}</b></div></li>`).join("")}</ul><button class="btn google-btn" data-signin-cta>${googleIconSvg()} Crea el usuario con Google</button><small class="onb-note">Sin usuario puedes hacer 3 partidas de prueba.</small>` : "";
     $("[data-dots]", box).innerHTML = Array.from({ length: N }, (_, i) => `<i class="${i === k ? "on" : ""}"></i>`).join("");
-    $("[data-next]", box).textContent = last ? "Comença a jugar" : s.install && isStandalone() ? "Següent" : s.install ? "Ara no, després" : "Següent";
+    $("[data-next]", box).textContent = last ? "Empieza a jugar" : s.install && isStandalone() ? "Siguiente" : s.install ? "Ahora no, después" : "Siguiente";
     if (!last && s.install) insBind(box, () => { if (++k >= N) close(); else draw(); });
   };
   draw();
@@ -1099,17 +1170,17 @@ if (!store.get(ONBOARD_KEY, null)) {
 // Un sol cop per tanda (NOVETATS_ID). Qui entra per primer cop fa el tutorial, que ja ho explica, i no les veu.
 // No surten enmig d'una partida ni a les pàgines de control i avís legal: s'esperen a la pàgina següent.
 var NOVETATS_KEY = "r29n-novetats", NOVETATS_ID = "2026-11-06";
-let NOVETATS_HEAD = { t: "El repte diari s'ha renovat", art: "diari", cta: "Juga el repte d'avui", href: "#joc/diari" };
+let NOVETATS_HEAD = { t: "El reto diario se ha renovado", art: "diari", cta: "Juega el reto de hoy", href: "#joc/diari" };
 let NOVETATS = [
-  { ico: "🔎", t: "Troba l'error", d: "Una frase amb un tros fals: toca'l." },
-  { ico: "🗂️", t: "Classifica", d: "Porta cada targeta a la seva columna, sense cap errada." },
-  { ico: "🗳️", t: "Quines eleccions són?", d: "Endevina-les a partir del resultat dels partits." },
-  { ico: "🧮", t: "La llei d'Hondt", d: "Calcula quants escons treu un partit amb els vots a la mà." },
-  { ico: "🗺️", t: "Pinta la comunitat", d: "Toca al mapa totes les seves províncies." },
+  { ico: "🔎", t: "Encuentra el error", d: "Una frase con un trozo falso: tócalo." },
+  { ico: "🗂️", t: "Clasifica", d: "Lleva cada tarjeta a su columna, sin ningún fallo." },
+  { ico: "🗳️", t: "¿Qué elecciones son?", d: "Adivínalas a partir del resultado de los partidos." },
+  { ico: "🧮", t: "La ley d'Hondt", d: "Calcula cuántos escaños obtiene un partido con los votos en la mano." },
+  { ico: "🗺️", t: "Pinta la comunidad", d: "Toca en el mapa todas sus provincias." },
 ];
 let NOVETATS_APP = [
-  { ico: "📚", t: "Moltes més preguntes", d: "A totes les proves: Constitució, història, política catalana, actualitat i més." },
-  { ico: "🧩", t: "Parelles renovades", d: "Ara lligues organismes amb la seva funció, partits amb candidats o presidents amb els seus anys. I adeu a la prova de sumar majories." },
+  { ico: "📚", t: "Muchas más preguntas", d: "En todas las pruebas: Constitución, historia, política catalana, actualidad y más." },
+  { ico: "🧩", t: "Parejas renovadas", d: "Ahora unes organismos con su función, partidos con candidatos o presidentes con sus años. Y adiós a la prueba de sumar mayorías." },
 ];
 // Des del 8-11-2026 (en català): el test d'actualitat, i el repte renovat a «I a més». En castellà, on el test no hi és, es
 // queda l'avís del repte renovat.
@@ -1118,14 +1189,14 @@ function novetatsTest() {
   if (novetatsSet || !(typeof testOn === "function" && testOn())) return;
   novetatsSet = true;
   NOVETATS_ID = "2026-11-08";
-  NOVETATS_HEAD = { t: "Nou: el test d'actualitat", art: "diari", cta: "Fes el test d'avui", href: "#joc/actualitat" };
+  NOVETATS_HEAD = { t: "Nuevo: el test de actualidad", art: "diari", cta: "Haz el test de hoy", href: "#joc/actualitat" };
   NOVETATS = [
-    { ico: "📰", t: "Cada dia, preguntes noves", d: "Sobre els temes de l'actualitat d'aquests dies i de cultura general relacionada amb les notícies." },
-    { ico: "💡", t: "Amb l'explicació", d: "Després de cada resposta, el context i l'enllaç a la notícia." },
-    { ico: "🏆", t: "Amb el seu rànquing", d: "A part del repte diari: guanya qui n'encerta més i, si hi ha empat, qui va més de pressa." },
+    { ico: "📰", t: "Cada día, preguntas nuevas", d: "Sobre los temas de actualidad de estos días y de cultura general relacionada con las noticias." },
+    { ico: "💡", t: "Con la explicación", d: "Después de cada respuesta, el contexto y el enlace a la noticia." },
+    { ico: "🏆", t: "Con su ranking", d: "Aparte del reto diario: gana quien acierta más y, si hay empate, quien va más rápido." },
   ];
   NOVETATS_APP = [
-    { ico: "🗓️", t: "El repte diari, renovat", d: "Proves noves (Troba l'error, Classifica, La llei d'Hondt, Pinta la comunitat…) i moltes més preguntes." },
+    { ico: "🗓️", t: "El reto diario, renovado", d: "Pruebas nuevas (Encuentra el error, Clasifica, La ley d'Hondt, Pinta la comunidad…) y muchas más preguntas." },
   ];
 }
 function novetatsMaybe() {
@@ -1137,12 +1208,12 @@ function novetatsMaybe() {
   if (["joc", "control", "legal", "nit"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .xat")) return;
   store.set(NOVETATS_KEY, NOVETATS_ID);
   const li = (x) => `<li><span class="nov-ico" aria-hidden="true">${x.ico}</span><div><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div></li>`;
-  const box = h(`<div class="onb nov" role="dialog" aria-modal="true" aria-label="Novetats"><div class="card nov-card">
-    <header class="nov-head"><div class="nov-art" aria-hidden="true">${ART[NOVETATS_HEAD.art] ? ART[NOVETATS_HEAD.art]() : ""}</div><div><p class="kicker">Novetats</p><h3>${NOVETATS_HEAD.t}</h3></div></header>
+  const box = h(`<div class="onb nov" role="dialog" aria-modal="true" aria-label="Novedades"><div class="card nov-card">
+    <header class="nov-head"><div class="nov-art" aria-hidden="true">${ART[NOVETATS_HEAD.art] ? ART[NOVETATS_HEAD.art]() : ""}</div><div><p class="kicker">Novedades</p><h3>${NOVETATS_HEAD.t}</h3></div></header>
     <ul class="nov-list">${NOVETATS.map(li).join("")}</ul>
-    <p class="nov-sub">I a més</p>
+    <p class="nov-sub">Y además</p>
     <ul class="nov-list sm">${NOVETATS_APP.map(li).join("")}</ul>
-    <div class="row nov-btns"><button class="btn ghost" type="button" data-later>Més tard</button><a class="btn primary" href="${NOVETATS_HEAD.href}" data-go>${NOVETATS_HEAD.cta}</a></div>
+    <div class="row nov-btns"><button class="btn ghost" type="button" data-later>Más tarde</button><a class="btn primary" href="${NOVETATS_HEAD.href}" data-go>${NOVETATS_HEAD.cta}</a></div>
   </div></div>`);
   document.body.appendChild(box);
   const close = (go) => { box.remove(); window.Track?.("novetats", { id: NOVETATS_ID, go: go ? 1 : 0 }); };
@@ -1165,10 +1236,10 @@ function isStandalone() { return matchMedia("(display-mode: standalone)").matche
 function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
 function canInstall() { return !isStandalone() && (!!installEvt || isIOS()); }
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  window.addEventListener("load", () => navigator.serviceWorker.register("../sw.js").catch(() => {}));
 }
 window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; renderInstall(); });
-window.addEventListener("appinstalled", () => { window.Stats?.add("inst"); window.Stats?.step?.("ins", "instal"); installEvt = null; store.set(INSTALL_KEY, { done: 1 }); renderInstall(); toast("Ja tens Política en Joc instal·lada"); });
+window.addEventListener("appinstalled", () => { window.Stats?.add("inst"); window.Stats?.step?.("ins", "instal"); installEvt = null; store.set(INSTALL_KEY, { done: 1 }); renderInstall(); toast("Ya tienes Política en Joc instalada"); });
 async function doInstall() {
   if (installEvt) {
     installEvt.prompt();
@@ -1178,11 +1249,11 @@ async function doInstall() {
     renderInstall();
     return;
   }
-  const box = h(`<div class="onb" role="dialog" aria-modal="true" aria-label="Instal·la l'app"><div class="card install-ios">
-    <h3>Instal·la Política en Joc</h3>
-    <ol><li>Toca el botó <b>Comparteix</b> <span class="ios-share" aria-hidden="true">⬆︎</span> de Safari.</li><li>Tria <b>Afegeix a la pantalla d'inici</b>.</li><li>Prem <b>Afegeix</b>. Ja la tindràs com una app!</li></ol>
-    <p class="muted">Ha de ser amb Safari. Funciona igual que l'app: a pantalla completa i amb la icona a la pantalla d'inici.</p>
-    <button class="btn primary" type="button" data-ok>Entesos</button></div></div>`);
+  const box = h(`<div class="onb" role="dialog" aria-modal="true" aria-label="Instala la app"><div class="card install-ios">
+    <h3>Instala Política en Joc</h3>
+    <ol><li>Toca el botón <b>Comparte</b> <span class="ios-share" aria-hidden="true">⬆︎</span> de Safari.</li><li>Elige <b>Añadir a pantalla de inicio</b>.</li><li>Pulsa <b>Añadir</b>. ¡Ya la tendrás como una app!</li></ol>
+    <p class="muted">Tiene que ser con Safari. Funciona igual que la app: a pantalla completa y con el icono en la pantalla de inicio.</p>
+    <button class="btn primary" type="button" data-ok>Entendido</button></div></div>`);
   document.body.appendChild(box);
   $("[data-ok]", box).addEventListener("click", () => box.remove());
   box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
@@ -1191,7 +1262,7 @@ async function doInstall() {
 function renderInstall() {
   if (!INSTALL_KEY) return;
   const card = $("#install-card");
-  if (card) card.innerHTML = canInstall() ? `<div class="card install-card"><span aria-hidden="true">📲</span><div><b>Instal·la Política en Joc</b><p>Tindràs l'app a la pantalla d'inici, a pantalla completa i més ràpida.</p></div><button class="btn primary" type="button" data-install>Instal·la</button></div>` : "";
+  if (card) card.innerHTML = canInstall() ? `<div class="card install-card"><span aria-hidden="true">📲</span><div><b>Instala Política en Joc</b><p>Tendrás la app en la pantalla de inicio, a pantalla completa y más rápida.</p></div><button class="btn primary" type="button" data-install>Instala</button></div>` : "";
   const bar = $("#install-bar");
   if (bar) bar.innerHTML = "";
   $$("[data-install]").forEach((b) => { b.onclick = doInstall; });
@@ -1222,16 +1293,16 @@ const insShareSvg = `<svg class="ins-svg" viewBox="0 0 24 24" aria-hidden="true"
 const insAddSvg = `<svg class="ins-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 // Els passos (o el botó) segons el mòbil i el navegador
 function insHow(kind) {
-  if (kind === "prompt") return `<button class="btn primary lg ins-go" type="button" data-ins-go>📲 Instal·la-la ara</button><p class="ins-small">Un toc i ja la tindràs a la pantalla d'inici.</p>`;
+  if (kind === "prompt") return `<button class="btn primary lg ins-go" type="button" data-ins-go>📲 Instálala ahora</button><p class="ins-small">Un toque y ya la tendrás en la pantalla de inicio.</p>`;
   if (kind === "ios") return `<ol class="ins-steps">
-      <li><span>1</span><p>Toca el botó <b>Comparteix</b> ${insShareSvg} ${/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent) ? "(a dalt, a la barra de l'adreça)" : "(a la barra de Safari)"}.</p></li>
-      <li><span>2</span><p>Baixa una mica i tria <b>Afegeix a la pantalla d'inici</b> ${insAddSvg}.</p></li>
-      <li><span>3</span><p>Toca <b>Afegeix</b>, a dalt a la dreta. Ja la tens!</p></li></ol>`;
-  if (kind === "android") return `<ol class="ins-steps"><li><span>1</span><p>Toca el menú <b>⋮</b> del navegador (a dalt o a baix).</p></li><li><span>2</span><p>Tria <b>Instal·la l'app</b> o <b>Afegeix a la pantalla d'inici</b>.</p></li></ol>`;
-  if (kind === "inapp") return `<p class="ins-small">Ara l'estàs veient dins d'una altra app. Toca el menú <b>⋯</b> i tria <b>Obre al navegador</b> (Chrome o Safari): des d'allà la podràs instal·lar.</p>`;
+      <li><span>1</span><p>Toca el botón <b>Comparte</b> ${insShareSvg} ${/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent) ? "(arriba, en la barra de la dirección)" : "(en la barra de Safari)"}.</p></li>
+      <li><span>2</span><p>Baja un poco y elige <b>Añadir a pantalla de inicio</b> ${insAddSvg}.</p></li>
+      <li><span>3</span><p>Toca <b>Añadir</b>, arriba a la derecha. ¡Ya la tienes!</p></li></ol>`;
+  if (kind === "android") return `<ol class="ins-steps"><li><span>1</span><p>Toca el menú <b>⋮</b> del navegador (arriba o abajo).</p></li><li><span>2</span><p>Elige <b>Instala la app</b> o <b>Añadir a pantalla de inicio</b>.</p></li></ol>`;
+  if (kind === "inapp") return `<p class="ins-small">Ahora la estás viendo dentro de otra app. Toca el menú <b>⋯</b> y elige <b>Abrir en el navegador</b> (Chrome o Safari): desde allí podrás instalarla.</p>`;
   return "";
 }
-const INS_WHY = `<ul class="ins-why"><li><span aria-hidden="true">⚡</span>S'obre a l'instant i a pantalla completa</li><li><span aria-hidden="true">🔔</span>Avisos quan un amic t'escriu o et truca</li><li><span aria-hidden="true">📲</span>A la pantalla d'inici, com qualsevol app (no ocupa gairebé res)</li></ul>`;
+const INS_WHY = `<ul class="ins-why"><li><span aria-hidden="true">⚡</span>Se abre al instante y a pantalla completa</li><li><span aria-hidden="true">🔔</span>Avisos cuando un amigo te escribe o te llama</li><li><span aria-hidden="true">📲</span>En la pantalla de inicio, como cualquier app (casi no ocupa nada)</li></ul>`;
 function insBind(root, onDone) {
   $("[data-ins-go]", root)?.addEventListener("click", async () => { window.Track?.("install_go"); window.Stats?.step?.("ins", "toc"); await doInstall(); if (isStandalone() || store.get(INSTALL_KEY, {}).done) onDone?.(); });
 }
@@ -1245,11 +1316,11 @@ function installMaybe() {
   const v = location.hash.slice(1).split("/")[0];
   if (["joc", "control", "legal", "nit"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .nov, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .ring, .call-ui.dock, .xat-sheet-bg")) return;
   const box = h(`<div class="ins-bg" role="dialog" aria-modal="true" aria-labelledby="ins-t"><div class="ins card">
-    <button class="ins-x" type="button" data-ins-no aria-label="Ara no">✕</button>
-    <div class="ins-head"><img src="img/icon-192.png" alt="" width="64" height="64"><div><h3 id="ins-t">Instal·la Política en Joc</h3><p>Gratis · sense botiga d'apps</p></div></div>
+    <button class="ins-x" type="button" data-ins-no aria-label="Ahora no">✕</button>
+    <div class="ins-head"><img src="img/icon-192.png" alt="" width="64" height="64"><div><h3 id="ins-t">Instala Política en Joc</h3><p>Gratis · sin tienda de apps</p></div></div>
     ${INS_WHY}
     ${insHow(kind)}
-    <button class="btn ghost" type="button" data-ins-no>Ara no</button>
+    <button class="btn ghost" type="button" data-ins-no>Ahora no</button>
   </div></div>`);
   document.body.appendChild(box);
   window.Track?.("install_sheet", { kind });

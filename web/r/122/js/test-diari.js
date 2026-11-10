@@ -80,14 +80,51 @@ function renderTestHero() {
   if (typeof renderHjFoot === "function") renderHjFoot();
 }
 
+// Imatge del resultat (1080 × 1350, la mida que millor es veu a WhatsApp, Instagram i X), amb el mateix estil que la del
+// repte diari: encerts, temps i la graella
+function testShareCanvas(key, r) {
+  const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const c = cv.getContext("2d"), INK = "#17173d", PAPER = "#f1e9d8", CARD = "#fffaf0", BLUE = "#3554ff";
+  const display = (size) => `900 ${size}px Unbounded, "Arial Black", sans-serif`, sans = (size, w = 600) => `${w} ${size}px "DM Sans", system-ui, sans-serif`;
+  const round = (x, y, w, hh, rr) => { c.beginPath(); c.moveTo(x + rr, y); c.arcTo(x + w, y, x + w, y + hh, rr); c.arcTo(x + w, y + hh, x, y + hh, rr); c.arcTo(x, y + hh, x, y, rr); c.arcTo(x, y, x + w, y, rr); c.closePath(); };
+  c.fillStyle = PAPER; c.fillRect(0, 0, W, H);
+  c.fillStyle = "rgba(23,23,61,.08)";
+  for (let x = 6; x < W; x += 18) for (let y = 6; y < H; y += 18) { c.beginPath(); c.arc(x, y, 1.6, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = BLUE; c.fillRect(0, 0, W, 150);
+  c.fillStyle = CARD; c.font = display(46); c.textAlign = "left"; c.fillText("TEST D'ACTUALITAT", 60, 95);
+  const [y, m, dd] = key.split("-").map(Number);
+  c.font = sans(30, 700); c.textAlign = "right";
+  c.fillText(new Date(y, m - 1, dd).toLocaleDateString(typeof PEJ_LANG !== "undefined" && PEJ_LANG === "es" ? "es-ES" : "ca-ES", { day: "numeric", month: "long" }), W - 60, 93);
+  c.fillStyle = INK; round(72, 222, W - 132, 900, 40); c.fill();
+  c.fillStyle = CARD; round(60, 210, W - 132, 900, 40); c.fill(); c.strokeStyle = INK; c.lineWidth = 6; c.stroke();
+  c.textAlign = "center"; c.fillStyle = "#6e6a82"; c.font = sans(34, 700); c.fillText("Encerts", W / 2 - 6, 320);
+  c.fillStyle = INK; c.font = display(190); c.fillText(`${r.hits}/${r.n}`, W / 2 - 6, 510);
+  c.font = sans(40, 700); c.fillStyle = "#3a3a63"; c.fillText(`⏱ ${fmtSecs(r.ms)}`, W / 2 - 6, 590);
+  const cells = (r.grid || "").match(/🟩|🟥|⬜/g) || [], sz = 70, gap = 14, x0 = W / 2 - 6 - (cells.length * (sz + gap) - gap) / 2;
+  cells.forEach((g, i) => { c.fillStyle = g === "🟩" ? "#45d483" : g === "🟥" ? "#ff6b4a" : "#d9d2c0"; round(x0 + i * (sz + gap), 650, sz, sz, 14); c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke(); });
+  c.font = display(48); c.fillStyle = INK; c.fillText("Has seguit les notícies?", W / 2 - 6, 860);
+  c.font = sans(34, 600); c.fillStyle = "#6e6a82"; c.fillText("Preguntes noves cada matí a les 6:00", W / 2 - 6, 930);
+  c.fillStyle = INK; c.font = display(40); c.fillText("Política en Joc", W / 2, 1230);
+  c.font = sans(30, 600); c.fillStyle = "#3a3a63"; c.fillText(location.host || "politicaenjoc.cat", W / 2, 1280);
+  return cv;
+}
+// Comparteix una imatge amb text: al mòbil, amb el menú del sistema (WhatsApp, Instagram…); a l'ordinador, es baixa la
+// imatge i es copia el text
+async function shareCanvas(cv, name, text) {
+  const blob = await new Promise((res) => cv.toBlob(res, "image/png"));
+  const file = blob && new File([blob], name, { type: "image/png" });
+  try {
+    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    if (navigator.share) { await navigator.share({ text }); return; }
+  } catch (e) { if (e?.name === "AbortError") return; }
+  if (blob) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+  try { await navigator.clipboard.writeText(text); toast("Imatge descarregada i text copiat"); } catch { toast("Imatge descarregada"); }
+}
+const testShareText = (r) => `Política en Joc · Test d'actualitat\n📰 ${r.hits}/${r.n} · ⏱ ${fmtSecs(r.ms)}\n${r.grid}\n${location.origin}${location.pathname}#joc/actualitat`;
 async function testShare(key) {
   const r = testResult(key);
   if (!r) return;
-  const text = `Política en Joc · Test d'actualitat\n📰 ${r.hits}/${r.n} · ⏱ ${fmtSecs(r.ms)}\n${r.grid}\n${location.origin}${location.pathname}#joc/actualitat`;
-  try {
-    if (navigator.share) await navigator.share({ text });
-    else { await navigator.clipboard.writeText(text); toast("Resultat copiat"); }
-  } catch { /* cancel·lat */ }
+  await shareCanvas(testShareCanvas(key, r), `test-${key}.png`, testShareText(r));
 }
 
 registerGame({
@@ -106,10 +143,11 @@ registerGame({
   rules: ["Fins a 10 preguntes", "Actualitat i cultura general", "Amb l'explicació de cada resposta", "Compta la primera partida"],
   gate() {
     if (!testOn()) return { html: `<p class="muted">El test d'actualitat només és en català.</p>`, bind() {} };
-    if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) showIntro(GAMES.find((g) => g.id === "actualitat")); }); return { html: `<p class="muted">Carregant el test…</p>`, bind() {} }; }
+    if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) { const g = GAMES.find((x) => x.id === "actualitat"); g.quick() ? startGame(g) : showIntro(g); } }); return { html: `<p class="muted">Carregant el test…</p>`, bind() {} }; }
     if (!testDay()) return { html: `<p class="muted">El test d'avui encara no és a punt: es prepara cada matí. Torna-hi d'aquí a una estona.</p>`, bind() {} };
     return null;
   },
+  quick() { return testOn() && !!testData && !!testDay() && !testResult(); },
   status() {
     const r = testResult();
     return r ? `<span class="gc-status done">Fet · ${r.hits}/${r.n}</span>` : `<span class="gc-status new">Nou test</span>`;
@@ -175,6 +213,18 @@ registerGame({
         exp.scrollIntoView({ block: "nearest", behavior: "smooth" });
       });
     }
+    // «La teva portada»: el resultat com la primera pàgina d'un diari, amb cada pregunta com un titular
+    function portada() {
+      let dia = key;
+      try { dia = new Date(`${key}T12:00:00`).toLocaleDateString(document.documentElement.lang || "ca", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { /* data tal qual */ }
+      const tit = hits === N ? "Ho sap tot" : hits >= N * 0.7 ? "Segueix l'actualitat de prop" : hits >= N * 0.4 ? "Al dia, a mitges" : "Demà, la revenja";
+      const li = items.map(({ q }, k) => `<li class="${results[k] ? "ok" : "ko"}"><i>${results[k] ? "✓" : "✗"}</i><span>${esc(q.q)}</span></li>`).join("");
+      return `<div class="tp">
+          <div class="tp-mast"><small>${esc(dia)}</small><b>La teva portada</b></div>
+          <h3 class="tp-h">${hits} de ${N}: ${esc(tit)}</h3>
+          <ul class="tp-l">${li}</ul>
+        </div>`;
+    }
     function end() {
       if (ended) return;
       ended = true;
@@ -196,7 +246,7 @@ registerGame({
         ratio: hits / N,
         unit: `${fmtSecs(ms)}${first ? "" : " · aquesta partida ja no compta per al rànquing"}`,
         verdict: hits === N ? "Ple! Estàs al dia de tot." : hits >= N * 0.7 ? "Molt bé: segueixes l'actualitat de prop." : hits >= N * 0.4 ? "No està malament. Demà, més!" : "Avui costava. Llegeix les explicacions i demà hi tornes.",
-        extraHtml: `<div class="daily-share"><div class="share-grid">${grid}</div>
+        extraHtml: `${portada()}<div class="daily-share"><div class="share-grid">${grid}</div>
             <div class="daily-share-btns"><button class="btn primary" data-test-share>Comparteix el resultat</button><a class="btn ghost" href="#ranking" data-test-rank>Veure el rànquing</a></div></div>
           <div id="test-rank"></div>`,
         onShown(body) {

@@ -1,7 +1,63 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-10",
+  "updated": "2026-11-11",
   "questions": [
+    {
+      "d": "2026-11-11",
+      "t": "internacional",
+      "q": "Quina autoritat ha sol·licitat el Govern espanyol per paralitzar TikTok a causa d'abusos sexuals infantils?",
+      "a": [
+        "L'Agència de Protecció de Dades",
+        "El Tribunal Constitucional",
+        "El Consell de Ministres",
+        "La Comissió Nacional de Mercats"
+      ],
+      "exp": "Diversos mitjans informen que el Govern ha demanat a l'Agència de Protecció de Dades que paralitzi l'activitat de TikTok després de detectar més de mil vídeos d'abusos sexuals a menors.",
+      "u": "https://www.20minutos.es/nacional/infancia-pide-agencia-proteccion-datos-paralizar-actividad-tiktok-espana_7059482_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-11",
+      "t": "politica",
+      "q": "Quina quantitat ha assignat el Govern espanyol a la modernització de les Forces Armades i a contractes de defensa?",
+      "a": [
+        "Més de 11.800 milions d'euros (pròxim a 12.000 milions)",
+        "5.000 milions d'euros",
+        "20.000 milions d'euros",
+        "8.000 milions d'euros"
+      ],
+      "exp": "El Govern ha autoritzat una inversió superior a 11.800 milions d'euros per a la modernització de les Forces Armades i ha impulsat contractes de defensa per gairebé 12.000 milions d'euros.",
+      "u": "https://www.lavanguardia.com/politica/20261110/11681168/gobierno-autoriza-mas-11-800-millones-modernizacion-fuerzas-armadas.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-11",
+      "t": "justicia",
+      "q": "Quina mesura ha pres el Govern espanyol per intentar frenar la difusió d'abusos sexuals a TikTok?",
+      "a": [
+        "Ha sol·licitat la suspensió temporal de l'aplicació a Espanya",
+        "Ha prohibit l'ús de TikTok a les escoles",
+        "Ha imposat una multa de 10 milions d'euros a la companyia",
+        "Ha ordenat el bloqueig de tots els comptes amb contingut per a adults"
+      ],
+      "exp": "Segons diversos informes, el Govern ha demanat la suspensió temporal de TikTok a Espanya després de descobrir més de mil vídeos d'abusos sexuals infantils.",
+      "u": "https://www.20minutos.es/nacional/infancia-pide-agencia-proteccion-datos-paralizar-actividad-tiktok-espana_7059482_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-11",
+      "t": "justicia",
+      "q": "Quina acció ha pres el Govern espanyol respecte a la recerca de vídeos d'abusos a TikTok?",
+      "a": [
+        "Ha demanat a l'Agència de Protecció de Dades que paralitzi l'activitat de l'aplicació",
+        "Ha ordenat la confiscació dels servidors de TikTok a Espanya",
+        "Ha iniciat una investigació judicial contra la direcció de TikTok",
+        "Ha aprovat una llei que prohibeix l'ús de xarxes socials per a menors de 16 anys"
+      ],
+      "exp": "El Govern ha sol·licitat a l'Agència de Protecció de Dades que prengui mesures per paralitzar TikTok a causa de la difusió de vídeos d'abusos sexuals a menors.",
+      "u": "https://www.ara.cat/societat/govern-espanyol-demana-l-agencia-proteccio-dades-paralitzi-l-activitat-tiktok-l_1_5906496.html",
+      "auto": true
+    },
     {
       "d": "2026-11-10",
       "t": "immigracio",
@@ -227,5 +283,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-10"
+  "updatedAuto": "2026-11-11"
 }

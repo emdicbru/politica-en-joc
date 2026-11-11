@@ -358,8 +358,185 @@
      ]
     }
    ]
+  },
+  "2026-11-11": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Per a què ha autoritzat el Govern espanyol uns 11.800 milions d'euros en contractes?",
+     "a": [
+      "Modernitzar les Forces Armades",
+      "Renovar la xarxa ferroviària",
+      "Ampliar l'escola pública",
+      "Ajudes al lloguer"
+     ],
+     "exp": "El Consell de Ministres ha autoritzat més de 11.800 milions d'euros per a la modernització de les Forces Armades.",
+     "u": "https://www.lavanguardia.com/politica/20261110/11681168/gobierno-autoriza-mas-11-800-millones-modernizacion-fuerzas-armadas.html",
+     "s": [
+      "La Vanguardia",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Quina xarxa social ha demanat el Govern que l'Agència de Protecció de Dades paralitzi a Espanya?",
+     "a": [
+      "TikTok",
+      "Instagram",
+      "X",
+      "Telegram"
+     ],
+     "exp": "El Govern ha demanat a l'Agència de Protecció de Dades que paralitzi l'activitat de TikTok a Espanya.",
+     "u": "https://www.20minutos.es/nacional/feijoo-se-reune-con-los-responsables-maldita-es-tras-destaparse-mas-mil-videos-abuso-sexual-infantil-tiktok_7059491_0.html",
+     "s": [
+      "20minutos",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin lema fa servir el PP per al seu programa electoral de 249 mesures?",
+     "a": [
+      "Reconstrucció nacional",
+      "Espanya endavant",
+      "Canvi tranquil",
+      "Orgull de país"
+     ],
+     "exp": "El PP presenta el seu programa del 29-N, de 249 mesures, sota el concepte de «reconstrucció nacional».",
+     "u": "https://www.20minutos.es/nacional/programa-electoral-pp-consulta-medidas-reconstruccion-nacional_7059504_0.html",
+     "s": [
+      "20minutos",
+      "El Español"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "justicia",
+     "q": "Quin tribunal ha rebutjat suspendre d'urgència el DNI digital per votar el 29-N, però ho estudiarà?",
+     "a": [
+      "Tribunal Suprem",
+      "Tribunal Constitucional",
+      "Audiència Nacional",
+      "Tribunal de Comptes"
+     ],
+     "exp": "El Tribunal Suprem ha rebutjat suspendre cautelarment l'ús del DNI digital per votar, però n'estudiarà el fons.",
+     "u": "https://www.eldebate.com/espana/20261110/supremo-da-20-dias-defenderse-hijos-ley-nietos-acaba-permitir-votar-29n_479475.html",
+     "s": [
+      "El Debate",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "De quina ciutat és alcalde Louis Aliot, que ha participat a Girona en un acte de Vox?",
+     "a": [
+      "Perpinyà",
+      "Tolosa",
+      "Montpeller",
+      "Carcassona"
+     ],
+     "exp": "Louis Aliot, alcalde de Perpinyà, s'ha desplaçat a Girona per donar suport a Vox.",
+     "u": "https://www.vilaweb.cat/noticies/aliot-es-desplaca-a-girona-per-donar-suport-a-vox/",
+     "s": [
+      "VilaWeb",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin presentador va admetre que es va equivocar en l'entrevista a Santiago Abascal?",
+     "a": [
+      "David Broncano",
+      "Jordi Évole",
+      "Andreu Buenafuente",
+      "Berto Romero"
+     ],
+     "exp": "David Broncano va reconèixer que no va estar bé en l'entrevista a Abascal a La Revuelta.",
+     "u": "https://www.elespanol.com/espana/politica/20261110/broncano-admite-equivoco-marron-entrevista-abascal-no-bien-ambicioso-vanidoso/1003744453124_0.html",
+     "s": [
+      "El Español",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "A quina aliança militar pertany Espanya des de 1982?",
+     "a": [
+      "OTAN",
+      "Pacte de Varsòvia",
+      "UEO",
+      "OSCE"
+     ],
+     "exp": "Espanya va ingressar a l'OTAN el 1982, sota el govern de Leopoldo Calvo-Sotelo.",
+     "u": "https://www.lavanguardia.com/politica/20261110/11681168/gobierno-autoriza-mas-11-800-millones-modernizacion-fuerzas-armadas.html",
+     "s": [
+      "La Vanguardia",
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Quin any es va aprovar en referèndum la Constitució espanyola vigent?",
+     "a": [
+      "1978",
+      "1975",
+      "1981",
+      "1986"
+     ],
+     "exp": "La Constitució espanyola va ser ratificada en referèndum el 6 de desembre de 1978.",
+     "u": "https://www.eldebate.com/espana/20261110/supremo-rechaza-suspender-urgencia-dni-digital-29n-estudiara_479349.html",
+     "s": [
+      "El Debate",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Quin dia es commemora internacionalment el Dia del Treball?",
+     "a": [
+      "1 de maig",
+      "8 de març",
+      "11 de novembre",
+      "1 de desembre"
+     ],
+     "exp": "El Dia Internacional del Treball se celebra l'1 de maig, en record de les lluites obreres.",
+     "u": "https://www.eldebate.com/espana/20261111/bolanos-respalda-huelga-general-defiende-broncano-llama-franquista-abascal_479481.html",
+     "s": [
+      "El País",
+      "El Español"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "En quin país té la seu ByteDance, l'empresa propietària de TikTok?",
+     "a": [
+      "Xina",
+      "Estats Units",
+      "Corea del Sud",
+      "Singapur"
+     ],
+     "exp": "ByteDance, propietària de TikTok, té la seu a Pequín, a la Xina.",
+     "u": "https://www.20minutos.es/nacional/feijoo-se-reune-con-los-responsables-maldita-es-tras-destaparse-mas-mil-videos-abuso-sexual-infantil-tiktok_7059491_0.html",
+     "s": [
+      "20minutos",
+      "Ara"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794314619696
+ "updated": 1794373486266
 }

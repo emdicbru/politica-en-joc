@@ -535,8 +535,183 @@
      ]
     }
    ]
+  },
+  "2026-11-12": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "A quin programa d'Antena 3 ha estat entrevistat Feijóo durant la campanya del 29-N?",
+     "a": [
+      "El Hormiguero",
+      "Pasapalabra",
+      "Y ahora Sonsoles",
+      "La Revuelta"
+     ],
+     "exp": "Alberto Núñez Feijóo va ser entrevistat per Pablo Motos a «El Hormiguero», d'Antena 3.",
+     "u": "https://www.lavanguardia.com/politica/20261111/11681968/feijoo-examina-hormiguero.html",
+     "s": [
+      "La Vanguardia",
+      "El Español"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Amb quin youtuber ha suspès Vox l'entrevista prevista a Santiago Abascal?",
+     "a": [
+      "Jordi Wild",
+      "Ibai Llanos",
+      "Dani Mateo",
+      "Risto Mejide"
+     ],
+     "exp": "Vox va cancel·lar la gravació amb Jordi Wild després de queixar-se de l'entrevista a «La Revuelta».",
+     "u": "https://www.lavanguardia.com/politica/20261111/11681773/abascal-suspende-entrevista-jordi-wild-le-acusa-querer-riesgos-salir-reforzado-revuelta.html",
+     "s": [
+      "La Vanguardia",
+      "20minutos",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat catalana ha fet Abascal un acte de precampanya de Vox aquesta setmana?",
+     "a": [
+      "Tarragona",
+      "Lleida",
+      "Reus",
+      "Granollers"
+     ],
+     "exp": "Santiago Abascal va participar en un acte de Vox a Tarragona.",
+     "u": "https://www.vilaweb.cat/noticies/els-mossos-disparen-foam-contra-manifestants-que-volien-boicotejar-un-acte-de-vox-a-tarragona/",
+     "s": [
+      "El Debate",
+      "VilaWeb",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Què ha promès Feijóo respecte als decrets d'habitatge del Govern si arriba a governar?",
+     "a": [
+      "Derogar-los",
+      "Mantenir-los íntegrament",
+      "Ampliar-los",
+      "Transferir-los a les autonomies"
+     ],
+     "exp": "Feijóo ha promès derogar els decrets d'habitatge si governa.",
+     "u": "https://www.europapress.es/nacional/noticia-feijoo-promete-derogar-decretos-vivienda-si-gobierna-subir-pensiones-conforme-ipc-no-jugare-pensionistas-20261111232434.html",
+     "s": [
+      "Europa Press",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quins dos sindicats majoritaris han secundat la vaga general de l'11-N?",
+     "a": [
+      "CCOO i UGT",
+      "CGT i CNT",
+      "USO i CSIF",
+      "ELA i LAB"
+     ],
+     "exp": "CCOO i UGT són els sindicats que han impulsat la vaga general de l'11 de novembre.",
+     "u": "https://www.lavanguardia.com/politica/20261111/11681083/gobierno-da-aliento-hoy-huelga-general-rechaza-plano-oposicion.html",
+     "s": [
+      "La Vanguardia",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina candidata ha estat entrevistada a «La Revuelta» després de l'entrevista a Abascal?",
+     "a": [
+      "Ada Colau",
+      "Yolanda Díaz",
+      "Irene Montero",
+      "Ione Belarra"
+     ],
+     "exp": "Ada Colau va ser entrevistada per David Broncano a «La Revuelta».",
+     "u": "https://www.eldiario.es/politica/colau-revuelta-prioridad-no-haya-gobierno-facha-psoe-no-tenga-connivencia-especulacion_1_13654090.html",
+     "s": [
+      "eldiario.es",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Quin nom tenia Tarragona en època romana?",
+     "a": [
+      "Tàrraco",
+      "Barcino",
+      "Gerunda",
+      "Ilerda"
+     ],
+     "exp": "La Tarragona romana es deia Tàrraco i va ser capital de la província Hispania Citerior.",
+     "u": "https://www.vilaweb.cat/noticies/els-mossos-disparen-foam-contra-manifestants-que-volien-boicotejar-un-acte-de-vox-a-tarragona/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "Com es diu la institució que defensa els drets dels ciutadans davant l'Administració a Catalunya?",
+     "a": [
+      "Síndic de Greuges",
+      "Fiscalia",
+      "Defensor del Poble",
+      "Consell de Garanties"
+     ],
+     "exp": "El Síndic de Greuges és el defensor del poble de Catalunya.",
+     "u": "https://www.abc.es/espana/andalucia/marta-bosquet-elegida-primera-mujer-defensora-pueblo-20261111201358-nts.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "internacional",
+     "q": "Quina cambra del Congrés dels Estats Units ha d'aprovar un procés d'impeachment?",
+     "a": [
+      "La Cambra de Representants",
+      "El Senat",
+      "El Tribunal Suprem",
+      "La Casa Blanca"
+     ],
+     "exp": "La Cambra de Representants aprova l'impeachment i el Senat jutja el càrrec acusat.",
+     "u": "https://www.ara.cat/internacional/estats-units/republicans-descarrilen-l-impeachment-hegseth-malgrat-desfeta-electoral_1_5906878.html",
+     "s": [
+      "Ara"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "ciencia",
+     "q": "Quin element químic és el principal combustible de les centrals nuclears?",
+     "a": [
+      "Urani",
+      "Carboni",
+      "Heli",
+      "Sofre"
+     ],
+     "exp": "Les centrals nuclears utilitzen urani enriquit, en general urani-235, com a combustible.",
+     "u": "https://www.20minutos.es/nacional/pp-eliminara-100-dias-plan-cierre-nuclear-compensara-forma-automatica-los-consumidores-caso-apagon_7059392_0.html",
+     "s": [
+      "20minutos"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794373486266
+ "updated": 1794459935577
 }

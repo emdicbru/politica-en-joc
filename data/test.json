@@ -710,8 +710,192 @@
      ]
     }
    ]
+  },
+  "2026-11-13": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat ha obert Feijóo la campanya del PP per al 29-N?",
+     "a": [
+      "Badalona",
+      "Valladolid",
+      "Girona",
+      "Saragossa"
+     ],
+     "exp": "Feijóo va arrencar la campanya electoral del PP a Badalona, en un acte amb Xavier García Albiol.",
+     "u": "https://www.elespanol.com/espana/politica/20261112/feijoo-promete-auditoria-saqueo-arranque-campana-badalona-cambio-viene-imparable/1003744456480_0.html",
+     "s": [
+      "El Español",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat ha fet el PSOE l'acte d'inici de campanya amb Pedro Sánchez?",
+     "a": [
+      "Sevilla",
+      "Granada",
+      "Màlaga",
+      "Saragossa"
+     ],
+     "exp": "Pedro Sánchez va obrir la campanya del PSOE en un míting a Sevilla.",
+     "u": "https://www.abc.es/espana/andalucia/pedro-sanchez-saca-begona-gomez-mitin-sevilla-20261112210128-nts.html",
+     "s": [
+      "ABC",
+      "VilaWeb",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Quin president estranger visitarà dilluns Sánchez a la Moncloa en plena campanya?",
+     "a": [
+      "Lula da Silva",
+      "Gustavo Petro",
+      "Claudia Sheinbaum",
+      "Javier Milei"
+     ],
+     "exp": "El president del Brasil, Lula da Silva, es reunirà dilluns amb Sánchez a Madrid i participarà en un acte de campanya.",
+     "u": "https://www.lavanguardia.com/politica/20261112/11682725/sanchez-recibira-proximo-lunes-lula-moncloa-plena-campana-electoral-espana.html",
+     "s": [
+      "La Vanguardia",
+      "eldiario.es",
+      "NacióDigital"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin partit situa en primer lloc el CIS preelectoral per al 29-N?",
+     "a": [
+      "PSOE",
+      "PP",
+      "Vox",
+      "Junts"
+     ],
+     "exp": "L'enquesta preelectoral del CIS dona la primera posició al PSOE.",
+     "u": "https://www.europapress.es/nacional/noticia-cis-da-victoria-psoe-33-niega-mayoria-pacto-psoe-vox-20261112171530.html",
+     "s": [
+      "Europa Press",
+      "infoLibre",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Sobre quin àmbit tracta el «decret Maricarmen» que el Congrés ha rescatat?",
+     "a": [
+      "Habitatge i lloguers",
+      "Pensions",
+      "Sanitat",
+      "Energia"
+     ],
+     "exp": "El «decret Maricarmen» és un paquet de mesures d'habitatge, que inclou la pròrroga dels lloguers fins al 2028.",
+     "u": "https://www.ara.cat/politica/congres-rescata-decret-maricarmen-poques-hores-l-inici-campanya_1_5907909.html",
+     "s": [
+      "Ara",
+      "La Vanguardia",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Què ha promès Feijóo en l'arrencada de campanya sobre l'etapa del Govern de Sánchez?",
+     "a": [
+      "Una auditoria",
+      "Un referèndum",
+      "Una comissió d'investigació al Senat",
+      "Una reforma de la Constitució"
+     ],
+     "exp": "Feijóo ha prometut una auditoria de l'etapa del Govern de Sánchez si arriba a governar.",
+     "u": "https://www.europapress.es/nacional/noticia-feijoo-promete-cataluna-auditoria-saqueo-vengo-ofrecer-gobierno-no-robe-20261112205006.html",
+     "s": [
+      "Europa Press",
+      "El Español",
+      "ABC",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin partit ha presentat un programa electoral de 115 mesures per al 29-N?",
+     "a": [
+      "Vox",
+      "PP",
+      "PSOE",
+      "Frente Amplio"
+     ],
+     "exp": "Vox ha presentat el seu programa electoral amb 115 mesures, amb Ceuta i Melilla en primer lloc.",
+     "u": "https://www.eldebate.com/espana/20261112/vox-desvela-programa-29n-115-medidas-ceuta-melilla-primer-lugar_480280.html",
+     "s": [
+      "El Debate",
+      "El País",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital del Brasil, país del president Lula?",
+     "a": [
+      "Brasília",
+      "Rio de Janeiro",
+      "São Paulo",
+      "Salvador"
+     ],
+     "exp": "La capital del Brasil és Brasília, inaugurada el 1960.",
+     "u": "https://www.lavanguardia.com/politica/20261112/11682725/sanchez-recibira-proximo-lunes-lula-moncloa-plena-campana-electoral-espana.html",
+     "s": [
+      "La Vanguardia",
+      "eldiario.es"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin riu desemboca entre Badalona i Sant Adrià de Besòs?",
+     "a": [
+      "El Besòs",
+      "El Llobregat",
+      "El Ter",
+      "La Tordera"
+     ],
+     "exp": "El Besòs desemboca al Mediterrani i fa de límit entre Badalona i Sant Adrià de Besòs.",
+     "u": "https://www.eldebate.com/espana/20261112/alberto-nunez-feijoo-interviene-acto-junto-xavier-garcia-badalona-directo_480199.html",
+     "s": [
+      "El Debate",
+      "El Español"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "En quin any es va celebrar l'Exposició Universal de Sevilla?",
+     "a": [
+      "1992",
+      "1982",
+      "1988",
+      "2002"
+     ],
+     "exp": "L'Expo de Sevilla es va celebrar el 1992, l'any dels Jocs Olímpics de Barcelona.",
+     "u": "https://www.abc.es/espana/andalucia/pedro-sanchez-vuelve-bailar-sevilla-reclama-voto-20261112211051-nts.html",
+     "s": [
+      "ABC",
+      "El Debate"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794459935577
+ "updated": 1794546321780
 }

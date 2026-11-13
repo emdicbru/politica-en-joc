@@ -1,8 +1,27 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1385326224,
+ "revid": 1385465150,
  "seats": [
+  {
+   "n": "40dB / Prisa",
+   "d": "10–12 nov",
+   "s": {
+    "pp": 130.5,
+    "psoe": 117,
+    "vox": 65.5,
+    "fa": 6,
+    "altres": 6,
+    "erc": 10,
+    "junts": 3,
+    "bildu": 7,
+    "pnv": 3,
+    "bng": 2,
+    "cc": 1,
+    "podemos": 0,
+    "salf": 0
+   }
+  },
   {
    "n": "Sigma Dos / El Mundo",
    "d": "3–11 nov",
@@ -23,19 +42,38 @@
   },
   {
    "n": "SW Demoscopia / La Séptima",
-   "d": "26 oct–10 nov",
+   "d": "26 oct–11 nov",
    "s": {
-    "pp": 115,
-    "psoe": 131,
-    "vox": 60.5,
+    "pp": 116.5,
+    "psoe": 131.5,
+    "vox": 58.5,
     "fa": 11.5,
-    "erc": 12.5,
+    "erc": 12,
     "junts": 4,
-    "bildu": 6.5,
+    "bildu": 7,
     "pnv": 3,
     "bng": 2,
     "cc": 1,
-    "altres": 2.5,
+    "altres": 3,
+    "podemos": 0,
+    "salf": 0
+   }
+  },
+  {
+   "n": "Winston / Artículo14",
+   "d": "5–8 nov",
+   "s": {
+    "pp": 134,
+    "psoe": 109,
+    "vox": 64,
+    "fa": 17,
+    "erc": 8,
+    "junts": 3,
+    "bildu": 5,
+    "pnv": 3,
+    "bng": 2,
+    "cc": 0,
+    "altres": 5,
     "podemos": 0,
     "salf": 0
    }
@@ -127,43 +165,6 @@
     "podemos": 1,
     "salf": 0
    }
-  },
-  {
-   "n": "NC Report / La Razón",
-   "d": "2–5 nov",
-   "s": {
-    "pp": 139,
-    "psoe": 100,
-    "vox": 68,
-    "fa": 9.5,
-    "erc": 7.5,
-    "junts": 8.5,
-    "bildu": 6.5,
-    "pnv": 4.5,
-    "bng": 2,
-    "cc": 1,
-    "altres": 2.5,
-    "podemos": 0.5
-   }
-  },
-  {
-   "n": "40dB / Prisa",
-   "d": "2–4 nov",
-   "s": {
-    "pp": 132.5,
-    "psoe": 119,
-    "vox": 61,
-    "fa": 6,
-    "altres": 6,
-    "erc": 10,
-    "junts": 3,
-    "bildu": 7,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 1,
-    "podemos": 0,
-    "salf": 0
-   }
   }
  ],
  "pctKeys": [
@@ -180,6 +181,18 @@
  ],
  "pct": [
   [
+   31.5,
+   29.4,
+   18.8,
+   4,
+   1.3,
+   null,
+   null,
+   null,
+   null,
+   1.7
+  ],
+  [
    30.8,
    25.3,
    19.6,
@@ -192,16 +205,28 @@
    null
   ],
   [
-   28.3,
-   31.4,
-   17.5,
-   7.4,
+   28.6,
+   31.5,
+   17.2,
+   7.3,
    1.7,
    2.7,
-   1.2,
+   1.3,
    1.4,
    0.8,
    2
+  ],
+  [
+   31.1,
+   26.4,
+   18.7,
+   8.4,
+   1.6,
+   2.3,
+   1.1,
+   1.1,
+   1,
+   2.5
   ],
   [
    32.3,
@@ -288,18 +313,6 @@
    null
   ],
   [
-   31.9,
-   29.9,
-   18,
-   3.9,
-   1.2,
-   null,
-   null,
-   null,
-   null,
-   2
-  ],
-  [
    29.7,
    27.3,
    18.6,
@@ -309,18 +322,6 @@
    1.4,
    1.5,
    0.7,
-   1.6
-  ],
-  [
-   31.8,
-   25.7,
-   19.2,
-   6.8,
-   1.9,
-   2.2,
-   1.5,
-   1.4,
-   0.9,
    1.6
   ]
  ],

@@ -81,7 +81,7 @@ function renderHome() {
     asb.innerHTML = `<a class="home-asb" href="#joc/assembla">
       <span class="home-asb-k">Especial 29N</span>
       <b>Test d'afinitat política</b>
-      <small>${top ? `El teu resultat: coincideixes un ${r.top[0][1]} % amb ${esc(top.sig)}. Torna-hi o compara'l amb els amics.` : "20 temes de la campanya i descobreix amb quins partits coincideixes més. En 3 minuts."}</small>
+      <small>${top ? `El teu resultat: coincideixes un ${r.top[0][1]} % amb ${esc(top.sig)}. Torna-hi o compara'l amb els amics.` : "Uns 40 temes de la campanya: on et situes i amb quins partits coincideixes més. En 7 minuts."}</small>
       <span class="home-asb-go">${top ? "Torna-hi" : "Fes el test"} →</span></a>`;
   }
   if (asb) {
@@ -113,7 +113,7 @@ function nextDailyCard(id) {
   const C = {
     diari: { href: "#joc/diari", k: "Repte diari", t: "10 proves contra el rellotge", cls: "nd-diari" },
     actualitat: { href: "#joc/actualitat", k: "Test d'actualitat", t: "10 preguntes sobre les notícies d'avui", cls: "nd-test" },
-    assembla: { href: "#joc/assembla", k: "Test d'afinitat política", t: "20 temes de la campanya, en 3 minuts", cls: "nd-asb" },
+    assembla: { href: "#joc/assembla", k: "Test d'afinitat política", t: "Uns 40 temes de la campanya, en 7 minuts", cls: "nd-asb" },
   };
   const order = ["diari", "actualitat", "assembla"].filter((g) => g !== id && !done[g] && (g !== "actualitat" || testOk));
   const nx = order[0];
@@ -1023,7 +1023,7 @@ function renderCmpYou() {
   if (!el) return;
   const me = cmpMe(), top = me && (me.top || []).map(([id, pct]) => ({ p: partyById(id), pct })).filter((x) => x.p);
   if (!top || !top.length) {
-    el.innerHTML = `<a class="cmp-cta" href="#joc/assembla"><span><small>Test d'afinitat política</small><b>On ets tu en aquest mapa?</b><em>Respon 20 afirmacions i et situem entre els partits. En 3 minuts.</em></span><i>→</i></a>`;
+    el.innerHTML = `<a class="cmp-cta" href="#joc/assembla"><span><small>Test d'afinitat política</small><b>On ets tu en aquest mapa?</b><em>Respon unes 40 afirmacions i et situem entre els partits. En 7 minuts.</em></span><i>→</i></a>`;
     return;
   }
   const pos = me.pos, lab = pos && typeof assemblaXLabel === "function" ? [pos.x != null ? assemblaXLabel(pos.x) : null, pos.y != null ? assemblaYLabel(pos.y) : null].filter(Boolean).join(" · ") : "";

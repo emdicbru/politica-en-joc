@@ -163,7 +163,7 @@ const DRAW_TARGETS = [
     explain: "El Rosellón, el Conflent, el Vallespir, el Capcir y la Alta Cerdaña, que el tratado de los Pirineos (1659) pasó a Francia. Hoy es el departamento de Pirineos Orientales." },
   { id: "cat", name: "Cataluña", provs: ["B", "GI", "L", "T"], extra: [], view: [-1.5, 4.6, 39.8, 43.95],
     explain: "Barcelona, Girona, Lleida y Tarragona: las cuatro provincias de Cataluña." },
-  { id: "pv", name: "el País Valenciano", provs: ["CS", "V", "A"], extra: [], view: [-3.2, 1.6, 37.5, 41.2],
+  { id: "pv", name: "la Comunitat Valenciana", provs: ["CS", "V", "A"], extra: [], view: [-3.2, 1.6, 37.5, 41.2],
     explain: "Castellón, Valencia y Alicante." },
   { id: "andal", name: "Andalucía", provs: ["AL", "CA", "CO", "GR", "H", "J", "MA", "SE"], extra: [], view: [-9.6, -0.5, 35.1, 39.5],
     explain: "Las ocho provincias andaluzas: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga y Sevilla. Su Estatuto la define como nacionalidad histórica." },

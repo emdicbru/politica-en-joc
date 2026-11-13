@@ -8040,3 +8040,61 @@ body:has(#view-joc:not([hidden])[data-game="assembla"]) main { padding-top: max(
 .asb-ax-h { flex-wrap: wrap; }
 .asb-ax-h b { order: -1; flex-basis: 100%; text-align: left; font-size: 1rem; }
 .asb-ax-t { order: 1; }
+
+/* ---------- Test d'afinitat: marcar el que és important (v125) ---------- */
+.asb-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.asb-star { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 6px 14px 6px 10px; border: var(--bw) solid var(--ink); border-radius: 999px; background: #fffaf0; color: var(--ink); font: inherit; font-weight: 800; font-size: .92rem; cursor: pointer; box-shadow: 0 3px 0 var(--ink); }
+.asb-star i { font-style: normal; font-size: 1.35rem; line-height: 1; }
+.asb-star.on { background: var(--ink); color: #ffcf3d; }
+.asb-star.on span { color: #fffaf0; }
+.asb-star:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.asb-star.on i { animation: asbStar .45s var(--ease); }
+@keyframes asbStar { 0% { transform: scale(.4) rotate(-40deg); } 70% { transform: scale(1.35) rotate(8deg); } 100% { transform: scale(1); } }
+.asb-hint { margin: 0; font-size: .85rem; font-weight: 700; color: var(--ink-2); }
+
+/* ---------- Mapa del resultat: línies i selector (v126) ---------- */
+.asb-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 2px solid var(--ink); border-radius: 14px; background: #f3ecdc; }
+.asb-seg button { font: inherit; font-weight: 800; font-size: .82rem; line-height: 1.2; padding: 8px 6px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); cursor: pointer; }
+.asb-seg button.on { background: var(--ink); color: #fffaf0; }
+.asb-lines { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; font-size: .85rem; font-weight: 800; }
+.asb-lines span { display: inline-flex; align-items: center; gap: 6px; }
+.asb-lines i { display: inline-block; width: 22px; height: 0; border-top: 4px solid var(--pc); border-radius: 2px; }
+.asb-lines i.l1 { border-top-style: dotted; border-top-width: 3px; } .asb-lines i.l2 { border-top-style: dotted; border-top-width: 2px; }
+.asb-mapnote { margin: 0; font-size: .85rem; line-height: 1.4; color: var(--ink-2); }
+.asb-map line { pointer-events: none; }
+
+/* ---------- Test d'afinitat: territori, escala, resultat en dues parts i mètode (v127) ---------- */
+.asb-pick { gap: 12px; }
+.asb-pick-k { margin: 0; font-size: .78rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.asb-pick-h { margin: 0; font-family: var(--display); font-size: clamp(1.6rem, 6vw, 2.2rem); line-height: 1.1; }
+.asb-pick-p { margin: 0; font-weight: 600; }
+.asb-terrs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.asb-tb { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 64px; padding: 12px 14px; border: var(--bw) solid var(--ink); border-radius: 16px; background: #fffaf0; color: var(--ink); font: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 0 var(--ink); }
+.asb-tb b { font-family: var(--display); font-size: 1rem; line-height: 1.15; }
+.asb-tb small { font-weight: 700; color: var(--ink-2); }
+.asb-tb.on { background: var(--ink); color: #fffaf0; } .asb-tb.on small { color: #ffcf3d; }
+.asb-tb:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.asb-opts.scale .asb-o { border-left-width: var(--bw); border-left-color: var(--ink); font-size: .98rem; }
+#view-joc[data-game="assembla"] .result > :is(.result-score, .result-sub) { display: none; }
+#view-joc[data-game="assembla"] .result > .result-verdict { font-size: clamp(1.25rem, 5vw, 1.6rem); }
+.asb-af { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: var(--bw) solid var(--ink); border-radius: 20px; background: #fffaf0; box-shadow: var(--hard-sm); }
+:is(.asb-af, .asb-eix) h3 { margin: 0; font-family: var(--display); font-size: 1.2rem; }
+.asb-acts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.asb-acts2 .btn { min-height: 52px; font-weight: 800; }
+.asb-acts2 .btn.primary { background: #25d366; color: var(--ink); border-color: var(--ink); }
+.asb-met { padding: 12px 14px; border: 2px solid var(--ink); border-radius: 16px; background: #fff; text-align: left; }
+.asb-met summary { cursor: pointer; font-family: var(--display); font-weight: 900; font-size: 1rem; }
+.asb-met ol { margin: 10px 0 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; font-size: .9rem; line-height: 1.45; }
+.asb-met-leg { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 10px 0 0; font-size: .78rem; font-weight: 700; }
+.asb-met-l li { display: flex; flex-direction: column; gap: 4px; }
+.asb-met-l small { color: var(--ink-2); font-weight: 700; font-size: .78rem; }
+.asb-pvs { display: flex; flex-wrap: wrap; gap: 4px; }
+:is(.asb-pvs, .asb-met-leg) span { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: .74rem; font-weight: 800; border: 1.5px solid var(--ink); }
+:is(.asb-pvs, .asb-met-leg) .v2 { background: #0f9d58; color: #fff; } :is(.asb-pvs, .asb-met-leg) .v1 { background: #a6e3bf; }
+:is(.asb-pvs, .asb-met-leg) .v0 { background: #e9e2d0; } :is(.asb-pvs, .asb-met-leg) .v-1 { background: #ffc2b3; }
+:is(.asb-pvs, .asb-met-leg) .v-2 { background: #ff4b2b; color: #fff; } :is(.asb-pvs, .asb-met-leg) .vn { background: #fff; color: var(--ink-2); border-style: dashed; }
+.asb-terr { margin: 0; font-size: .88rem; font-weight: 600; text-align: center; }
+.asb-af .asb-pb strong { font-size: 1.15rem; white-space: nowrap; }
+.asb-af .asb-pc.p1 .asb-pb strong { font-size: 1.45rem; }
+.asb-acts2 { grid-template-columns: 1fr; }
+#view-joc[data-game="assembla"] .result > .result-verdict { padding: 0 34px; }

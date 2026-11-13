@@ -81,7 +81,7 @@ function renderHome() {
     asb.innerHTML = `<a class="home-asb" href="#joc/assembla">
       <span class="home-asb-k">Especial 29N</span>
       <b>Test de afinidad política</b>
-      <small>${top ? `Tu resultado: coincides un ${r.top[0][1]} % con ${esc(top.sig)}. Vuelve a intentarlo o compáralo con tus amigos.` : "20 temas de la campaña y descubre con qué partidos coincides más. En 3 minutos."}</small>
+      <small>${top ? `Tu resultado: coincides un ${r.top[0][1]} % con ${esc(top.sig)}. Vuelve a intentarlo o compáralo con tus amigos.` : "Unos 40 temas de la campaña: dónde te sitúas y con qué partidos coincides más. En 7 minutos."}</small>
       <span class="home-asb-go">${top ? "Otra vez" : "Haz el test"} →</span></a>`;
   }
   if (asb) {
@@ -113,7 +113,7 @@ function nextDailyCard(id) {
   const C = {
     diari: { href: "#joc/diari", k: "Reto diario", t: "10 pruebas contra el reloj", cls: "nd-diari" },
     actualitat: { href: "#joc/actualitat", k: "Test de actualidad", t: "10 preguntas sobre las noticias de hoy", cls: "nd-test" },
-    assembla: { href: "#joc/assembla", k: "Test de afinidad política", t: "20 temas de la campaña, en 3 minutos", cls: "nd-asb" },
+    assembla: { href: "#joc/assembla", k: "Test de afinidad política", t: "Unos 40 temas de la campaña, en 7 minutos", cls: "nd-asb" },
   };
   const order = ["diari", "actualitat", "assembla"].filter((g) => g !== id && !done[g] && (g !== "actualitat" || testOk));
   const nx = order[0];
@@ -1023,7 +1023,7 @@ function renderCmpYou() {
   if (!el) return;
   const me = cmpMe(), top = me && (me.top || []).map(([id, pct]) => ({ p: partyById(id), pct })).filter((x) => x.p);
   if (!top || !top.length) {
-    el.innerHTML = `<a class="cmp-cta" href="#joc/assembla"><span><small>Test de afinidad política</small><b>¿Dónde estás tú en este mapa?</b><em>Responde 20 afirmaciones y te situamos entre los partidos. En 3 minutos.</em></span><i>→</i></a>`;
+    el.innerHTML = `<a class="cmp-cta" href="#joc/assembla"><span><small>Test de afinidad política</small><b>¿Dónde estás tú en este mapa?</b><em>Responde unas 40 afirmaciones y te situamos entre los partidos. En 7 minutos.</em></span><i>→</i></a>`;
     return;
   }
   const pos = me.pos, lab = pos && typeof assemblaXLabel === "function" ? [pos.x != null ? assemblaXLabel(pos.x) : null, pos.y != null ? assemblaYLabel(pos.y) : null].filter(Boolean).join(" · ") : "";

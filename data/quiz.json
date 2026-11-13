@@ -1,7 +1,77 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-12",
+  "updated": "2026-11-13",
   "questions": [
+    {
+      "d": "2026-11-13",
+      "t": "politica",
+      "q": "Quin líder ha declarat que Marlaska és el seu \"ojito derecho\"?",
+      "a": [
+        "Pedro Sánchez",
+        "Alberto Núñez Feijóo",
+        "Santiago Abascal",
+        "Ada Colau"
+      ],
+      "exp": "El president del Govern, Pedro Sánchez, va afirmar que considera a José Luis Marlaska com el seu \"ojito derecho\" en una entrevista publicada per Europa Press i reiterada per 20 Minutos.",
+      "u": "https://www.europapress.es/nacional/noticia-sanchez-respalda-marlaska-mejor-ministro-interior-ojito-izquierdo-derecho-20261113081407.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-13",
+      "t": "politica",
+      "q": "Quin líder del PP ha promès una auditoria del que anomena \"saqueo\" del govern de Sánchez?",
+      "a": [
+        "Alberto Núñez Feijóo",
+        "Pedro Sánchez",
+        "Santiago Abascal",
+        "Ximo Puig"
+      ],
+      "exp": "Feijóo, candidat del Partit Popular, ha anunciat que durà a terme una auditoria per investigar el que ell denomina \"saqueo\" del govern del PSOE.",
+      "u": "https://www.abc.es/espana/cataluna/feijoo-promete-auditoria-saqueo-decadencia-anos-sanchismo-20261112203649-nt.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-13",
+      "t": "politica",
+      "q": "Quin portaveu d'ERC ha acusat Junts de ser \"col·laboracionista d'Abascal\"?",
+      "a": [
+        "Gabriel Rufián",
+        "Oriol Junqueras,",
+        "Marta Rovira",
+        "Carles Puigdemont"
+      ],
+      "exp": "Rufián ha denunciat que Junts no es posiciona contra el PP i Vox, qualificant-los de col·laboracionistes d'Abascal, segons informes de VilaWeb i Europa Press.",
+      "u": "https://www.vilaweb.cat/noticies/nogueras-arrenca-la-campanya-amb-el-compromis-de-frenar-la-dreta-rancia-i-evitar-que-abascal-o-colau-siguin-ministres/",
+      "auto": true
+    },
+    {
+      "d": "2026-11-13",
+      "t": "politica",
+      "q": "Quina revisió del CIS va reduir més de 20 escons al PSOE?",
+      "a": [
+        "El CIS va restar més de 20 escons al PSOE",
+        "El CIS va augmentar 15 escons al PSOE",
+        "El CIS va mantenir les projeccions originals",
+        "El CIS va eliminar les projeccions del PSOE"
+      ],
+      "exp": "Una revisió del Centre d'Investigació Sociològica (CIS) va disminuir la previsió de escons del PSOE en més de vint places, segons El Debate i ABC.",
+      "u": "https://www.eldebate.com/espana/20261113/revision-cis-resta-20-escanos-psoe-coloca-vox-encima-maximo-historico_480333.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-13",
+      "t": "justicia",
+      "q": "Qui va ser identificat com a testaferro en la trama de les 'mordides' vinculades al govern de Sánchez?",
+      "a": [
+        "L'ex‑xofrer de Pedro Sánchez",
+        "José Luis Marlaska",
+        "Alberto Núñez Feijóo",
+        "Santiago Abascal"
+      ],
+      "exp": "Diversos mitjans, com ABC i El Debate, han informat que l'ex‑xofrer de Pedro Sánchez actuà com a testaferro en la trama de contractes irregulars.",
+      "u": "https://www.abc.es/espana/andalucia/aldama-compro-chale-cordoba-pago-especie-exchofer-20261112200904-nts.html",
+      "auto": true
+    },
     {
       "d": "2026-11-12",
       "t": "habitatge",
@@ -339,5 +409,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-12"
+  "updatedAuto": "2026-11-13"
 }

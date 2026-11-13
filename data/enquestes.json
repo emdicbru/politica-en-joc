@@ -1,8 +1,26 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1385097401,
+ "revid": 1385326224,
  "seats": [
+  {
+   "n": "Sigma Dos / El Mundo",
+   "d": "3–11 nov",
+   "s": {
+    "pp": 129,
+    "psoe": 105.5,
+    "vox": 66.5,
+    "fa": 10.5,
+    "altres": 7,
+    "erc": 8.5,
+    "junts": 6.5,
+    "bildu": 7,
+    "pnv": 4.5,
+    "bng": 2,
+    "cc": 0.5,
+    "podemos": 0
+   }
+  },
   {
    "n": "SW Demoscopia / La Séptima",
    "d": "26 oct–10 nov",
@@ -92,24 +110,6 @@
    }
   },
   {
-   "n": "Sigma Dos / El Mundo",
-   "d": "30 oct–6 nov",
-   "s": {
-    "pp": 134,
-    "psoe": 103.5,
-    "vox": 66,
-    "fa": 11,
-    "altres": 7,
-    "erc": 8.5,
-    "junts": 5.5,
-    "bildu": 7,
-    "pnv": 5,
-    "bng": 2,
-    "cc": 0.5,
-    "podemos": 0
-   }
-  },
-  {
    "n": "GAD3 / Vocento",
    "d": "3–5 nov",
    "s": {
@@ -180,6 +180,18 @@
  ],
  "pct": [
   [
+   30.8,
+   25.3,
+   19.6,
+   6.2,
+   1.4,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  [
    28.3,
    31.4,
    17.5,
@@ -238,18 +250,6 @@
    1.4,
    0.9,
    1.9
-  ],
-  [
-   31,
-   25.2,
-   19.4,
-   6.9,
-   1.6,
-   2.9,
-   1.2,
-   1.3,
-   0.9,
-   null
   ],
   [
    31.9,
@@ -324,5 +324,5 @@
    1.6
   ]
  ],
- "updated": "2026-11-12"
+ "updated": "2026-11-13"
 }

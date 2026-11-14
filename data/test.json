@@ -894,8 +894,183 @@
      ]
     }
    ]
+  },
+  "2026-11-14": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina periodista moderarà el cara a cara entre Sánchez i Feijóo del 19 de novembre?",
+     "a": [
+      "María Casado",
+      "Ana Pastor",
+      "Silvia Intxaurrondo",
+      "Cristina Pardo"
+     ],
+     "exp": "El cara a cara es farà el dijous 19 de novembre, organitzat per l'Acadèmia de la Televisió i moderat per María Casado.",
+     "u": "https://www.lavanguardia.com/politica/20261113/11683641/cara-cara-sanchez-feijoo-sera-jueves-moderado-maria-casado.html",
+     "s": [
+      "La Vanguardia",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "economia",
+     "q": "Quin producte agrari ha decidit retirar del mercat un 12% de la producció el Govern per evitar un excés d'oferta?",
+     "a": [
+      "Oli d'oliva",
+      "Vi",
+      "Arròs",
+      "Taronja"
+     ],
+     "exp": "El Govern aplica la retirada del 12% de l'oli d'oliva, prevista per la normativa europea quan hi ha sobreproducció, segons el ministre Planas.",
+     "u": "https://www.abc.es/espana/castilla-la-mancha/toledo/pueblos/planas-acusa-pp-vox-pura-ignorancia-rechazar-20261113154637-nt.html",
+     "s": [
+      "ABC",
+      "Ministeri d'Agricultura"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quines dues empreses públiques ferroviàries ha renovat de presidència el Govern espanyol?",
+     "a": [
+      "Renfe i Adif",
+      "Renfe i Ouigo",
+      "Adif i FGC",
+      "Rodalies i Iryo"
+     ],
+     "exp": "El Govern ha cessat els presidents de Renfe i Adif i els ha substituït per dos perfils tècnics.",
+     "u": "https://www.ara.cat/societat/mobilitat/sacsejada-renfe-adif-govern-espanyol-canvia-presidents_1_5909425.html",
+     "s": [
+      "Ara",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina cadena s'ha emès el primer debat electoral a quatre de la campanya del 29-N?",
+     "a": [
+      "La Sexta",
+      "TV3",
+      "Telecinco",
+      "La 1"
+     ],
+     "exp": "El primer debat de la campanya, amb representants del PSOE, PP, Vox i Frente Amplio, es va emetre a La Sexta.",
+     "u": "https://www.20minutos.es/nacional/horario-primer-debate-electoral-cuatro-las-elecciones-generales-29n-donde-ver-online-por-tv-directo_7060679_0.html",
+     "s": [
+      "20minutos",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina plaça de Madrid ha fet Vox el primer gran acte de la campanya del 29-N?",
+     "a": [
+      "Plaça de Colón",
+      "Plaça de Cibeles",
+      "Plaça de Callao",
+      "Plaça de Espanya"
+     ],
+     "exp": "Santiago Abascal va obrir la campanya de Vox amb un acte a la plaça de Colón de Madrid.",
+     "u": "https://www.ara.cat/politica/entrada-santiago-abascal-placa-colon-madrid-gran-acte-campanya_8_5909989.html",
+     "s": [
+      "Ara",
+      "Vozpópuli"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin percentatge de participació ha demanat Pedro Sánchez per al 29-N?",
+     "a": [
+      "75%",
+      "60%",
+      "65%",
+      "85%"
+     ],
+     "exp": "Sánchez ha demanat una participació del 75% per al 29-N, en l'arrencada de la campanya.",
+     "u": "https://www.20minutos.es/nacional/sanchez-pide-participacion-mayoria-progresista-mofa-feijoo-jordi-wild_7060966_0.html",
+     "s": [
+      "20minutos",
+      "El País"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina província és la principal productora d'oli d'oliva d'Espanya?",
+     "a": [
+      "Jaén",
+      "Lleida",
+      "Badajoz",
+      "Tarragona"
+     ],
+     "exp": "Jaén és, amb diferència, la principal província productora d'oli d'oliva d'Espanya.",
+     "u": "https://www.abc.es/espana/castilla-la-mancha/toledo/pueblos/planas-acusa-pp-vox-pura-ignorancia-rechazar-20261113154637-nt.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Quin va ser el primer ferrocarril de la península Ibèrica, inaugurat el 1848?",
+     "a": [
+      "Barcelona–Mataró",
+      "Madrid–Aranjuez",
+      "València–Xàtiva",
+      "Sevilla–Còrdova"
+     ],
+     "exp": "La línia Barcelona–Mataró, de 1848, va ser el primer tren de passatgers de la península Ibèrica.",
+     "u": "https://www.ara.cat/societat/mobilitat/sacsejada-renfe-adif-govern-espanyol-canvia-presidents_1_5909425.html",
+     "s": [
+      "Ara"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "politica",
+     "q": "Quina empresa pública gestiona a Espanya el vot per correu?",
+     "a": [
+      "Correos",
+      "Renfe",
+      "Aena",
+      "Telefónica"
+     ],
+     "exp": "El vot per correu es tramita a través de Correos, l'operador postal públic.",
+     "u": "https://www.vilaweb.cat/noticies/eleccions-espanyoles-29-novembre-vot-correu-terminis/",
+     "s": [
+      "VilaWeb",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Cartagena, on Aznar ha obert la campanya, pertany a quina comunitat autònoma?",
+     "a": [
+      "Regió de Múrcia",
+      "Andalusia",
+      "País Valencià",
+      "Aragó"
+     ],
+     "exp": "Cartagena és un dels principals ports de la Regió de Múrcia, al Mediterrani.",
+     "u": "https://www.elmundo.es/murcia/2026/11/13/6af7082efc6c836b0f8b459e.html",
+     "s": [
+      "El Mundo",
+      "El Debate"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794546321780
+ "updated": 1794632760039
 }

@@ -1,12 +1,11 @@
-// El consentiment de galetes: un sol avís, d'un toc («Accepta» o «Rebutja», igual de visibles), per a l'estadística
-// d'ús (stats.js: amb consentiment, l'app desa al dispositiu el dia de la primera i l'última visita per saber si és nou,
-// si torna i amb quina freqüència) i, si mai es configura, Google Analytics 4 («measurementId» a js/firebase-config.js).
-// Sense resposta o amb «Rebutja», no es desa res al dispositiu per mesurar l'ús.
+// El consentiment de galetes: un sol avís, d'un toc («Accepta» o «Rebutja», igual de visibles). És legalment necessari
+// per a l'única dada no imprescindible que es desa al dispositiu: la memòria de l'estadística d'ús (stats.js, r29n-stats:
+// el dia de la primera i l'última visita, per saber si el dispositiu és nou, si torna i cada quan).
+// Sense resposta o amb «Rebutja», no es desa res al dispositiu per mesurar l'ús. No hi ha Google Analytics.
 const CONSENT_KEY = "r29n-consent";
 const CONSENT_DAYS = 365; // es torna a preguntar al cap d'un any
-const ANALYTICS_AVAILABLE = !!(window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.measurementId);
-const GA_SDK = "https://www.gstatic.com/firebasejs/10.12.2";
-let gaMod = null, gaRef = null, gaLoading = null;
+// Google Analytics es va treure el 14-11-2026. A qui l'havia acceptat, se li esborren les galetes _ga que hi quedessin.
+const ANALYTICS_AVAILABLE = false;
 
 function getConsent() {
   const c = store.get(CONSENT_KEY, null);
@@ -24,49 +23,17 @@ function clearGaCookies() {
   });
 }
 
-async function enableAnalytics() {
-  if (!ANALYTICS_AVAILABLE) return;
-  if (gaRef) {
-    gaMod.setAnalyticsCollectionEnabled(gaRef, true);
-    gaMod.setConsent?.({ analytics_storage: "granted" });
-    return;
-  }
-  gaLoading = gaLoading || (async () => {
-    try {
-      const [appMod, anMod] = await Promise.all([import(`${GA_SDK}/firebase-app.js`), import(`${GA_SDK}/firebase-analytics.js`)]);
-      const app = appMod.getApps()[0] || appMod.initializeApp(window.FIREBASE_CONFIG);
-      gaMod = anMod;
-      gaRef = anMod.initializeAnalytics(app, { config: { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false } });
-      anMod.setConsent?.({ analytics_storage: "granted", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
-      Track("page_view", { page_path: location.hash || "#jocs", page_title: document.title });
-    } catch (e) {
-      console.warn("No s'ha pogut carregar l'analítica:", e);
-    }
-  })();
-  await gaLoading;
-}
-
-function disableAnalytics() {
-  if (gaRef && gaMod) {
-    gaMod.setAnalyticsCollectionEnabled(gaRef, false);
-    gaMod.setConsent?.({ analytics_storage: "denied" });
-  }
-  clearGaCookies();
-}
-
 function saveConsent(analytics, quiet = false) {
   const before = getConsent();
   store.set(CONSENT_KEY, { analytics: !!analytics, ts: Date.now() });
   closeConsent();
-  if (analytics) enableAnalytics(); else disableAnalytics();
   window.Stats?.consent?.(!!analytics);
   if (!before) window.Stats?.add?.("cons", 1, analytics ? "si" : "no");
   if (!quiet) toast(analytics ? "Gràcies! Ens ajudes a millorar l'app 💛" : "D'acord: no es desa res per mesurar l'ús.");
 }
 
-window.Track = (name, params) => {
-  if (gaRef && gaMod && getConsent()?.analytics) { try { gaMod.logEvent(gaRef, name, params); } catch { /* sense analítica */ } }
-};
+// Esdeveniments: abans anaven a Google Analytics; ara no s'envien enlloc (els comptadors propis són a stats.js)
+window.Track = () => {};
 
 function closeConsent() {
   document.getElementById("consent")?.remove();
@@ -110,7 +77,6 @@ function openConsent(settings = false) {
 document.addEventListener("click", (e) => {
   if (e.target.closest("[data-open-consent]")) { e.preventDefault(); openConsent(true); }
 });
-window.addEventListener("hashchange", () => Track("page_view", { page_path: location.hash || "#jocs", page_title: document.title }));
 
 {
   const c = getConsent();
@@ -121,6 +87,8 @@ window.addEventListener("hashchange", () => Track("page_view", { page_path: loca
     openConsent(false);
   };
   if (!c) setTimeout(ask, 1200);
-  else if (c.analytics && ANALYTICS_AVAILABLE) enableAnalytics();
-  else if (ANALYTICS_AVAILABLE) clearGaCookies();
+  // Restes de Google Analytics a qui l'havia acceptat: les galetes _ga i l'identificador d'instal·lació de Firebase
+  clearGaCookies();
+  try { indexedDB.deleteDatabase("firebase-installations-database"); } catch { /* sense IndexedDB */ }
+
 }

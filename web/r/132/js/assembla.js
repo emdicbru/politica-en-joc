@@ -437,6 +437,20 @@ function assemblaMethodHtml(terr) {
 
 function assemblaResult(ctx, ans, terr, restart) {
   const rows = assemblaScores(ans, terr), pos = assemblaPos(ans), T = ASSEMBLA_TERR[terr] || ASSEMBLA_TERR.resta;
+  // Comptadors anònims per al Centre de control (stats.js): territori, partit més afí, casella del mapa i cada resposta.
+  // Cap identificador: només sumen 1. Si la persona ha demanat no comptar les seves visites, Stats no envia res.
+  if (typeof Stats !== "undefined") {
+    try {
+      Stats.add("at", 1, terr);
+      if (rows[0]) Stats.add("ap", 1, rows[0].id);
+      if (pos && pos.x !== null && pos.y !== null) Stats.add("ag", 1, `${Math.round(pos.x)}_${Math.round(pos.y)}`);
+      for (const [id, a] of Object.entries(ans)) {
+        if (!a) continue;
+        Stats.add("aq", 1, `${id}_${a.v === null || a.v === undefined ? "s" : a.v}`);
+        if (a.imp && a.v !== null) Stats.add("ai", 1, id);
+      }
+    } catch { /* sense comptadors */ }
+  }
   try { store.set(ASSEMBLA_KEY, { at: Date.now(), terr, top: rows.slice(0, 3).map((r) => [r.id, r.pct]), all: rows.map((r) => [r.id, r.pct]), pos }); } catch { /* sense memòria */ }
   if (!rows.length) {
     return ctx.finish({ score: 0, display: "—", noRecord: true, xp: 10, verdict: "Has saltat massa afirmacions per comparar-te amb els partits.", extraHtml: `<p class="muted">Torna-hi i respon-ne almenys ${ASSEMBLA_MIN}.</p>` });

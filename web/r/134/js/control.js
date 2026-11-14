@@ -11,7 +11,7 @@ const CTL_ROLES = {
   propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
 };
 // Què cal per veure cada pestanya
-const CTL_TAB_ROLE = { resum: 1, usuaris: 1, afinitat: 1, registrats: 2, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4, locucio: 4 };
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, afinitat: 1, embut: 1, calendari: 2, xarxes: 1, informe: 1, testdia: 2, assaig: 2, registrats: 2, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4, locucio: 4 };
 let ctlRoleCache = { email: null, role: undefined, loading: false };
 function ctlRole() {
   const email = window.Online?.user?.email?.toLowerCase();
@@ -170,11 +170,14 @@ function renderControlPage(fromLive = false) {
   const newErr = ctlRpt.list ? ctlRpt.list.filter((r) => r.status === "nou").length : 0;
   const labSoon = ctlLabItems().filter((x) => x.from > now).length;
   const count = (n) => (n ? `<em class="ctl-n">${n}</em>` : "");
+  const nAlerts = (typeof CTP !== "undefined" && CTP.alerts?.filter((a) => a.lvl !== "baixa").length) || 0;
   const GROUPS = [
-    ["General", [["resum", "🏠", "Resum"], ["usuaris", "📊", "Usuaris"], ["afinitat", "🧭", "Test d'afinitat"], ["registrats", "👤", "Registrats"], ["errors", "🐞", "Errors", count(newErr)], ["equip", "👥", "Equip"]]],
-    ["Contingut", [["noticies", "📰", "Notícies"], ["notif", "🔔", "Notificacions"], ["premsa", "📣", "Premsa"], ["anuncis", "💶", "Anuncis"]]],
-    ["Especial del 29N", [["fases", "📅", "Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "📺", "Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "🎯", "Porra i pronòstics", dot(["Porra", "Pronòstics"])]]],
-    ["Eines", [["lab", "🧪", "Laboratori", count(labSoon)], ["locucio", "🎙️", "Locució"], ["ajuda", "❓", "Ajuda"]]],
+    ["Avui", [["resum", "🏠", "Resum", count(nAlerts)]]],
+    ["Audiència", [["usuaris", "📊", "Visites i ús"], ["embut", "🪜", "Embut i comparticions"], ["afinitat", "🧭", "Test d'afinitat"], ["registrats", "👤", "Registrats"]]],
+    ["Comunicació", [["notif", "🔔", "Notificacions"], ["calendari", "🗓️", "Calendari d'avisos"], ["xarxes", "📸", "Carrusel del dia"], ["premsa", "📣", "Premsa"], ["informe", "🧾", "Informe setmanal"]]],
+    ["Contingut", [["noticies", "📰", "Notícies"], ["testdia", "✏️", "Test d'avui"], ["anuncis", "💶", "Anuncis"]]],
+    ["Especial del 29N", [["fases", "📅", "Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "📺", "Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["assaig", "🧯", "Assaig de la nit"], ["jocs", "🎯", "Porra i pronòstics", dot(["Porra", "Pronòstics"])]]],
+    ["Equip i eines", [["errors", "🐞", "Errors", count(newErr)], ["equip", "👥", "Equip"], ["lab", "🧪", "Laboratori", count(labSoon)], ["locucio", "🎙️", "Locució"], ["ajuda", "❓", "Ajuda"]]],
   ].map(([g, items]) => [g, items.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3))]).filter(([, items]) => items.length);
   const TABS = GROUPS.flatMap(([, items]) => items);
   let tab = sessionStorage.getItem("ctl-tab") || "resum";
@@ -196,6 +199,8 @@ function renderControlPage(fromLive = false) {
     ${pv || Object.keys(featPreviews()).length ? `<div class="esp-preview">🧪 Tens una vista prèvia activa en aquesta pestanya${pv ? ` (${esc(pv.label)})` : ""}. <button type="button" data-pv-off>Tanca-la</button></div>` : ""}
 
     ${panel("resum", `
+      ${typeof ctpTodayHtml === "function" ? ctpAlertsHtml() + ctpTodayHtml() : ""}
+      <h2 class="ctl-h2">Estat de l'app</h2>
       <section class="ctl-kpis">
         <button type="button" class="ctl-kpi ${newErr ? "hot" : ""}" data-tab="errors"><small>Errors nous</small><b>${ctlRpt.list ? newErr : ctlRpt.failed ? "?" : "…"}</b><span>${ctlRpt.list ? `de ${ctlRpt.list.length} avisos` : ctlRpt.failed ? "no s'han pogut llegir" : "carregant"}</span></button>
         <button type="button" class="ctl-kpi" data-tab="lab"><small>Funcions en prova</small><b>${labSoon}</b><span>${labSoon ? "encara no les veu la gent" : "totes ja són públiques"}</span></button>
@@ -298,6 +303,12 @@ function renderControlPage(fromLive = false) {
 
     ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
     ${panel("afinitat", tab === "afinitat" && typeof ctlAfinitatHtml === "function" ? ctlAfinitatHtml() : "")}
+    ${panel("embut", tab === "embut" && typeof ctpFunnelHtml === "function" ? ctpFunnelHtml() : "")}
+    ${panel("calendari", tab === "calendari" && typeof ctpCalendarHtml === "function" ? ctpCalendarHtml() : "")}
+    ${panel("xarxes", tab === "xarxes" && typeof ctpXarxesHtml === "function" ? ctpXarxesHtml() : "")}
+    ${panel("informe", tab === "informe" && typeof ctpReportHtml === "function" ? ctpReportHtml() : "")}
+    ${panel("testdia", tab === "testdia" && typeof ctpTestHtml === "function" ? ctpTestHtml() : "")}
+    ${panel("assaig", tab === "assaig" && typeof ctpNitHtml === "function" ? ctpNitHtml() : "")}
     ${panel("registrats", tab === "registrats" && typeof ctlRegHtml === "function" ? ctlRegHtml() : "")}
 
     ${panel("noticies", tab === "noticies" ? ctlNewsHtml() : "")}
@@ -332,6 +343,7 @@ function renderControlPage(fromLive = false) {
   </div>`;
 
   if (tab === "notif") ctlNotifBind(root);
+  if (typeof ctpBind === "function") ctpBind(tab, root);
   if (tab === "usuaris") ctlStatsBind(root);
   if (tab === "afinitat" && typeof ctlAfinitatBind === "function") { ctlAfinitatBind(root); if (ctlCan(CTL_TAB_ROLE.notif)) ctlQuickBind(root); }
   if (tab === "registrats" && typeof ctlRegBind === "function") ctlRegBind(root);
@@ -504,13 +516,31 @@ async function ctlPushLoad() {
   if (ctlPush.loading) return;
   ctlPush.loading = true;
   const O = window.Online;
-  const [cfg, hist, all, sched] = await Promise.all([O.getConfig("push"), O.pushHistory(), O.pushCount(), O.pushScheduled()]);
+  const day = (k) => Stats.day(new Date(Date.now() - k * 864e5));
+  const [cfg, hist, all, sched, docs] = await Promise.all([O.getConfig("push"), O.pushHistory(20), O.pushCount(), O.pushScheduled(), O.statsRange(day(29), day(0))]);
+  // Clics de cada enviament (stats «pc», per codi d'enviament) i dels missatges i trucades dels amics
+  // Clics per dia i per codi d'avís (stats «pc»; el codi és l'empremta del títol, vegeu ctlPushKey)
+  const pc = {};
+  (docs || []).forEach((d) => { const day = d.id.split("_")[0]; for (const [k, v] of Object.entries(d.pc || {})) { const m = (pc[day] ||= {}); m[k] = (m[k] || 0) + (Number(v) || 0); } });
+  ctlPush.clicks = pc;
   ctlPush.cfg = cfg || { diariOn: true, diariHora: "09:00" };
   ctlPush.hist = hist;
   ctlPush.sched = sched;
   ctlPush.counts = { all };
   ctlPush.loading = false;
-  if (sessionStorage.getItem("ctl-tab") === "notif") renderControl(true);
+  if (["notif", "calendari", "resum"].includes(sessionStorage.getItem("ctl-tab") || "resum")) renderControl(true);
+}
+// Clics d'un avís: la suma dels seus codis d'enviament (n del repte diari i la ratxa; ns dels avisos, un per enviament)
+const ctlPushKey = (t) => { let h = 2166136261; for (const ch of String(t || "")) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return "t" + h.toString(36); };
+// Clics d'un avís: els del seu títol des del dia que surt fins a tres dies després (si es repeteix, de l'últim enviament)
+function ctlClicks(x) {
+  const t0 = x.sentAt || x.lastSent || x.created;
+  if (!t0 || !["sent", "scheduled"].includes(x.status) || !ctlPush.clicks) return "";
+  const key = ctlPushKey(x.title);
+  let n = 0;
+  for (let k = 0; k <= 3; k++) n += ctlPush.clicks[Stats.day(new Date(t0 + k * 864e5))]?.[key] || 0;
+  const sent = x.sent ?? x.last?.sent;
+  return ` · 👆 ${n} ${n === 1 ? "clic" : "clics"}${sent ? ` (${Math.round((n / sent) * 1000) / 10} %)` : ""}`;
 }
 function ctlNotifHtml() {
   if (!ctlPush.cfg) { ctlPushLoad(); return `<div class="card"><p class="muted">Carregant…</p></div>`; }
@@ -523,6 +553,7 @@ function ctlNotifHtml() {
     ${ready ? "" : `<p class="ctl-alert">⚠️ Falta la clau pública de les notificacions (<code>vapidKey</code> a js/firebase-config.js). Fins aleshores ningú les pot activar.</p>`}
     <section class="ctl-status">
       <div class="ctl-st"><small>Dispositius</small><b>${n.all ?? "—"}</b><span class="ctl-tag">amb notificacions</span></div>
+      <div class="ctl-st"><small>Clics (30 dies)</small><b>${Object.values(P.clicks || {}).reduce((a, m) => a + Object.entries(m).filter(([k]) => /^t/.test(k)).reduce((s, [, v]) => s + v, 0), 0)}</b><span class="ctl-tag">avisos · ${Object.values(P.clicks || {}).reduce((a, m) => a + (m.xat || 0) + (m.trucada || 0), 0)} d'amics</span></div>
 
       <div class="ctl-st"><small>Enviament</small><b>${gh ? "Immediat" : "En 5–15 min"}</b><span class="ctl-tag">${gh ? "amb token" : "cua automàtica"}</span></div>
     </section>
@@ -567,7 +598,7 @@ function ctlNotifHtml() {
     </section>
     <section class="card">
       <h2 class="section-title sm">🕑 Darrers avisos</h2>
-      ${P.hist?.length ? `<ol class="push-hist">${P.hist.map((x) => `<li><span>${st(x.status)}</span><div><b>${esc(x.title || "")}</b><small>${ctlDate(x.created)} · ${x.kind === "diari" ? "repte diari" : x.kind === "ratxa" ? "recordatori de ratxa" : CTL_AUD.find(([k]) => k === (x.aud || x.topic))?.[1] || x.aud || x.topic}${x.sent !== undefined ? ` · ${x.sent} enviats${x.failed ? `, ${x.failed} fallits` : ""}` : ""}</small></div></li>`).join("")}</ol>` : `<p class="muted">Encara no s'ha enviat cap avís.</p>`}
+      ${P.hist?.length ? `<ol class="push-hist">${P.hist.map((x) => `<li><span>${st(x.status)}</span><div><b>${esc(x.title || "")}</b><small>${ctlDate(x.created)} · ${x.kind === "diari" ? "repte diari" : x.kind === "ratxa" ? "recordatori de ratxa" : CTL_AUD.find(([k]) => k === (x.aud || x.topic))?.[1] || x.aud || x.topic}${ctlClicks(x)}${x.sent !== undefined ? ` · ${x.sent} enviats${x.failed ? `, ${x.failed} fallits` : ""}` : ""}</small></div></li>`).join("")}</ol>` : `<p class="muted">Encara no s'ha enviat cap avís.</p>`}
       <button class="linklike" type="button" data-prefresh>Actualitza</button>
     </section>
     <section class="card">

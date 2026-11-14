@@ -88,6 +88,18 @@ const Stats = (() => {
     } catch { /* sense xarxa */ }
   }
 
+  // Clic a una notificació (sw.js hi afegeix ?n=<codi de l'enviament>): suma 1 a «pc», sense cap identificador de
+  // persona, i el codi es treu de l'adreça perquè no es torni a comptar ni quedi a l'enllaç si es comparteix
+  function pushClick() {
+    try {
+      const u = new URL(location.href), n = u.searchParams.get("n");
+      if (!n || !/^[a-z0-9]{1,24}$/.test(n)) return;
+      add("pc", 1, n);
+      u.searchParams.delete("n");
+      history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+    } catch { /* adreça estranya */ }
+  }
+
   // Una «sessió» és cada cop que s'obre l'app, o quan s'hi torna després de 30 minuts fora
   let hiddenAt = 0;
   function session() {
@@ -95,6 +107,7 @@ const Stats = (() => {
     if (s.off) return;
     const day = madridDay();
     add("ses");
+    pushClick();
     add("h", 1, madridHour());
     devDay();
     hit();
@@ -192,8 +205,8 @@ document.addEventListener("click", (e) => {
   if (!b) return;
   const off = !Stats.off();
   Stats.setOff(off);
-  b.textContent = off ? "Vuelve a contar mis visitas" : "No cuentes mis visitas";
-  toast(off ? "Tus visitas ya no se cuentan" : "Tus visitas vuelven a contar");
+  b.textContent = off ? "Torna a comptar les meves visites" : "No comptis les meves visites";
+  toast(off ? "Les teves visites ja no es compten" : "Les teves visites tornen a comptar");
 });
 // Arrenca quan ja hi ha la resta de l'app
 setTimeout(() => Stats.start(), 1200);

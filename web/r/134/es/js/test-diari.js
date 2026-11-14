@@ -7,13 +7,42 @@
 const TEST_KEY = "r29n-test";
 let testData = null, testLoading = null;
 const testOn = () => PEJ_LANG !== "es";
+// Correccions del Centre de control (pestanya «Test d'avui»): config/testfix = { day, json: { índex: { q, a, exp, hide } } }.
+// Es llegeixen amb l'API REST pública de Firestore (la configuració és de lectura pública), amb un temps màxim curt.
+async function testFixLoad() {
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 2500);
+    const pid = window.FIREBASE_CONFIG?.projectId || "politica-en-joc";
+    const r = await fetch(`https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/config/testfix`, { signal: ctl.signal, cache: "no-store" });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const f = (await r.json()).fields || {};
+    return { day: f.day?.stringValue, json: f.json?.stringValue };
+  } catch { return null; }
+}
+function testFixApply(data, fix) {
+  const day = data?.days?.[fix?.day];
+  if (!day || !fix.json) return;
+  let F = {};
+  try { F = JSON.parse(fix.json); } catch { return; }
+  day.questions = day.questions.map((q, i) => {
+    const f = F[i];
+    if (!f) return q;
+    if (f.hide) return null;
+    return { ...q, ...(f.q ? { q: f.q } : {}), ...(Array.isArray(f.a) && f.a.length === q.a.length ? { a: f.a } : {}), ...(typeof f.exp === "string" ? { exp: f.exp } : {}) };
+  }).filter(Boolean);
+}
 function testLoad() {
   if (testData) return Promise.resolve(testData);
   if (!testOn()) return Promise.resolve((testData = { days: {} }));
   return (testLoading ||= (async () => {
     try {
-      const r = await fetch(`${window.PEJ_DATA || "../data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
+      const [r, fix] = await Promise.all([
+        fetch(`${window.PEJ_DATA || "../data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" }),
+        testFixLoad(),
+      ]);
       testData = r.ok ? await r.json() : { days: {} };
+      testFixApply(testData, fix);
     } catch { testData = { days: {} }; }
     testLoading = null;
     return testData;
@@ -110,13 +139,15 @@ function testShareCanvas(key, r) {
 }
 // Comparteix una imatge amb text: al mòbil, amb el menú del sistema (WhatsApp, Instagram…); a l'ordinador, es baixa la
 // imatge i es copia el text
-async function shareCanvas(cv, name, text) {
+async function shareCanvas(cv, name, text, game = "actualitat") {
   const blob = await new Promise((res) => cv.toBlob(res, "image/png"));
   const file = blob && new File([blob], name, { type: "image/png" });
+  const sh = (c) => window.Stats?.add("sh", 1, `${game}_${c}`);
   try {
-    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
-    if (navigator.share) { await navigator.share({ text }); return; }
+    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); sh("app"); return; }
+    if (navigator.share) { await navigator.share({ text }); sh("text"); return; }
   } catch (e) { if (e?.name === "AbortError") return; }
+  sh("descarrega");
   if (blob) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
   try { await navigator.clipboard.writeText(text); toast("Imagen descargada y texto copiado"); } catch { toast("Imagen descargada"); }
 }

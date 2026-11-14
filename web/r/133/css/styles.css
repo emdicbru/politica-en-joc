@@ -8129,3 +8129,7 @@ h1, h2, h3 { text-wrap: balance; }
 .cta-qb i { display: block; height: 100%; }
 .cta-q em { font-style: normal; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
 .cta-q em.pos { color: var(--ok); } .cta-q em.neg { color: var(--ko); }
+
+.ctl-quick-b { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.ctl-quick-b .btn { display: grid; justify-items: start; gap: 2px; min-height: 64px; padding: 10px 18px; text-align: left; }
+.ctl-quick-b .btn small { font-weight: 600; font-size: .8rem; opacity: .9; }

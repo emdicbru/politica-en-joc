@@ -100,7 +100,7 @@ function ctlChanges() {
 }
 async function ctlCheckFile() {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
     ctlFile = r.ok ? await r.json() : { missing: true };
   } catch { ctlFile = { missing: true }; }
 }
@@ -333,7 +333,7 @@ function renderControlPage(fromLive = false) {
 
   if (tab === "notif") ctlNotifBind(root);
   if (tab === "usuaris") ctlStatsBind(root);
-  if (tab === "afinitat" && typeof ctlAfinitatBind === "function") ctlAfinitatBind(root);
+  if (tab === "afinitat" && typeof ctlAfinitatBind === "function") { ctlAfinitatBind(root); if (ctlCan(CTL_TAB_ROLE.notif)) ctlQuickBind(root); }
   if (tab === "registrats" && typeof ctlRegBind === "function") ctlRegBind(root);
   if (tab === "noticies") ctlNewsBind(root);
   if (tab === "equip") ctlTeamBind(root);
@@ -504,13 +504,31 @@ async function ctlPushLoad() {
   if (ctlPush.loading) return;
   ctlPush.loading = true;
   const O = window.Online;
-  const [cfg, hist, all, sched] = await Promise.all([O.getConfig("push"), O.pushHistory(), O.pushCount(), O.pushScheduled()]);
+  const day = (k) => Stats.day(new Date(Date.now() - k * 864e5));
+  const [cfg, hist, all, sched, docs] = await Promise.all([O.getConfig("push"), O.pushHistory(20), O.pushCount(), O.pushScheduled(), O.statsRange(day(29), day(0))]);
+  // Clics de cada enviament (stats «pc», per codi d'enviament) i dels missatges i trucades dels amics
+  // Clics per dia i per codi d'avís (stats «pc»; el codi és l'empremta del títol, vegeu ctlPushKey)
+  const pc = {};
+  (docs || []).forEach((d) => { const day = d.id.split("_")[0]; for (const [k, v] of Object.entries(d.pc || {})) { const m = (pc[day] ||= {}); m[k] = (m[k] || 0) + (Number(v) || 0); } });
+  ctlPush.clicks = pc;
   ctlPush.cfg = cfg || { diariOn: true, diariHora: "09:00" };
   ctlPush.hist = hist;
   ctlPush.sched = sched;
   ctlPush.counts = { all };
   ctlPush.loading = false;
   if (sessionStorage.getItem("ctl-tab") === "notif") renderControl(true);
+}
+// Clics d'un avís: la suma dels seus codis d'enviament (n del repte diari i la ratxa; ns dels avisos, un per enviament)
+const ctlPushKey = (t) => { let h = 2166136261; for (const ch of String(t || "")) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return "t" + h.toString(36); };
+// Clics d'un avís: els del seu títol des del dia que surt fins a tres dies després (si es repeteix, de l'últim enviament)
+function ctlClicks(x) {
+  const t0 = x.sentAt || x.lastSent || x.created;
+  if (!t0 || !["sent", "scheduled"].includes(x.status) || !ctlPush.clicks) return "";
+  const key = ctlPushKey(x.title);
+  let n = 0;
+  for (let k = 0; k <= 3; k++) n += ctlPush.clicks[Stats.day(new Date(t0 + k * 864e5))]?.[key] || 0;
+  const sent = x.sent ?? x.last?.sent;
+  return ` · 👆 ${n} ${n === 1 ? "clic" : "clics"}${sent ? ` (${Math.round((n / sent) * 1000) / 10} %)` : ""}`;
 }
 function ctlNotifHtml() {
   if (!ctlPush.cfg) { ctlPushLoad(); return `<div class="card"><p class="muted">Carregant…</p></div>`; }
@@ -523,9 +541,11 @@ function ctlNotifHtml() {
     ${ready ? "" : `<p class="ctl-alert">⚠️ Falta la clau pública de les notificacions (<code>vapidKey</code> a js/firebase-config.js). Fins aleshores ningú les pot activar.</p>`}
     <section class="ctl-status">
       <div class="ctl-st"><small>Dispositius</small><b>${n.all ?? "—"}</b><span class="ctl-tag">amb notificacions</span></div>
+      <div class="ctl-st"><small>Clics (30 dies)</small><b>${Object.values(P.clicks || {}).reduce((a, m) => a + Object.entries(m).filter(([k]) => /^t/.test(k)).reduce((s, [, v]) => s + v, 0), 0)}</b><span class="ctl-tag">avisos · ${Object.values(P.clicks || {}).reduce((a, m) => a + (m.xat || 0) + (m.trucada || 0), 0)} d'amics</span></div>
 
       <div class="ctl-st"><small>Enviament</small><b>${gh ? "Immediat" : "En 5–15 min"}</b><span class="ctl-tag">${gh ? "amb token" : "cua automàtica"}</span></div>
     </section>
+    ${ctlQuickHtml()}
     <section class="card">
       <h2 class="section-title sm">📅 Repte diari automàtic</h2>
       <p class="muted">Cada dia s'envia «Ja tens el repte d'avui». A qui porta ratxa, li ho diu: «🔥 Portes 5 dies de ratxa…».</p>
@@ -557,7 +577,7 @@ function ctlNotifHtml() {
         ${d.rep === "dies" ? `<div class="ctl-days">${CTL_WD.map(([n, t]) => `<label><input type="checkbox" data-pday="${n}" ${d.days.includes(n) ? "checked" : ""}> ${t}</label>`).join("")}</div>` : ""}
         ${d.rep !== "cap" ? `<label>Fins a (opcional) <input type="date" data-puntil value="${esc(d.until)}"></label>` : ""}
       </div>` : ""}
-      <div class="push-prev"><span aria-hidden="true"><img src="../img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
+      <div class="push-prev"><span aria-hidden="true"><img src="img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
       <div class="row"><button class="btn primary" type="button" data-psend ${d.title.trim() ? "" : "disabled"}>${d.when === "prog" ? "Programa l'avís" : "Envia l'avís"}</button></div>
     </section>
     <section class="card">
@@ -566,7 +586,7 @@ function ctlNotifHtml() {
     </section>
     <section class="card">
       <h2 class="section-title sm">🕑 Darrers avisos</h2>
-      ${P.hist?.length ? `<ol class="push-hist">${P.hist.map((x) => `<li><span>${st(x.status)}</span><div><b>${esc(x.title || "")}</b><small>${ctlDate(x.created)} · ${x.kind === "diari" ? "repte diari" : x.kind === "ratxa" ? "recordatori de ratxa" : CTL_AUD.find(([k]) => k === (x.aud || x.topic))?.[1] || x.aud || x.topic}${x.sent !== undefined ? ` · ${x.sent} enviats${x.failed ? `, ${x.failed} fallits` : ""}` : ""}</small></div></li>`).join("")}</ol>` : `<p class="muted">Encara no s'ha enviat cap avís.</p>`}
+      ${P.hist?.length ? `<ol class="push-hist">${P.hist.map((x) => `<li><span>${st(x.status)}</span><div><b>${esc(x.title || "")}</b><small>${ctlDate(x.created)} · ${x.kind === "diari" ? "repte diari" : x.kind === "ratxa" ? "recordatori de ratxa" : CTL_AUD.find(([k]) => k === (x.aud || x.topic))?.[1] || x.aud || x.topic}${ctlClicks(x)}${x.sent !== undefined ? ` · ${x.sent} enviats${x.failed ? `, ${x.failed} fallits` : ""}` : ""}</small></div></li>`).join("")}</ol>` : `<p class="muted">Encara no s'ha enviat cap avís.</p>`}
       <button class="linklike" type="button" data-prefresh>Actualitza</button>
     </section>
     <section class="card">
@@ -576,6 +596,27 @@ function ctlNotifHtml() {
       <div class="ctl-push-row"><input data-ghtoken type="password" placeholder="github_pat_…" autocomplete="off"><button class="btn" type="button" data-ghsave>Desa</button></div>`}
     </section>`;
 }
+// Avisos d'un sol botó: el text ja està escrit i surt de seguida a tothom que té les notificacions activades
+const CTL_QUICK = {
+  afinitat: { label: "🧭 Test d'afinitat", title: "🧭 Amb quin partit coincideixes?", body: "Fes el test d'afinitat política del 29N: 43 afirmacions, el teu lloc als eixos i el resultat en imatge.", url: "./#joc/assembla" },
+};
+async function ctlQuickPush(key) {
+  const q = CTL_QUICK[key], O = window.Online;
+  if (!q || !O?.pushQueue) return;
+  const n = ctlPush.counts?.all;
+  if (!confirm(`Enviar ara a tothom${n != null ? ` (${n} dispositius)` : ""}?\n\n${q.title}\n${q.body}`)) return;
+  const id = await O.pushQueue({ title: q.title, body: q.body, url: q.url, aud: "tots", kind: "manual", quick: key });
+  if (!id) return;
+  const now = await ctlDispatch();
+  toast(now ? "Enviant ara mateix" : "A la cua: sortirà en pocs minuts");
+  ctlPush.cfg = null;
+  if (["notif", "afinitat"].includes(sessionStorage.getItem("ctl-tab"))) renderControl(true);
+}
+const ctlQuickHtml = (keys = Object.keys(CTL_QUICK)) => `<section class="card ctl-quick"><h2 class="section-title sm">⚡ Avís en un toc</h2>
+  <p class="muted">Surt a tothom que té les notificacions activades${localStorage.getItem(CTL_GH_KEY) ? ", de seguida" : " (en 5–15 minuts; amb el token de GitHub, de seguida)"}.</p>
+  <div class="ctl-quick-b">${keys.map((k) => `<button type="button" class="btn primary" data-quick="${k}">${esc(CTL_QUICK[k].label)}<small>${esc(CTL_QUICK[k].title)}</small></button>`).join("")}</div></section>`;
+const ctlQuickBind = (root) => $$("[data-quick]", root).forEach((b) => b.addEventListener("click", () => ctlQuickPush(b.dataset.quick)));
+
 async function ctlDispatch(workflow = "push.yml") {
   const gh = localStorage.getItem(CTL_GH_KEY);
   if (!gh) return false;
@@ -587,6 +628,7 @@ async function ctlDispatch(workflow = "push.yml") {
 function ctlNotifBind(root) {
   const O = window.Online, P = ctlPush;
   if (!P.cfg) return;
+  ctlQuickBind(root);
   const save = async (patch) => { const next = { ...P.cfg, ...patch }; if (await O.setConfig("push", next)) { P.cfg = next; toast("Desat"); renderControl(); } };
   $$("[data-pdiari]", root).forEach((b) => b.addEventListener("click", () => save({ diariOn: b.dataset.pdiari === "on" })));
   $("[data-phora]", root)?.addEventListener("change", (e) => e.target.value && save({ diariHora: e.target.value }));

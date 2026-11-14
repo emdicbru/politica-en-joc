@@ -116,6 +116,7 @@ function ctlAfinitatHtml() {
   return `
     <div class="ctl-head-row"><div class="ctl-seg" role="radiogroup">${[[0, "Tot"], [7, "7 dies"], [1, "Avui"]].map(([k, t]) => `<button type="button" role="radio" aria-checked="${CTA.range === k}" class="${CTA.range === k ? "on" : ""}" data-carange="${k}">${t}</button>`).join("")}</div>
       <button type="button" class="btn ghost sm" data-carefresh>Actualitza</button></div>
+    ${typeof ctlQuickHtml === "function" && ctlCan(CTL_TAB_ROLE.notif) ? ctlQuickHtml(["afinitat"]) : ""}
     <section class="card cta-kpis">
       <div><small>Tests acabats</small><b>${fmt(S.n)}</b><span class="muted">${CTA.range ? "en el període" : `des del ${CTA_FROM.split("-").reverse().join("-")}`}</span></div>
       <div><small>Avui</small><b>${fmt(today)}</b></div>

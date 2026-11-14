@@ -11,8 +11,8 @@ window.FIREBASE_CONFIG = {
   storageBucket: "politica-en-joc.firebasestorage.app",
   messagingSenderId: "339432287996",
   appId: "1:339432287996:web:0e7f05e2fba70796db3179",
-  // ID de mesura de Google Analytics 4 (tipus "G-XXXXXXXXXX"). Mentre estigui buit no es mostra el banner ni es carrega res.
-  measurementId: "G-PZWQFY3R43",
+  // Google Analytics es va treure el 14-11-2026: l'estadística d'ús és només la pròpia (stats.js). No hi tornis a posar
+  // cap «measurementId» sense actualitzar la política de galetes i l'avís de consentiment.
   // Clau pública (VAPID) de les notificacions push. És pública; la privada és un secret de GitHub (VAPID_PRIVATE).
   // La posa tools/push-setup.js. Mentre estigui buida, les notificacions no es poden activar.
   vapidKey: "BJczW68D4U462IgTUb3G-LuT2HJgLvypJSLAZ9WTrNbtrj02xNvU-2lT2DE_joPCv6SNnYJTzTvUKWSbK5LOr-A",

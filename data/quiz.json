@@ -1,7 +1,21 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-13",
+  "updated": "2026-11-14",
   "questions": [
+    {
+      "d": "2026-11-14",
+      "t": "campanya",
+      "q": "Quina taxa de participació ha demanat Pedro Sánchez per al 29‑N?",
+      "a": [
+        "75 %",
+        "70 %",
+        "80 %",
+        "65 %"
+      ],
+      "exp": "Sánchez ha sol·licitat que la participació a les eleccions generals del 29‑novembre sigui del 75 %, com a condició per a constituir una majoria progressista. La proposta apareix en diversos mitjans.",
+      "u": "https://elpais.com/espana/elecciones-generales/2026-11-13/sanchez-insta-a-una-participacion-del-75-el-29-n-para-reeditar-un-gobierno-progresista-que-llegue-mas-lejos-y-antes-en-las-conquistas-sociales.html",
+      "auto": true
+    },
     {
       "d": "2026-11-13",
       "t": "politica",
@@ -409,5 +423,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-13"
+  "updatedAuto": "2026-11-14"
 }

@@ -31,7 +31,7 @@ async function ctuLoad() {
   CTU.totals = { users, pron, push, ok: !!docs };
   CTU.at = Date.now();
   CTU.loading = false;
-  if (sessionStorage.getItem("ctl-tab") === "usuaris") renderControl(true);
+  if (["usuaris", "embut", "informe"].includes(sessionStorage.getItem("ctl-tab"))) renderControl(true);
 }
 // Suma els dies del període triat
 function ctuSum(keys) {

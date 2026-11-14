@@ -11,7 +11,7 @@ const CTL_ROLES = {
   propietari: { n: 4, name: "Propietari", desc: "Ho pot tot i és l'únic que dona i treu accessos al Centre de control." },
 };
 // Què cal per veure cada pestanya
-const CTL_TAB_ROLE = { resum: 1, usuaris: 1, afinitat: 1, registrats: 2, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4, locucio: 4 };
+const CTL_TAB_ROLE = { resum: 1, usuaris: 1, afinitat: 1, embut: 1, calendari: 2, xarxes: 1, informe: 1, testdia: 2, assaig: 2, registrats: 2, noticies: 1, errors: 1, lab: 1, ajuda: 1, notif: 2, fases: 2, nit: 2, jocs: 2, premsa: 3, anuncis: 3, equip: 4, locucio: 4 };
 let ctlRoleCache = { email: null, role: undefined, loading: false };
 function ctlRole() {
   const email = window.Online?.user?.email?.toLowerCase();
@@ -100,7 +100,7 @@ function ctlChanges() {
 }
 async function ctlCheckFile() {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
     ctlFile = r.ok ? await r.json() : { missing: true };
   } catch { ctlFile = { missing: true }; }
 }
@@ -170,11 +170,14 @@ function renderControlPage(fromLive = false) {
   const newErr = ctlRpt.list ? ctlRpt.list.filter((r) => r.status === "nou").length : 0;
   const labSoon = ctlLabItems().filter((x) => x.from > now).length;
   const count = (n) => (n ? `<em class="ctl-n">${n}</em>` : "");
+  const nAlerts = (typeof CTP !== "undefined" && CTP.alerts?.filter((a) => a.lvl !== "baixa").length) || 0;
   const GROUPS = [
-    ["General", [["resum", "🏠", "Resum"], ["usuaris", "📊", "Usuaris"], ["afinitat", "🧭", "Test d'afinitat"], ["registrats", "👤", "Registrats"], ["errors", "🐞", "Errors", count(newErr)], ["equip", "👥", "Equip"]]],
-    ["Contingut", [["noticies", "📰", "Notícies"], ["notif", "🔔", "Notificacions"], ["premsa", "📣", "Premsa"], ["anuncis", "💶", "Anuncis"]]],
-    ["Especial del 29N", [["fases", "📅", "Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "📺", "Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["jocs", "🎯", "Porra i pronòstics", dot(["Porra", "Pronòstics"])]]],
-    ["Eines", [["lab", "🧪", "Laboratori", count(labSoon)], ["locucio", "🎙️", "Locució"], ["ajuda", "❓", "Ajuda"]]],
+    ["Avui", [["resum", "🏠", "Resum", count(nAlerts)]]],
+    ["Audiència", [["usuaris", "📊", "Visites i ús"], ["embut", "🪜", "Embut i comparticions"], ["afinitat", "🧭", "Test d'afinitat"], ["registrats", "👤", "Registrats"]]],
+    ["Comunicació", [["notif", "🔔", "Notificacions"], ["calendari", "🗓️", "Calendari d'avisos"], ["xarxes", "📸", "Carrusel del dia"], ["premsa", "📣", "Premsa"], ["informe", "🧾", "Informe setmanal"]]],
+    ["Contingut", [["noticies", "📰", "Notícies"], ["testdia", "✏️", "Test d'avui"], ["anuncis", "💶", "Anuncis"]]],
+    ["Especial del 29N", [["fases", "📅", "Fases i avisos", dot(["Fase", "Missatge"])], ["nit", "📺", "Nit electoral", dot(["Resultats", "Participació", "Simulacre"])], ["assaig", "🧯", "Assaig de la nit"], ["jocs", "🎯", "Porra i pronòstics", dot(["Porra", "Pronòstics"])]]],
+    ["Equip i eines", [["errors", "🐞", "Errors", count(newErr)], ["equip", "👥", "Equip"], ["lab", "🧪", "Laboratori", count(labSoon)], ["locucio", "🎙️", "Locució"], ["ajuda", "❓", "Ajuda"]]],
   ].map(([g, items]) => [g, items.filter(([k]) => ctlCan(CTL_TAB_ROLE[k] || 3))]).filter(([, items]) => items.length);
   const TABS = GROUPS.flatMap(([, items]) => items);
   let tab = sessionStorage.getItem("ctl-tab") || "resum";
@@ -196,6 +199,8 @@ function renderControlPage(fromLive = false) {
     ${pv || Object.keys(featPreviews()).length ? `<div class="esp-preview">🧪 Tens una vista prèvia activa en aquesta pestanya${pv ? ` (${esc(pv.label)})` : ""}. <button type="button" data-pv-off>Tanca-la</button></div>` : ""}
 
     ${panel("resum", `
+      ${typeof ctpTodayHtml === "function" ? ctpAlertsHtml() + ctpTodayHtml() : ""}
+      <h2 class="ctl-h2">Estat de l'app</h2>
       <section class="ctl-kpis">
         <button type="button" class="ctl-kpi ${newErr ? "hot" : ""}" data-tab="errors"><small>Errors nous</small><b>${ctlRpt.list ? newErr : ctlRpt.failed ? "?" : "…"}</b><span>${ctlRpt.list ? `de ${ctlRpt.list.length} avisos` : ctlRpt.failed ? "no s'han pogut llegir" : "carregant"}</span></button>
         <button type="button" class="ctl-kpi" data-tab="lab"><small>Funcions en prova</small><b>${labSoon}</b><span>${labSoon ? "encara no les veu la gent" : "totes ja són públiques"}</span></button>
@@ -298,6 +303,12 @@ function renderControlPage(fromLive = false) {
 
     ${panel("usuaris", tab === "usuaris" ? ctlStatsHtml() : "")}
     ${panel("afinitat", tab === "afinitat" && typeof ctlAfinitatHtml === "function" ? ctlAfinitatHtml() : "")}
+    ${panel("embut", tab === "embut" && typeof ctpFunnelHtml === "function" ? ctpFunnelHtml() : "")}
+    ${panel("calendari", tab === "calendari" && typeof ctpCalendarHtml === "function" ? ctpCalendarHtml() : "")}
+    ${panel("xarxes", tab === "xarxes" && typeof ctpXarxesHtml === "function" ? ctpXarxesHtml() : "")}
+    ${panel("informe", tab === "informe" && typeof ctpReportHtml === "function" ? ctpReportHtml() : "")}
+    ${panel("testdia", tab === "testdia" && typeof ctpTestHtml === "function" ? ctpTestHtml() : "")}
+    ${panel("assaig", tab === "assaig" && typeof ctpNitHtml === "function" ? ctpNitHtml() : "")}
     ${panel("registrats", tab === "registrats" && typeof ctlRegHtml === "function" ? ctlRegHtml() : "")}
 
     ${panel("noticies", tab === "noticies" ? ctlNewsHtml() : "")}
@@ -332,6 +343,7 @@ function renderControlPage(fromLive = false) {
   </div>`;
 
   if (tab === "notif") ctlNotifBind(root);
+  if (typeof ctpBind === "function") ctpBind(tab, root);
   if (tab === "usuaris") ctlStatsBind(root);
   if (tab === "afinitat" && typeof ctlAfinitatBind === "function") { ctlAfinitatBind(root); if (ctlCan(CTL_TAB_ROLE.notif)) ctlQuickBind(root); }
   if (tab === "registrats" && typeof ctlRegBind === "function") ctlRegBind(root);
@@ -516,7 +528,7 @@ async function ctlPushLoad() {
   ctlPush.sched = sched;
   ctlPush.counts = { all };
   ctlPush.loading = false;
-  if (sessionStorage.getItem("ctl-tab") === "notif") renderControl(true);
+  if (["notif", "calendari", "resum"].includes(sessionStorage.getItem("ctl-tab") || "resum")) renderControl(true);
 }
 // Clics d'un avís: la suma dels seus codis d'enviament (n del repte diari i la ratxa; ns dels avisos, un per enviament)
 const ctlPushKey = (t) => { let h = 2166136261; for (const ch of String(t || "")) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return "t" + h.toString(36); };
@@ -577,7 +589,7 @@ function ctlNotifHtml() {
         ${d.rep === "dies" ? `<div class="ctl-days">${CTL_WD.map(([n, t]) => `<label><input type="checkbox" data-pday="${n}" ${d.days.includes(n) ? "checked" : ""}> ${t}</label>`).join("")}</div>` : ""}
         ${d.rep !== "cap" ? `<label>Fins a (opcional) <input type="date" data-puntil value="${esc(d.until)}"></label>` : ""}
       </div>` : ""}
-      <div class="push-prev"><span aria-hidden="true"><img src="img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
+      <div class="push-prev"><span aria-hidden="true"><img src="../img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
       <div class="row"><button class="btn primary" type="button" data-psend ${d.title.trim() ? "" : "disabled"}>${d.when === "prog" ? "Programa l'avís" : "Envia l'avís"}</button></div>
     </section>
     <section class="card">

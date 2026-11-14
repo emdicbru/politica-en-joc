@@ -1,0 +1,31 @@
+name: Informe setmanal
+# Dilluns al matí, el resum de la setmana anterior per correu (tools/informe.js). El servei d'avisos (Cloudflare) l'engega
+# al minut just si té el secret GH_DISPATCH; aquest horari de GitHub és la reserva (pot arribar amb retard).
+on:
+  schedule:
+    - cron: "15 8 * * 1"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Torna'l a enviar encara que ja s'hagi enviat"
+        required: false
+        default: ""
+concurrency:
+  group: informe
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  informe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save --no-audit --no-fund firebase-admin@12
+      - run: node tools/informe.js
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          BREVO_KEY: ${{ secrets.BREVO_KEY }}
+          FORCE: ${{ github.event.inputs.force }}

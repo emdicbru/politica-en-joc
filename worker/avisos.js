@@ -238,6 +238,84 @@ async function pushCron(env) {
   await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/push.yml/dispatches`, { method: "POST", headers: { Authorization: `Bearer ${env.GH_DISPATCH}`, Accept: "application/vnd.github+json", "User-Agent": "pej-avisos", "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main" }) });
 }
 
+// ---------- Alertes per a l'equip (cada 10 minuts) ----------
+// Comprova el que pot fallar sense que ningú se n'adoni i, si cal, envia una notificació als mòbils de l'equip que ho han
+// demanat al Centre de control (privat/alertes.uids). Cada alerta surt un sol cop per dia (privat/alertes.sent).
+//  · Test d'actualitat: a punt per revisar (de 6:30 fins a l'hora de publicació) o sense publicar a les 7:00.
+//  · Avís del repte diari que no ha sortit 45 minuts després de la seva hora.
+//  · Còpia dels titulars (data/news.json) aturada més de 8 hores.
+//  · Errors nous de la gent (reports amb status «nou»): quan n'hi ha més que a l'última alerta.
+const DATA = "https://emdicbru.github.io/politica-en-joc/data/";
+const fsEnc = (v) => (v === null || v === undefined ? { nullValue: null } : typeof v === "boolean" ? { booleanValue: v } : typeof v === "number" ? (Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v }) : typeof v === "string" ? { stringValue: v } : Array.isArray(v) ? { arrayValue: { values: v.map(fsEnc) } } : { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fsEnc(x)])) } });
+async function fsPatch(env, path, data) {
+  const mask = Object.keys(data).map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join("&");
+  return fetch(`${FS}/${path}?${mask}`, { method: "PATCH", headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsEnc(v)])) }) });
+}
+async function newReports(env) {
+  const r = await fetch(`${FS}:runQuery`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await googleToken(env)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "reports" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "nou" } } }, select: { fields: [{ fieldPath: "status" }] }, limit: 100 } }),
+  });
+  return (await r.json()).filter((x) => x.document).length;
+}
+export function teamChecks({ t, test, fix, news, push, errN, errPrev, now = Date.now() }) {
+  const out = [];
+  const gate = hmMin(fix?.gate || "08:00");
+  const hasTest = !!test?.days?.[t.day];
+  if (hasTest && fix?.ok !== t.day && t.min >= 6 * 60 + 30 && t.min < gate) out.push({ key: "test-revisa", title: "📝 Test d'avui a punt per revisar", body: `Surt sol a les ${fix?.gate || "08:00"}. Revisa'l i publica'l abans des del Centre de control.`, url: "./#control" });
+  if (!hasTest && t.min >= 7 * 60) out.push({ key: "test-falta", title: "🔴 El test d'avui no s'ha publicat", body: "La rutina de les 6:00 no l'ha deixat a data/test.json.", url: "./#control" });
+  if (push && push.diariOn !== false && t.min > hmMin(push.diariHora ?? 9) + 45 && push.diariLast !== t.day) out.push({ key: "diari", title: "🟠 L'avís del repte diari no ha sortit", body: `Havia de sortir a les ${push.diariHora || "09:00"}.`, url: "./#control" });
+  if (news?.updated && now - news.updated > 8 * 3600e3) out.push({ key: "news", title: "🟠 Els titulars fa hores que no es desen", body: "La còpia de data/news.json té més de 8 hores.", url: "./#control" });
+  if (errN > (errPrev || 0)) out.push({ key: `err${errN}`, title: `🐞 ${errN} ${errN === 1 ? "error nou" : "errors nous"} per revisar`, body: "Avisos de la gent des de la web.", url: "./#control", errN });
+  return out;
+}
+async function teamAlerts(env) {
+  if (!env.FIREBASE_SA || !env.VAPID_PRIVATE) return;
+  const t = madridNow();
+  const st = (await fsGet(env, "privat/alertes")) || {};
+  const uids = (st.uids || []).filter(Boolean);
+  if (!uids.length) return;
+  const get = (f) => fetch(`${DATA}${f}?t=${Date.now()}`, { cf: { cacheTtl: 0 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const [test, news, fix, push, errN] = await Promise.all([get("test.json"), get("news.json"), fsGet(env, "config/testfix"), fsGet(env, "config/push"), newReports(env).catch(() => 0)]);
+  const sent = st.sent || {};
+  const todo = teamChecks({ t, test, fix, news, push, errN, errPrev: st.errN }).filter((a) => sent[a.key] !== t.day);
+  if (!todo.length) { if ((st.errN || 0) > errN) await fsPatch(env, "privat/alertes", { errN }); return; }
+  const subs = (await Promise.all(uids.map((u) => pushSubs(env, u)))).flat();
+  for (const a of todo) {
+    for (const s of subs) {
+      const code = await webPush(env, s.sub, { title: a.title, body: a.body, url: a.url, tag: `ctl-${a.key}`, n: "alerta" }, { ttl: 3600 }).catch(() => 0);
+      if (code === 404 || code === 410) await fsDelete(env, `push/${s.id}`);
+    }
+    sent[a.key] = t.day;
+  }
+  const errMax = Math.max(st.errN || 0, ...todo.filter((a) => a.errN).map((a) => a.errN));
+  // Només es guarden les marques d'avui
+  await fsPatch(env, "privat/alertes", { sent: Object.fromEntries(Object.entries(sent).filter(([, d]) => d === t.day)), errN: errMax || errN });
+}
+
+// ---------- Rellotge de les tasques de GitHub (cada minut, amb GH_DISPATCH) ----------
+// El cron de GitHub Actions arriba sovint amb hores de retard. Amb el token, aquí s'engeguen a l'hora exacta:
+// titulars cada 20 minuts, enquestes a les 8:40 i 20:40, test d'actualitat de reserva a les 6:45 si la rutina no l'ha
+// fet, i l'informe setmanal el dilluns a les 9:00.
+export function dueWorkflows(t, weekday, testOk) {
+  const m = t.min % 60, out = [];
+  if (m % 20 === 7) out.push("news.yml");
+  if (t.min === 8 * 60 + 40 || t.min === 20 * 60 + 40) out.push("enquestes.yml");
+  if (t.min === 6 * 60 + 45 && !testOk) out.push("test.yml");
+  if (weekday === 1 && t.min === 9 * 60) out.push("informe.yml");
+  return out;
+}
+async function ghClock(env) {
+  if (!env.GH_DISPATCH) return;
+  const t = madridNow(), wd = new Date(t.day + "T12:00:00Z").getUTCDay();
+  let testOk = true;
+  if (t.min === 6 * 60 + 45) { const r = await fetch(`${DATA}test.json?t=${Date.now()}`).then((x) => (x.ok ? x.json() : null)).catch(() => null); testOk = !!r?.days?.[t.day]; }
+  for (const wf of dueWorkflows(t, wd, testOk)) {
+    await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/${wf}/dispatches`, { method: "POST", headers: { Authorization: `Bearer ${env.GH_DISPATCH}`, Accept: "application/vnd.github+json", "User-Agent": "pej-avisos", "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main" }) }).catch(() => {});
+  }
+}
+
 // ---------- Trucades: servidors TURN de Cloudflare (POST /turn) ----------
 // Amb dades mòbils (o xarxes d'empresa) els dos navegadors sovint no es poden connectar directament i la trucada es queda
 // «connectant». El TURN retransmet l'àudio i el vídeo xifrats (DTLS-SRTP: Cloudflare no els pot llegir). Les credencials
@@ -373,6 +451,8 @@ const json = (req, status, body) => new Response(JSON.stringify(body), { status,
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(pushCron(env).catch((e) => console.warn(e)));
+    ctx.waitUntil(ghClock(env).catch((e) => console.warn(e)));
+    if (madridNow().min % 10 === 0) ctx.waitUntil(teamAlerts(env).catch((e) => console.warn(e)));
     ctx.waitUntil(visCleanup(env).catch((e) => console.warn(e)));
   },
   async fetch(req, env, ctx) {

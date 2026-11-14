@@ -463,9 +463,10 @@ async function shareDailyImage(key) {
   const file = blob && new File([blob], `repte-${dailyNumber(key)}.png`, { type: "image/png" });
   const text = dailyShareText(key, r);
   try {
-    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); window.Stats?.add("sh", 1, "diari_app"); return; }
   } catch (e) { if (e?.name === "AbortError") return; }
   if (!blob) return;
+  window.Stats?.add("sh", 1, "diari_descarrega");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `repte-${dailyNumber(key)}.png`;

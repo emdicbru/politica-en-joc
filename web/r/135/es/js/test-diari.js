@@ -7,13 +7,55 @@
 const TEST_KEY = "r29n-test";
 let testData = null, testLoading = null;
 const testOn = () => PEJ_LANG !== "es";
+// Correccions del Centre de control (pestanya «Test d'avui»): config/testfix = { day, json: { índex: { q, a, exp, hide } } }.
+// Es llegeixen amb l'API REST pública de Firestore (la configuració és de lectura pública), amb un temps màxim curt.
+async function testFixLoad() {
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 2500);
+    const pid = window.FIREBASE_CONFIG?.projectId || "politica-en-joc";
+    const r = await fetch(`https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/config/testfix`, { signal: ctl.signal, cache: "no-store" });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const f = (await r.json()).fields || {};
+    return { day: f.day?.stringValue, json: f.json?.stringValue, ok: f.ok?.stringValue || "", gate: f.gate?.stringValue || "" };
+  } catch { return null; }
+}
+// Hora de publicació del test (Madrid): fins aleshores només el veu l'equip, que el pot revisar i aprovar abans
+let testGate = { ok: "", gate: "08:00" };
+const testMadridMin = () => { const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()).split(":").map(Number); return p[0] * 60 + p[1]; };
+const testGateMin = () => { const m = String(testGate.gate || "08:00").match(/^(\d{1,2}):(\d{2})$/); return m ? Number(m[1]) * 60 + Number(m[2]) : 480; };
+// Es veu el test d'aquest dia? Sí si és d'un altre dia, si ja s'ha aprovat, si ja és l'hora o si qui mira és de l'equip
+function testReleased(key) {
+  if (key !== todayKey()) return true;
+  if (testGate.ok === key) return true;
+  if (testMadridMin() >= testGateMin()) return true;
+  return typeof ctlIsAdmin === "function" && (() => { try { return ctlIsAdmin(); } catch { return false; } })();
+}
+const testGateText = () => `El test de hoy sale a las ${String(testGate.gate || "08:00")}. ¡Vuelve dentro de un rato!`;
+function testFixApply(data, fix) {
+  if (fix) testGate = { ok: fix.ok || "", gate: fix.gate || "08:00" };
+  const day = data?.days?.[fix?.day];
+  if (!day || !fix.json) return;
+  let F = {};
+  try { F = JSON.parse(fix.json); } catch { return; }
+  day.questions = day.questions.map((q, i) => {
+    const f = F[i];
+    if (!f) return q;
+    if (f.hide) return null;
+    return { ...q, ...(f.q ? { q: f.q } : {}), ...(Array.isArray(f.a) && f.a.length === q.a.length ? { a: f.a } : {}), ...(typeof f.exp === "string" ? { exp: f.exp } : {}) };
+  }).filter(Boolean);
+}
 function testLoad() {
   if (testData) return Promise.resolve(testData);
   if (!testOn()) return Promise.resolve((testData = { days: {} }));
   return (testLoading ||= (async () => {
     try {
-      const r = await fetch(`${window.PEJ_DATA || "../data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" });
+      const [r, fix] = await Promise.all([
+        fetch(`${window.PEJ_DATA || "../data/"}test.json?t=${Math.floor(Date.now() / 600000)}`, { cache: "no-cache" }),
+        testFixLoad(),
+      ]);
       testData = r.ok ? await r.json() : { days: {} };
+      testFixApply(testData, fix);
     } catch { testData = { days: {} }; }
     testLoading = null;
     return testData;
@@ -21,7 +63,9 @@ function testLoad() {
 }
 // Només els tests de la versió 2 del generador o posteriors (la primera no comprovava les respostes amb els titulars)
 const TEST_MIN_V = 2;
-const testDay = (key = todayKey()) => { const d = testData?.days?.[key]; return d && (d.v || 1) >= TEST_MIN_V ? d : null; };
+const testDay = (key = todayKey()) => { const d = testData?.days?.[key]; return d && (d.v || 1) >= TEST_MIN_V && testReleased(key) ? d : null; };
+// Hi ha test d'avui però encara no ha arribat l'hora de publicar-lo
+const testWaiting = (key = todayKey()) => { const d = testData?.days?.[key]; return !!(d && (d.v || 1) >= TEST_MIN_V && !testReleased(key)); };
 const testStore = () => store.get(TEST_KEY, { scores: {} });
 const testResult = (key = todayKey()) => testStore().scores[key] || null;
 // Ratxa: dies seguits amb el test fet (si avui encara no s'ha fet, compta fins ahir)
@@ -61,7 +105,7 @@ function renderTestHero() {
       <span class="jc-meta">Nuevo cada mañana a las <b>6:00</b></span>
     </div>
     <h2 class="jc-name">Test de actualidad</h2>
-    <p class="jc-sub">${r ? `¡Hecho! <b>${r.hits}/${r.n}</b> aciertos · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntas sobre lo que ha pasado estos días. ¿Cuánto sabes de la actualidad?` : `El test de hoy aún no está listo: se prepara cada mañana con las noticias de los últimos días.`}</p>
+    <p class="jc-sub">${r ? `¡Hecho! <b>${r.hits}/${r.n}</b> aciertos · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntas sobre lo que ha pasado estos días. ¿Cuánto sabes de la actualidad?` : testWaiting(key) ? testGateText() : `El test de hoy aún no está listo: se prepara cada mañana con las noticias de los últimos días.`}</p>
     <div class="jc-row">${r ? `<div class="jc-grid" aria-label="Resultado">${[...r.grid].map((c) => `<i class="${c === "🟩" ? "ok" : "ko"}"></i>`).join("")}</div>`
       : chips.length ? `<div class="jc-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join("")}</div>` : ""}</div>
     <div class="jc-stats">
@@ -110,13 +154,15 @@ function testShareCanvas(key, r) {
 }
 // Comparteix una imatge amb text: al mòbil, amb el menú del sistema (WhatsApp, Instagram…); a l'ordinador, es baixa la
 // imatge i es copia el text
-async function shareCanvas(cv, name, text) {
+async function shareCanvas(cv, name, text, game = "actualitat") {
   const blob = await new Promise((res) => cv.toBlob(res, "image/png"));
   const file = blob && new File([blob], name, { type: "image/png" });
+  const sh = (c) => window.Stats?.add("sh", 1, `${game}_${c}`);
   try {
-    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
-    if (navigator.share) { await navigator.share({ text }); return; }
+    if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text }); sh("app"); return; }
+    if (navigator.share) { await navigator.share({ text }); sh("text"); return; }
   } catch (e) { if (e?.name === "AbortError") return; }
+  sh("descarrega");
   if (blob) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
   try { await navigator.clipboard.writeText(text); toast("Imagen descargada y texto copiado"); } catch { toast("Imagen descargada"); }
 }
@@ -145,7 +191,7 @@ registerGame({
   gate() {
     if (!testOn()) return { html: `<p class="muted">El test de actualidad solo está en catalán.</p>`, bind() {} };
     if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) { const g = GAMES.find((x) => x.id === "actualitat"); g.quick() ? startGame(g) : showIntro(g); } }); return { html: `<p class="muted">Cargando el test…</p>`, bind() {} }; }
-    if (!testDay()) return { html: `<p class="muted">El test de hoy aún no está listo: se prepara cada mañana. Vuelve dentro de un rato.</p>`, bind() {} };
+    if (!testDay()) return { html: `<p class="muted">${testWaiting() ? testGateText() : "El test de hoy aún no está listo: se prepara cada mañana. Vuelve dentro de un rato."}</p>`, bind() {} };
     return null;
   },
   quick() { return testOn() && !!testData && !!testDay() && !testResult(); },
@@ -162,7 +208,7 @@ registerGame({
   },
   start(ctx) {
     const key = todayKey(), day = testDay(key);
-    if (!day) { ctx.body.innerHTML = `<div class="card"><p>El test de hoy aún no está listo.</p></div>`; return; }
+    if (!day) { ctx.body.innerHTML = `<div class="card"><p>${testWaiting(key) ? testGateText() : "El test de hoy aún no está listo."}</p></div>`; return; }
     const first = !testResult(key);
     // L'ordre de les opcions és el mateix per a tothom
     const rng = seededRng(hashString(`test-${key}`));
@@ -261,3 +307,4 @@ registerGame({
   },
 });
 testLoad().then(() => renderTestHero());
+setInterval(() => { if (testWaiting() === false && testData?.days?.[todayKey()] && !document.hidden && typeof renderTestHero === "function" && !window.__testShown) { window.__testShown = true; renderTestHero(); } }, 60000);

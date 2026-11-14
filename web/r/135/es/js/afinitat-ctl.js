@@ -4,7 +4,7 @@
 //   f.assembla  tests acabats (des del 10-11-2026, quan es va estrenar)
 //   at  territori · ap  partit amb més afinitat · ag  casella del mapa «x_y» (0–10) · aq  resposta «id_v» (v: -2…2, s = saltada)
 //   ai  afirmacions marcades amb ☆ (des del 14-11-2026)
-const CTA = { days: null, loading: false, range: 0, at: 0 };
+const CTA = { days: null, loading: false, range: 0, at: 0, terr: "" };
 const CTA_FROM = "2026-11-10"; // estrena del test
 const CTA_RES_FROM = "2026-11-14"; // des d'aquest dia es desen també les respostes
 
@@ -32,7 +32,7 @@ async function ctaLoad() {
       if (!d) return;
       const f = Number(doc.f?.assembla) || 0;
       if (f) d.n = (d.n || 0) + f;
-      for (const k of ["at", "ap", "ag", "aq", "ai"]) {
+      for (const k of ["at", "ap", "ag", "aq", "ai", "apt", "agt"]) {
         if (!doc[k] || typeof doc[k] !== "object") continue;
         const m = (d[k] ||= {});
         for (const [kk, vv] of Object.entries(doc[k])) m[kk] = (m[kk] || 0) + (Number(vv) || 0);
@@ -49,7 +49,7 @@ function ctaSum(keys) {
   keys.forEach((day) => {
     const d = CTA.days[day] || {};
     s.n += d.n || 0;
-    for (const k of ["at", "ap", "ag", "aq", "ai"]) {
+    for (const k of ["at", "ap", "ag", "aq", "ai", "apt", "agt"]) {
       if (!d[k]) continue;
       const m = (s[k] ||= {});
       for (const [kk, vv] of Object.entries(d[k])) m[kk] = (m[kk] || 0) + vv;
@@ -108,6 +108,10 @@ function ctlAfinitatHtml() {
   const S = ctaSum(keys);
   const res = ctaSum(keys.filter((d) => d >= CTA_RES_FROM));
   const withRes = Object.values(res.at || {}).reduce((a, b) => a + b, 0);
+  // Amb un territori triat, el partit i el mapa surten només d'aquell territori
+  const T = CTA.terr, pre = T + "_";
+  const sub = (m) => Object.fromEntries(Object.entries(m || {}).filter(([k]) => k.startsWith(pre)).map(([k, v]) => [k.slice(pre.length), v]));
+  const apShow = T ? sub(res.apt) : res.ap, agShow = T ? sub(res.agt) : res.ag;
   const terr = Object.fromEntries(Object.entries(typeof ASSEMBLA_TERR !== "undefined" ? ASSEMBLA_TERR : {}).map(([k, t]) => [k, t.name]));
   const pn = Object.fromEntries((typeof PARTIES !== "undefined" ? PARTIES : []).map((p) => [p.id, p.sig]));
   const perDay = all.map((d) => [d, CTA.days[d].n || 0]);
@@ -125,15 +129,31 @@ function ctlAfinitatHtml() {
     <section class="card"><h2 class="section-title sm">Tests acabats cada dia</h2>
       <div class="cta-days">${perDay.map(([d, n]) => `<div title="${d}: ${n}"><i style="height:${(n / maxDay) * 100}%"></i><b>${n || ""}</b><small>${d.slice(8)}/${d.slice(5, 7)}</small></div>`).join("")}</div>
       <p class="muted">Compta cada test acabat: si algú el repeteix, compta dues vegades. No es guarda res que identifiqui ningú.</p></section>
+    <div class="ctl-head-row"><label class="ctl-inline">Territori <select data-caterr><option value="">Tots</option>${Object.entries(terr).map(([k, t]) => `<option value="${k}" ${k === T ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label><span class="muted">El filtre per territori compta des del 14-11-2026 a la tarda.</span></div>
     <div class="cta-grid">
-      <section class="card"><h2 class="section-title sm">Partit amb més afinitat</h2>${ctuBars(res.ap, pn, { max: 12 })}</section>
+      <section class="card"><h2 class="section-title sm">Partit amb més afinitat${T ? ` · ${esc(terr[T] || T)}` : ""}</h2>${ctuBars(apShow, pn, { max: 12 })}</section>
       <section class="card"><h2 class="section-title sm">On voten</h2>${ctuBars(res.at, terr, { max: 8 })}</section>
     </div>
-    <section class="card"><h2 class="section-title sm">On es col·loca la gent</h2>${ctaMap(res.ag)}</section>
+    <section class="card"><h2 class="section-title sm">On es col·loca la gent${T ? ` · ${esc(terr[T] || T)}` : ""}</h2>${ctaMap(agShow)}</section>
+    ${ctaPollsHtml(res.ap, pn)}
     <section class="card"><h2 class="section-title sm">Què responen, afirmació per afirmació</h2>${ctaAnswers(res.aq, res.ai)}</section>
     <p class="muted">Dades anònimes i agregades: cada test acabat suma 1 a uns comptadors per dia (territori, partit, casella del mapa i resposta de cada afirmació). No hi ha cap identificador de persona ni de dispositiu, i no es pot saber què ha respost ningú en concret. ${CTA.at ? `Carregat ${ctlRel(CTA.at)}.` : ""}</p>`;
 }
+// Contrast: % de tests amb cada partit primer, al costat de la intenció de vot de les enquestes (pacte.js)
+function ctaPollsHtml(ap, pn) {
+  const tot = Object.values(ap || {}).reduce((a, b) => a + b, 0);
+  if (!tot || typeof POLL_PCT === "undefined" || !POLL_PCT.length) return "";
+  const poll = (id) => { const k = POLL_PCT_KEYS.indexOf(id); if (k < 0) return null; const v = POLL_PCT.map((r) => r[k]).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const ids = [...new Set([...Object.keys(ap), ...POLL_PCT_KEYS])].filter((id) => pn[id]);
+  const rows = ids.map((id) => [id, ((ap[id] || 0) / tot) * 100, poll(id)]).filter(([, a, p]) => a >= 0.5 || (p || 0) >= 1).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(...rows.map(([, a, p]) => Math.max(a, p || 0)), 1);
+  return `<section class="card"><h2 class="section-title sm">Test d'afinitat contra enquestes</h2>
+    <p class="cta-leg"><span><i style="background:#d2331a"></i>% de tests amb el partit en primer lloc</span><span><i style="background:#17173d"></i>% de vot a les enquestes (mitjana)</span></p>
+    <ul class="cta-vs">${rows.map(([id, a, p]) => `<li><b>${esc(pn[id])}</b><div><i class="a" style="width:${(a / max) * 100}%"></i><i class="p" style="width:${((p || 0) / max) * 100}%"></i></div><span>${Math.round(a)} % · ${p == null ? "—" : Math.round(p) + " %"}</span></li>`).join("")}</ul>
+    <p class="muted">No és una enquesta: qui fa el test no és una mostra representativa. Serveix per veure cap a on s'inclina el públic de l'app.</p></section>`;
+}
 function ctlAfinitatBind(root) {
+  $("[data-caterr]", root)?.addEventListener("change", (e) => { CTA.terr = e.target.value; renderControl(true); });
   $$("[data-carange]", root).forEach((b) => b.addEventListener("click", () => { CTA.range = Number(b.dataset.carange); renderControl(true); }));
   $("[data-carefresh]", root)?.addEventListener("click", () => { CTA.days = null; renderControl(true); });
 }

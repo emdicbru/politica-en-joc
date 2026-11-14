@@ -1,15 +1,15 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1385549459,
+ "revid": 1385635653,
  "seats": [
   {
    "n": "40dB / Prisa",
-   "d": "10–12 nov",
+   "d": "10–13 nov",
    "s": {
-    "pp": 130.5,
-    "psoe": 117,
-    "vox": 65.5,
+    "pp": 128.5,
+    "psoe": 119.5,
+    "vox": 64,
     "fa": 6,
     "altres": 6,
     "erc": 10,
@@ -181,16 +181,16 @@
  ],
  "pct": [
   [
-   31.5,
-   29.4,
-   18.8,
+   31.1,
+   29.8,
+   18.5,
    4,
    1.3,
    null,
    null,
    null,
    null,
-   1.7
+   1.6
   ],
   [
    30.4,

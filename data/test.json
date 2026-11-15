@@ -1069,8 +1069,187 @@
      ]
     }
    ]
+  },
+  "2026-11-15": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Per quin motiu ha cancel·lat el PSOE l'acte de Sánchez amb Lula a Madrid?",
+     "a": [
+      "Una afonia del president brasiler",
+      "Un canvi d'agenda de Sánchez",
+      "Problemes amb l'aforament",
+      "Una indisposició de Sánchez"
+     ],
+     "exp": "El PSOE va cancel·lar l'acte conjunt de Sánchez i Lula da Silva a Madrid perquè el president del Brasil tenia afonia.",
+     "u": "https://www.20minutos.es/nacional/psoe-cancela-acto-campana-sanchez-con-lula-por-una-afonia-lider-brasileno_7061175_0.html",
+     "s": [
+      "Europa Press",
+      "20minutos",
+      "infoLibre"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quin municipi guipuscoà van llançar pedres i petards contra el candidat del PP Jon Echeverría?",
+     "a": [
+      "Hernani",
+      "Irun",
+      "Errenteria",
+      "Tolosa"
+     ],
+     "exp": "L'acte del PP a Hernani (Gipuzkoa) va ser impedit amb pedres i petards, i el partit va cancel·lar la ruta per la província.",
+     "u": "https://www.20minutos.es/nacional/lanzan-piedras-petardos-hernani-contra-candidato-pp-guipuzcoa-jon-echeverria_7061141_0.html",
+     "s": [
+      "ABC",
+      "El Mundo",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Feijóo ha dit que, si governa, quin tema es gestionarà des d'una vicepresidència?",
+     "a": [
+      "L'habitatge",
+      "La sanitat",
+      "L'ensenyament",
+      "L'energia"
+     ],
+     "exp": "Feijóo ha promès que la gestió de l'habitatge dependria d'una vicepresidència si arriba a la Moncloa.",
+     "u": "https://www.20minutos.es/nacional/feijoo-dice-que-si-gana-gestion-vivienda-se-llevara-desde-una-vicepresidencia-es-mayor-problema-espana_7061118_0.html",
+     "s": [
+      "20minutos",
+      "eldiario.es",
+      "NacióDigital",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Ada Colau promet ampliar la sanitat pública amb el dentista, els audiòfons i què més?",
+     "a": [
+      "La salut visual",
+      "La fisioteràpia privada",
+      "Els gimnasos",
+      "Les assegurances"
+     ],
+     "exp": "Colau proposa que la sanitat pública cobreixi el dentista, els audiòfons i la salut visual.",
+     "u": "https://www.vilaweb.cat/noticies/colau-promet-una-sanitat-universal-que-cobreixi-el-dentista-els-audiofons-i-la-salut-visual/",
+     "s": [
+      "VilaWeb",
+      "20minutos",
+      "El País"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat gallega han participat Feijóo, Tellado i Rueda en un gran acte de campanya?",
+     "a": [
+      "Santiago de Compostela",
+      "A Corunya",
+      "Vigo",
+      "Lugo"
+     ],
+     "exp": "Feijóo, Tellado i Rueda van intervenir en un acte a Santiago de Compostela, en el gran míting del PP a Galícia.",
+     "u": "https://www.eldebate.com/espana/20261114/feijoo-tellado-rueda-intervienen-acto-santiago-compostela-directo_480833.html",
+     "s": [
+      "El Debate",
+      "ABC",
+      "El País"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin tema ha posat al centre Junts en l'acte de campanya a Manresa?",
+     "a": [
+      "La seguretat",
+      "El transport ferroviari",
+      "La política lingüística",
+      "L'agricultura"
+     ],
+     "exp": "Junts va defensar la lluita contra la multireincidència i la seguretat en l'acte a Manresa.",
+     "u": "https://www.lavanguardia.com/politica/20261114/11684233/junts-empuna-bandera-seguridad-manresa-e-interpela-jordi-wild-ciudad.html",
+     "s": [
+      "La Vanguardia",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "internacional",
+     "q": "Com es diu el parlament d'Israel, on es negocia ara la formació de govern?",
+     "a": [
+      "Knesset",
+      "Duma",
+      "Bundestag",
+      "Sejm"
+     ],
+     "exp": "El Parlament d'Israel s'anomena Knesset i té 120 membres.",
+     "u": "https://www.ara.cat/internacional/proxim-orient/caura-netanyahu-guia-no-perdre-s-negociacions-formar-govern-israel_1_5909237.html",
+     "s": [
+      "Ara"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "internacional",
+     "q": "Com s'anomena la cambra baixa del Congrés dels Estats Units?",
+     "a": [
+      "Cambra de Representants",
+      "Senat",
+      "Cambra dels Comuns",
+      "Assemblea Nacional"
+     ],
+     "exp": "El Congrés nord-americà té dues cambres: el Senat i la Cambra de Representants (la baixa).",
+     "u": "https://www.ara.cat/internacional/estats-units/l-ala-esquerra-dels-democrates-comenca-pols-l-establishment-partit-congres-dels-eua_1_5909780.html",
+     "s": [
+      "Ara"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la llengua oficial del Brasil, país del president Lula?",
+     "a": [
+      "El portuguès",
+      "El castellà",
+      "L'anglès",
+      "El francès"
+     ],
+     "exp": "El portuguès és la llengua oficial del Brasil.",
+     "u": "https://www.20minutos.es/nacional/psoe-cancela-acto-campana-sanchez-con-lula-por-una-afonia-lider-brasileno_7061175_0.html",
+     "s": [
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin és el riu més llarg de la península Ibèrica?",
+     "a": [
+      "El Tajo",
+      "L'Ebre",
+      "El Duero",
+      "El Guadalquivir"
+     ],
+     "exp": "El Tajo, amb uns 1.000 km, és el riu més llarg de la península Ibèrica.",
+     "u": "https://www.eldebate.com/espana/20261114/feijoo-tellado-rueda-intervienen-acto-santiago-compostela-directo_480833.html",
+     "s": [
+      "El Debate"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794632760039
+ "updated": 1794719096115
 }

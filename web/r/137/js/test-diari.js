@@ -17,10 +17,23 @@ async function testFixLoad() {
     clearTimeout(t);
     if (!r.ok) return null;
     const f = (await r.json()).fields || {};
-    return { day: f.day?.stringValue, json: f.json?.stringValue };
+    return { day: f.day?.stringValue, json: f.json?.stringValue, ok: f.ok?.stringValue || "", gate: f.gate?.stringValue || "" };
   } catch { return null; }
 }
+// Hora de publicació del test (Madrid): fins aleshores només el veu l'equip, que el pot revisar i aprovar abans
+let testGate = { ok: "", gate: "08:00" };
+const testMadridMin = () => { const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()).split(":").map(Number); return p[0] * 60 + p[1]; };
+const testGateMin = () => { const m = String(testGate.gate || "08:00").match(/^(\d{1,2}):(\d{2})$/); return m ? Number(m[1]) * 60 + Number(m[2]) : 480; };
+// Es veu el test d'aquest dia? Sí si és d'un altre dia, si ja s'ha aprovat, si ja és l'hora o si qui mira és de l'equip
+function testReleased(key) {
+  if (key !== todayKey()) return true;
+  if (testGate.ok === key) return true;
+  if (testMadridMin() >= testGateMin()) return true;
+  return typeof ctlIsAdmin === "function" && (() => { try { return ctlIsAdmin(); } catch { return false; } })();
+}
+const testGateText = () => `El test d'avui surt a les ${String(testGate.gate || "08:00")}. Torna-hi d'aquí a una estona!`;
 function testFixApply(data, fix) {
+  if (fix) testGate = { ok: fix.ok || "", gate: fix.gate || "08:00" };
   const day = data?.days?.[fix?.day];
   if (!day || !fix.json) return;
   let F = {};
@@ -50,7 +63,9 @@ function testLoad() {
 }
 // Només els tests de la versió 2 del generador o posteriors (la primera no comprovava les respostes amb els titulars)
 const TEST_MIN_V = 2;
-const testDay = (key = todayKey()) => { const d = testData?.days?.[key]; return d && (d.v || 1) >= TEST_MIN_V ? d : null; };
+const testDay = (key = todayKey()) => { const d = testData?.days?.[key]; return d && (d.v || 1) >= TEST_MIN_V && testReleased(key) ? d : null; };
+// Hi ha test d'avui però encara no ha arribat l'hora de publicar-lo
+const testWaiting = (key = todayKey()) => { const d = testData?.days?.[key]; return !!(d && (d.v || 1) >= TEST_MIN_V && !testReleased(key)); };
 const testStore = () => store.get(TEST_KEY, { scores: {} });
 const testResult = (key = todayKey()) => testStore().scores[key] || null;
 // Ratxa: dies seguits amb el test fet (si avui encara no s'ha fet, compta fins ahir)
@@ -90,7 +105,7 @@ function renderTestHero() {
       <span class="jc-meta">Nou cada matí a les <b>6:00</b></span>
     </div>
     <h2 class="jc-name">Test d'actualitat</h2>
-    <p class="jc-sub">${r ? `Fet! <b>${r.hits}/${r.n}</b> encerts · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntes sobre el que ha passat aquests dies. Quant en saps, de l'actualitat?` : `El test d'avui encara no és a punt: es prepara cada matí amb les notícies dels últims dies.`}</p>
+    <p class="jc-sub">${r ? `Fet! <b>${r.hits}/${r.n}</b> encerts · ${fmtSecs(r.ms)}` : day ? `${qs.length} preguntes sobre el que ha passat aquests dies. Quant en saps, de l'actualitat?` : testWaiting(key) ? testGateText() : `El test d'avui encara no és a punt: es prepara cada matí amb les notícies dels últims dies.`}</p>
     <div class="jc-row">${r ? `<div class="jc-grid" aria-label="Resultat">${[...r.grid].map((c) => `<i class="${c === "🟩" ? "ok" : "ko"}"></i>`).join("")}</div>`
       : chips.length ? `<div class="jc-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join("")}</div>` : ""}</div>
     <div class="jc-stats">
@@ -175,7 +190,7 @@ registerGame({
   gate() {
     if (!testOn()) return { html: `<p class="muted">El test d'actualitat només és en català.</p>`, bind() {} };
     if (!testData) { testLoad().then(() => { if (location.hash === "#joc/actualitat" && $(".card.intro")) { const g = GAMES.find((x) => x.id === "actualitat"); g.quick() ? startGame(g) : showIntro(g); } }); return { html: `<p class="muted">Carregant el test…</p>`, bind() {} }; }
-    if (!testDay()) return { html: `<p class="muted">El test d'avui encara no és a punt: es prepara cada matí. Torna-hi d'aquí a una estona.</p>`, bind() {} };
+    if (!testDay()) return { html: `<p class="muted">${testWaiting() ? testGateText() : "El test d'avui encara no és a punt: es prepara cada matí. Torna-hi d'aquí a una estona."}</p>`, bind() {} };
     return null;
   },
   quick() { return testOn() && !!testData && !!testDay() && !testResult(); },
@@ -192,7 +207,7 @@ registerGame({
   },
   start(ctx) {
     const key = todayKey(), day = testDay(key);
-    if (!day) { ctx.body.innerHTML = `<div class="card"><p>El test d'avui encara no és a punt.</p></div>`; return; }
+    if (!day) { ctx.body.innerHTML = `<div class="card"><p>${testWaiting(key) ? testGateText() : "El test d'avui encara no és a punt."}</p></div>`; return; }
     const first = !testResult(key);
     // L'ordre de les opcions és el mateix per a tothom
     const rng = seededRng(hashString(`test-${key}`));
@@ -291,3 +306,4 @@ registerGame({
   },
 });
 testLoad().then(() => renderTestHero());
+setInterval(() => { if (testWaiting() === false && testData?.days?.[todayKey()] && !document.hidden && typeof renderTestHero === "function" && !window.__testShown) { window.__testShown = true; renderTestHero(); } }, 60000);

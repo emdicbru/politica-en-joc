@@ -8178,3 +8178,13 @@ h1, h2, h3 { text-wrap: balance; }
 
 .ctp-xl label, .ctp-xl b { text-transform: none; letter-spacing: 0; font-size: .92rem; color: var(--ink); }
 .ctp-xl small { text-transform: none; letter-spacing: 0; }
+
+.ctp-gate { display: grid; gap: 10px; border-left: 0; background: #fff4d6; } .ctp-gate.on { background: var(--ok-soft); }
+.ctp-gate small { display: block; color: var(--ink-2); margin-top: 2px; }
+.ctp-alsub { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 12px 14px; margin-bottom: 14px; border-radius: 14px; border: 1px dashed var(--line-2, #bbb); }
+.ctp-alsub.on { border-style: solid; border-color: var(--ok); }
+.ctp-alsub small { display: block; color: var(--muted); font-size: .82rem; max-width: 640px; }
+
+.ctp-xe { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 14px; }
+.ctp-xe li { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--paper-2); }
+.ctp-xe textarea { font: inherit; font-size: .95rem; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-2, #ccc); width: 100%; }

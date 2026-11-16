@@ -87,12 +87,28 @@ function ctpAlerts() {
   }
   return out;
 }
+const CTP_AL = { cfg: null, loading: false };
+async function ctpAlLoad() {
+  if (CTP_AL.loading) return;
+  CTP_AL.loading = true;
+  CTP_AL.cfg = (await window.Online.getPrivat("alertes")) || {};
+  CTP_AL.loading = false;
+  if ((sessionStorage.getItem("ctl-tab") || "resum") === "resum") renderControl(true);
+}
+function ctpAlSubHtml() {
+  if (!CTP_AL.cfg) { ctpAlLoad(); return ""; }
+  const uid = window.Online?.user?.uid, on = (CTP_AL.cfg.uids || []).includes(uid);
+  const dev = !!store.get("r29n-push", {}).id && typeof Notification !== "undefined" && Notification.permission === "granted";
+  return `<section class="ctp-alsub ${on ? "on" : ""}"><div><b>📲 ${on ? "Reps les alertes al mòbil" : "Rep les alertes al mòbil, encara que el control estigui tancat"}</b>
+    <small>${on ? "Les envia el servei d'avisos cada 10 minuts si cal (test sense publicar, avís del repte que no surt, errors nous, titulars aturats). Arriben als dispositius on tens les notificacions activades amb aquest compte." : dev ? "Activa-ho i el servei d'avisos t'avisarà als dispositius on tens les notificacions activades amb aquest compte." : "Primer activa les notificacions en aquest dispositiu (Perfil → Notificacions) amb la sessió iniciada."}</small></div>
+    ${ctlCan(3) ? `<button type="button" class="btn ${on ? "ghost" : "primary"} sm" data-alsub="${on ? "off" : "on"}">${on ? "Deixa de rebre-les" : "Activa-les"}</button>` : ""}</section>`;
+}
 function ctpAlertsHtml() {
   const A = CTP.alerts;
-  if (!A) return "";
-  if (!A.length) return `<section class="ctp-alerts ok"><p>✅ Tot en ordre: test del dia, titulars, enquestes, avisos i visites.</p></section>`;
+  if (!A) return ctpAlSubHtml();
+  if (!A.length) return `<section class="ctp-alerts ok"><p>✅ Tot en ordre: test del dia, titulars, enquestes, avisos i visites.</p></section>${ctpAlSubHtml()}`;
   return `<section class="ctp-alerts">${A.map((a) => `<div class="ctp-al ${a.lvl}"><b>${a.lvl === "alta" ? "🔴" : a.lvl === "mitja" ? "🟠" : "🟡"} ${esc(a.t)}</b><p>${esc(a.d)}</p>${a.tab ? `<button type="button" class="btn ghost sm" data-tab="${a.tab}">Ves-hi</button>` : a.go ? `<a class="btn ghost sm" href="${a.go}">Obre-la</a>` : ""}</div>`).join("")}
-    <p class="muted">Amb el Centre de control obert, les alertes noves també surten com a notificació d'aquest navegador.</p></section>`;
+    </section>${ctpAlSubHtml()}`;
 }
 // Amb el control obert: avís del navegador (un sol cop per alerta i dia)
 function ctpNotifyAlerts() {
@@ -211,6 +227,8 @@ async function ctpTfLoad() {
   let f = {};
   try { f = fix && fix.day === day ? JSON.parse(fix.json || "{}") : {}; } catch { f = {}; }
   CTP_TF.fix = f;
+  CTP_TF.ok = fix?.ok || "";
+  CTP_TF.gate = fix?.gate || "08:00";
   CTP_TF.loading = false;
   if (sessionStorage.getItem("ctl-tab") === "testdia") renderControl(true);
 }
@@ -219,7 +237,15 @@ function ctpTestHtml() {
   const D = CTP_TF.data, F = CTP_TF.fix || {};
   if (!D) return `<section class="card"><h2 class="section-title sm">No hi ha test d'avui</h2><p>La rutina de les 6:00 encara no ha publicat el test del ${CTP_TF.day.split("-").reverse().join("-")} a data/test.json.</p><button type="button" class="btn" data-tf-reload>Torna a comprovar</button></section>`;
   const nFix = Object.keys(F).length;
-  return `<p class="ctl-intro">El test d'avui tal com el veu la gent. Si una pregunta té un error, corregeix-la o amaga-la: el canvi surt de seguida a tothom que encara no l'hagi començat.</p>
+  const mm = (() => { const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()).split(":").map(Number); return p[0] * 60 + p[1]; })();
+  const [gh, gm] = String(CTP_TF.gate).split(":").map(Number), out = CTP_TF.ok === CTP_TF.day || mm >= gh * 60 + gm;
+  return `<section class="card ctp-gate ${out ? "on" : ""}">
+      <div><b>${out ? "✅ Publicat: la gent ja el veu" : `⏳ Pendent de revisió: surt sol a les ${esc(CTP_TF.gate)}`}</b>
+      <small>La rutina el prepara a les 6:00. Fins a l'hora de publicació només el veu l'equip: revisa'l i, si està bé, publica'l abans.</small></div>
+      <div class="row">${out ? "" : `<button type="button" class="btn primary" data-tf-ok>Aprova i publica ara</button>`}
+        <label class="ctl-inline">Hora de publicació <input type="time" step="900" data-tf-gate value="${esc(CTP_TF.gate)}"></label></div>
+    </section>
+    <p class="ctl-intro">Si una pregunta té un error, corregeix-la o amaga-la: el canvi surt de seguida a tothom que encara no l'hagi començat.</p>
     ${nFix ? `<p class="ctl-ok">● ${nFix} ${nFix === 1 ? "pregunta corregida" : "preguntes corregides"} avui</p>` : ""}
     <ol class="ctp-tq">${D.questions.map((q, i) => { const f = F[i] || {}; const cur = { ...q, ...f }; return `<li class="${f.hide ? "off" : ""}">
       <label>Pregunta <textarea data-tf="${i}" data-k="q" rows="2">${esc(cur.q)}</textarea></label>
@@ -228,22 +254,33 @@ function ctpTestHtml() {
       <div class="row"><button type="button" class="btn sm" data-tf-save="${i}">Desa la correcció</button><button type="button" class="btn ghost sm" data-tf-hide="${i}">${f.hide ? "Torna-la a mostrar" : "Amaga-la"}</button>${Object.keys(f).length ? `<button type="button" class="linklike" data-tf-undo="${i}">Desfés els canvis</button>` : ""}${q.u ? `<a class="linklike" href="${esc(q.u)}" target="_blank" rel="noopener">Notícia ↗</a>` : ""}</div>
     </li>`; }).join("")}</ol>`;
 }
-async function ctpTfSave(next) {
-  const ok = await window.Online.setConfig("testfix", { day: CTP_TF.day, json: JSON.stringify(next), at: Date.now(), by: window.Online.user?.email || "" });
-  if (ok) { CTP_TF.fix = next; toast("Desat: la gent ja veu la correcció"); renderControl(true); }
+async function ctpTfSave(next, extra = {}, msg = "Desat: la gent ja veu la correcció") {
+  const doc = { day: CTP_TF.day, json: JSON.stringify(next), ok: CTP_TF.ok || "", gate: CTP_TF.gate || "08:00", at: Date.now(), by: window.Online.user?.email || "", ...extra };
+  const ok = await window.Online.setConfig("testfix", doc);
+  if (ok) { CTP_TF.fix = next; CTP_TF.ok = doc.ok; CTP_TF.gate = doc.gate; toast(msg); renderControl(true); }
 }
 
 // ---------- 9. Xarxes: carrusel del dia ----------
-const CTP_X = { picks: null };
+// Tries fins a 6 titulars; per a cadascun pots reescriure el text (per exemple, traduir-lo) i, si esmenta un partit, hi surt
+// la foto del seu cap de llista (Wikimedia Commons, amb el crèdit a la mateixa imatge).
+const CTP_X = { picks: null, text: {}, foto: {} };
+const ctpXItems = () => ((typeof newsData !== "undefined" && newsData?.items) || []);
+const ctpPartyOf = (x) => (x._p || []).map((id) => PARTIES.find((p) => p.id === id)).filter((p) => p && typeof PHOTOS !== "undefined" && PHOTOS[p.cand?.name]);
 function ctpXarxesHtml() {
-  const items = (typeof newsData !== "undefined" && newsData?.items) || [];
   const day0 = Date.parse(ctpDay(0) + "T00:00:00+01:00");
-  const today = items.filter((x) => x.d >= day0).slice(0, 40);
-  if (!CTP_X.picks) CTP_X.picks = today.slice(0, 5).map((x) => x.u);
-  return `<p class="ctl-intro">Tria fins a 6 titulars d'avui i en surt un carrusel per a Instagram (1080 × 1350): portada, un titular per imatge, les enquestes i la crida final. Revisa'l sempre abans de publicar: els titulars són dels mitjans, tal qual.</p>
-    <section class="card"><h2 class="section-title sm">Titulars d'avui</h2>
+  const today = ctpXItems().filter((x) => x.d >= day0).slice(0, 40);
+  if (!CTP_X.picks) CTP_X.picks = today.filter((x) => /vilaweb|ara|naci|vanguardia|el periódico|324|catalunya/i.test(x.s)).concat(today).map((x) => x.u).filter((u, i, l) => l.indexOf(u) === i).slice(0, 5);
+  const picked = today.filter((x) => CTP_X.picks.includes(x.u));
+  return `<p class="ctl-intro">Tria fins a 6 titulars d'avui. Per a cadascun pots reescriure el text (si és en castellà, tradueix-lo) i triar la foto. Surten: portada, un titular per imatge, les enquestes i la crida final, en 1080 × 1350.</p>
+    <section class="card"><h2 class="section-title sm">1. Titulars d'avui</h2>
       ${today.length ? `<ol class="ctp-xl">${today.map((x) => `<li><label><input type="checkbox" data-xpick="${esc(x.u)}" ${CTP_X.picks.includes(x.u) ? "checked" : ""}><span><b>${esc(x.t)}</b><small>${esc(x.s)} · ${new Date(x.d).toLocaleTimeString("ca", { hour: "2-digit", minute: "2-digit" })}</small></span></label></li>`).join("")}</ol>` : `<p class="muted">Encara no hi ha titulars d'avui (o no s'han carregat: obre un moment Notícies).</p>`}
-      <div class="row"><button type="button" class="btn primary" data-xgen ${today.length ? "" : "disabled"}>Genera el carrusel</button></div></section>
+    </section>
+    ${picked.length ? `<section class="card"><h2 class="section-title sm">2. Text i foto de cada imatge</h2>
+      <ol class="ctp-xe">${picked.map((x) => { const ps = ctpPartyOf(x), f = CTP_X.foto[x.u] ?? (ps[0]?.id || ""); return `<li>
+        <label>Text <textarea rows="3" data-xtext="${esc(x.u)}">${esc(CTP_X.text[x.u] ?? x.t)}</textarea></label>
+        <label class="ctl-inline">Foto <select data-xfoto="${esc(x.u)}"><option value="">Sense foto</option>${PARTIES.filter((p) => typeof PHOTOS !== "undefined" && PHOTOS[p.cand?.name]).map((p) => `<option value="${p.id}" ${f === p.id ? "selected" : ""}>${esc(p.cand.name)} (${esc(p.sig)})${ps.some((q) => q.id === p.id) ? " · esmentat" : ""}</option>`).join("")}</select></label>
+        <small class="muted">${esc(x.s)}</small></li>`; }).join("")}</ol>
+      <div class="row"><button type="button" class="btn primary" data-xgen>Genera el carrusel</button></div></section>` : ""}
     <div class="ctp-xout" id="ctp-xout"></div>`;
 }
 function ctpWrap(c, text, x, y, maxW, lh, maxLines = 8) {
@@ -254,29 +291,40 @@ function ctpWrap(c, text, x, y, maxW, lh, maxLines = 8) {
   lines.slice(0, maxLines).forEach((l, i) => c.fillText(i === maxLines - 1 && lines.length > maxLines ? l + "…" : l, x, y + i * lh));
   return Math.min(lines.length, maxLines);
 }
-function ctpSlide(kind, data, i, n) {
+const ctpImg = (src) => new Promise((res) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+const ctpBig = (src) => String(src).replace(/\/\d+px-/, "/960px-");
+function ctpSlide(kind, data, i) {
   const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   const c = cv.getContext("2d"), INK = "#17173d", RED = "#d2331a", YEL = "#ffcf3d";
   const disp = (s) => `900 ${s}px Unbounded, "Arial Black", sans-serif`, sans = (s, w = 600) => `${w} ${s}px "DM Sans", system-ui, sans-serif`;
-  c.fillStyle = kind === "crida" ? RED : i % 2 ? "#f4f1ea" : INK; c.fillRect(0, 0, W, H);
-  const fg = kind === "crida" || !(i % 2) ? "#fff" : INK;
-  c.fillStyle = fg; c.textBaseline = "alphabetic";
-  if (kind === "portada") {
+  const dark = kind === "crida" || kind === "portada" || !!data.img || !(i % 2);
+  c.fillStyle = kind === "crida" ? RED : dark ? INK : "#f4f1ea"; c.fillRect(0, 0, W, H);
+  const fg = dark ? "#fff" : INK, sub = dark ? "#c9c6e0" : "#5e5a74";
+  c.textBaseline = "alphabetic";
+  if (kind === "titular" && data.img) {
+    // Foto a la meitat de dalt, retallada per omplir, amb degradat cap al fons
+    const im = data.img, ih = 760, sc = Math.max(W / im.width, ih / im.height), dw = im.width * sc, dh = im.height * sc;
+    c.drawImage(im, (W - dw) / 2, Math.min(0, (ih - dh) * 0.15), dw, dh);
+    const g = c.createLinearGradient(0, ih - 380, 0, ih); g.addColorStop(0, "rgba(23,23,61,0)"); g.addColorStop(1, INK);
+    c.fillStyle = g; c.fillRect(0, ih - 380, W, 380); c.fillStyle = INK; c.fillRect(0, ih, W, H - ih);
+    c.save(); c.translate(W - 26, 30); c.rotate(Math.PI / 2); c.font = sans(17, 600); c.fillStyle = "rgba(255,255,255,.85)"; c.fillText(data.credit, 0, 0); c.restore();
+    c.font = sans(32, 800); c.fillStyle = YEL; c.fillText(`${data.s.toUpperCase()} · ${data.h}`, 72, 800);
+    c.font = disp(data.t.length > 110 ? 50 : 60); c.fillStyle = "#fff"; ctpWrap(c, data.t, 72, 880, 936, data.t.length > 110 ? 64 : 74, 5);
+  } else if (kind === "portada") {
     c.font = sans(40, 800); c.fillStyle = YEL; c.fillText(data.date.toUpperCase(), 72, 260);
     c.font = disp(118); c.fillStyle = "#fff"; ctpWrap(c, "El dia de la campanya", 72, 420, 936, 128, 4);
-    c.font = sans(44, 600); c.fillStyle = "#d9d6ea"; ctpWrap(c, `${data.n} titulars del dia, en ${data.n + 2} imatges.`, 72, 1000, 900, 58, 3);
+    c.font = sans(44, 600); c.fillStyle = sub; ctpWrap(c, `${data.n} ${data.n === 1 ? "notícia" : "notícies"} del dia, en ${data.n + 3} imatges.`, 72, 1000, 900, 58, 3);
   } else if (kind === "titular") {
-    c.font = sans(34, 800); c.fillStyle = i % 2 ? RED : YEL; c.fillText(`${data.s.toUpperCase()} · ${data.h}`, 72, 200);
+    c.font = sans(34, 800); c.fillStyle = dark ? YEL : RED; c.fillText(`${data.s.toUpperCase()} · ${data.h}`, 72, 200);
     c.font = disp(data.t.length > 110 ? 64 : 76); c.fillStyle = fg; ctpWrap(c, data.t, 72, 330, 936, data.t.length > 110 ? 80 : 94, 9);
-    c.font = sans(28, 600); c.fillStyle = i % 2 ? "#5e5a74" : "#b9b6dc"; ctpWrap(c, "Titular original del mitjà. Llegeix la notícia sencera a la seva web.", 72, 1150, 936, 38, 2);
   } else if (kind === "enquestes") {
     c.font = disp(84); c.fillStyle = fg; c.fillText("LES ENQUESTES", 72, 230);
-    c.font = sans(34, 600); c.fillStyle = i % 2 ? "#5e5a74" : "#b9b6dc"; c.fillText(`Mitjana de ${data.n} enquestes · escons`, 72, 300);
+    c.font = sans(34, 600); c.fillStyle = sub; c.fillText(`Mitjana de ${data.n} enquestes · escons`, 72, 300);
     const max = Math.max(...data.rows.map((r) => r[1]));
     data.rows.forEach(([sig, v, col], k) => {
       const y = 400 + k * 92;
       c.font = disp(34); c.fillStyle = fg; c.fillText(sig, 72, y + 40);
-      c.fillStyle = i % 2 ? "#e3dfd5" : "rgba(255,255,255,.14)"; c.fillRect(300, y + 8, 560, 44);
+      c.fillStyle = dark ? "rgba(255,255,255,.14)" : "#e3dfd5"; c.fillRect(300, y + 8, 560, 44);
       c.fillStyle = col; c.fillRect(300, y + 8, Math.max(8, (v / max) * 560), 44);
       c.font = disp(38); c.fillStyle = fg; c.textAlign = "right"; c.fillText(String(Math.round(v)), 1008, y + 44); c.textAlign = "left";
     });
@@ -284,27 +332,44 @@ function ctpSlide(kind, data, i, n) {
     c.font = disp(110); c.fillStyle = "#fff"; ctpWrap(c, "I tu, en saps prou?", 72, 520, 936, 120, 3);
     c.font = sans(46, 600); ctpWrap(c, "Fes el test d'actualitat d'avui i el test d'afinitat política a politicaenjoc.cat", 72, 900, 920, 60, 4);
   }
-  c.textAlign = "left"; c.font = disp(34); c.fillStyle = kind === "crida" || !(i % 2) ? "#fff" : INK; c.fillText("POLÍTICA EN JOC", 72, H - 70);
+  c.textAlign = "left"; c.font = disp(34); c.fillStyle = dark ? "#fff" : INK; c.fillText("POLÍTICA EN JOC", 72, H - 70);
   c.font = sans(28, 700); c.textAlign = "right"; c.fillText("politicaenjoc.cat", W - 72, H - 72); c.textAlign = "left";
   return cv;
 }
 async function ctpGenCarousel(root) {
-  const items = ((typeof newsData !== "undefined" && newsData?.items) || []).filter((x) => CTP_X.picks.includes(x.u)).slice(0, 6);
+  const items = ctpXItems().filter((x) => CTP_X.picks.includes(x.u)).slice(0, 6);
   if (!items.length) return toast("Tria almenys un titular");
+  $$("[data-xtext]", root).forEach((el) => { CTP_X.text[el.dataset.xtext] = el.value.trim(); });
+  $$("[data-xfoto]", root).forEach((el) => { CTP_X.foto[el.dataset.xfoto] = el.value; });
+  const out = $("#ctp-xout", root);
+  out.innerHTML = `<section class="card"><p class="muted">Preparant les imatges…</p></section>`;
   await document.fonts?.ready;
   const date = new Date().toLocaleDateString("ca", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" });
   const P = (typeof POLL_SEATS !== "undefined" ? POLL_SEATS : []).slice(0, 8);
   const ks = ["pp", "psoe", "vox", "fa", "erc", "junts", "bildu", "pnv"];
   const rows = ks.map((k) => [PARTIES.find((p) => p.id === k)?.sig || k, P.reduce((a, p) => a + (p.s?.[k] || 0), 0) / (P.length || 1), PARTIES.find((p) => p.id === k)?.color || "#888"]);
-  const slides = [ctpSlide("portada", { date, n: items.length }, 0), ...items.map((x, k) => ctpSlide("titular", { t: x.t, s: x.s, h: new Date(x.d).toLocaleTimeString("ca", { hour: "2-digit", minute: "2-digit" }) }, k + 1)), ...(P.length ? [ctpSlide("enquestes", { n: P.length, rows }, items.length + 1)] : []), ctpSlide("crida", {}, 0)];
-  const out = $("#ctp-xout", root);
-  out.innerHTML = `<section class="card"><h2 class="section-title sm">Carrusel (${slides.length} imatges)</h2><div class="ctp-xs"></div><div class="row"><button type="button" class="btn primary" data-xdl>Descarrega-les totes</button></div>
-    <p class="muted">Fonts per al peu de la publicació: ${esc([...new Set(items.map((x) => x.s))].join(", "))}. Enquestes: recull de la Viquipèdia.</p></section>`;
+  const credits = [];
+  const heads = [];
+  for (const [k, x] of items.entries()) {
+    const pid = CTP_X.foto[x.u] ?? ctpPartyOf(x)[0]?.id ?? "";
+    const p = PARTIES.find((q) => q.id === pid), ph = p && typeof PHOTOS !== "undefined" ? PHOTOS[p.cand?.name] : null;
+    const img = ph ? await ctpImg(ctpBig(ph.src)) : null;
+    const credit = ph ? `Foto: ${ph.author} · ${ph.license} · Wikimedia Commons` : "";
+    if (img) credits.push(`${p.cand.name}: ${ph.author} (${ph.license}), ${ph.page}`);
+    heads.push(ctpSlide("titular", { t: CTP_X.text[x.u] || x.t, s: x.s, h: new Date(x.d).toLocaleTimeString("ca", { hour: "2-digit", minute: "2-digit" }), img, credit }, k + 1));
+  }
+  const slides = [ctpSlide("portada", { date, n: items.length }, 0), ...heads, ...(P.length ? [ctpSlide("enquestes", { n: P.length, rows }, items.length + 1)] : []), ctpSlide("crida", {}, 0)];
+  const peu = `El dia de la campanya, ${date}.\n\nFonts: ${[...new Set(items.map((x) => x.s))].join(", ")}. Enquestes: recull de la Viquipèdia.${credits.length ? `\nFotos (Wikimedia Commons):\n${[...new Set(credits)].join("\n")}` : ""}\n\n#29N #EleccionsGenerals #PolíticaEnJoc`;
+  out.innerHTML = `<section class="card"><h2 class="section-title sm">3. Carrusel (${slides.length} imatges)</h2><div class="ctp-xs"></div>
+    <div class="row"><button type="button" class="btn primary" data-xdl>Descarrega-les totes</button><button type="button" class="btn" data-xpeu>Copia el text de la publicació</button></div>
+    <textarea class="ctp-rep" rows="7" readonly>${esc(peu)}</textarea></section>`;
   const box = $(".ctp-xs", out);
   slides.forEach((cv) => { cv.className = "ctp-x"; box.appendChild(cv); });
+  $("[data-xpeu]", out).addEventListener("click", async () => { try { await navigator.clipboard.writeText(peu); toast("Copiat"); } catch { toast("No s'ha pogut copiar"); } });
   $("[data-xdl]", out).addEventListener("click", async () => {
     for (let k = 0; k < slides.length; k++) {
       const blob = await new Promise((r) => slides[k].toBlob(r, "image/png"));
+      if (!blob) { toast("Una foto no deixa exportar la imatge: treu-la i torna-ho a provar"); return; }
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `carrusel-${ctpDay(0)}-${String(k + 1).padStart(2, "0")}.png`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
       await new Promise((r) => setTimeout(r, 350));
@@ -333,10 +398,24 @@ function ctpReportText() {
 
 Dades anònimes i agregades del Centre de control de Política en Joc (politicaenjoc.cat).`;
 }
+const CTP_REP = { cfg: null, loading: false };
+async function ctpRepLoad() {
+  if (CTP_REP.loading) return;
+  CTP_REP.loading = true;
+  CTP_REP.cfg = (await window.Online.getPrivat("informe")) || {};
+  CTP_REP.loading = false;
+  if (sessionStorage.getItem("ctl-tab") === "informe") renderControl(true);
+}
 function ctpReportHtml() {
   if (!CTU.days) { ctuLoad(); return `<div class="card"><p class="muted">Carregant les dades…</p></div>`; }
-  const txt = ctpReportText();
-  return `<p class="ctl-intro">Resum dels darrers 7 dies, a punt per enviar a premsa o a col·laboradors. Es genera amb les dades del moment.</p>
+  if (!CTP_REP.cfg) ctpRepLoad();
+  const R = CTP_REP.cfg || {}, txt = ctpReportText();
+  return `<section class="card"><h2 class="section-title sm">📬 Enviament automàtic</h2>
+      <p>Cada dilluns a les 9:00 s'envia per correu l'informe de la setmana anterior (amb Brevo, el mateix servei de les notes de premsa).</p>
+      <label class="ctl-inline">Destinataris (separats per comes) <input type="text" data-rep-dest value="${esc((R.dest || []).join(", "))}" placeholder="nom@exemple.cat, …" ${ctlCan(3) ? "" : "disabled"}></label>
+      ${ctlCan(3) ? `<div class="row"><button type="button" class="btn sm" data-rep-save>Desa</button></div>` : ""}
+      <p class="muted">${R.last?.at ? `Últim enviament: ${new Date(R.last.at).toLocaleString("ca")} · ${esc(R.last.status || "")}` : "Encara no se n'ha enviat cap."} Les adreces només les veu l'equip.</p></section>
+    <p class="ctl-intro">Resum dels darrers 7 dies amb les dades del moment, per si el vols enviar tu.</p>
     <section class="card"><textarea class="ctp-rep" rows="16" readonly>${esc(txt)}</textarea>
       <div class="row"><button type="button" class="btn primary" data-rep-copy>Copia el text</button><button type="button" class="btn" data-rep-dl>Descarrega (.txt)</button></div></section>`;
 }
@@ -371,7 +450,15 @@ function ctpNitHtml() {
 
 // ---------- Enllaços (cridat des de control.js) ----------
 function ctpBind(tab, root) {
-  if (tab === "resum") $("[data-ctp-refresh]", root)?.addEventListener("click", () => { CTP.today = null; renderControl(true); });
+  if (tab === "resum") {
+    $("[data-ctp-refresh]", root)?.addEventListener("click", () => { CTP.today = null; renderControl(true); });
+    $("[data-alsub]", root)?.addEventListener("click", async (e) => {
+      const uid = window.Online?.user?.uid; if (!uid) return;
+      const on = e.target.dataset.alsub === "on", cur = new Set(CTP_AL.cfg?.uids || []);
+      on ? cur.add(uid) : cur.delete(uid);
+      if (await window.Online.setPrivat("alertes", { uids: [...cur] })) { CTP_AL.cfg = { ...CTP_AL.cfg, uids: [...cur] }; toast(on ? "Rebràs les alertes al mòbil" : "Ja no rebràs les alertes"); renderControl(true); }
+    });
+  }
   if (tab === "calendari") {
     ctlQuickBind(root);
     $$("[data-ctp-prog]", root).forEach((b) => b.addEventListener("click", () => ctpProgram(...b.dataset.ctpProg.split("|"))));
@@ -380,6 +467,8 @@ function ctpBind(tab, root) {
   if (tab === "embut") $$("[data-curange]", root).forEach((b) => b.addEventListener("click", () => { CTU.range = Number(b.dataset.curange); renderControl(true); }));
   if (tab === "testdia") {
     $("[data-tf-reload]", root)?.addEventListener("click", () => { CTP_TF.day = null; renderControl(true); });
+    $("[data-tf-ok]", root)?.addEventListener("click", () => { if (confirm("El test d'avui sortirà ara mateix per a tothom. Continuar?")) ctpTfSave(CTP_TF.fix || {}, { ok: CTP_TF.day }, "Publicat"); });
+    $("[data-tf-gate]", root)?.addEventListener("change", (e) => { if (/^\d{2}:\d{2}$/.test(e.target.value)) ctpTfSave(CTP_TF.fix || {}, { gate: e.target.value }, `Hora de publicació: ${e.target.value}`); });
     const read = (i) => { const o = {}; $$(`[data-tf="${i}"]`, root).forEach((el) => { o[el.dataset.k] = el.value.trim(); }); return o; };
     $$("[data-tf-save]", root).forEach((b) => b.addEventListener("click", () => {
       const i = Number(b.dataset.tfSave), q = CTP_TF.data.questions[i], v = read(i);
@@ -403,13 +492,19 @@ function ctpBind(tab, root) {
   if (tab === "xarxes") {
     $$("[data-xpick]", root).forEach((el) => el.addEventListener("change", () => {
       const u = el.dataset.xpick;
+      $$("[data-xtext]", root).forEach((t) => { CTP_X.text[t.dataset.xtext] = t.value.trim(); });
+      $$("[data-xfoto]", root).forEach((t) => { CTP_X.foto[t.dataset.xfoto] = t.value; });
       CTP_X.picks = el.checked ? [...CTP_X.picks, u].slice(-6) : CTP_X.picks.filter((x) => x !== u);
-      if (CTP_X.picks.length >= 6) $$("[data-xpick]", root).forEach((x) => { x.checked = CTP_X.picks.includes(x.dataset.xpick); });
+      renderControl(true);
     }));
     $("[data-xgen]", root)?.addEventListener("click", () => ctpGenCarousel(root));
   }
   if (tab === "informe") {
     $("[data-rep-copy]", root)?.addEventListener("click", async () => { try { await navigator.clipboard.writeText(ctpReportText()); toast("Copiat"); } catch { toast("No s'ha pogut copiar"); } });
+    $("[data-rep-save]", root)?.addEventListener("click", async () => {
+      const dest = $("[data-rep-dest]", root).value.split(/[,;\s]+/).map((x) => x.trim().toLowerCase()).filter((x) => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(x)).slice(0, 20);
+      if (await window.Online.setPrivat("informe", { dest })) { CTP_REP.cfg = { ...CTP_REP.cfg, dest }; toast(`Desat: ${dest.length} destinataris`); renderControl(true); }
+    });
     $("[data-rep-dl]", root)?.addEventListener("click", () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ctpReportText()], { type: "text/plain" })); a.download = `informe-${ctpDay(0)}.txt`; document.body.appendChild(a); a.click(); a.remove(); });
   }
   if (tab === "assaig") $("[data-nit-run]", root)?.addEventListener("click", ctpNitRun);

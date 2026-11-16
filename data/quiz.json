@@ -1,7 +1,91 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-14",
+  "updated": "2026-11-16",
   "questions": [
+    {
+      "d": "2026-11-16",
+      "t": "habitatge",
+      "q": "Quin percentatge del PIB ha proposat el PSOE destinar a la vivenda social?",
+      "a": [
+        "1 % del PIB",
+        "2 % del PIB",
+        "0,5 % del PIB",
+        "3 % del PIB"
+      ],
+      "exp": "El programa electoral del PSOE inclou destinar l'1 % del producte interior brut a la vivenda social, segons diversos titulars.",
+      "u": "https://elpais.com/espana/elecciones-generales/2026-11-15/el-psoe-propone-destinar-el-1-del-pib-a-vivienda-social-y-crear-una-prestacion-estatal-por-crianza.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-16",
+      "t": "politica",
+      "q": "Quines mesures ha promès blindar el govern de Pedro Sánchez a la Constitució?",
+      "a": [
+        "l’abstenció, les pensions i la vivenda",
+        "l’abstenció, l’educació i la salut",
+        "l’abstenció, la defensa i la justícia",
+        "l’abstenció, la cultura i el medi ambient"
+      ],
+      "exp": "Segons diversos informes, Sánchez ha anunciat que vol \"blindar\" l’abstenció, les pensions i la vivenda en la Constitució.",
+      "u": "https://www.abc.es/espana/sanchez-promete-blindaje-constitucional-aborto-pensiones-vivienda-20261115155628-nt.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-16",
+      "t": "enquestes",
+      "q": "Quin percentatge d'escons preveu el PP tenir segons l'enquesta de l'ABC a Cantabria?",
+      "a": [
+        "88 % d'opcions de ser el partit amb més escons",
+        "70 % d'opcions de ser el partit amb més escons",
+        "55 % d'opcions de ser el partit amb més escons",
+        "40 % d'opcions de ser el partit amb més escons"
+      ],
+      "exp": "L'enquesta de l'ABC a Cantabria indica que el PP té un 88 % d'opcions de ser el partit amb més escons a les eleccions del 29‑N.",
+      "u": "https://www.abc.es/espana/cantabria/encuestas-elecciones-generales-29n-cantabria-resultados-psoe-20261116050000-nt.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-16",
+      "t": "habitatge",
+      "q": "Quina iniciativa ha presentat el PSOE per reduir la durada dels contractes dloguer?",
+      "a": [
+        "Proposar una ampliació de la durada mínima per llei",
+        "Eliminar els contractes dloguer per complet",
+        "Mantenir la durada actual sense canvis",
+        "Reduir la durada mínima a sis mesos"
+      ],
+      "exp": "El programa del PSOE inclou augmentar per llei la durada mínima dels contractes dloguer, segons les propostes publicades.",
+      "u": "https://www.eldiario.es/politica/programa-psoe-propone-aumentar-ley-duracion-alquileres-gravar-grandes-buitres-1-pib-casas-asequibles_1_13665879.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-16",
+      "t": "energia",
+      "q": "Quina proposta ha fet el PSOE per augmentar la inversió en la xarxa ferroviària fins al 2030?",
+      "a": [
+        "Destinar 19 000 milions d'euros",
+        "Destinar 10 000 milions d'euros",
+        "Destinar 5 000 milions d'euros",
+        "No augmentar la inversió"
+      ],
+      "exp": "El PSOE ha promès una inversió de 19 000 milions d'euros per a la xarxa ferroviària fins al 2030, segons diversos informes.",
+      "u": "https://www.20minutos.es/nacional/psoe-promete-blindar-mantenimiento-vias-tren-con-19-000-millones-un-pacto-estado-por-seguridad-ferroviaria_7061321_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-16",
+      "t": "habitatge",
+      "q": "Quina proposta ha fet el PSOE per reduir la durada dels contractes dloguer?",
+      "a": [
+        "Ampliar la durada mínima per llei",
+        "Eliminar els contractes dloguer",
+        "Mantenir la durada actual",
+        "Reduir la durada mínima a sis mesos"
+      ],
+      "exp": "El programa del PSOE inclou augmentar per llei la durada mínima dels contractes dloguer, segons les propostes publicades.",
+      "u": "https://www.eldiario.es/politica/programa-psoe-propone-aumentar-ley-duracion-alquileres-gravar-grandes-buitres-1-pib-casas-asequibles_1_13665879.html",
+      "auto": true
+    },
     {
       "d": "2026-11-14",
       "t": "campanya",
@@ -423,5 +507,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-14"
+  "updatedAuto": "2026-11-16"
 }

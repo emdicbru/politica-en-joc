@@ -1248,8 +1248,181 @@
      ]
     }
    ]
+  },
+  "2026-11-16": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Quina mesura d'habitatge inclou el programa electoral del PSOE per al 29-N?",
+     "a": [
+      "Destinar l'1% del PIB a habitatge social",
+      "Prohibir la compra d'habitatges a estrangers",
+      "Eliminar l'impost de transmissions patrimonials",
+      "Construir habitatge només amb capital privat"
+     ],
+     "exp": "El PSOE va presentar diumenge el programa amb el compromís de dedicar l'1% del PIB a habitatge social i assequible.",
+     "u": "https://elpais.com/espana/elecciones-generales/2026-11-15/el-psoe-propone-destinar-el-1-del-pib-a-vivienda-social-y-crear-una-prestacion-estatal-por-crianza.html",
+     "s": [
+      "El País",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Quin líder estranger es reuneix dilluns amb Pedro Sánchez a la Moncloa?",
+     "a": [
+      "Lula da Silva, president del Brasil",
+      "Claudia Sheinbaum, presidenta de Mèxic",
+      "Javier Milei, president de l'Argentina",
+      "Gustavo Petro, president de Colòmbia"
+     ],
+     "exp": "Sánchez rep el president brasiler Lula da Silva a la Moncloa aquest dilluns, tot i que s'ha cancel·lat l'acte de campanya conjunt per l'afonia de Lula.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-reune-lula-moncloa-lunes-cancela-acto-campana-afonia-presidente-brasileno-20261115150524.html",
+     "s": [
+      "Europa Press",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina proposta ha fet Ada Colau per reconèixer la «família escollida»?",
+     "a": [
+      "Permisos retribuïts per cuidar amics i veïns",
+      "Una paga anual per a cada llar",
+      "Reduir l'IRPF a les persones que viuen soles",
+      "Una escola pública per a cada barri"
+     ],
+     "exp": "Colau ha proposat que la família escollida, amb amics i veïns, tingui permisos retribuïts quan hi hagi cures.",
+     "u": "https://www.lavanguardia.com/politica/20261115/11684858/colau-pide-permisos-retribuidos-familia-escogida-vecinos-amigos-hay-cuidados.html",
+     "s": [
+      "La Vanguardia",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quins tres àmbits promet Sánchez blindar a la Constitució si guanya?",
+     "a": [
+      "Avortament, pensions i habitatge",
+      "Sanitat, educació i transport",
+      "Lloguer, immigració i defensa",
+      "Energia, agricultura i turisme"
+     ],
+     "exp": "Pedro Sánchez va prometre en un acte de campanya blindar constitucionalment l'avortament, les pensions i l'habitatge.",
+     "u": "https://www.20minutos.es/nacional/sanchez-promete-blindar-aborto-las-pensiones-vivienda-constitucion-sin-tener-los-apoyos-suficientes_7061350_0.html",
+     "s": [
+      "ABC",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "territori",
+     "q": "Què ha promès Feijóo sobre les inversions pendents en infraestructures a Catalunya?",
+     "a": [
+      "Complir-les i retre'n comptes cada tres mesos",
+      "Posposar-les fins a la propera legislatura",
+      "Cedir-ne la gestió a empreses privades",
+      "Reduir-les a la meitat"
+     ],
+     "exp": "Feijóo va prometre complir les inversions pendents a Catalunya i retre'n comptes cada tres mesos.",
+     "u": "https://www.vilaweb.cat/noticies/feijoo-promet-complir-amb-les-inversions-pendents-en-infraestructures-a-catalunya-i-retre-comptes-cada-tres-mesos/",
+     "s": [
+      "VilaWeb",
+      "NacióDigital"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quin municipi de l'àrea de Barcelona va fer un míting Abascal diumenge?",
+     "a": [
+      "Cornellà de Llobregat",
+      "Badalona",
+      "Sabadell",
+      "Terrassa"
+     ],
+     "exp": "El líder de Vox, Santiago Abascal, va fer diumenge un míting a Cornellà de Llobregat, centrat en l'àrea metropolitana.",
+     "u": "https://www.lavanguardia.com/politica/20261115/11684813/abascal-apela-en-cornella-a-la-reconquista-de-la-identidad-en-unas-elecciones-existenciales.html",
+     "s": [
+      "La Vanguardia",
+      "NacióDigital"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital del Brasil, país del president Lula?",
+     "a": [
+      "Brasília",
+      "Rio de Janeiro",
+      "São Paulo",
+      "Salvador de Bahia"
+     ],
+     "exp": "La capital del Brasil és Brasília, inaugurada el 1960; Rio de Janeiro ho havia estat abans.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-reune-lula-moncloa-lunes-cancela-acto-campana-afonia-presidente-brasileno-20261115150524.html",
+     "s": [
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital de la província canadenca del Quebec?",
+     "a": [
+      "Ciutat de Quebec",
+      "Montréal",
+      "Ottawa",
+      "Toronto"
+     ],
+     "exp": "La capital del Quebec és la ciutat de Quebec; Montréal és la ciutat més gran de la província.",
+     "u": "https://www.vilaweb.cat/noticies/espot-es-reuneix-amb-el-nou-primer-ministre-del-quebec-a-la-cimera-de-la-francofonia/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "politica",
+     "q": "Quin tribunal és l'intèrpret suprem de la Constitució espanyola?",
+     "a": [
+      "El Tribunal Constitucional",
+      "El Tribunal Suprem",
+      "El Consell d'Estat",
+      "L'Audiència Nacional"
+     ],
+     "exp": "El Tribunal Constitucional és l'intèrpret suprem de la Constitució i vetlla perquè les lleis hi encaixin.",
+     "u": "https://www.20minutos.es/nacional/sanchez-promete-blindar-aborto-las-pensiones-vivienda-constitucion-sin-tener-los-apoyos-suficientes_7061350_0.html",
+     "s": [
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Amb quin monarca es va casar Isabel la Catòlica, reina de Castella?",
+     "a": [
+      "Ferran II d'Aragó",
+      "Felip el Hermós",
+      "Carles I",
+      "Alfons V el Magnànim"
+     ],
+     "exp": "Isabel I de Castella es va casar el 1469 amb Ferran II d'Aragó, i units van ser coneguts com els Reis Catòlics.",
+     "u": "https://www.abc.es/espana/castilla-leon/psoe-mete-campana-reina-isabel-catolica-defender-20261115184141-nt.html",
+     "s": [
+      "ABC"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794719096115
+ "updated": 1794805491994
 }

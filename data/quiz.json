@@ -1,7 +1,63 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-16",
+  "updated": "2026-11-17",
   "questions": [
+    {
+      "d": "2026-11-17",
+      "t": "economia",
+      "q": "Què ha aprovat el govern d'Espanya respecte al salari mínim durant la campanya electoral del 29‑N?",
+      "a": [
+        "Una pujada exprés del salari mínim",
+        "Una reducció del salari mínim per estimular l'ocupació",
+        "Mantenir el salari mínim sense canvis",
+        "Eliminar el salari mínim i deixar-lo a negociació col·lectiva"
+      ],
+      "exp": "El govern, encapçalat per Pedro Sánchez, ha aprovat una pujada exprés del salari mínim coincidint amb la campanya electoral, tal com informen Europa Press i Ara.",
+      "u": "https://www.europapress.es/nacional/noticia-elecciones-generales-29n-directo-ultima-hora-subida-smi-sueldo-funcionarios-20261117082548.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-17",
+      "t": "territori",
+      "q": "Quina ha estat la reacció del govern català davant l’incompliment dels serveis mínims a Rodalies?",
+      "a": [
+        "Ha qualificat l’incompliment d’inadmissible",
+        "Ha proposat augmentar les tarifes per cobrir els costos",
+        "Ha delegat la gestió a les autoritats locals",
+        "Ha anunciat la suspensió temporal del servei"
+      ],
+      "exp": "Segons VilaWeb i NacióDigital, el govern català considera inadmissible que no es garanteixin els serveis mínims a Rodalies, coincidint amb la vaga que afecta la campanya.",
+      "u": "https://www.vilaweb.cat/noticies/govern-catala-inadmissible-incompliment-servei-minim-vaga/",
+      "auto": true
+    },
+    {
+      "d": "2026-11-17",
+      "t": "immigracio",
+      "q": "Com ha definit Santiago Abascal la situació migratòria a les Illes Canàries?",
+      "a": [
+        "Una invasió planificada",
+        "Una crisi humanitària inevitable",
+        "Un problema local sense rellevància nacional",
+        "Una oportunitat per al creixement econòmic"
+      ],
+      "exp": "Abascal ha qualificat l’arribada de cayucos a les Illes Canàries com una \"invasió planificada\" i ha demanat \"ni un cayuco més\", segons El País i ABC.",
+      "u": "https://elpais.com/espana/elecciones-generales/2026-11-16/abascal-califica-en-canarias-de-invasion-planificada-la-llega-de-cayucos.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-17",
+      "t": "politica",
+      "q": "Quina promesa ha fet Alberto Núñez Feijóo respecte als exiliats per ETA?",
+      "a": [
+        "Saldar la deute amb els exiliats per dignitat i memòria",
+        "Negar qualsevol reconeixement als exiliats",
+        "Reduir les pensions dels exiliats",
+        "Eliminar les mesures de suport als exiliats"
+      ],
+      "exp": "Feijóo ha anunciat que vol saldar la deute amb els exiliats per ETA, incloent una proposta de 'llei de néts' per facilitar el seu vot, segons ABC i El Debate.",
+      "u": "https://www.abc.es/espana/feijoo-propone-ley-nietos-vasca-voten-exiliados-20261116093459-nt.html",
+      "auto": true
+    },
     {
       "d": "2026-11-16",
       "t": "habitatge",
@@ -507,5 +563,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-16"
+  "updatedAuto": "2026-11-17"
 }

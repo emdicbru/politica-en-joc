@@ -1421,8 +1421,185 @@
      ]
     }
    ]
+  },
+  "2026-11-17": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Feijóo ha proposat una «llei de nets» basca. Qui podria votar a les eleccions autonòmiques amb aquesta mesura?",
+     "a": [
+      "Els exiliats pel terrorisme d'ETA",
+      "Els joves de 16 anys",
+      "Els emigrants a Amèrica",
+      "Els residents estrangers"
+     ],
+     "exp": "Feijóo va proposar a Pamplona una «llei de nets» perquè els exiliats bascos pel terrorisme d'ETA puguin votar a les eleccions autonòmiques.",
+     "u": "https://www.abc.es/espana/feijoo-propone-ley-nietos-vasca-voten-exiliados-20261116093459-nt.html",
+     "s": [
+      "ABC",
+      "El País",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina jornada laboral setmanal proposa el programa electoral del Front Ampli?",
+     "a": [
+      "32 hores",
+      "35 hores",
+      "37,5 hores",
+      "30 hores"
+     ],
+     "exp": "El Front Ampli ha presentat un programa que inclou la jornada laboral de 32 hores setmanals i la jubilació als 65 anys.",
+     "u": "https://www.infolibre.es/politica/jornada-laboral-32-horas-semana-jubilacion-65-anos-frente-amplio-presenta-programa-electoral_1_2240254.html",
+     "s": [
+      "infoLibre",
+      "20minutos",
+      "NacióDigital"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Ada Colau condiciona el seu suport a un govern de Sánchez a una primera mesura sobre habitatge. Quina?",
+     "a": [
+      "Un decret per abaixar el lloguer",
+      "Un pla de construcció d'habitatge",
+      "Una rebaixa de l'IVA del lloguer",
+      "Un ajut als compradors joves"
+     ],
+     "exp": "Colau ha dit que un futur govern amb Sánchez hauria de començar amb un decret per abaixar el lloguer.",
+     "u": "https://www.europapress.es/nacional/noticia-colau-condiciona-futuro-gobierno-sanchez-primera-medida-sea-decreto-bajar-alquiler-20261116200020.html",
+     "s": [
+      "Europa Press",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Quin servei ha informat la jutgessa que no té evidències que el Marroc instigués l'entrada massiva a Ceuta?",
+     "a": [
+      "El CNI",
+      "La Guàrdia Civil",
+      "Europol",
+      "La Policia Nacional"
+     ],
+     "exp": "El Centre Nacional d'Intel·ligència (CNI) ha comunicat a la jutgessa que no ha trobat evidències que l'entrada massiva fos instigada, planificada o coordinada pel Marroc.",
+     "u": "https://www.europapress.es/nacional/noticia-cni-no-ve-evidencias-entrada-masiva-ceuta-fuera-instigada-planeada-coordinada-marruecos-20261116125350.html",
+     "s": [
+      "Europa Press",
+      "eldiario.es"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "immigracio",
+     "q": "Quina comunitat autònoma ha triat Abascal per a una gira de campanya en plena arribada de cayucs?",
+     "a": [
+      "Canàries",
+      "Andalusia",
+      "Galícia",
+      "Balears"
+     ],
+     "exp": "Abascal ha començat una gira de campanya per Canàries, en un moment de repunt de l'arribada de cayucs.",
+     "u": "https://www.abc.es/espana/canarias/abascal-arranca-gira-canarias-pleno-repunte-migratorio-20261116210101-nt.html",
+     "s": [
+      "ABC",
+      "El País",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "economia",
+     "q": "Quina condonació demana Junts al PSOE que aprovi abans de les eleccions?",
+     "a": [
+      "La del FLA",
+      "La de l'IVA",
+      "La de l'IRPF",
+      "La de les hipoteques"
+     ],
+     "exp": "Miriam Nogueras ha emplaçat el PSOE a portar a la Diputació Permanent la condonació del deute del Fons de Liquiditat Autonòmica (FLA).",
+     "u": "https://www.vilaweb.cat/noticies/nogueras-desafia-el-psoe-a-votar-la-condonacio-del-fla-al-congres-espanyol/",
+     "s": [
+      "VilaWeb",
+      "NacióDigital",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin estret separa la península Ibèrica del Marroc?",
+     "a": [
+      "Estret de Gibraltar",
+      "Estret de Bonifacio",
+      "Estret del Bòsfor",
+      "Canal de la Mànega"
+     ],
+     "exp": "L'estret de Gibraltar separa Espanya i el Marroc i connecta l'Atlàntic amb la Mediterrània.",
+     "u": "https://www.europapress.es/nacional/noticia-cni-no-ve-evidencias-entrada-masiva-ceuta-fuera-instigada-planeada-coordinada-marruecos-20261116125350.html",
+     "s": [
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és l'illa més gran de l'arxipèlag canari?",
+     "a": [
+      "Tenerife",
+      "Gran Canària",
+      "Fuerteventura",
+      "La Palma"
+     ],
+     "exp": "Tenerife és l'illa més gran de Canàries, amb uns 2.034 km².",
+     "u": "https://www.abc.es/espana/canarias/abascal-arranca-gira-canarias-pleno-repunte-migratorio-20261116210101-nt.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin riu passa per Còrdova, on Sánchez farà un míting?",
+     "a": [
+      "El Guadalquivir",
+      "L'Ebre",
+      "El Tajo",
+      "El Duero"
+     ],
+     "exp": "El Guadalquivir travessa Còrdova i Sevilla i desemboca a l'Atlàntic.",
+     "u": "https://www.abc.es/espana/canarias/abascal-arranca-gira-canarias-pleno-repunte-migratorio-20261116210101-nt.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital oficial d'Euskadi?",
+     "a": [
+      "Vitòria-Gasteiz",
+      "Bilbao",
+      "Donostia",
+      "Pamplona"
+     ],
+     "exp": "Vitòria-Gasteiz és la capital institucional d'Euskadi i seu del Govern basc.",
+     "u": "https://elpais.com/espana/elecciones-generales/2026-11-16/el-pp-propone-una-ley-de-nietos-para-que-los-exiliados-vascos-por-terrorismo-de-eta-puedan-votar-en-las-elecciones-autonomicas.html",
+     "s": [
+      "El País"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794805491994
+ "updated": 1794891907854
 }

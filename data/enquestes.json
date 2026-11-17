@@ -1,7 +1,7 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1386052502,
+ "revid": 1386085315,
  "seats": [
   {
    "n": "40dB / Prisa",
@@ -42,6 +42,25 @@
    }
   },
   {
+   "n": "SW Demoscopia / La Séptima",
+   "d": "26 oct–15 nov",
+   "s": {
+    "pp": 117.5,
+    "psoe": 131,
+    "vox": 57,
+    "fa": 11.5,
+    "erc": 12,
+    "junts": 3.5,
+    "bildu": 7,
+    "pnv": 3,
+    "bng": 2,
+    "cc": 1,
+    "altres": 3,
+    "podemos": 0.5,
+    "salf": 0
+   }
+  },
+  {
    "n": "SocioMétrica / El Español",
    "d": "1 set–15 nov",
    "s": {
@@ -58,6 +77,24 @@
     "cc": 1,
     "podemos": 0,
     "salf": 0
+   }
+  },
+  {
+   "n": "Sigma Dos / El Mundo",
+   "d": "11–14 nov",
+   "s": {
+    "pp": 126,
+    "psoe": 110,
+    "vox": 65.5,
+    "fa": 9.5,
+    "altres": 8,
+    "erc": 8.5,
+    "junts": 4.5,
+    "bildu": 7,
+    "pnv": 3.5,
+    "bng": 2.5,
+    "cc": 0.5,
+    "podemos": 0
    }
   },
   {
@@ -79,25 +116,6 @@
    }
   },
   {
-   "n": "SW Demoscopia / La Séptima",
-   "d": "26 oct–14 nov",
-   "s": {
-    "pp": 117,
-    "psoe": 131.5,
-    "vox": 57.5,
-    "fa": 11.5,
-    "erc": 12,
-    "junts": 4,
-    "bildu": 7,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 1,
-    "altres": 3,
-    "podemos": 0,
-    "salf": 0
-   }
-  },
-  {
    "n": "IMOP / El Confidencial",
    "d": "10–13 nov",
    "s": {
@@ -114,24 +132,6 @@
     "altres": 4,
     "podemos": 0,
     "salf": 0
-   }
-  },
-  {
-   "n": "Sigma Dos / El Mundo",
-   "d": "3–13 nov",
-   "s": {
-    "pp": 129,
-    "psoe": 108,
-    "vox": 64.5,
-    "fa": 10.5,
-    "altres": 8,
-    "erc": 9.5,
-    "junts": 4.5,
-    "bildu": 7,
-    "pnv": 3.5,
-    "bng": 2.5,
-    "cc": 0.5,
-    "podemos": 0
    }
   },
   {
@@ -210,6 +210,18 @@
    2.2
   ],
   [
+   28.8,
+   31.8,
+   16.8,
+   7.4,
+   1.7,
+   2.8,
+   1.3,
+   1.3,
+   0.8,
+   2
+  ],
+  [
    32.1,
    27.8,
    19.1,
@@ -222,6 +234,18 @@
    2.2
   ],
   [
+   30.8,
+   26.1,
+   19.8,
+   5.5,
+   1.4,
+   2.5,
+   1.2,
+   1.5,
+   0.9,
+   null
+  ],
+  [
    30.2,
    26.7,
    17.6,
@@ -232,18 +256,6 @@
    1.8,
    1,
    null
-  ],
-  [
-   28.6,
-   31.7,
-   16.9,
-   7.3,
-   1.7,
-   2.8,
-   1.3,
-   1.4,
-   0.8,
-   2
   ],
   [
    31.5,
@@ -267,18 +279,6 @@
    null,
    null,
    null,
-   null
-  ],
-  [
-   31,
-   25.6,
-   19.7,
-   6.1,
-   null,
-   2.7,
-   1.3,
-   1.4,
-   0.8,
    null
   ],
   [
@@ -330,5 +330,5 @@
    0.4
   ]
  ],
- "updated": "2026-11-16"
+ "updated": "2026-11-17"
 }

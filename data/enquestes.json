@@ -1,25 +1,44 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1386305032,
+ "revid": 1386449783,
  "seats": [
   {
    "n": "40dB / Prisa",
-   "d": "12–16 nov",
+   "d": "13–17 nov",
    "s": {
-    "pp": 131.5,
-    "psoe": 122,
-    "vox": 58.5,
-    "fa": 6.5,
+    "pp": 133.5,
+    "psoe": 122.5,
+    "vox": 55.5,
+    "fa": 6,
     "altres": 6,
     "erc": 10,
-    "junts": 3,
+    "junts": 4,
     "bildu": 7,
     "pnv": 3,
     "bng": 2,
     "cc": 1,
     "podemos": 0.5,
     "salf": 0
+   }
+  },
+  {
+   "n": "Sondaxe / La Voz de Galicia",
+   "d": "12–16 nov",
+   "s": {
+    "pp": 121,
+    "psoe": 111,
+    "vox": 71,
+    "fa": 8,
+    "altres": 6,
+    "erc": 11,
+    "junts": 4,
+    "bildu": 10,
+    "pnv": 3,
+    "bng": 2,
+    "cc": 1,
+    "podemos": 1,
+    "salf": 1
    }
   },
   {
@@ -74,27 +93,8 @@
     "bng": 2,
     "cc": 1,
     "altres": 3,
-    "podemos": 0,
+    "podemos": 0.5,
     "salf": 0
-   }
-  },
-  {
-   "n": "Sondaxe / La Voz de Galicia",
-   "d": "11–15 nov",
-   "s": {
-    "pp": 125,
-    "psoe": 112,
-    "vox": 66,
-    "fa": 9,
-    "altres": 6,
-    "erc": 10,
-    "junts": 3,
-    "bildu": 10,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 1,
-    "podemos": 2,
-    "salf": 1
    }
   },
   {
@@ -187,16 +187,28 @@
  ],
  "pct": [
   [
-   31.8,
-   30.6,
-   17.5,
-   4.2,
-   1.1,
+   32.2,
+   30.7,
+   17,
+   4,
+   1.2,
    null,
    null,
    null,
    null,
-   1.6
+   1.7
+  ],
+  [
+   29,
+   27,
+   19.4,
+   5.5,
+   1.2,
+   2.4,
+   1,
+   2.1,
+   0.7,
+   3.1
   ],
   [
    30.7,
@@ -227,24 +239,12 @@
    31.9,
    16.5,
    7.3,
-   null,
-   null,
-   null,
-   null,
-   null,
-   null
-  ],
-  [
-   29.7,
-   26.7,
-   18,
-   6,
-   2.1,
-   2.3,
-   1,
-   2.1,
-   0.9,
-   3
+   1.7,
+   2.8,
+   1.3,
+   1.3,
+   0.8,
+   2
   ],
   [
    32.1,

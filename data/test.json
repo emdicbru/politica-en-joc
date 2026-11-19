@@ -1777,8 +1777,182 @@
      ]
     }
    ]
+  },
+  "2026-11-19": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quins dos candidats a la presidència del Govern s'enfronten aquest dijous en un debat cara a cara?",
+     "a": [
+      "Pedro Sánchez i Alberto Núñez Feijóo",
+      "Pedro Sánchez i Santiago Abascal",
+      "Alberto Núñez Feijóo i Santiago Abascal",
+      "Pedro Sánchez i Yolanda Díaz"
+     ],
+     "exp": "El cara a cara entre els líders del PSOE i del PP se celebra aquest dijous 19 de novembre, a deu dies de les eleccions generals.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-feijoo-llegan-manana-cara-cara-clima-crispacion-enfrentamientos-falta-dialogo-20261118192926.html",
+     "s": [
+      "Europa Press",
+      "El Español"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quin col·lectiu de votants correspon al vot CERA a les eleccions generals?",
+     "a": [
+      "Espanyols residents a l'estranger",
+      "Estrangers residents a Espanya",
+      "Joves que voten per primera vegada",
+      "Persones ingressades en hospitals"
+     ],
+     "exp": "CERA és el cens d'espanyols residents absents, és a dir, els que viuen a l'estranger i voten des d'allà.",
+     "u": "https://www.20minutos.es/nacional/paises-pueden-influir-mas-elecciones-generales-voto-cera_7062724_0.html",
+     "s": [
+      "20minutos",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin recurs ha llançat Vox per explicar les seves propostes de campanya?",
+     "a": [
+      "Un videojoc",
+      "Un pòdcast diari",
+      "Un concurs televisiu",
+      "Una aplicació de cites"
+     ],
+     "exp": "Vox ha presentat un videojoc amb minijocs repartits per Espanya per explicar el seu programa.",
+     "u": "https://www.europapress.es/nacional/noticia-vox-lanza-videojuego-sentido-comun-explicar-propuestas-minijuegos-repartidos-espana-20261118213444.html",
+     "s": [
+      "Europa Press",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "economia",
+     "q": "Quin model de finançament per a Catalunya inclou el programa electoral de Junts per al 29N?",
+     "a": [
+      "Un concert econòmic",
+      "Un sistema de quotes per habitant",
+      "Una hisenda federal compartida",
+      "Un fons estatal de garantia"
+     ],
+     "exp": "El programa de Junts proposa un concert econòmic, a més de menys impostos i més control migratori.",
+     "u": "https://naciodigital.cat/politica/concert-economic-menys-impostos-i-control-migratori-aixi-es-el-programa-de-junts.html",
+     "s": [
+      "NacióDigital",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "parlament",
+     "q": "Quin òrgan del Congrés ha convalidat set decrets llei amb les Corts dissoltes per les eleccions?",
+     "a": [
+      "La Diputació Permanent",
+      "La Mesa del Congrés",
+      "La Junta de Portaveus",
+      "El Ple del Senat"
+     ],
+     "exp": "Amb les Corts dissoltes, la Diputació Permanent és l'òrgan que continua actiu i va votar els set decrets.",
+     "u": "https://elpais.com/espana/2026-11-18/el-congreso-aprueba-siete-decretos-sociales-con-un-amplisimo-respaldo-pero-entre-criticas-de-campana.html",
+     "s": [
+      "El País",
+      "El Español"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin ministre ha fet una crida a mobilitzar el vot LGTBI de cara al 29N?",
+     "a": [
+      "Fernando Grande-Marlaska",
+      "Óscar López",
+      "Ángel Víctor Torres",
+      "Luis Planas"
+     ],
+     "exp": "El ministre de l'Interior, Fernando Grande-Marlaska, ha cridat a la mobilització del vot LGTBI.",
+     "u": "https://www.elmundo.es/elecciones/elecciones-generales/2026/11/18/6afdd2dfe9cf4ae80c8b458f.html",
+     "s": [
+      "El Mundo",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "politica",
+     "q": "Quin palau madrileny és la seu de la Presidència del Govern d'Espanya?",
+     "a": [
+      "El Palau de la Moncloa",
+      "El Palau de la Zarzuela",
+      "El Palau de Cibeles",
+      "El Palau de Liria"
+     ],
+     "exp": "La Moncloa és la seu de la Presidència del Govern; la Zarzuela és la residència del rei.",
+     "u": "https://www.europapress.es/nacional/noticia-29n-irene-montero-culpa-inaccion-gobierno-alza-derecha-vea-moncloa-guinda-pastel-20261118221801.html",
+     "s": [
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "justicia",
+     "q": "Quin òrgan fiscalitza els comptes i la gestió econòmica del sector públic espanyol?",
+     "a": [
+      "El Tribunal de Comptes",
+      "El Tribunal Suprem",
+      "El Defensor del Poble",
+      "El Consell d'Estat"
+     ],
+     "exp": "El Tribunal de Comptes és l'òrgan fiscalitzador dels comptes i la gestió econòmica del sector públic.",
+     "u": "https://www.elmundo.es/espana/2026/11/19/6afdf50b21efa0c7408b4592.html",
+     "s": [
+      "El Mundo",
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital de Galícia, on Feijóo va fer un gran acte de campanya?",
+     "a": [
+      "Santiago de Compostel·la",
+      "A Corunya",
+      "Vigo",
+      "Lugo"
+     ],
+     "exp": "Santiago de Compostel·la és la capital de Galícia i seu de la Xunta.",
+     "u": "https://www.eldebate.com/espana/galicia/20261119/psoe-fleta-autobuses-gratis-desde-toda-galicia-intentar-llenar-recinto-feijoo-abarroto-santiago_482441.html",
+     "s": [
+      "El Debate"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Quin és el nom oficial actual del conegut com a «Valle de los Caídos»?",
+     "a": [
+      "Valle de Cuelgamuros",
+      "Valle de Guadarrama",
+      "Valle de la Concòrdia",
+      "Valle de El Escorial"
+     ],
+     "exp": "Des de la Llei de memòria democràtica de 2022, el lloc s'anomena Valle de Cuelgamuros.",
+     "u": "https://www.eldebate.com/espana/20261119/psoe-promete-culminar-plan-valle-caidos-memoria-democratica-cuestion-estado_482555.html",
+     "s": [
+      "El Debate"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1794978304847
+ "updated": 1795064705454
 }

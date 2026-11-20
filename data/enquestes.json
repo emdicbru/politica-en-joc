@@ -1,18 +1,18 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1386627491,
+ "revid": 1386658683,
  "seats": [
   {
    "n": "40dB / Prisa",
-   "d": "14–18 nov",
+   "d": "15–19 nov",
    "s": {
-    "pp": 134,
-    "psoe": 120.5,
-    "vox": 57,
+    "pp": 133,
+    "psoe": 119,
+    "vox": 59,
     "fa": 6.5,
     "altres": 6,
-    "erc": 9,
+    "erc": 10,
     "junts": 3,
     "bildu": 7,
     "pnv": 3,
@@ -20,6 +20,24 @@
     "cc": 1,
     "podemos": 0.5,
     "salf": 0
+   }
+  },
+  {
+   "n": "Sigma Dos / El Mundo",
+   "d": "12–18 nov",
+   "s": {
+    "pp": 128,
+    "psoe": 113,
+    "vox": 61.5,
+    "fa": 12.5,
+    "erc": 8.5,
+    "junts": 4.5,
+    "bildu": 7,
+    "pnv": 4.5,
+    "bng": 2.5,
+    "cc": 0.5,
+    "altres": 3.5,
+    "podemos": 0
    }
   },
   {
@@ -58,24 +76,6 @@
     "cc": 0,
     "podemos": 0,
     "salf": 1
-   }
-  },
-  {
-   "n": "Sigma Dos / El Mundo",
-   "d": "11–17 nov",
-   "s": {
-    "pp": 126,
-    "psoe": 111,
-    "vox": 64.5,
-    "fa": 12,
-    "erc": 8.5,
-    "junts": 4.5,
-    "bildu": 7,
-    "pnv": 4.5,
-    "bng": 2.5,
-    "cc": 0.5,
-    "altres": 4,
-    "podemos": 0
    }
   },
   {
@@ -199,16 +199,28 @@
    null
   ],
   [
-   32.4,
-   30.4,
-   17.2,
-   4.2,
-   1.2,
+   32.2,
+   30.2,
+   17.6,
+   4.1,
+   1.1,
    null,
    null,
    null,
    null,
    1.7
+  ],
+  [
+   31,
+   27.1,
+   19.4,
+   7.1,
+   0.8,
+   2.3,
+   1.4,
+   1.6,
+   1,
+   null
   ],
   [
    30.4,
@@ -245,18 +257,6 @@
    1.9,
    0.5,
    2.7
-  ],
-  [
-   30.7,
-   26.7,
-   19.7,
-   6.9,
-   0.8,
-   2.3,
-   1.4,
-   1.6,
-   1,
-   null
   ],
   [
    29.3,
@@ -331,5 +331,5 @@
    null
   ]
  ],
- "updated": "2026-11-19"
+ "updated": "2026-11-20"
 }

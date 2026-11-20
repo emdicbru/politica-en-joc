@@ -1,7 +1,49 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-19",
+  "updated": "2026-11-20",
   "questions": [
+    {
+      "d": "2026-11-20",
+      "t": "campanya",
+      "q": "Què va publicar Feijóo a les xarxes socials després del debat cara a cara amb Pedro Sánchez?",
+      "a": [
+        "Una foto passejant el seu gos",
+        "Un vídeo criticant la gestió de la salut",
+        "Un missatge de suport a la independència catalana",
+        "Una declaració sobre l'augment del salari mínim"
+      ],
+      "exp": "Després del debat, Feijóo va compartir a les xarxes una imatge del seu gos, una acció que va ser destacada per diversos mitjans com a resposta al cara‑a‑cara.",
+      "u": "https://www.elespanol.com/espana/politica/20261120/feijoo-pasea-perro-redes-partido-popular-cara-pedro-sanchez-ayer-debate/1003744465943_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-20",
+      "t": "campanya",
+      "q": "Quina valoració va fer Ester Muñoz del resultat del debat entre Sánchez i Feijóo?",
+      "a": [
+        "Que Feijóo va guanyar 5 a 0",
+        "Que Sánchez va guanyar 3 a 2",
+        "Que el debat va acabar en empat",
+        "Que Feijóo va perdre per falta d'arguments"
+      ],
+      "exp": "Ester Muñoz, analista de l'Àrea de Comunicació, va afirmar que Feijóo havia superat Sánchez amb una puntuació de cinc a zero, segons les seves observacions.",
+      "u": "https://www.20minutos.es/nacional/ester-munoz-cree-que-feijoo-gano-sanchez-cara-cara-por-cinco-cero_7063542_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-20",
+      "t": "politica",
+      "q": "Què va afirmar Jordi Rufián sobre la preparació de Pedro Sánchez al debat?",
+      "a": [
+        "Que Sánchez va estar mal assessoritzat",
+        "Que Sánchez va ser el millor preparat",
+        "Que Sánchez va tenir un equip d'experts en economia",
+        "Que Sánchez va presentar noves propostes legislatives"
+      ],
+      "exp": "Rufián, portaveu d'ERC, va declarar que Sánchez havia estat mal assessoritzat durant el debat, una opinió repetida en diversos informes mediàtics.",
+      "u": "https://www.eldebate.com/espana/cataluna/20261120/rufian-senala-sanchez-estuvo-mal-asesorado-debate-reitera-feijoo-comio-presidente_483149.html",
+      "auto": true
+    },
     {
       "d": "2026-11-19",
       "t": "economia",
@@ -379,63 +421,7 @@
       "exp": "El Govern ha sol·licitat a l'Agència de Protecció de Dades que prengui mesures per paralitzar TikTok a causa de la difusió de vídeos d'abusos sexuals a menors.",
       "u": "https://www.ara.cat/societat/govern-espanyol-demana-l-agencia-proteccio-dades-paralitzi-l-activitat-tiktok-l_1_5906496.html",
       "auto": true
-    },
-    {
-      "d": "2026-11-10",
-      "t": "immigracio",
-      "q": "Què ha declarat oficialment el Govern espanyol com a emergència a les Illes Canàries a causa de l’arribada massiva de migrants?",
-      "a": [
-        "Ha declarat una emergència migratòria i ha anunciat ajudes econòmiques per a El Hierro",
-        "Ha declarat una emergència sanitària i ha imposat quarantena a totes les illes",
-        "Ha declarat una emergència climàtica i ha mobilitzat l'exèrcit per a la neteja de platges",
-        "Ha declarat una emergència econòmica i ha reduït els impostos a les illes"
-      ],
-      "exp": "El Govern ha declarat una emergència migratòria a les Illes Canàries després de l'arribada de 7.500 persones, anunciant mesures d'ajuda econòmica per a El Hierro. (fonts 20 i 25)",
-      "u": "https://www.20minutos.es/nacional/clavijo-cifra-7-500-los-inmigrantes-llegados-canarias-noviembre-gobierno-anuncia-ayudas-economicas-para-hierro_7059290_0.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-10",
-      "t": "politica",
-      "q": "Quina nova prestació ha creat el Govern espanyol per a les famílies monoparentals?",
-      "a": [
-        "Un títol oficial que prioritza l'accés a ajudes i beneficis",
-        "Un augment del 10 % en la pensió mínima",
-        "Una reducció del lloguer per a famílies amb un fill",
-        "Un crèdit fiscal per a la compra de vivenda"
-      ],
-      "exp": "El Govern ha aprovat la creació d'un títol oficial per a famílies monoparentals que facilita l'accés prioritari a ajudes i beneficis socials. (fonts 41 i 70)",
-      "u": "https://www.ara.cat/societat/govern-espanyol-crea-titol-families-monoparentals-reforcar-prestacions_1_5905960.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-10",
-      "t": "territori",
-      "q": "Quin ministre ha assegurat que el Govern actuarà davant el no compliment dels serveis mínims a Rodalies?",
-      "a": [
-        "Miquel Illa",
-        "Núria Ventura",
-        "Pedro Sánchez",
-        "Alberto Núñez Feijóo"
-      ],
-      "exp": "El ministre de Transports, Miquel Illa, ha declarat que el Govern prendrà mesures si Rodalies no garanteix els serveis mínims. (fonts 0 i 55)",
-      "u": "https://www.eldebate.com/espana/cataluna/20261110/illa-asegura-govern-actuara-ante-incumplimiento-servicios-minimos-rodalies_479243.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-10",
-      "t": "justicia",
-      "q": "A quin òrgan constitucional ha portat el Govern la qüestió de la prioritat nacional a la Comunitat Valenciana?",
-      "a": [
-        "Al Tribunal Constitucional",
-        "Al Tribunal Suprem",
-        "Al Consell de Ministres",
-        "Al Parlament Europeu"
-      ],
-      "exp": "El Govern ha presentat al Tribunal Constitucional la demanda relativa a la prioritat nacional a la Comunitat Valenciana. (fonts 23 i 28)",
-      "u": "https://www.eldebate.com/espana/comunidad-valenciana/20261110/gobierno-lleva-constitucional-prioridad-nacional-veto-burka-proteccion-nonatos-comunidad-valenciana_479180.html",
-      "auto": true
     }
   ],
-  "updatedAuto": "2026-11-19"
+  "updatedAuto": "2026-11-20"
 }

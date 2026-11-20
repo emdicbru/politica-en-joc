@@ -1951,8 +1951,185 @@
      ]
     }
    ]
+  },
+  "2026-11-20": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Quin país veí va centrar un dels xocs més intensos del cara a cara entre Sánchez i Feijóo?",
+     "a": [
+      "El Marroc",
+      "Algèria",
+      "Portugal",
+      "França"
+     ],
+     "exp": "La relació amb el Marroc va ser un dels temes del debat del 19 de novembre, amb referències a Ceuta i a la política exterior.",
+     "u": "https://www.elespanol.com/espana/politica/20261120/debe-usted-marruecos-feijoo-reprocha-invasion-ceuta-sanchez-vincula-internacional-ultra/1003744465493_0.html",
+     "s": [
+      "El Español",
+      "El Debate",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Sobre quin tema va donar dades Feijóo quan va citar «Jésica, Andrea i Maricarmen» al cara a cara?",
+     "a": [
+      "L'habitatge",
+      "Les pensions",
+      "La sanitat",
+      "L'educació"
+     ],
+     "exp": "Feijóo va usar dades sobre habitatge per interpel·lar Sánchez durant el cara a cara del 19 de novembre.",
+     "u": "https://www.elespanol.com/espana/politica/20261120/usted-conoce-jesica-andrea-maricarmen-feijoo-abruma-sanchez-datos-vivienda/1003744465188_0.html",
+     "s": [
+      "El Español",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Quina organització internacional va fixar l'objectiu de despesa en defensa del 5%, tema del cara a cara?",
+     "a": [
+      "L'OTAN",
+      "L'ONU",
+      "L'OSCE",
+      "L'OMC"
+     ],
+     "exp": "Sánchez i Feijóo van debatre sobre el compromís del 5% en defensa, vinculat a l'OTAN.",
+     "u": "https://www.eldebate.com/espana/20261119/sanchez-jacta-no-acatar-5-gasto-defensa-desmentido-otan_483092.html",
+     "s": [
+      "El Debate",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "A quina ciutat va viatjar Isabel Díaz Ayuso el 19 de novembre per fer-hi un acte de campanya?",
+     "a": [
+      "Barcelona",
+      "Sevilla",
+      "València",
+      "Bilbao"
+     ],
+     "exp": "Ayuso va fer un acte a Barcelona de cara al 29N, segons la premsa.",
+     "u": "https://www.ara.cat/politica/eleccions-generals/ayuso-desembarca-barcelona-defensar-hispanitat-insultar-sanchez_1_5916270.html",
+     "s": [
+      "Ara",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Quin president d'un organisme esportiu mundial tindrà dos rivals a les eleccions del març del 2027?",
+     "a": [
+      "Gianni Infantino, de la FIFA",
+      "Thomas Bach, del COI",
+      "Aleksander Čeferin, de la UEFA",
+      "Mohamed bin Hammam, de l'AFC"
+     ],
+     "exp": "Infantino, president de la FIFA, afrontarà dos rivals, com Philippe Diallo, en les eleccions del març del 2027.",
+     "u": "https://www.vilaweb.cat/noticies/infantino-rivals-eleccions-presidencia-fifa-2027-diallo-tashima/",
+     "s": [
+      "VilaWeb",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Com s'anomena la darrera intervenció d'un minut de cada candidat al cara a cara?",
+     "a": [
+      "Minut d'or",
+      "Torn de rèplica",
+      "Última paraula",
+      "Cloenda lliure"
+     ],
+     "exp": "Cada candidat va tancar el debat amb el seu «minut d'or».",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-cierra-debate-llamando-participar-29n-votando-alma-quien-pueda-votar-vote-20261119235244.html",
+     "s": [
+      "Europa Press",
+      "ABC",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin dirigent d'ERC va dir que Feijóo s'havia «menjat» Sánchez al cara a cara?",
+     "a": [
+      "Gabriel Rufián",
+      "Oriol Junqueras",
+      "Carles Puigdemont",
+      "Ione Belarra"
+     ],
+     "exp": "Rufián va afirmar que si Feijóo el «menja» així és que no s'ho ha preparat o està mal assessorat.",
+     "u": "https://www.abc.es/espana/rufian-sentencia-sanchez-cara-cara-preparado-mal-20261119234008-nt.html",
+     "s": [
+      "ABC",
+      "20minutos",
+      "El Español"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "En quina ciutat suïssa té la seu la FIFA?",
+     "a": [
+      "Zúric",
+      "Ginebra",
+      "Berna",
+      "Lausana"
+     ],
+     "exp": "La FIFA té la seu a Zúric; el COI, en canvi, és a Lausana.",
+     "u": "https://www.vilaweb.cat/noticies/infantino-rivals-eleccions-presidencia-fifa-2027-diallo-tashima/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "politica",
+     "q": "Com es diu el parlament espanyol format pel Congrés dels Diputats i el Senat?",
+     "a": [
+      "Corts Generals",
+      "Assemblea Nacional",
+      "Assemblea de la República",
+      "Dieta Nacional"
+     ],
+     "exp": "Les Corts Generals són el parlament d'Espanya, ara dissoltes per les eleccions del 29N.",
+     "u": "https://www.abc.es/espana/encuestas-elecciones-generales-29n-resultados-psoe-pp-20261119051500-nt.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin estret connecta el Mediterrani i l'Atlàntic entre Espanya i l'Àfrica?",
+     "a": [
+      "L'estret de Gibraltar",
+      "L'estret del Bòsfor",
+      "L'estret de Messina",
+      "L'estret de Bering"
+     ],
+     "exp": "L'estret de Gibraltar, de uns 14 km d'amplada mínima, separa Europa i l'Àfrica.",
+     "u": "https://www.elespanol.com/espana/politica/20261120/debe-usted-marruecos-feijoo-reprocha-invasion-ceuta-sanchez-vincula-internacional-ultra/1003744465493_0.html",
+     "s": [
+      "El Español"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795064705454
+ "updated": 1795151165600
 }

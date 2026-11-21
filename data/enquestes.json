@@ -1,8 +1,27 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1386839174,
+ "revid": 1386931367,
  "seats": [
+  {
+   "n": "EM-Analytics / Electomanía",
+   "d": "9–21 nov",
+   "s": {
+    "pp": 126,
+    "psoe": 121,
+    "vox": 59,
+    "fa": 11,
+    "altres": 6,
+    "erc": 9,
+    "junts": 4,
+    "bildu": 7,
+    "pnv": 3,
+    "bng": 2,
+    "cc": 0,
+    "podemos": 2,
+    "salf": 0
+   }
+  },
   {
    "n": "40dB / Prisa",
    "d": "16–20 nov",
@@ -19,25 +38,6 @@
     "bng": 2,
     "cc": 1,
     "podemos": 0.5,
-    "salf": 0
-   }
-  },
-  {
-   "n": "EM-Analytics / Electomanía",
-   "d": "9–20 nov",
-   "s": {
-    "pp": 129,
-    "psoe": 121,
-    "vox": 56,
-    "fa": 12,
-    "altres": 6,
-    "erc": 8,
-    "junts": 4,
-    "bildu": 7,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 0,
-    "podemos": 2,
     "salf": 0
    }
   },
@@ -187,6 +187,18 @@
  ],
  "pct": [
   [
+   31,
+   27.9,
+   18.5,
+   5.7,
+   0.9,
+   2.5,
+   1.1,
+   1.5,
+   0.8,
+   2.1
+  ],
+  [
    31.9,
    31.2,
    17.1,
@@ -197,18 +209,6 @@
    null,
    null,
    1.5
-  ],
-  [
-   31,
-   27.6,
-   18.2,
-   6,
-   0.9,
-   2.3,
-   1.1,
-   1.5,
-   0.8,
-   2.3
   ],
   [
    30,
@@ -238,12 +238,12 @@
    29.5,
    27.9,
    19.8,
-   4.9,
+   5,
    null,
-   null,
-   null,
-   null,
-   null,
+   2.7,
+   1.5,
+   1.5,
+   0.4,
    null
   ],
   [

@@ -2128,8 +2128,185 @@
      ]
     }
    ]
+  },
+  "2026-11-21": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat gallega va fer Sánchez un gran mitin el 20 de novembre, després del cara a cara amb Feijóo?",
+     "a": [
+      "Santiago de Compostel·la",
+      "Vigo",
+      "A Corunya",
+      "Ourense"
+     ],
+     "exp": "Pedro Sánchez va tancar la setmana de campanya amb un mitin multitudinari a Santiago de Compostel·la.",
+     "u": "https://elpais.com/espana/elecciones-generales/2026-11-20/sanchez-se-toma-la-revancha-en-galicia-y-esgrime-contra-feijoo-el-derecho-a-la-eutanasia-votemos-en-homenaje-a-ramon-sampedro.html",
+     "s": [
+      "El País",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "energia",
+     "q": "Quin tipus d'infraestructura regula el decret que el Govern ha aprovat per evitar un impacte de 5.000 M€ en la factura elèctrica?",
+     "a": [
+      "Els centres de dades",
+      "Les plantes de dessalació",
+      "Els parcs eòlics marins",
+      "Les estacions de recàrrega"
+     ],
+     "exp": "El Govern espanyol ha aprovat un decret sobre centres de dades amb obligacions de consum elèctric.",
+     "u": "https://www.ara.cat/economia/tecnologia/govern-espanyol-aprova-decret-centres-dades-prevenir-impacte-5-000-m-factura-electrica_1_5917053.html",
+     "s": [
+      "Ara",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Quina llei va defensar Sánchez en un acte de campanya a Galícia, advertint que Feijóo la podria derogar?",
+     "a": [
+      "La llei de l'eutanàsia",
+      "La llei de l'avortament",
+      "La llei d'habitatge",
+      "La llei de memòria democràtica"
+     ],
+     "exp": "Sánchez va alertar de la «amenaça» per a la llei de l'eutanàsia, en un acte amb la parella de Ramón Sampedro; Feijóo va obrir la porta a derogar-la.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-alerta-amenaza-supone-feijoo-ley-eutanasia-junto-mujer-ramon-sampedro-20261120205345.html",
+     "s": [
+      "Europa Press",
+      "El País"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Amb quina dirigent de Podem va tancar Gabriel Rufián una gira d'actes de campanya a Madrid?",
+     "a": [
+      "Irene Montero",
+      "Yolanda Díaz",
+      "Ada Colau",
+      "Mónica García"
+     ],
+     "exp": "Rufián va tancar la gira conjunta amb Irene Montero amb un acte a Madrid.",
+     "u": "https://naciodigital.cat/politica/rufian-tanca-la-gira-amb-montero-amb-retret-a-sanchez-ella-no-hauria-estat-sotmesa-per-feijoo.html",
+     "s": [
+      "NacióDigital",
+      "El País"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "immigracio",
+     "q": "En quina illa canària va visitar Feijóo La Restinga i va defensar un comandament únic per gestionar la immigració?",
+     "a": [
+      "El Hierro",
+      "La Gomera",
+      "La Palma",
+      "Lanzarote"
+     ],
+     "exp": "Feijóo va visitar El Hierro i hi va proposar un comandament únic per a la gestió migratòria.",
+     "u": "https://www.abc.es/espana/canarias/feijoo-apuesta-mando-unico-gestionar-inmigracion-visita-20261120150604-nt.html",
+     "s": [
+      "ABC",
+      "El País"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin polític català va reivindicar haver estat esmentat durant el cara a cara entre Sánchez i Feijóo?",
+     "a": [
+      "Carles Puigdemont",
+      "Oriol Junqueras",
+      "Gabriel Rufián",
+      "Salvador Illa"
+     ],
+     "exp": "Puigdemont va destacar la seva menció al duel: «Ens hem posat al centre».",
+     "u": "https://naciodigital.cat/politica/puigdemont-destaca-la-seva-mencio-durant-el-duel-sanchez-feijoo-ens-hem-ficat-al-centre.html",
+     "s": [
+      "NacióDigital",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Quina institució presideix Luis Argüello, que ha publicat un decàleg de recomanacions per al 29N?",
+     "a": [
+      "La Conferència Episcopal Espanyola",
+      "El Consell General del Poder Judicial",
+      "La Reial Acadèmia Espanyola",
+      "El Tribunal Constitucional"
+     ],
+     "exp": "Luis Argüello presideix la Conferència Episcopal Espanyola, que no ha fixat una posició conjunta sobre les eleccions.",
+     "u": "https://www.20minutos.es/nacional/presidente-los-obispos-publica-su-propio-decalogo-recomendaciones-ante-29n_7063919_0.html",
+     "s": [
+      "20minutos",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "ciencia",
+     "q": "Quin material és la base dels xips semiconductors que fan funcionar els centres de dades?",
+     "a": [
+      "El silici",
+      "El coure",
+      "L'alumini",
+      "El titani"
+     ],
+     "exp": "Els xips es fabriquen majoritàriament a partir d'oblies de silici.",
+     "u": "https://www.20minutos.es/nacional/gobierno-defiende-que-decreto-centros-datos-evita-5-000-millones-mas-consumidores_7063874_0.html",
+     "s": [
+      "20minutos",
+      "Ara"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin és l'estat més petit del món, envoltat per la ciutat de Roma i seu de l'Església catòlica?",
+     "a": [
+      "Ciutat del Vaticà",
+      "San Marino",
+      "Mònaco",
+      "Liechtenstein"
+     ],
+     "exp": "La Ciutat del Vaticà és l'estat sobirà més petit del món i és dins de Roma.",
+     "u": "https://www.lavanguardia.com/politica/20261120/11689121/nota-argueello-fracasa-habra-posicion-obispos-sobre-elecciones-29-n.html",
+     "s": [
+      "La Vanguardia",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital d'Hongria, país governat durant anys per Viktor Orbán?",
+     "a": [
+      "Budapest",
+      "Praga",
+      "Viena",
+      "Bratislava"
+     ],
+     "exp": "Budapest és la capital d'Hongria, a banda i banda del Danubi.",
+     "u": "https://www.eldiario.es/politica/intrahistoria-prestamos-hungaro-orban-rescato-abascal_1_13677768.html",
+     "s": [
+      "eldiario.es",
+      "El País"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795151165600
+ "updated": 1795237496819
 }

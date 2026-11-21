@@ -1,7 +1,77 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-20",
+  "updated": "2026-11-21",
   "questions": [
+    {
+      "d": "2026-11-21",
+      "t": "campanya",
+      "q": "Què va afirmar Pedro Sánchez sobre la manera com Feijóo es va comportar al debat?",
+      "a": [
+        "Que Feijóo es va retratar perquè només ofereix insultos",
+        "Que Feijóo va guanyar el debat amb arguments sòlids",
+        "Que Feijóo va quedar neutral i sense polèmica",
+        "Que Feijóo va demostrar una gran capacitat de lideratge"
+      ],
+      "exp": "Sánchez va dir que Feijóo es va retratar al debat, ja que només va oferir insultos i no va aportar solucions concretes.",
+      "u": "https://www.20minutos.es/nacional/pedro-sanchez-dice-que-feijoo-acabo-retratandose-debate-porque-no-tiene-nada-que-ofrecer-mas-que-los-insultos_7063935_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-21",
+      "t": "campanya",
+      "q": "Quina afirmació va fer Feijóo respecte al resultat del debat amb Sánchez?",
+      "a": [
+        "Va reivindicar que havia guanyat el debat",
+        "Va admetre la derrota i la necessitat de millorar",
+        "Va dir que el debat havia estat empat",
+        "Va afirmar que el debat no havia influït en l'electorat"
+      ],
+      "exp": "Feijóo ha declarat que va guanyar el debat, tot i que altres anàlisis indiquen resultats més equilibrats.",
+      "u": "https://www.eldebate.com/espana/20261120/feijoo-reivindica-gano-cara-cara-sanchez-exhibio-desgana-mentira-silencios_483496.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-21",
+      "t": "campanya",
+      "q": "En quina regió va afirmar Sánchez haver aconseguit una 'revenja' després del debat?",
+      "a": [
+        "Galícia",
+        "Andalusia",
+        "Catalunya",
+        "Comunitat Valenciana"
+      ],
+      "exp": "Segons diversos informes, Sánchez va dir que havia cobrat la revanxa i guanyat a Feijóo a Galícia després del debat.",
+      "u": "https://elpais.com/espana/elecciones-generales/2026-11-20/sanchez-se-toma-la-revancha-en-galicia-y-esgrime-contra-feijoo-el-derecho-a-la-eutanasia-votemos-en-homenaje-a-ramon-sampedro.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-21",
+      "t": "campanya",
+      "q": "Quina acció va prendre Pedro Sánchez després del debat amb Feijóo, segons diversos mitjans?",
+      "a": [
+        "Va llançar un atac i va tornar a ballar en un mitin",
+        "Va retirar-se de la campanya electoral",
+        "Va demanar una revisió del debat per part del tribunal",
+        "Va anunciar la seva jubilació política"
+      ],
+      "exp": "Després del debat, Sánchez va intensificar la seva campanya, llançant un atac i celebrant amb un ball en un esdeveniment posterior.",
+      "u": "https://elpais.com/espana/elecciones-generales/2026-11-21/sanchez-vuelve-al-ataque-para-dejar-atras-el-debate-mientras-feijoo-intenta-explotarlo-al-maximo.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-21",
+      "t": "campanya",
+      "q": "Quina iniciativa va presentar el PP a València després del debat amb Sánchez?",
+      "a": [
+        "Un gran bany de masses com a celebració",
+        "Una proposta de reducció d'impostos",
+        "Un acord de coalició amb Vox",
+        "Una campanya de sensibilització ambiental"
+      ],
+      "exp": "El PP va organitzar un gran bany de masses a la Plaça de Toros de València com a mostra d'entusiasme després del debat.",
+      "u": "https://www.lavanguardia.com/local/valencia/20261121/11688927/pp-mide-euforia-cara-cara-plaza-toros-valencia-icono-electoral.html",
+      "auto": true
+    },
     {
       "d": "2026-11-20",
       "t": "campanya",
@@ -365,63 +435,7 @@
       "exp": "El PP, representat per Feijóo, ha anunciat que, en cas d’arribar al govern, derogarà els decrets de vivenda aprovat pel Congrés.",
       "u": "https://www.europapress.es/nacional/noticia-feijoo-promete-derogar-decretos-vivienda-si-gobierna-subir-pensiones-conforme-ipc-no-jugare-pensionistas-20261111232434.html",
       "auto": true
-    },
-    {
-      "d": "2026-11-11",
-      "t": "internacional",
-      "q": "Quina autoritat ha sol·licitat el Govern espanyol per paralitzar TikTok a causa d'abusos sexuals infantils?",
-      "a": [
-        "L'Agència de Protecció de Dades",
-        "El Tribunal Constitucional",
-        "El Consell de Ministres",
-        "La Comissió Nacional de Mercats"
-      ],
-      "exp": "Diversos mitjans informen que el Govern ha demanat a l'Agència de Protecció de Dades que paralitzi l'activitat de TikTok després de detectar més de mil vídeos d'abusos sexuals a menors.",
-      "u": "https://www.20minutos.es/nacional/infancia-pide-agencia-proteccion-datos-paralizar-actividad-tiktok-espana_7059482_0.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-11",
-      "t": "politica",
-      "q": "Quina quantitat ha assignat el Govern espanyol a la modernització de les Forces Armades i a contractes de defensa?",
-      "a": [
-        "Més de 11.800 milions d'euros (pròxim a 12.000 milions)",
-        "5.000 milions d'euros",
-        "20.000 milions d'euros",
-        "8.000 milions d'euros"
-      ],
-      "exp": "El Govern ha autoritzat una inversió superior a 11.800 milions d'euros per a la modernització de les Forces Armades i ha impulsat contractes de defensa per gairebé 12.000 milions d'euros.",
-      "u": "https://www.lavanguardia.com/politica/20261110/11681168/gobierno-autoriza-mas-11-800-millones-modernizacion-fuerzas-armadas.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-11",
-      "t": "justicia",
-      "q": "Quina mesura ha pres el Govern espanyol per intentar frenar la difusió d'abusos sexuals a TikTok?",
-      "a": [
-        "Ha sol·licitat la suspensió temporal de l'aplicació a Espanya",
-        "Ha prohibit l'ús de TikTok a les escoles",
-        "Ha imposat una multa de 10 milions d'euros a la companyia",
-        "Ha ordenat el bloqueig de tots els comptes amb contingut per a adults"
-      ],
-      "exp": "Segons diversos informes, el Govern ha demanat la suspensió temporal de TikTok a Espanya després de descobrir més de mil vídeos d'abusos sexuals infantils.",
-      "u": "https://www.20minutos.es/nacional/infancia-pide-agencia-proteccion-datos-paralizar-actividad-tiktok-espana_7059482_0.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-11",
-      "t": "justicia",
-      "q": "Quina acció ha pres el Govern espanyol respecte a la recerca de vídeos d'abusos a TikTok?",
-      "a": [
-        "Ha demanat a l'Agència de Protecció de Dades que paralitzi l'activitat de l'aplicació",
-        "Ha ordenat la confiscació dels servidors de TikTok a Espanya",
-        "Ha iniciat una investigació judicial contra la direcció de TikTok",
-        "Ha aprovat una llei que prohibeix l'ús de xarxes socials per a menors de 16 anys"
-      ],
-      "exp": "El Govern ha sol·licitat a l'Agència de Protecció de Dades que prengui mesures per paralitzar TikTok a causa de la difusió de vídeos d'abusos sexuals a menors.",
-      "u": "https://www.ara.cat/societat/govern-espanyol-demana-l-agencia-proteccio-dades-paralitzi-l-activitat-tiktok-l_1_5906496.html",
-      "auto": true
     }
   ],
-  "updatedAuto": "2026-11-20"
+  "updatedAuto": "2026-11-21"
 }

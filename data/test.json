@@ -2305,8 +2305,181 @@
      ]
     }
    ]
+  },
+  "2026-11-22": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina illa va fer Pedro Sánchez un míting el 21 de novembre?",
+     "a": [
+      "Gran Canària",
+      "Tenerife",
+      "Lanzarote",
+      "Fuerteventura"
+     ],
+     "exp": "Sánchez va demanar «votar amb força» en un míting a Las Palmas de Gran Canaria, a una setmana del 29N.",
+     "u": "https://www.abc.es/espana/canarias/sanchez-pide-votar-fuerza-gran-canaria-mandar-20261121202516-nt.html",
+     "s": [
+      "ABC",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin expresident del Govern ha avançat que votarà en blanc el 29N?",
+     "a": [
+      "Felipe González",
+      "José Luis Rodríguez Zapatero",
+      "José María Aznar",
+      "Mariano Rajoy"
+     ],
+     "exp": "Felipe González ha anunciat que votarà en blanc, i José Bono li ha demanat que ho reconsideri.",
+     "u": "https://elpais.com/espana/elecciones-generales/2026-11-21/bono-conmina-a-gonzalez-a-reconsiderar-su-voto-en-blanco-el-psoe-te-debe-mucho-pero-tu-mas-al-psoe.html",
+     "s": [
+      "El País",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "immigracio",
+     "q": "Quin concepte va defensar Abascal a Alacant dient que «li sona a música celestial»?",
+     "a": [
+      "La remigració",
+      "La regularització extraordinària",
+      "El reagrupament familiar",
+      "L'arrelament social"
+     ],
+     "exp": "Abascal va defensar la «remigració» en un acte a Alacant.",
+     "u": "https://elpais.com/espana/elecciones-generales/2026-11-21/abascal-en-alicante-la-remigracion-me-suena-a-musica-celestial.html",
+     "s": [
+      "El País",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat va fer Feijóo un gran acte de campanya el 21 de novembre?",
+     "a": [
+      "València",
+      "Saragossa",
+      "Múrcia",
+      "Sevilla"
+     ],
+     "exp": "Feijóo va fer un gran acte a València, on el PP va mobilitzar milers de persones de la Comunitat Valenciana.",
+     "u": "https://www.eldebate.com/espana/comunidad-valenciana/20261121/provincia-castellon-moviliza-2000-personas-valencia-aupar-feijoo_483667.html",
+     "s": [
+      "El Debate",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Amb quin líder va comparar Sánchez la mobilització que demana per al 29N?",
+     "a": [
+      "Lula da Silva",
+      "Gustavo Petro",
+      "Gabriel Boric",
+      "Claudia Sheinbaum"
+     ],
+     "exp": "Sánchez va demanar una mobilització com la que va portar Lula a la presidència del Brasil.",
+     "u": "https://www.eldebate.com/espana/20261121/sanchez-pide-votar-memoria-exilio-republicano-movilizacion-como-aupo-lula_483722.html",
+     "s": [
+      "El Debate",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Quin tema solen situar els baròmetres del CIS com el principal problema del país?",
+     "a": [
+      "L'habitatge",
+      "L'atur",
+      "La sanitat",
+      "La corrupció"
+     ],
+     "exp": "L'habitatge apareix com el principal problema per a la ciutadania en els baròmetres del CIS i és un dels temes centrals de la campanya.",
+     "u": "https://www.lavanguardia.com/politica/20261122/11690020/mayoria-quiere-nuevo-gobierno-centre-vivienda.html",
+     "s": [
+      "La Vanguardia",
+      "El Salto"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital de Bahrain, país afectat per la guerra de l'Iran?",
+     "a": [
+      "Manama",
+      "Doha",
+      "Abu Dhabi",
+      "Mascate"
+     ],
+     "exp": "Manama és la capital de Bahrain, un petit estat insular del golf Pèrsic.",
+     "u": "https://www.vilaweb.cat/noticies/bahrain-guerra-iran-repressio-xiita/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "En quina província aragonesa se situa el monestir de Sixena?",
+     "a": [
+      "Osca",
+      "Saragossa",
+      "Terol",
+      "Lleida"
+     ],
+     "exp": "El monestir de Sixena és a Villanueva de Sijena, a la província d'Osca (Aragó).",
+     "u": "https://naciodigital.cat/politica/el-govern-darago-considera-inacceptables-les-critiques-durtasun-al-trasllat-de-pintures-de-sixena-2026-11-21.html",
+     "s": [
+      "NacióDigital"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "En quin any va acabar la Guerra Civil, que va provocar l'exili republicà?",
+     "a": [
+      "1939",
+      "1936",
+      "1941",
+      "1945"
+     ],
+     "exp": "La Guerra Civil va acabar l'1 d'abril de 1939 amb la victòria franquista, i milers de republicans van marxar a l'exili.",
+     "u": "https://www.20minutos.es/nacional/sanchez-pide-votar-por-memoria-exilio-republicano-ante-involucion-pp-vox_7064139_0.html",
+     "s": [
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital del Brasil, país de Lula da Silva?",
+     "a": [
+      "Brasília",
+      "Rio de Janeiro",
+      "São Paulo",
+      "Salvador"
+     ],
+     "exp": "Brasília és la capital federal del Brasil des de 1960.",
+     "u": "https://www.eldebate.com/espana/20261121/sanchez-pide-votar-memoria-exilio-republicano-movilizacion-como-aupo-lula_483722.html",
+     "s": [
+      "El Debate"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795237496819
+ "updated": 1795323903716
 }

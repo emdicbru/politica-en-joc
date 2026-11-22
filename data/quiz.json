@@ -1,7 +1,49 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-21",
+  "updated": "2026-11-22",
   "questions": [
+    {
+      "d": "2026-11-22",
+      "t": "enquestes",
+      "q": "Quants escons es preveu que tingui la coalició de dreta (PP‑Vox) una setmana abans del 29‑N?",
+      "a": [
+        "194 escons",
+        "180 escons",
+        "210 escons",
+        "165 escons"
+      ],
+      "exp": "Els informes de l’ABC indiquen que la dreta manté una holgada majoria de 194 escons a una setmana de les eleccions.",
+      "u": "https://www.abc.es/espana/derecha-mantiene-holgada-mayoria-194-escanos-semana-20261122023225-nt.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-22",
+      "t": "immigracio",
+      "q": "Quin líder polític ha defensat la proposta de \"remigració\" a Alacant?",
+      "a": [
+        "Santiago Abascal",
+        "Alberto Núñez Feijóo",
+        "Pedro Sánchez",
+        "Inés Arrimadas"
+      ],
+      "exp": "Abascal, líder de Vox, ha manifestat en diverses intervencions a Alacant que la \"remigració\" li sona a música celestial i la defensa com a política d’immigració.",
+      "u": "https://www.20minutos.es/nacional/abascal-defiende-alicante-remigracion-suena-musica-celestial_7064159_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-22",
+      "t": "politica",
+      "q": "Quina percentatge de participació electoral afirma que cal superar per tal que el PSOE guanyi les eleccions, segons les declaracions de Pedro Sánchez?",
+      "a": [
+        "Més del 75 %",
+        "Més del 60 %",
+        "Més del 50 %",
+        "Més del 80 %"
+      ],
+      "exp": "En una intervenció, Sánchez ha indicat que amb una participació superior al 75 % el PSOE tindria la victòria assegurada.",
+      "u": "https://www.eldebate.com/espana/20261122/participacion-alta-beneficia-izquierda-sanchez-dice-75-ganan-elecciones_482850.html",
+      "auto": true
+    },
     {
       "d": "2026-11-21",
       "t": "campanya",
@@ -379,63 +421,7 @@
       "exp": "Diversos mitjans, com ABC i El Debate, han informat que l'ex‑xofrer de Pedro Sánchez actuà com a testaferro en la trama de contractes irregulars.",
       "u": "https://www.abc.es/espana/andalucia/aldama-compro-chale-cordoba-pago-especie-exchofer-20261112200904-nts.html",
       "auto": true
-    },
-    {
-      "d": "2026-11-12",
-      "t": "habitatge",
-      "q": "Quin òrgan ha aprovat el decret de vivenda que va generar debat a la Cambra?",
-      "a": [
-        "El Congrés dels Diputats",
-        "El Senat",
-        "El Govern d'Espanya",
-        "El Tribunal Constitucional"
-      ],
-      "exp": "El Congrés dels Diputats va aprovar el decret de vivenda, tal com es reflecteix en les cobertures de diversos mitjans el 12‑11‑2026.",
-      "u": "https://www.lavanguardia.com/politica/20261112/11681894/congreso-aprueba-hoy-decreto-vivienda-cuya-derogacion-provoco-29-n.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-12",
-      "t": "campanya",
-      "q": "Quina ciutat va ser el punt d'inici de la campanya electoral de Pedro Sánchez el 12‑11‑2026?",
-      "a": [
-        "Sevilla",
-        "Pamplona",
-        "Barcelona",
-        "Madrid"
-      ],
-      "exp": "Pedro Sánchez va inaugurar la seva campanya electoral a Sevilla, segons informes de diversos mitjans el mateix dia.",
-      "u": "https://www.europapress.es/nacional/noticia-sanchez-abre-campana-hoy-sevilla-feijoo-hara-badalona-mientras-abascal-colau-eligen-madrid-20261112072933.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-12",
-      "t": "politica",
-      "q": "Quin líder polític ha afirmat que la vaga general del 11‑N és un acte camuflat de campanya electoral?",
-      "a": [
-        "Alberto Núñez Feijóo",
-        "Pedro Sánchez",
-        "Santiago Abascal",
-        "Ximo Puig"
-      ],
-      "exp": "Feijóo ha qualificat la vaga general com una maniobra electoral, una afirmació recollida en diverses fonts el 12‑11‑2026.",
-      "u": "https://www.europapress.es/nacional/noticia-feijoo-ve-fracaso-huelga-general-acto-camuflado-campana-electoral-parte-sindicatos-20261111223111.html",
-      "auto": true
-    },
-    {
-      "d": "2026-11-12",
-      "t": "habitatge",
-      "q": "Quin partit ha promès derogar els decrets de vivenda si arriba al poder?",
-      "a": [
-        "Partit Popular (PP)",
-        "Vox",
-        "Socialista",
-        "Unió de Catalunya"
-      ],
-      "exp": "El PP, representat per Feijóo, ha anunciat que, en cas d’arribar al govern, derogarà els decrets de vivenda aprovat pel Congrés.",
-      "u": "https://www.europapress.es/nacional/noticia-feijoo-promete-derogar-decretos-vivienda-si-gobierna-subir-pensiones-conforme-ipc-no-jugare-pensionistas-20261111232434.html",
-      "auto": true
     }
   ],
-  "updatedAuto": "2026-11-21"
+  "updatedAuto": "2026-11-22"
 }

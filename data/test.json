@@ -2478,8 +2478,190 @@
      ]
     }
    ]
+  },
+  "2026-11-23": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin tipus de consulta ha dit Pedro Sánchez que no acceptarà, ni que necessiti vots de Junts i ERC?",
+     "a": [
+      "Un referèndum d'independència",
+      "Un referèndum sobre la monarquia",
+      "Un referèndum sobre l'OTAN",
+      "Un referèndum sobre la UE"
+     ],
+     "exp": "Sánchez va afirmar que no acceptarà un referèndum d'independència a Catalunya encara que necessiti els vots de Junts i ERC per governar.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-dice-no-aceptara-referendum-cataluna-necesite-votos-junts-erc-gobernar-20261122231957.html",
+     "s": [
+      "Europa Press",
+      "Ara",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quin programa de La Sexta va ser entrevistat Pedro Sánchez, amb Gonzo, en plena campanya?",
+     "a": [
+      "Salvados",
+      "El Intermedio",
+      "Al Rojo Vivo",
+      "Equipo de Investigación"
+     ],
+     "exp": "Sánchez va ser entrevistat per Gonzo a «Salvados», de La Sexta, a la setmana final de campanya.",
+     "u": "https://www.lavanguardia.com/politica/20261122/11690345/entrevista-pedro-sanchez-salvados-gonzo-elecciones-29n-hoy-en-directo.html",
+     "s": [
+      "La Vanguardia",
+      "20minutos",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin dia se celebren les eleccions generals espanyoles d'aquesta campanya?",
+     "a": [
+      "29 de novembre",
+      "22 de novembre",
+      "6 de desembre",
+      "15 de novembre"
+     ],
+     "exp": "Les eleccions generals es fan el 29 de novembre de 2026, el 29N, i la campanya és ja a l'última setmana.",
+     "u": "https://www.20minutos.es/nacional/sanchez-apela-remontada-para-reeditar-gobierno-progresista-tras-29n-pide-poner-todo-rojo-nos-queda-una-semana_7064259_0.html",
+     "s": [
+      "20minutos",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Qui encapçala la candidatura de Junts a les generals i ha fet l'acte central amb Puigdemont, Pujol i Mas?",
+     "a": [
+      "Míriam Nogueras",
+      "Laura Borràs",
+      "Marta Madrenas",
+      "Elsa Artadi"
+     ],
+     "exp": "Míriam Nogueras, portaveu de Junts al Congrés, va tancar l'acte central de campanya acompanyada de Puigdemont, Pujol i Mas.",
+     "u": "https://www.lavanguardia.com/politica/20261122/11690402/pujol-pide-voto-nogueras-mitin-central-junts-han-hecho-buen-trabajo-seguiran-haciendo.html",
+     "s": [
+      "La Vanguardia",
+      "VilaWeb",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quins dos líders van protagonitzar el cara a cara televisat del 19 de novembre?",
+     "a": [
+      "Pedro Sánchez i Alberto Núñez Feijóo",
+      "Pedro Sánchez i Santiago Abascal",
+      "Feijóo i Santiago Abascal",
+      "Sánchez i Ernest Urtasun"
+     ],
+     "exp": "El 19 de novembre, Pedro Sánchez i Alberto Núñez Feijóo van enfrontar-se en l'únic debat cara a cara de la campanya.",
+     "u": "https://www.3cat.cat/3catinfo/cara-a-cara-29n-feijoo-retreu-els-casos-de-corrupcio-i-sanchez-defensa-la-seva-gestio-economica/noticia/3440953/",
+     "s": [
+      "3Cat",
+      "Público",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Amb quin nom es presenta a les generals la candidatura d'esquerres on Urtasun és número 2 per Barcelona?",
+     "a": [
+      "Front Ampli",
+      "Sumar Units",
+      "Unides Podem",
+      "Més País"
+     ],
+     "exp": "Ernest Urtasun, ministre de Cultura, és número 2 de la candidatura Front Ampli (Frente Amplio) per Barcelona.",
+     "u": "https://www.europapress.es/catalunya/noticia-urtasun-llama-elegir-frente-amplio-vez-vox-motor-gobierno-20261122213445.html",
+     "s": [
+      "Europa Press",
+      "VilaWeb",
+      "Democrata"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "parlament",
+     "q": "Com es diu la cambra alta de les Corts Generals, també en joc a les eleccions?",
+     "a": [
+      "Senat",
+      "Congrés dels Diputats",
+      "Consell d'Estat",
+      "Tribunal de Comptes"
+     ],
+     "exp": "El Senat és la cambra alta de les Corts Generals; el Congrés dels Diputats n'és la cambra baixa.",
+     "u": "https://www.20minutos.es/nacional/sanchez-muestra-su-apoyo-candidata-carmela-silva-tras-pintadas-insultos-fachada_7064294_0.html",
+     "s": [
+      "20minutos",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Quin partit va fundar Jordi Pujol el 1974, origen de l'espai polític actual de Junts?",
+     "a": [
+      "Convergència Democràtica de Catalunya",
+      "Unió Democràtica de Catalunya",
+      "Esquerra Republicana",
+      "Partit Socialista Unificat de Catalunya"
+     ],
+     "exp": "Jordi Pujol va fundar Convergència Democràtica de Catalunya el 1974; Junts recull en part aquesta tradició.",
+     "u": "https://www.vilaweb.cat/noticies/pujol-irromp-en-campanya-per-a-donar-suport-a-nogueras-ha-fet-bona-feina-i-la-continuara-fent/",
+     "s": [
+      "VilaWeb",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Com es diu l'arxipèlag format per Eivissa i Formentera?",
+     "a": [
+      "Pitiüses",
+      "Gimnèsies",
+      "Columbrets",
+      "Cíclades"
+     ],
+     "exp": "Eivissa i Formentera formen les Pitiüses; les Gimnèsies són Mallorca i Menorca.",
+     "u": "https://www.elmundo.es/baleares/2026/11/22/6b031472fc6c8339628b457e.html",
+     "s": [
+      "El Mundo",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "De quin monestir aragonès provenen les pintures murals romàniques objecte de litigi amb el MNAC?",
+     "a": [
+      "Sixena",
+      "Poblet",
+      "Santes Creus",
+      "Montserrat"
+     ],
+     "exp": "Les pintures de Sixena (Osca) són objecte d'un litigi judicial entre Aragó i Catalunya, on les guarda el MNAC.",
+     "u": "https://www.vilaweb.cat/noticies/colau-sobre-el-trasllat-de-les-pintures-de-sixena-hi-ha-una-sentencia-i-cal-respectar-la/",
+     "s": [
+      "VilaWeb",
+      "Ara"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795323903716
+ "updated": 1795410294062
 }

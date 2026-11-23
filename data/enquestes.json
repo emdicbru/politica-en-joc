@@ -1,25 +1,81 @@
 {
  "about": "Enquestes del pactòmetre. Les actualitza tools/update-polls.js a partir de la Viquipèdia (recull d'enquestes). Escons: punt mitjà dels intervals; l'app els ajusta a 350.",
  "source": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Spanish_general_election",
- "revid": 1387105893,
+ "revid": 1387189440,
  "seats": [
   {
    "n": "40dB / Prisa",
-   "d": "17–21 nov",
+   "d": "18–22 nov",
    "s": {
-    "pp": 132.5,
-    "psoe": 124.5,
-    "vox": 54,
+    "pp": 131.5,
+    "psoe": 121.5,
+    "vox": 56,
     "fa": 6.5,
     "altres": 6,
-    "erc": 11,
-    "junts": 3,
+    "erc": 10,
+    "junts": 4,
     "bildu": 7,
     "pnv": 3,
     "bng": 2,
     "cc": 1,
     "podemos": 0.5,
     "salf": 0
+   }
+  },
+  {
+   "n": "SocioMétrica / El Español",
+   "d": "1 set–22 nov",
+   "s": {
+    "pp": 134,
+    "psoe": 114,
+    "vox": 63,
+    "fa": 5,
+    "altres": 6,
+    "erc": 9,
+    "junts": 5,
+    "bildu": 8,
+    "pnv": 3,
+    "bng": 2,
+    "cc": 1,
+    "podemos": 0,
+    "salf": 0
+   }
+  },
+  {
+   "n": "Sondaxe / La Voz de Galicia",
+   "d": "17–21 nov",
+   "s": {
+    "pp": 130,
+    "psoe": 115,
+    "vox": 58,
+    "fa": 8,
+    "altres": 8,
+    "erc": 10,
+    "junts": 7,
+    "bildu": 7,
+    "pnv": 4,
+    "bng": 2,
+    "cc": 1,
+    "podemos": 0,
+    "salf": 0
+   }
+  },
+  {
+   "n": "Sigma Dos / El Mundo",
+   "d": "16–21 nov",
+   "s": {
+    "pp": 132,
+    "psoe": 117,
+    "vox": 58,
+    "fa": 12,
+    "erc": 11,
+    "junts": 3.5,
+    "bildu": 6.5,
+    "pnv": 3.5,
+    "bng": 2.5,
+    "cc": 0.5,
+    "altres": 5,
+    "podemos": 0
    }
   },
   {
@@ -39,62 +95,6 @@
     "cc": 0,
     "podemos": 2,
     "salf": 0
-   }
-  },
-  {
-   "n": "SocioMétrica / El Español",
-   "d": "1 set–21 nov",
-   "s": {
-    "pp": 134,
-    "psoe": 113,
-    "vox": 65,
-    "fa": 5,
-    "altres": 5,
-    "erc": 9,
-    "junts": 5,
-    "bildu": 8,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 1,
-    "podemos": 0,
-    "salf": 0
-   }
-  },
-  {
-   "n": "Sondaxe / La Voz de Galicia",
-   "d": "16–20 nov",
-   "s": {
-    "pp": 124,
-    "psoe": 112,
-    "vox": 68,
-    "fa": 9,
-    "altres": 6,
-    "erc": 10,
-    "junts": 7,
-    "bildu": 8,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 1,
-    "podemos": 0,
-    "salf": 0
-   }
-  },
-  {
-   "n": "Sigma Dos / El Mundo",
-   "d": "14–20 nov",
-   "s": {
-    "pp": 129,
-    "psoe": 115,
-    "vox": 59.5,
-    "fa": 7,
-    "altres": 6,
-    "erc": 10.5,
-    "junts": 4.5,
-    "bildu": 7.5,
-    "pnv": 4.5,
-    "bng": 2,
-    "cc": 0.5,
-    "podemos": 0
    }
   },
   {
@@ -134,23 +134,6 @@
    }
   },
   {
-   "n": "SW Demoscopia / La Séptima",
-   "d": "26 oct–20 nov",
-   "s": {
-    "pp": 124,
-    "psoe": 133.5,
-    "vox": 51,
-    "fa": 10,
-    "erc": 11,
-    "junts": 3.5,
-    "bildu": 7,
-    "pnv": 3,
-    "bng": 2,
-    "cc": 1,
-    "altres": 3
-   }
-  },
-  {
    "n": "Winston / Artículo14",
    "d": "17–19 nov",
    "s": {
@@ -159,6 +142,25 @@
     "vox": 61,
     "fa": 9,
     "podemos": 0,
+    "salf": 0
+   }
+  },
+  {
+   "n": "GAD3 / Vocento",
+   "d": "16–19 nov",
+   "s": {
+    "pp": 131,
+    "psoe": 110,
+    "vox": 63,
+    "fa": 9,
+    "altres": 8,
+    "erc": 11,
+    "junts": 4,
+    "bildu": 7,
+    "pnv": 4,
+    "bng": 2,
+    "cc": 1,
+    "podemos": 1,
     "salf": 0
    }
   }
@@ -177,16 +179,52 @@
  ],
  "pct": [
   [
-   31.9,
-   31.6,
-   16.9,
-   4.1,
+   31.8,
+   30.9,
+   17.3,
+   4.4,
+   1.1,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  [
+   32.1,
+   28.7,
+   18.4,
+   4.9,
    1,
+   2.5,
+   1.4,
+   1.5,
+   0.8,
+   2.2
+  ],
+  [
+   31.1,
+   28.2,
+   17.3,
+   5.4,
+   1.5,
+   2.7,
+   1.7,
+   1.4,
+   0.8,
+   1.7
+  ],
+  [
+   31.7,
+   28.3,
+   17.9,
+   7.2,
+   0.7,
    null,
    null,
    null,
    null,
-   1.4
+   null
   ],
   [
    31.2,
@@ -201,39 +239,15 @@
    2.1
   ],
   [
-   32.3,
-   28.5,
-   18.8,
-   4.9,
-   1,
-   2.5,
-   1.3,
-   1.5,
-   0.8,
-   2.2
-  ],
-  [
-   30,
-   27.7,
-   18.8,
-   6.6,
+   29.9,
+   32.5,
+   15.8,
+   6.8,
    null,
-   2.7,
-   1.6,
-   1.5,
-   0.6,
-   null
-  ],
-  [
-   31.5,
-   28,
-   18.3,
-   5.7,
-   0.7,
-   2.7,
-   1.5,
-   1.6,
-   0.9,
+   null,
+   null,
+   null,
+   null,
    null
   ],
   [
@@ -258,18 +272,6 @@
    1.5,
    1.4,
    0.9,
-   null
-  ],
-  [
-   29.9,
-   32.5,
-   15.9,
-   6.8,
-   null,
-   null,
-   null,
-   null,
-   null,
    null
   ],
   [
@@ -321,5 +323,5 @@
    1.3
   ]
  ],
- "updated": "2026-11-22"
+ "updated": "2026-11-23"
 }

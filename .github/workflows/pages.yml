@@ -34,8 +34,8 @@ jobs:
           cp -r web/. _site/
           cp data/*.json _site/data/ 2>/dev/null || true
           touch _site/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: d
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

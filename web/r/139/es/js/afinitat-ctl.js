@@ -78,7 +78,7 @@ function ctaMap(grid) {
     <text x="${P}" y="${W - 10}" font-size="12" font-weight="700" fill="#5e5a74">← Esquerra</text><text x="${W - P}" y="${W - 10}" font-size="12" font-weight="700" fill="#5e5a74" text-anchor="end">Dreta →</text>
     <text x="14" y="${P}" font-size="12" font-weight="700" fill="#5e5a74" transform="rotate(-90 14 ${P})" text-anchor="end">Independentisme ↑</text>
   </svg>
-  <p class="muted">Cada casella pinta més fosca com més gent hi cau. El punt groc és la mitjana (esquerra–dreta ${fmt(Math.round(mx * 10) / 10)}, centralisme–independentisme ${fmt(Math.round(my * 10) / 10)}); els partits, amb el mateix càlcul que al test.</p>`;
+  <p class="muted">Cada casella pinta més fosca com més gent hi cau. El punt groc és la mitjana (esquerra–dreta ${fmt(Math.round(mx * 10) / 10)}, centralisme–independentisme ${fmt(Math.round(my * 10) / 10)}); els partits, al lloc del comparador. Les respostes d'abans del 16-11-2026 es van situar amb el mètode antic.</p>`;
 }
 
 // Respostes de cada afirmació: barra apilada de «molt d'acord» a «molt en desacord»

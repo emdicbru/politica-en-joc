@@ -1,7 +1,105 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-23",
+  "updated": "2026-11-24",
   "questions": [
+    {
+      "d": "2026-11-24",
+      "t": "politica",
+      "q": "Què ha afirmat Pedro Sánchez respecte a la disposició del PP i Vox d'acceptar el resultat electoral?",
+      "a": [
+        "Que el PP i Vox no acceptaran el resultat electoral",
+        "Que el PP i Vox acceptaran qualsevol resultat",
+        "Que el PP i Vox demanaran una segona volta",
+        "Que el PP i Vox no participaran en la formació de govern"
+      ],
+      "exp": "Sánchez ha repetit que el Partit Popular i Vox no acceptaran el resultat de les eleccions, segons diversos declaracions recents.",
+      "u": "https://www.eldebate.com/espana/20261124/sanchez-vuelve-insistir-preocupante-pronostico-pp-vox-no-aceptaran-resultado-electoral_484470.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-24",
+      "t": "politica",
+      "q": "Quina preocupació ha expressat Feijóo sobre les \"urnas de cartó\"?",
+      "a": [
+        "Ha manifestat inquietud per la seva utilització en el vot exterior",
+        "Ha elogiat la seva eficàcia per augmentar la participació",
+        "Ha suggerit que són una solució permanent",
+        "Ha demanat la seva eliminació total del procés electoral"
+      ],
+      "exp": "Feijóo ha indicat que les urnes de cartó per al vot a l'estranger li generen inquietud, segons diverses declaracions mediàtiques.",
+      "u": "https://www.elespanol.com/espana/politica/20261124/feijoo-dice-urnas-voto-exterior-provocan-inquietud-confia-supervision-consules/1003744469634_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-24",
+      "t": "politica",
+      "q": "Quina alerta ha fet Isabel Díaz Ayuso sobre les \"circumstàncies anòmalas\" relacionades amb el cens electoral?",
+      "a": [
+        "Ha avisat que hi ha circumstàncies anòmalas i falta de confiança en el cens",
+        "Ha assegurat que el cens és totalment fiable",
+        "Ha indicat que no hi ha cap problema amb el cens",
+        "Ha proposat una revisió completa del cens sense especificar problemes"
+      ],
+      "exp": "Ayuso ha denunciat la presència de circumstàncies anòmalas i una manca de confiança en el cens electoral, segons dues fonts.",
+      "u": "https://www.eldebate.com/espana/madrid/20261124/ayuso-avisa-circunstancias-anomalas-votar-29n-no-sabe-cual-censo_484429.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-24",
+      "t": "habitatge",
+      "q": "Quina ampliació ha aprovat el govern d'Espanya respecte al permís per naixement?",
+      "a": [
+        "L'ha ampliat a 20 setmanes",
+        "L'ha reduït a 12 setmanes",
+        "L'ha mantingut en 16 setmanes",
+        "L'ha augmentat a 24 setmanes"
+      ],
+      "exp": "El govern ha anunciat que el permís per naixement s'amplia a 20 setmanes, segons diversos mitjans.",
+      "u": "https://www.20minutos.es/nacional/gobierno-amplia-20-semanas-permiso-por-nacimiento_7064962_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-24",
+      "t": "justicia",
+      "q": "Quina acció ha pres el govern contra la llei del concebut no nascut d'Ayuso?",
+      "a": [
+        "Ha interposat recurs davant del Tribunal Constitucional",
+        "Ha aprovat la llei sense modificacions",
+        "Ha proposat una nova llei per substituir-la",
+        "Ha abandonat la qüestió sense acció legal"
+      ],
+      "exp": "El govern ha recursat la llei del concebut no nascut d'Ayuso davant del Tribunal Constitucional, segons dues fonts.",
+      "u": "https://www.20minutos.es/nacional/gobierno-recurre-tribunal-constitucional-ley-concebido-no-nacido-comunidad-madrid_7064930_0.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-24",
+      "t": "campanya",
+      "q": "En quina ciutat tancarà Feijóo la campanya electoral el divendres abans del 29‑N?",
+      "a": [
+        "Sevilla",
+        "València",
+        "Barcelona",
+        "Madrid"
+      ],
+      "exp": "Feijóo ha anunciat que tancarà la campanya a Sevilla el divendres previ al 29‑N, confirmat per dues cobertures mediàtiques.",
+      "u": "https://www.abc.es/espana/andalucia/feijoo-cerrara-campana-electoral-viernes-sevilla-acompanado-20261124091600-nts.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-24",
+      "t": "internacional",
+      "q": "Què ha anunciat Carles Puigdemont respecte al seu retorn a Espanya?",
+      "a": [
+        "Que prepara el seu retorn imminent al país",
+        "Que es quedarà a l'exili indefinidament",
+        "Que abandonarà la política espanyola",
+        "Que es traslladarà a un altre continent"
+      ],
+      "exp": "Puigdemont ha declarat que està preparant el seu retorn imminent a Espanya, segons dues fonts diferents.",
+      "u": "https://www.eldebate.com/espana/cataluna/20261124/profugo-puigdemont-prepara-regreso-inminente-espana-comienzo-mis-ultimos-dias-exilio_484479.html",
+      "auto": true
+    },
     {
       "d": "2026-11-23",
       "t": "enquestes",
@@ -407,21 +505,7 @@
       "exp": "El programa del PSOE inclou augmentar per llei la durada mínima dels contractes dloguer, segons les propostes publicades.",
       "u": "https://www.eldiario.es/politica/programa-psoe-propone-aumentar-ley-duracion-alquileres-gravar-grandes-buitres-1-pib-casas-asequibles_1_13665879.html",
       "auto": true
-    },
-    {
-      "d": "2026-11-14",
-      "t": "campanya",
-      "q": "Quina taxa de participació ha demanat Pedro Sánchez per al 29‑N?",
-      "a": [
-        "75 %",
-        "70 %",
-        "80 %",
-        "65 %"
-      ],
-      "exp": "Sánchez ha sol·licitat que la participació a les eleccions generals del 29‑novembre sigui del 75 %, com a condició per a constituir una majoria progressista. La proposta apareix en diversos mitjans.",
-      "u": "https://elpais.com/espana/elecciones-generales/2026-11-13/sanchez-insta-a-una-participacion-del-75-el-29-n-para-reeditar-un-gobierno-progresista-que-llegue-mas-lejos-y-antes-en-las-conquistas-sociales.html",
-      "auto": true
     }
   ],
-  "updatedAuto": "2026-11-23"
+  "updatedAuto": "2026-11-24"
 }

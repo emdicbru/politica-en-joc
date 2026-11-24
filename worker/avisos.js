@@ -7,6 +7,8 @@
 //  - La notificació va xifrada per al dispositiu (RFC 8291) i signada amb la clau VAPID de l'app (RFC 8292).
 // Secrets del Worker (els posa GitHub Actions, .github/workflows/avisos.yml): FIREBASE_SA, VAPID_PUBLIC, VAPID_PRIVATE.
 
+import { landing as esconsLanding, image as esconsImage } from "./escons.js";
+
 const PROJECT = "politica-en-joc";
 const ORIGINS = ["https://politicaenjoc.cat", "https://www.politicaenjoc.cat", "https://politica-en-joc.web.app", "https://politica-en-joc.firebaseapp.com"];
 const FS = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
@@ -475,6 +477,9 @@ export default {
       ctx.waitUntil(countPerfil(env, req.headers.get("CF-Connecting-IP") || "", req.headers.get("User-Agent") || "", body).catch((e) => console.warn(e)));
       return new Response(null, { status: 204, headers: cors(req) });
     }
+    // Enllaços compartits del mapa d'escons: previsualització amb la imatge de cada predicció (worker/escons.js)
+    if (req.method === "GET" && url.pathname === "/e") return esconsLanding(url);
+    if (req.method === "GET" && url.pathname === "/e.png") return esconsImage(req, url, ctx);
     if (req.method === "GET" && url.pathname === "/") return json(req, 200, { ok: true, servei: "Avisos de Política en Joc", turn: turnOn(env), ia: !!env.AI });
     if (req.method === "POST" && url.pathname === "/ia") {
       try { await verifyGithubOidc((req.headers.get("Authorization") || "").replace(/^Bearer /, "")); } catch (e) { return json(req, 401, { error: `accés: ${e.message}` }); }

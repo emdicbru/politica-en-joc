@@ -2660,8 +2660,188 @@
      ]
     }
    ]
+  },
+  "2026-11-24": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "justicia",
+     "q": "Quin tribunal ha aplicat l'amnistia a Carles Puigdemont i ha arxivat la causa del procés?",
+     "a": [
+      "El Tribunal Suprem",
+      "L'Audiència Nacional",
+      "El Tribunal Constitucional",
+      "El TSJ de Catalunya"
+     ],
+     "exp": "El Tribunal Suprem va aplicar l'amnistia a Puigdemont i va arxivar definitivament la causa del procés, nou anys després de l'obertura.",
+     "u": "https://elpais.com/espana/elecciones-generales/2026-11-23/el-supremo-aplica-la-amnistia-a-puigdemont-y-cierra-la-causa-del-proces.html",
+     "s": [
+      "El País",
+      "El Mundo",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin organisme ha obert expedients als ministres Bolaños i Bustinduy per possibles declaracions partidistes?",
+     "a": [
+      "La Junta Electoral Central",
+      "El Tribunal de Comptes",
+      "El Consell d'Estat",
+      "El Defensor del Poble"
+     ],
+     "exp": "La Junta Electoral Central va obrir expedient als ministres Félix Bolaños i Pablo Bustinduy per possibles declaracions partidistes des de la Moncloa.",
+     "u": "https://www.20minutos.es/nacional/junta-electoral-abre-expediente-los-ministros-bolanos-bustinduy-por-declaraciones-partidistas-desde-moncloa_7064774_0.html",
+     "s": [
+      "20minutos",
+      "infoLibre"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Quin permís laboral ha aprovat el Govern ampliar fins a deu dies?",
+     "a": [
+      "El permís per defunció d'un familiar",
+      "El permís per matrimoni",
+      "El permís per mudança",
+      "El permís per naixement"
+     ],
+     "exp": "El Govern espanyol va aprovar ampliar fins a deu dies el permís per defunció d'un familiar.",
+     "u": "https://naciodigital.cat/politica/el-govern-espanyol-ampliara-fins-als-10-dies-el-permis-per-defuncio.html",
+     "s": [
+      "NacióDigital",
+      "Ara",
+      "infoLibre"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Qui va tancar el debat a vuit de RTVE en nom del PSOE?",
+     "a": [
+      "Patxi López",
+      "Óscar López",
+      "Diana Morant",
+      "Salvador Illa"
+     ],
+     "exp": "Patxi López, portaveu del PSOE al Congrés, va tancar el debat a vuit amb la seva intervenció final.",
+     "u": "https://www.europapress.es/nacional/noticia-patxi-lopez-psoe-cierra-debate-apelando-quienes-defienden-democracias-no-anoran-dictaduras-20261124002849.html",
+     "s": [
+      "Europa Press",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "A quin partit representava Oskar Matute al debat a vuit de RTVE?",
+     "a": [
+      "EH Bildu",
+      "PNB",
+      "BNG",
+      "Compromís"
+     ],
+     "exp": "Oskar Matute és el candidat d'EH Bildu i va participar en el debat a vuit.",
+     "u": "https://elpais.com/espana/2026-11-22/oskar-matute-candidato-de-eh-bildu-para-parar-a-pp-y-vox-no-cobramos-ninguna-contraprestacion.html",
+     "s": [
+      "El País",
+      "infoLibre",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quin canal de televisió farà Feijóo l'entrevista al final de la campanya?",
+     "a": [
+      "TVE",
+      "Antena 3",
+      "Telecinco",
+      "laSexta"
+     ],
+     "exp": "Feijóo va acceptar fer l'entrevista de final de campanya a TVE.",
+     "u": "https://www.elmundo.es/elecciones/elecciones-generales/2026/11/20/6b003fdee9cf4a374d8b458d.html",
+     "s": [
+      "El Mundo",
+      "El País"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "Què vol dir l'expressió llatina «pro bono», que s'ha sentit aquests dies?",
+     "a": [
+      "Feina feta gratuïtament, pel bé comú",
+      "Feina feta amb urgència",
+      "Feina feta per encàrrec",
+      "Feina feta en secret"
+     ],
+     "exp": "«Pro bono» s'aplica a la feina o el servei que es fa de manera voluntària i sense cobrar, pel bé comú.",
+     "u": "https://www.elespanol.com/espana/politica/20261123/gonzalez-recurre-sarcasmo-responder-jose-bono-subrayando-condicion-lobista-hace-pro-bono/1003744468687_0.html",
+     "s": [
+      "El Español",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "En quina ciutat té la seu el Tribunal de Justícia de la Unió Europea?",
+     "a": [
+      "Luxemburg",
+      "Brussel·les",
+      "Estrasburg",
+      "La Haia"
+     ],
+     "exp": "El Tribunal de Justícia de la Unió Europea té la seu a Luxemburg.",
+     "u": "https://www.eldiario.es/politica/jueza-denuncia-justicia-ue-supremo-vacia-contenido-proteccion-desahucios_1_13687326.html",
+     "s": [
+      "eldiario.es",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin riu passa per Còrdova, ciutat on Pedro Sánchez va fer un míting?",
+     "a": [
+      "El Guadalquivir",
+      "El Guadiana",
+      "El Tajo",
+      "L'Ebre"
+     ],
+     "exp": "El Guadalquivir travessa Còrdova abans de seguir cap a Sevilla.",
+     "u": "https://www.europapress.es/nacional/noticia-patxi-lopez-psoe-cierra-debate-apelando-quienes-defienden-democracias-no-anoran-dictaduras-20261124002849.html",
+     "s": [
+      "Europa Press",
+      "El País"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "En quin any es va aprovar l'actual Constitució espanyola?",
+     "a": [
+      "1978",
+      "1976",
+      "1981",
+      "1982"
+     ],
+     "exp": "La Constitució espanyola es va aprovar en referèndum el desembre de 1978.",
+     "u": "https://www.vilaweb.cat/noticies/el-suprem-ha-signat-amb-puigdemont-la-seva-derrota-mes-dolorosa/",
+     "s": [
+      "VilaWeb",
+      "Ara"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795410294062
+ "updated": 1795496700031
 }

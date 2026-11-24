@@ -542,7 +542,7 @@ function nitHeroDay(f) {
 }
 
 // ---------- Qui pot governar (sempre a dalt) ----------
-function nitGovHtml(d) {
+function nitGovHtml(d, sub = null) {
   const x = (v) => `${(Math.min(v, 260) / 260) * 100}%`;
   const names = (ids) => nitAnd(ids.map(nitSig));
   const card = (g) => {
@@ -570,7 +570,7 @@ function nitGovHtml(d) {
     </article>`;
   };
   return `<section class="nt-govern" id="nt-govern" aria-label="Quién puede gobernar">
-    <h2>¿Quién puede gobernar? <small>${d.escrutat < 100 ? `con el ${espPct(d.escrutat)} escrutado` : "escrutinio terminado"}</small></h2>
+    <h2>¿Quién puede gobernar? <small>${sub ?? (d.escrutat < 100 ? `con el ${espPct(d.escrutat)} escrutado` : "escrutinio terminado")}</small></h2>
     <div class="nt-gv-g">${NIT_GOV.map((g) => card(nitGov(d, g))).join("")}</div>
     <p class="nt-gv-note">Apoyos posibles: los partidos que votaron cada investidura en 2023. Mayoría absoluta: 176 de 350.${d.seats.salf ? ` SALF, que no estaba, tiene ${d.seats.salf}.` : ""}</p>
   </section>`;

@@ -359,7 +359,7 @@ async function ctpGenCarousel(root) {
     heads.push(ctpSlide("titular", { t: CTP_X.text[x.u] || x.t, s: x.s, h: new Date(x.d).toLocaleTimeString("ca", { hour: "2-digit", minute: "2-digit" }), img, credit }, k + 1));
   }
   const slides = [ctpSlide("portada", { date, n: items.length }, 0), ...heads, ...(P.length ? [ctpSlide("enquestes", { n: P.length, rows }, items.length + 1)] : []), ctpSlide("crida", {}, 0)];
-  const peu = `El dia de la campanya, ${date}.\n\nFonts: ${[...new Set(items.map((x) => x.s))].join(", ")}. Enquestes: recull de la Viquipèdia.${credits.length ? `\nFotos (Wikimedia Commons):\n${credits.join("\n")}` : ""}\n\n#29N #EleccionsGenerals #PolíticaEnJoc`;
+  const peu = `El dia de la campanya, ${date}.\n\nFonts: ${[...new Set(items.map((x) => x.s))].join(", ")}. Enquestes: recull de la Viquipèdia.${credits.length ? `\nFotos (Wikimedia Commons):\n${[...new Set(credits)].join("\n")}` : ""}\n\n#29N #EleccionsGenerals #PolíticaEnJoc`;
   out.innerHTML = `<section class="card"><h2 class="section-title sm">3. Carrusel (${slides.length} imatges)</h2><div class="ctp-xs"></div>
     <div class="row"><button type="button" class="btn primary" data-xdl>Descarrega-les totes</button><button type="button" class="btn" data-xpeu>Copia el text de la publicació</button></div>
     <textarea class="ctp-rep" rows="7" readonly>${esc(peu)}</textarea></section>`;

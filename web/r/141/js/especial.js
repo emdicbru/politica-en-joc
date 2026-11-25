@@ -190,7 +190,7 @@ function espSchedule() {
   clearTimeout(Esp.timer);
   const mode = espResultsMode();
   const v = espView();
-  if (mode === "off" || !(v === "inici" || v === "nit" || v === "pronostics")) return;
+  if (mode === "off" || !(v === "inici" || v === "nit" || v === "pronostics" || v === "escons")) return;
   const wait = Esp.data && Esp.data.escrutat >= 100 && mode === "oficial" ? 120000 : ESP_POLL[mode] || 25000;
   Esp.timer = setTimeout(async () => {
     if (document.hidden) return espSchedule();
@@ -199,6 +199,7 @@ function espSchedule() {
     if (vv === "inici") renderHomeEspecial();
     if (vv === "nit") espPaint();
     if (vv === "pronostics" && PronState.tab !== "meus") renderPronostics();
+    if (vv === "escons" && typeof prdPaint === "function") prdPaint();
     espSchedule();
   }, wait);
 }
@@ -252,7 +253,7 @@ function renderHomeEspecial() {
   const el = $("#home-especial");
   if (!el) return;
   const f = espFase();
-  const lliga = (typeof pronState === "function" && pronState() === "oberta" ? `<a class="btn" href="#pronostics">🎟️ Lliga de pronòstics</a>` : "") + (typeof renderEscons === "function" && espNow() < ESP_T.nit ? `<a class="btn" href="#escons">🗺️ El teu mapa d'escons</a>` : "");
+  const lliga = (typeof pronState === "function" && pronState() === "oberta" ? `<a class="btn" href="#pronostics">🎟️ Lliga de pronòstics</a>` : "") + (typeof renderEscons === "function" ? (espNow() < ESP_T.nit ? `<a class="btn" href="#escons">🗺️ El teu mapa d'escons</a>` : prdFinal() ? `<a class="btn" href="#escons">🗺️ Com t'ha anat el mapa d'escons</a>` : "") : "");
   if (f === "off") {
     el.innerHTML = espPreviewBar() + (lliga ? `<section class="esp-home esp-pron">${espMsg()}<p class="esp-k">🎟️ Nou · fins a les 20:00 del 29N</p><h2>Lliga de pronòstics</h2><p>Reparteix 1.000 fitxes entre els teus pronòstics del 29N i competeix amb els teus amics. Les fitxes que guanyis es queden per a les municipals.</p><div class="esp-go"><a class="btn primary" href="#pronostics">Fes els pronòstics</a><a class="btn" href="#ranking">Crea una lliga</a></div></section>` : "");
     espBind(el);

@@ -29,7 +29,7 @@ function saveConsent(analytics, quiet = false) {
   closeConsent();
   window.Stats?.consent?.(!!analytics);
   if (!before) window.Stats?.add?.("cons", 1, analytics ? "si" : "no");
-  if (!quiet) toast(analytics ? "¡Gracias! Nos ayudas a mejorar la app 💛" : "De acuerdo: no se guarda nada para medir el uso.");
+  if (!quiet) toast(analytics ? "Gràcies! Ens ajudes a millorar l'app 💛" : "D'acord: no es desa res per mesurar l'ús.");
 }
 
 // Esdeveniments: abans anaven a Google Analytics; ara no s'envien enlloc (els comptadors propis són a stats.js)
@@ -46,22 +46,23 @@ function openConsent(settings = false) {
   const el = document.createElement("div");
   el.id = "consent";
   el.setAttribute("role", "dialog");
-  el.setAttribute("aria-label", "Preferencias de cookies");
+  el.setAttribute("aria-label", "Preferències de galetes");
   el.innerHTML = `
     <div class="cs-body">
-      <b>📊 ¿Nos ayudas a mejorar la app?</b>
-      <p>Si lo aceptas, contamos de manera anónima cómo se usa: si vuelves, cada cuánto y qué partes te interesan${ANALYTICS_AVAILABLE ? " (también con Google Analytics)" : ""}. Nunca sabremos quién eres y no hay cookies publicitarias. <a href="#legal/cookies">Más información</a></p>
+      <b>📊 Ens ajudes a millorar l'app?</b>
+      <p>Si ho acceptes, comptem de manera anònima com es fa servir: si hi tornes, cada quan i quines parts t'interessen${ANALYTICS_AVAILABLE ? " (també amb Google Analytics)" : ""}. Mai no sabrem qui ets i no hi ha galetes publicitàries. <a href="#legal/cookies">Més informació</a></p>
       <div class="cs-settings" ${settings ? "" : "hidden"}>
-        <label class="cs-row"><span><b>Técnicas</b><small>Necesarias para que la app funcione (el progreso, la sesión, las preferencias). No se pueden desactivar.</small></span><input type="checkbox" checked disabled></label>
-        <label class="cs-row"><span><b>Estadística de uso</b><small>Contadores anónimos y agregados: si el dispositivo es nuevo o vuelve y cada cuánto${ANALYTICS_AVAILABLE ? ", y Google Analytics" : ""}.</small></span><input type="checkbox" id="cs-an" ${cur?.analytics ? "checked" : ""}></label>
+        <label class="cs-row"><span><b>Tècniques</b><small>Necessàries perquè l'app funcioni (el progrés, la sessió, les preferències). No es poden desactivar.</small></span><input type="checkbox" checked disabled></label>
+        <label class="cs-row"><span><b>Estadística d'ús</b><small>Comptadors anònims i agregats: si el dispositiu és nou o torna i cada quan${ANALYTICS_AVAILABLE ? ", i Google Analytics" : ""}.</small></span><input type="checkbox" id="cs-an" ${cur?.analytics ? "checked" : ""}></label>
       </div>
     </div>
     <div class="cs-actions">
-      <button class="btn" data-cs="reject">Rechaza</button>
-      <button class="btn ghost" data-cs="settings" ${settings ? "hidden" : ""}>Configurar</button>
-      <button class="btn ghost" data-cs="save" ${settings ? "" : "hidden"}>Guardar la elección</button>
-      <button class="btn primary" data-cs="accept">Acepta</button>
+      <button class="btn" data-cs="reject">Rebutja</button>
+      <button class="btn ghost" data-cs="settings" ${settings ? "hidden" : ""}>Configura</button>
+      <button class="btn ghost" data-cs="save" ${settings ? "" : "hidden"}>Desa la tria</button>
+      <button class="btn primary" data-cs="accept">Accepta</button>
     </div>`;
+  if (!settings && typeof pejQuiet === "function" && pejQuiet()) el.classList.add("cs-mini");
   document.body.appendChild(el);
   document.body.classList.add("consent-open");
   el.querySelector('[data-cs="reject"]').addEventListener("click", () => saveConsent(false));
@@ -71,6 +72,7 @@ function openConsent(settings = false) {
     el.querySelector(".cs-settings").hidden = false;
     el.querySelector('[data-cs="settings"]').hidden = true;
     el.querySelector('[data-cs="save"]').hidden = false;
+    el.classList.remove("cs-mini");
   });
 }
 

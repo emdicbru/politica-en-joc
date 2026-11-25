@@ -8290,3 +8290,115 @@ h1, h2, h3 { text-wrap: balance; }
   .prd-mini em { font-style: normal; color: #c9c6dc; }
   .prd-mini em.ok { color: var(--yellow); }
 }
+/* Mapa d'escons: hipòtesis i comparació amb el resultat */
+.prd-hipo { margin-top: -2px; }
+.prd-hipo small { font-weight: 600; }
+.prd-hipo button { font-weight: 700; border-width: 1px; font-size: .78rem; }
+.prd-res { margin-bottom: 18px; border-left: 6px solid var(--ok); }
+.prd-res h2 { font-family: var(--display); font-size: 1.4rem; margin: 0 0 4px; }
+.prd-res-k { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+.prd-res-k div { background: var(--paper); border-radius: var(--radius-sm); padding: 10px 14px; }
+.prd-res-k b { display: block; font-family: var(--display); font-size: 2.2rem; line-height: 1; }
+.prd-res-k span { font-size: .85rem; color: var(--ink-2); }
+.prd-res-b { font-weight: 700; }
+.prd-res-t { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.prd-res-t th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 800; padding: 4px 6px; }
+.prd-res-t td { padding: 5px 6px; border-top: 1px solid var(--paper-2); }
+.prd-res-t td:not(:first-child), .prd-res-t th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.prd-res-t td.ok { color: var(--ok); font-weight: 800; }
+.prd-res-t td.ko { color: var(--ko); font-weight: 800; }
+.prd-nitbox { margin-top: 14px; }
+/* ---------- Mapa d'escons: interfície v140 ---------- */
+.prd-ctl-t { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.prd-ctl-t h2 { margin: 0; }
+.prd-hist { display: inline-flex; gap: 4px; }
+.prd-hist .btn { padding: 4px 9px; font-size: .75rem; min-height: 0; }
+.prd-hist .btn:disabled { opacity: .4; cursor: default; }
+.prd-hipo-t { margin: 0 0 6px; font-size: .8rem; font-weight: 700; color: var(--muted); }
+.prd-hipo-t small { font-weight: 600; }
+.prd-hipo { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 0 10px; padding: 0 24px 2px 0; scroll-snap-type: x proximity; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.prd-hipo::-webkit-scrollbar { display: none; }
+.prd-hipo button { white-space: nowrap; flex: none; scroll-snap-align: start; }
+.prd-row { row-gap: 0; }
+.prd-row > .prd-n { grid-row: 1; grid-column: 1; }
+.prd-row > .prd-rng { grid-row: 1; grid-column: 2; }
+.prd-row > .prd-num { grid-row: 1; grid-column: 3; }
+.prd-row > .prd-seats { grid-row: 1; grid-column: 4; }
+.prd-loc { grid-row: 2; grid-column: 1 / -1; font-size: .7rem; color: var(--muted); font-weight: 600; margin: -2px 0 0 16px; }
+.prd-loc:empty { display: none; }
+.prd-sumbar { position: relative; display: flex; height: 10px; margin: 12px 0 0; border-radius: 999px; overflow: hidden; background: var(--paper-2); border: 1.5px solid var(--ink); }
+.prd-sumbar i { display: block; height: 100%; background: var(--c); flex: none; }
+.prd-sumbar i.bl { background: repeating-linear-gradient(45deg, #cfc8b8 0 3px, #e9e3d6 3px 6px); }
+.prd-sumbar i.al { background: #b5aea0; }
+.prd-sumbar u { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ko); }
+.prd-sumbar.over { border-color: var(--ko); }
+.prd-sum { margin-top: 6px; }
+/* Capçalera de la cursa */
+.nt-race-h { cursor: default; padding-top: 0; padding-bottom: 2px; }
+.nt-race-h span { font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); text-align: right; white-space: nowrap; }
+.nt-race-h:hover { background: transparent; }
+.nt-race-h .s { display: none; }
+@media (max-width: 640px) { .nt-race-h .l { display: none; } .nt-race-h .s { display: inline; } .nt-race-h span { font-size: .6rem; letter-spacing: 0; } }
+/* Compartir */
+.prd-sharecard { padding: 18px; }
+.prd-sharecard .prd-name { margin: 0 0 12px; max-width: 420px; }
+.prd-share { display: grid; gap: 8px; margin: 0; max-width: 420px; }
+.prd-share .btn.big { width: 100%; justify-content: center; font-size: 1.05rem; padding: 12px 16px; }
+.prd-share-2 { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Mapa */
+.prd-maph { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.prd-maph .btn { flex: none; }
+.prd-big { position: fixed; inset: 0; z-index: 120; background: var(--paper); display: grid; grid-template-rows: auto 1fr auto; }
+.prd-big-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; background: var(--card); border-bottom: 2px solid var(--ink); }
+.prd-big-bar span { display: inline-flex; gap: 6px; }
+.prd-big-bar .btn { min-width: 40px; justify-content: center; }
+.prd-big-sc { overflow: auto; background: #dcebf3; -webkit-overflow-scrolling: touch; }
+.prd-big-in { width: 100%; min-height: 100%; display: flex; align-items: center; }
+.prd-big-in svg { width: 100%; height: auto; display: block; }
+.prd-big-h { margin: 0; padding: 8px 14px calc(8px + env(safe-area-inset-bottom)); font-size: .8rem; color: var(--muted); text-align: center; background: var(--card); }
+/* Vista compartida */
+.prd-shsum { margin: 14px 0 0; padding: 12px 14px; background: var(--card); border: 2px solid var(--ink); border-radius: var(--radius-sm); box-shadow: var(--hard-sm); max-width: 560px; }
+.prd-shsum:empty { display: none; }
+.prd-shsum .prd-v3 { display: none; }
+.prd-fab { display: none; }
+/* Pestanyes (només mòbil i tauleta) */
+.prd-tabs { display: none; }
+@media (max-width: 979px) {
+  .prd-tabs { display: flex; gap: 4px; position: sticky; top: calc(58px + env(safe-area-inset-top)); z-index: 20; margin: 0 -4px 12px; padding: 6px 4px; background: var(--paper); }
+  .prd-tabs button { flex: 1; font: 800 .88rem var(--sans); color: var(--ink); background: var(--card); border: 2px solid var(--ink); border-radius: 999px; padding: 8px 6px; cursor: pointer; }
+  .prd-tabs button[aria-selected="true"] { background: var(--ink); color: var(--card); }
+  .prd.tab-vots [data-pane]:not([data-pane="vots"]), .prd.tab-congres [data-pane]:not([data-pane="congres"]), .prd.tab-mapa [data-pane]:not([data-pane="mapa"]) { display: none; }
+  .prd.tab-vots .prd-out { display: none; }
+  .prd.tab-vots .prd-met { display: none; }
+  .prd-mini { display: grid; gap: 5px; width: calc(100% + 12px); text-align: left; border: 0; cursor: pointer; font: inherit; }
+  .prd-mini-bar { position: relative; display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: #3a3960; gap: 1px; }
+  .prd-mini-bar i { display: block; background: var(--c); }
+  .prd-mini-bar u { position: absolute; top: -2px; bottom: -2px; left: calc(176 / 350 * 100%); width: 2px; background: var(--yellow); }
+  .prd-mini-l { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: center; }
+  .prd-mini-go { margin-left: auto; color: var(--yellow); font-weight: 800; }
+  .is-shared .prd-fab { display: block; position: sticky; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 15; margin-top: 14px; }
+  .is-shared .prd-fab .btn { width: 100%; justify-content: center; box-shadow: var(--hard); }
+}
+/* Avís de galetes en petit a les pàgines «tranquil·les» (escons, nit electoral) */
+#consent.cs-mini { padding: 10px 14px; gap: 8px; grid-template-columns: 1fr auto; align-items: center; }
+#consent.cs-mini .cs-body b { font-size: .9rem; }
+#consent.cs-mini .cs-body p { font-size: .75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#consent.cs-mini .cs-actions .btn { padding: 6px 10px; font-size: .8rem; min-height: 0; }
+#consent.cs-mini [data-cs="settings"] { display: none; }
+@media (max-width: 640px) { #consent.cs-mini { grid-template-columns: 1fr; } #consent.cs-mini .cs-actions { display: flex; gap: 6px; } #consent.cs-mini .cs-actions .btn { flex: 1; } }
+.nt-race-h b { font-weight: inherit; }
+.prd-grid > * { min-width: 0; }
+
+/* Mapa d'escons: escons triats a mà en una circumscripció (v141) */
+.prd-seat-rows { display: grid; gap: 6px; margin-top: 10px; }
+.prd-seat-row { display: grid; grid-template-columns: 74px 1fr auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px dashed var(--line, rgba(0,0,0,.12)); }
+.prd-seat-row:last-child { border-bottom: 0; }
+.prd-seat-dots { display: flex; flex-wrap: wrap; gap: 3px; min-width: 0; }
+.prd-seat-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.prd-seat-row .prd-num b { min-width: 34px; text-align: center; font: 800 .95rem var(--sans); }
+.prd-seat-row .prd-num button { width: 34px; height: 32px; font-size: 1.1rem; }
+.prd-seat-row .prd-num button:disabled { opacity: .35; cursor: default; }
+.prd-seat-left { margin: 10px 0 0; font-weight: 700; font-size: .9rem; }
+.prd-seat-left.ko { color: var(--red); }
+.prd-seat-left.ok { color: var(--green, #1d7a46); }
+.prd-fixed { margin: 10px 0 0; font-size: .85rem; font-weight: 700; }

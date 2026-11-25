@@ -19,10 +19,9 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.d.outputs.page_url }}
+  # Dues feines (com recomana GitHub): la de publicar comença quan l'artefacte ja és registrat. Amb una sola feina,
+  # deploy-pages de vegades no el trobava («No artifacts named github-pages»).
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +33,15 @@ jobs:
           cp -r web/. _site/
           cp data/*.json _site/data/ 2>/dev/null || true
           touch _site/.nojekyll
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - id: d
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4

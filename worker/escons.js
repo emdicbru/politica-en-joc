@@ -1,7 +1,7 @@
-// Previsualització dels enllaços del mapa d'escons (#escons). Quan algú comparteix la seva predicció, l'enllaç passa per
+// Previsualització dels enllaços de «La teva predicció» (#prediccio, abans #escons). Quan algú comparteix la seva predicció, l'enllaç passa per
 // aquí perquè WhatsApp, X, Telegram… en mostrin la imatge pròpia (l'hemicicle d'aquella predicció) en lloc de la genèrica:
 //  - GET /e?c=<codi>&s=<escons>&l=ca|es → pàgina mínima amb les etiquetes og:* que redirigeix de seguida a l'app
-//    (politicaenjoc.cat/#escons/<codi>); el codi és el mateix de l'app i porta tota la predicció.
+//    (politicaenjoc.cat/#prediccio/<codi>); el codi és el mateix de l'app i porta tota la predicció.
 //  - GET /e.png?s=<escons>&l=ca|es → la imatge (PNG de 1200 × 630), dibuixada aquí mateix a partir dels escons.
 // No es desa res: tot va dins de l'adreça. La imatge només conté punts de colors i xifres que surten de l'adreça, i es
 // desa a la memòria cau de Cloudflare perquè cada enllaç es dibuixi una sola vegada.
@@ -37,7 +37,7 @@ export function landing(url) {
   const seats = parseSeats(url.searchParams.get("s"));
   let name = "";
   if (ok) { try { name = decodeURIComponent(code.split("~")[3] || "").replace(/[\u0000-\u001f]/g, "").slice(0, 40); } catch { name = ""; } }
-  const to = `${APP}${l === "es" ? "es/" : ""}#escons${ok ? `/${code}` : ""}`;
+  const to = `${APP}${l === "es" ? "es/" : ""}#prediccio${ok ? `/${code}` : ""}`;
   const top = Object.entries(seats).sort((a, b) => b[1] - a[1]).filter(([k]) => k !== "altres").slice(0, 6).map(([k, n]) => `${SIG[k]} ${n}`).join(" · ");
   const T = l === "es"
     ? { t: name ? `La predicción de ${name} para el 29N` : "Una predicción para el 29N", d: `${top ? `${top}. ` : ""}Mírala provincia a provincia y haz la tuya en Política en Joc.`, alt: "Hemiciclo del Congreso con la predicción de escaños" }

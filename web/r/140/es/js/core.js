@@ -63,6 +63,10 @@ document.addEventListener("click", (e) => {
 });
 
 // ---------- Emmagatzematge ----------
+// Pàgines on qui arriba (sovint des d'un enllaç compartit) ha de veure el contingut de seguida: sense tutorial,
+// novetats, «instal·la» ni «activa les notificacions», i l'avís de galetes en petit
+function pejQuiet() { return /^#(escons|nit)(\/|$)/.test(location.hash); }
+
 const store = {
   get(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -298,7 +302,7 @@ const DYNAMIC_GAMES = new Map();
 const gameById = (id) => GAMES.find((g) => g.id === id) || DYNAMIC_GAMES.get(id);
 
 // ---------- Navegació ----------
-const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "botiga", "premsa", "baixa", "amics"];
+const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador", "apren", "calendari", "perfil", "legal", "nit", "control", "pronostics", "escons", "botiga", "premsa", "baixa", "amics"];
 let session = null; // partida en curs
 
 function route() {
@@ -309,7 +313,7 @@ function route() {
   if (v !== "joc" || session?.game.id !== arg) endSession();
 
   VIEWS.forEach((name) => { $(`#view-${name}`).hidden = name !== v; });
-  const navKey = v === "joc" ? (arg?.startsWith("duel-") ? "social" : arg === "simulador" || arg === "debat" ? "simulador" : arg === "noticies-quiz" ? "noticies" : "jocs") : v === "calendari" ? "apren" : v === "duel" || v === "ranking" ? "social" : v === "nit" ? "inici" : v === "control" || v === "botiga" ? "perfil" : v === "pronostics" || v === "amics" ? "social" : v;
+  const navKey = v === "joc" ? (arg?.startsWith("duel-") ? "social" : arg === "simulador" || arg === "debat" ? "simulador" : arg === "noticies-quiz" ? "noticies" : "jocs") : v === "calendari" ? "apren" : v === "duel" || v === "ranking" ? "social" : v === "nit" || v === "escons" ? "inici" : v === "control" || v === "botiga" ? "perfil" : v === "pronostics" || v === "amics" ? "social" : v;
   $$("[data-nav]").forEach((a) => a.classList.toggle("active", a.dataset.nav === navKey));
   document.body.classList.toggle("playing", v === "joc");
 
@@ -331,6 +335,7 @@ function route() {
   if (v === "nit") renderNit(arg);
   if (v === "control") renderControl();
   if (v === "pronostics") renderPronostics(arg);
+  if (v === "escons") renderEscons(arg);
   if (v === "botiga") renderBotiga();
   if (v === "premsa") renderPremsa(arg);
   if (v === "baixa") renderBaixa(arg);

@@ -1,7 +1,49 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-24",
+  "updated": "2026-11-25",
   "questions": [
+    {
+      "d": "2026-11-25",
+      "t": "internacional",
+      "q": "Quina data ha anunciat Carles Puigdemont per al seu retorn a Espanya?",
+      "a": [
+        "12 de desembre",
+        "25 de novembre",
+        "1 de gener",
+        "15 de setembre"
+      ],
+      "exp": "Diversos mitjans confirmen que Puigdemont tornarà a Catalunya el 12 de desembre, després de nou anys d'exili.",
+      "u": "https://www.europapress.es/nacional/noticia-puigdemont-anuncia-regresara-cataluna-12-diciembre-despues-anos-belgica-20261125111810.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-25",
+      "t": "politica",
+      "q": "Què ha afirmat Sémper respecte al compromís del PP amb el resultat electoral?",
+      "a": [
+        "Que el PP respectarà qualsevol resultat electoral",
+        "Que el PP impugnarà el recompte si perd",
+        "Que el PP només acceptarà resultats favorables",
+        "Que el PP buscarà una coalició amb Vox independentment del resultat"
+      ],
+      "exp": "Sémper ha declarat que el Partit Popular respectarà qualsevol resultat electoral, tot i que confia en la seva victòria.",
+      "u": "https://www.eldebate.com/espana/20261125/semper-subraya-pp-respetara-resultado-electoral-aunque-urnas-cartonno-proyectan-seguridad_484949.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-25",
+      "t": "territori",
+      "q": "Quina acció ha decidit prendre la presidenta de la Comunitat de Madrid, Isabel Díaz Ayuso, davant el decret de Maricarmen aprovat per la Diputació Permanent?",
+      "a": [
+        "Recórrer-lo davant el Tribunal Constitucional",
+        "Acceptar-lo i aplicar-lo immediatament",
+        "Modificar-lo i presentar una nova proposta",
+        "Renunciar al seu càrrec"
+      ],
+      "exp": "Ayuso ha anunciat que interposarà recurs davant el Tribunal Constitucional contra el decret de Maricarmen, considerant-lo una invasió de competències autonòmiques.",
+      "u": "https://www.eldebate.com/espana/madrid/20261125/ayuso-recurrira-ante-tribunal-constitucional-decreto-maricarmen-aprobado-diputacion-permanente_485035.html",
+      "auto": true
+    },
     {
       "d": "2026-11-24",
       "t": "politica",
@@ -507,5 +549,5 @@
       "auto": true
     }
   ],
-  "updatedAuto": "2026-11-24"
+  "updatedAuto": "2026-11-25"
 }

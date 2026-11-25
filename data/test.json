@@ -2840,8 +2840,186 @@
      ]
     }
    ]
+  },
+  "2026-11-25": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "justicia",
+     "q": "Quin tribunal ha avalat l'ús del DNI digital al mòbil per votar el 29N?",
+     "a": [
+      "Tribunal Suprem",
+      "Tribunal Constitucional",
+      "Audiència Nacional",
+      "Junta Electoral Central"
+     ],
+     "exp": "El Tribunal Suprem ha avalat que es pugui fer servir el DNI digital per identificar-se a les eleccions generals del 29 de novembre.",
+     "u": "https://www.europapress.es/nacional/noticia-supremo-avala-dni-digital-elecciones-rechaza-recurso-contra-urnas-carton-nietos-20261124151755.html",
+     "s": [
+      "20minutos",
+      "Europa Press",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin polític ha anunciat el seu retorn a Catalunya després de nou anys d'exili a Bèlgica?",
+     "a": [
+      "Carles Puigdemont",
+      "Oriol Junqueras",
+      "Jordi Turull",
+      "Quim Torra"
+     ],
+     "exp": "Carles Puigdemont ha anunciat el seu imminent retorn després de l'amnistia, i ha revelat a Brussel·les com serà.",
+     "u": "https://www.vilaweb.cat/noticies/puigdemont-brusselles-detalls-retorn-nou-anys-exili/",
+     "s": [
+      "VilaWeb",
+      "Ara",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Quin tema va centrar el cara a cara entre Albiol i Colau en plena campanya?",
+     "a": [
+      "L'habitatge",
+      "Les pensions",
+      "La sanitat pública",
+      "El transport ferroviari"
+     ],
+     "exp": "Els dos candidats van confrontar les seves propostes sobre habitatge en un cara a cara televisiu durant la campanya.",
+     "u": "https://www.abc.es/espana/cataluna/albiol-propone-seguridad-juridica-propietarios-viviendas-colau-20261124001909-nt.html",
+     "s": [
+      "ABC",
+      "eldiario.es",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "Quin nou permís laboral ha creat el Govern espanyol en l'últim Consell de Ministres abans del 29N?",
+     "a": [
+      "Per cures pal·liatives d'un familiar",
+      "Per canvi de domicili",
+      "Per revisions mèdiques anuals",
+      "Per estudis universitaris"
+     ],
+     "exp": "El Govern ha ampliat els permisos per defunció i n'ha creat un de nou per cuidar un familiar en cures pal·liatives.",
+     "u": "https://www.20minutos.es/lainformacion/economia-y-finanzas/gobierno-aprueba-ampliacion-los-permisos-por-fallecimiento-crea-uno-nuevo-por-cuidados-paliativos-eutanasia_7065152_0.html",
+     "s": [
+      "20minutos",
+      "Ara",
+      "eldiario.es"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "territori",
+     "q": "Quina plataforma de mapes és objecte d'una queixa europea per dibuixar amb línia discontínua les fronteres de Ceuta i Melilla?",
+     "a": [
+      "Google Maps",
+      "Apple Maps",
+      "Waze",
+      "OpenStreetMap"
+     ],
+     "exp": "Google Maps dibuixa amb línia discontínua la frontera de Ceuta i Melilla amb el Marroc, i el Parlament Europeu tramita una petició sobre el cas.",
+     "u": "https://www.abc.es/espana/andalucia/europa-insta-gobierno-pedir-google-maps-reconozca-20261125025716-nts.html",
+     "s": [
+      "ABC",
+      "Maldita.es"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "internacional",
+     "q": "Sánchez ha promès reformar una llei per evitar que Espanya participi en quin tipus de conflictes?",
+     "a": [
+      "Guerres il·legals",
+      "Missions humanitàries",
+      "Operacions de l'OTAN",
+      "Exercicis militars"
+     ],
+     "exp": "Sánchez ha promès canviar la llei perquè Espanya no entri en «guerres il·legals», com les de l'Iraq i l'Iran.",
+     "u": "https://www.20minutos.es/nacional/sanchez-promete-cambiar-ley-defensa-nacional-para-prohibir-entrar-guerras-ilegales-como-irak-iran_7065406_0.html",
+     "s": [
+      "Europa Press",
+      "20minutos",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quin estret separa Ceuta de la península Ibèrica?",
+     "a": [
+      "L'estret de Gibraltar",
+      "L'estret del Bòsfor",
+      "L'estret de Messina",
+      "L'estret dels Dardanels"
+     ],
+     "exp": "Ceuta és a la riba africana de l'estret de Gibraltar, que separa la península Ibèrica del Marroc.",
+     "u": "https://www.abc.es/espana/andalucia/europa-insta-gobierno-pedir-google-maps-reconozca-20261125025716-nts.html",
+     "s": [
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital de l'Iraq, país citat en la promesa de Sánchez sobre guerres il·legals?",
+     "a": [
+      "Bagdad",
+      "Damasc",
+      "Teheran",
+      "Beirut"
+     ],
+     "exp": "Bagdad és la capital de l'Iraq i la seva ciutat més poblada.",
+     "u": "https://www.20minutos.es/nacional/sanchez-promete-cambiar-ley-defensa-nacional-para-prohibir-entrar-guerras-ilegales-como-irak-iran_7065406_0.html",
+     "s": [
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "Quin artista d'Alcoi dona nom als premis Ovidi, que s'han entregat aquests dies?",
+     "a": [
+      "Ovidi Montllor",
+      "Raimon",
+      "Lluís Llach",
+      "Joan Manuel Serrat"
+     ],
+     "exp": "Els premis Ovidi porten el nom d'Ovidi Montllor, actor i cantant nascut a Alcoi.",
+     "u": "https://www.vilaweb.cat/noticies/tomas-de-los-santos-seserino-i-animalpersona-triomfen-en-uns-premis-ovidi-molt-repartits/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "En quina ciutat té la seu la UNESCO, on Catalunya tindrà representació?",
+     "a": [
+      "París",
+      "Ginebra",
+      "Nova York",
+      "Brussel·les"
+     ],
+     "exp": "La UNESCO té la seu a París, on la delegada del Govern a França representarà Catalunya.",
+     "u": "https://www.lavanguardia.com/politica/20261124/11692282/delegada-govern-francia-eva-doya-representara-catalunya-unesco.html",
+     "s": [
+      "La Vanguardia"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795496700031
+ "updated": 1795583125511
 }

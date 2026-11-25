@@ -63,6 +63,10 @@ document.addEventListener("click", (e) => {
 });
 
 // ---------- Emmagatzematge ----------
+// Pàgines on qui arriba (sovint des d'un enllaç compartit) ha de veure el contingut de seguida: sense tutorial,
+// novetats, «instal·la» ni «activa les notificacions», i l'avís de galetes en petit
+function pejQuiet() { return /^#(escons|prediccio|nit)(\/|$)/.test(location.hash); }
+
 const store = {
   get(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -302,7 +306,9 @@ const VIEWS = ["inici", "noticies", "jocs", "joc", "ranking", "duel", "simulador
 let session = null; // partida en curs
 
 function route() {
-  const [view, arg] = location.hash.slice(1).split("/");
+  let [view, arg] = location.hash.slice(1).split("/");
+  // La predicció (#prediccio) es diu «escons» per dins; #escons continua funcionant per als enllaços antics
+  if (view === "prediccio") view = "escons";
   // L'antiga pàgina d'Actualitat d'Aprèn ara és la secció Notícies
   if (view === "apren" && arg === "actualitat") { location.replace("#noticies"); return; }
   const v = VIEWS.includes(view) ? view : "inici";

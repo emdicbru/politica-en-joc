@@ -1243,7 +1243,7 @@ function novetatsMaybe() {
   if (store.get(NOVETATS_KEY, null) === NOVETATS_ID) return;
   if (!store.get(ONBOARD_KEY, null) && !(Progress.data.xp > 0)) return; // primera visita: ja hi ha el tutorial
   const v = location.hash.slice(1).split("/")[0];
-  if (["joc", "control", "legal", "nit", "escons"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .xat")) return;
+  if (["joc", "control", "legal", "nit", "escons", "prediccio"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .xat")) return;
   store.set(NOVETATS_KEY, NOVETATS_ID);
   const li = (x) => `<li><span class="nov-ico" aria-hidden="true">${x.ico}</span><div><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div></li>`;
   const box = h(`<div class="onb nov" role="dialog" aria-modal="true" aria-label="Novedades"><div class="card nov-card">
@@ -1352,7 +1352,7 @@ function installMaybe() {
   if (st.done || Math.max(st.ses || 0, st.visits || 0) < 2 || Date.now() < (st.next || 0)) return;
   if (!insMobile() && kind !== "prompt") return;
   const v = location.hash.slice(1).split("/")[0];
-  if (["joc", "control", "legal", "nit", "escons"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .nov, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .ring, .call-ui.dock, .xat-sheet-bg")) return;
+  if (["joc", "control", "legal", "nit", "escons", "prediccio"].includes(v) || document.body.classList.contains("lesson") || document.querySelector(".onb, .nov, .esp-avis, .db-theater, .sim-wrap, .hq, .simchat, .ring, .call-ui.dock, .xat-sheet-bg")) return;
   const box = h(`<div class="ins-bg" role="dialog" aria-modal="true" aria-labelledby="ins-t"><div class="ins card">
     <button class="ins-x" type="button" data-ins-no aria-label="Ahora no">✕</button>
     <div class="ins-head"><img src="img/icon-192.png" alt="" width="64" height="64"><div><h3 id="ins-t">Instala Política en Joc</h3><p>Gratis · sin tienda de apps</p></div></div>

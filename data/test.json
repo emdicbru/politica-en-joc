@@ -3018,8 +3018,177 @@
      ]
     }
    ]
+  },
+  "2026-11-26": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quina candidata participa al debat a quatre d'aquest dijous amb Sánchez, Feijóo i Abascal?",
+     "a": [
+      "Ada Colau",
+      "Irene Montero",
+      "Mónica García",
+      "Yolanda Díaz"
+     ],
+     "exp": "Ada Colau, candidata del Frente Amplio, es mesura aquest dijous amb Sánchez, Feijóo i Abascal en el debat a quatre.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-feijoo-abascal-colau-miden-debate-cuatro-dibujara-dos-bloques-29n-20261125172619.html",
+     "s": [
+      "Europa Press",
+      "El Mundo",
+      "eldiario.es"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "immigracio",
+     "q": "Quin cos militar ha demanat Canàries per a la crisi migratòria d'El Hierro?",
+     "a": [
+      "La UME",
+      "La Legió",
+      "L'Armada",
+      "La Guàrdia Reial"
+     ],
+     "exp": "El Govern canari ha declarat l'emergència sanitària a El Hierro i ha demanat el suport de la Unitat Militar d'Emergències (UME).",
+     "u": "https://www.elespanol.com/espana/politica/20261125/clavijo-solicita-apoyo-ume-hierro-desborde-medios-recursos-crisis-migratoria/1003744472237_0.html",
+     "s": [
+      "El Español",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Davant quin tribunal recorrerà el Govern de Madrid el decret d'habitatge aprovat per la Diputació Permanent?",
+     "a": [
+      "El Tribunal Constitucional",
+      "El Tribunal Suprem",
+      "L'Audiència Nacional",
+      "El TSJ de Madrid"
+     ],
+     "exp": "El Govern d'Ayuso ha anunciat que recorrerà al Tribunal Constitucional el decret d'habitatge per «envair competències autonòmiques».",
+     "u": "https://www.lavanguardia.com/politica/20261125/11693119/gobierno-ayuso-recurrira-tc-decreto-vivienda-invadir-competencias-autonomicas.html",
+     "s": [
+      "La Vanguardia",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "On ha explicat Illa que rebrà Puigdemont quan torni a Catalunya?",
+     "a": [
+      "Al Palau de la Generalitat",
+      "Al Palau de Pedralbes",
+      "Al Parlament de Catalunya",
+      "A l'Ajuntament de Barcelona"
+     ],
+     "exp": "Illa rebrà Puigdemont al Palau de la Generalitat, en una data encara per concretar, després del seu retorn de l'exili.",
+     "u": "https://www.20minutos.es/cataluna/illa-recibira-puigdemont-palau-generalitat-una-fecha-aun-sin-concretar_7065692_0.html",
+     "s": [
+      "20minutos",
+      "El Debate",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "habitatge",
+     "q": "Quina mesura d'habitatge ha defensat Sánchez davant els seus socis d'esquerra?",
+     "a": [
+      "Incentius fiscals per als propietaris",
+      "Un topall estatal al lloguer",
+      "Un nou impost sobre els pisos buits",
+      "L'expropiació de pisos de grans tenidors"
+     ],
+     "exp": "A l'entrevista amb Plex, Sánchez va apostar per incentius fiscals als propietaris en lloc del «punitivisme» que defensen alguns socis.",
+     "u": "https://www.europapress.es/nacional/noticia-sanchez-apuesta-incentivos-fiscales-propietarios-frente-punitivismo-socios-izquierda-20261125223550.html",
+     "s": [
+      "Europa Press",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin recinte de Madrid ha acollit el míting de Feijóo amb Ayuso, Almeida i Álvarez de Toledo?",
+     "a": [
+      "La Caja Mágica",
+      "El WiZink Center",
+      "El Palau de Vistalegre",
+      "L'Estadi Santiago Bernabéu"
+     ],
+     "exp": "El PP va fer l'acte central a la Caja Mágica de Madrid amb Feijóo, Ayuso, Almeida i Álvarez de Toledo.",
+     "u": "https://www.eldebate.com/espana/20261125/feijoo-llena-junto-ayuso-caja-magica-revela-hoja-ruta-domingo-ganar-lunes-cambiar-espana_485259.html",
+     "s": [
+      "El Debate",
+      "El Español",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Amb quin creador de contingut han fet entrevistes Sánchez i Feijóo aquest dimecres?",
+     "a": [
+      "Plex",
+      "Wyoming",
+      "Cristina Pardo",
+      "Jesús Calleja"
+     ],
+     "exp": "Tant Sánchez com Feijóo han estat entrevistats per Plex en la recta final de la campanya.",
+     "u": "https://www.lavanguardia.com/politica/20261125/11693418/sanchez-entrevista-plex-nunca-pense-llegaria-presidente-gobierno.html",
+     "s": [
+      "La Vanguardia",
+      "20minutos",
+      "El Español"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "Com es diu el palau de Madrid on té la seu la presidència del Govern espanyol?",
+     "a": [
+      "El Palau de la Moncloa",
+      "El Palau de la Zarzuela",
+      "El Palau Reial",
+      "El Palau de Santa Cruz"
+     ],
+     "exp": "La Moncloa és la residència i la seu de la presidència del Govern d'Espanya.",
+     "u": "https://www.eldiario.es/politica/feijoo-abascal-asisten-primer-debate-tandem-llegar-moncloa-frente-sanchez-colau_1_13693175.html"
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "En quina comunitat autònoma és Teruel, ciutat on el PP va fer un acte el 25N?",
+     "a": [
+      "Aragó",
+      "Castella-la Manxa",
+      "Catalunya",
+      "València"
+     ],
+     "exp": "Teruel és la capital de la província homònima, a l'Aragó.",
+     "u": "https://www.elespanol.com/espana/politica/20261125/pp-recuerda-frente-parador-teruel-piso-abalos-puso-jesica-zona-cero-degradacion/1003744471719_0.html"
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Gandia, ciutat citada aquests dies en campanya, és capital de quina comarca valenciana?",
+     "a": [
+      "La Safor",
+      "La Ribera Alta",
+      "El Camp de Morvedre",
+      "La Marina Alta"
+     ],
+     "exp": "Gandia és la capital de la comarca de la Safor, al País Valencià.",
+     "u": "https://www.eldebate.com/espana/comunidad-valenciana/20261125/morant-acusa-feijoo-machista-referirse-ella-como-chica-gandia_485175.html"
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795583125511
+ "updated": 1795669533864
 }

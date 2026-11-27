@@ -3187,8 +3187,182 @@
      "u": "https://www.eldebate.com/espana/comunidad-valenciana/20261125/morant-acusa-feijoo-machista-referirse-ella-como-chica-gandia_485175.html"
     }
    ]
+  },
+  "2026-11-27": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin compromís ha pres Feijóo al debat a quatre si no és president després del 29N?",
+     "a": [
+      "Renunciar a l'acta de diputat i a l'aforament",
+      "Convocar un congrés extraordinari del PP",
+      "Sotmetre's a una qüestió de confiança",
+      "Presentar-se a les eleccions europees"
+     ],
+     "exp": "Al debat a quatre, Feijóo es va comprometre a dimitir i deixar l'acta i l'aforament si no arriba a la presidència del Govern.",
+     "u": "https://www.elespanol.com/espana/politica/20261127/feijoo-compromete-dimitir-dejar-acta-aforamiento-no-presidente-emplaza-sanchez-hacer-mismo/1003744474250_0.html",
+     "s": [
+      "El Español",
+      "eldiario.es"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "justicia",
+     "q": "Quin tribunal ha confirmat que els nacionalitzats per la «llei de néts» no podran votar el 29N?",
+     "a": [
+      "El Tribunal Suprem",
+      "El Tribunal Constitucional",
+      "L'Audiència Nacional",
+      "El Tribunal de Comptes"
+     ],
+     "exp": "El Tribunal Suprem va mantenir, a tres dies de les eleccions, la suspensió del vot dels nacionalitzats per la llei de néts.",
+     "u": "https://www.20minutos.es/nacional/supremo-mantiene-suspension-voto-los-nietos-tres-dias-las-elecciones_7066277_0.html",
+     "s": [
+      "20minutos",
+      "eldiario.es",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "politica",
+     "q": "Quin òrgan del Congrés ha convalidat els últims cinc decrets del Govern abans del 29N?",
+     "a": [
+      "La Diputació Permanent",
+      "El Ple del Congrés",
+      "La Mesa del Congrés",
+      "La Junta de Portaveus"
+     ],
+     "exp": "La Diputació Permanent, que funciona mentre les Corts estan dissoltes, va convalidar els últims cinc decrets del Govern abans de les eleccions.",
+     "u": "https://www.20minutos.es/nacional/diputacion-permanente-convalida-sus-ultimos-cinco-decretos-antes-29n-entre-criticas-oposicion-ausencia-vox_7066199_0.html",
+     "s": [
+      "20minutos",
+      "El Español"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "En quin estadi madrileny ha dit Sánchez que li agradaria que fos la final del Mundial 2030?",
+     "a": [
+      "El Metropolitano (Wanda)",
+      "El Santiago Bernabéu",
+      "El Vicente Calderón",
+      "L'Estadi de Vallecas"
+     ],
+     "exp": "Sánchez va dir, en to personal, que com a aficionat de l'Atlètic li agradaria que la final fos al Wanda Metropolitano.",
+     "u": "https://www.abc.es/espana/sanchez-sobre-final-mundial-2030-atletico-gustaria-20261126000413-nt.html",
+     "s": [
+      "ABC",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "De quina ciutat és alcalde Lluc Salellas, que ha anunciat que votarà ERC el 29-N?",
+     "a": [
+      "Girona",
+      "Lleida",
+      "Tarragona",
+      "Vic"
+     ],
+     "exp": "Lluc Salellas, alcalde de Girona i militant de la CUP, ha anunciat que votarà ERC a les eleccions espanyoles.",
+     "u": "https://www.vilaweb.cat/noticies/lluc-salellas-votara-erc-eleccions-espanyoles/",
+     "s": [
+      "VilaWeb",
+      "La Vanguardia"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "societat",
+     "q": "A quina plaça de Madrid ha inaugurat Ayuso el betlem de Nadal aquest dimecres?",
+     "a": [
+      "La Puerta del Sol",
+      "La Plaza Mayor",
+      "La plaça de Cibeles",
+      "La plaça d'Espanya"
+     ],
+     "exp": "Isabel Díaz Ayuso va inaugurar el betlem i l'ambient nadalenc a la Puerta del Sol de Madrid.",
+     "u": "https://www.eldebate.com/espana/madrid/20261126/ayuso-inaugura-navidad-puerta-sol-solos-estan-quienes-le-dan-espalda-dios_485407.html",
+     "s": [
+      "ABC",
+      "El Debate"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "politica",
+     "q": "Quines dues cambres formen les Corts Generals d'Espanya, que es renoven el 29N?",
+     "a": [
+      "Congrés dels Diputats i Senat",
+      "Congrés dels Diputats i Consell d'Estat",
+      "Senat i Tribunal Constitucional",
+      "Cort Suprema i Congrés dels Diputats"
+     ],
+     "exp": "Les Corts Generals són bicamerals: les formen el Congrés dels Diputats i el Senat.",
+     "u": "https://www.20minutos.es/nacional/diputacion-permanente-convalida-sus-ultimos-cinco-decretos-antes-29n-entre-criticas-oposicion-ausencia-vox_7066199_0.html",
+     "s": [
+      "20minutos"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital de Gal·les, territori on es parla d'ampliar l'autogovern?",
+     "a": [
+      "Cardiff",
+      "Edimburg",
+      "Belfast",
+      "Swansea"
+     ],
+     "exp": "Cardiff és la capital de Gal·les, una de les nacions del Regne Unit.",
+     "u": "https://www.vilaweb.cat/noticies/burnham-autogovern-galles-debat-territorial-regne-unit/",
+     "s": [
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital d'Hongria, país esmentat al debat dels candidats al Cercle d'Economia?",
+     "a": [
+      "Budapest",
+      "Praga",
+      "Viena",
+      "Bratislava"
+     ],
+     "exp": "Budapest és la capital d'Hongria i la seva ciutat més poblada.",
+     "u": "https://naciodigital.cat/politica/el-debat-al-cercle-deconomia.html",
+     "s": [
+      "NacióDigital"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Quina és la capital d'El Salvador, país on hi ha el municipi de Suchitoto?",
+     "a": [
+      "San Salvador",
+      "Tegucigalpa",
+      "Guatemala",
+      "San José"
+     ],
+     "exp": "San Salvador és la capital d'El Salvador; Suchitoto és un municipi del mateix país.",
+     "u": "https://www.abc.es/espana/abascal-pone-suchitoto-mapa-programa-ayuda-gestion-20261126235422-nt.html",
+     "s": [
+      "ABC"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795669533864
+ "updated": 1795755914198
 }

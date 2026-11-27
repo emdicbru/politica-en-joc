@@ -8884,3 +8884,48 @@ h1, h2, h3 { text-wrap: balance; }
 @media (max-width: 640px) { .ep-mine-g { grid-template-columns: 1fr; } .ep-wnav .btn { padding-left: 12px; padding-right: 12px; } .ep-wnav-m { font-size: .72rem; } }
 @media (prefers-reduced-motion: reduce) { .ep-how li, .ep-wiz-h, .ep-wiz-b, .ep-prev canvas, .ep-xul li, .ep-saved, .ep-friends { animation: none; } }
 .ep-hero.slim .ep-wallet { display: none; }
+/* v148 · Electoporra: províncies, imatges i apostes pròpies */
+.ep-provask { display: grid; gap: 10px; text-align: center; }
+.ep-provask-map { max-width: 320px; margin: 0 auto; opacity: .85; }
+.ep-provask-map svg { width: 100%; height: auto; }
+.ep-minimap path { fill: color-mix(in srgb, var(--yellow) 40%, var(--card)); stroke: var(--ink); stroke-width: .6; }
+.ep-starts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ep-psel { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 800; color: var(--muted); margin: 0 0 10px; }
+.ep-psel select { flex: 1; min-width: 0; font: 700 .92rem var(--sans); color: var(--ink); background: var(--card); border: 2px solid var(--ink); border-radius: 10px; padding: 7px 10px; }
+.ep-provmap { border-radius: 14px; overflow: hidden; border: 2px solid var(--ink); background: #dcebf3; }
+.ep-provmap svg { display: block; width: 100%; height: auto; }
+.ep-provmap .sim-pg { cursor: pointer; }
+.ep-pedit { margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--card); border: 2px solid var(--ink); box-shadow: 0 4px 0 var(--ink); animation: epDrop .3s var(--ease) both; }
+.ep-pedit header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.ep-pedit h3 { margin: 0; font-family: var(--display); font-size: 1.1rem; }
+.ep-pedit header span { color: var(--muted); font-weight: 700; font-size: .85rem; }
+.ep-pedit .ep-x { margin-left: auto; border: 0; background: var(--paper); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: 900; }
+.ep-pedit .ep-prows { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.ep-ptot { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--paper); font-size: .85rem; }
+.ep-ptot > b { flex-basis: 100%; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.ep-ptot span { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.ep-ptot i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.ep-iname { display: grid; gap: 4px; width: 100%; max-width: 420px; font-size: .78rem; font-weight: 800; color: var(--muted); }
+.ep-iname > span { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); }
+.ep-iname em { font-style: normal; font-family: var(--display); font-size: .95rem; color: var(--ink); white-space: nowrap; }
+.ep-iname input { flex: 1; min-width: 0; border: 0; background: transparent; font: 800 1rem var(--sans); color: var(--ink); padding: 6px 4px; }
+.ep-iname small { font-weight: 600; }
+.ep-xt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ep-xt button { font: 800 .86rem var(--sans); color: var(--ink); background: var(--card); border: 2px solid var(--paper-2); border-radius: 12px; padding: 7px 12px; cursor: pointer; display: grid; text-align: left; }
+.ep-xt button small { font-size: .68rem; font-weight: 600; color: var(--muted); }
+.ep-xt button[aria-checked="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.ep-xt button[aria-checked="true"] small { color: #c9c6dc; }
+.ep-xmake { margin-top: 12px; }
+@media (max-width: 640px) { .ep-starts.two { grid-template-columns: 1fr 1fr; } .ep-pedit .ep-prows { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .ep-pedit { animation: none; } }
+.ep-mygroups { padding: 12px 16px; margin-top: 12px; }
+.ep-mygroups > summary { cursor: pointer; font-weight: 800; }
+.ep-mygroups > summary small { color: var(--muted); }
+.ep-mygroups ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.ep-mygroups li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--paper); }
+.ep-mygroups li small { grid-column: 1; color: var(--muted); font-size: .76rem; }
+.ep-mygroups li button { grid-column: 2; grid-row: 1 / 3; font-size: .82rem; }
+.ep-mine-a { display: flex; gap: 6px; flex-wrap: wrap; }
+.pf-acct { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--card); border: 2px solid var(--ink); font-size: .9rem; }
+.pf-acct small { display: block; color: var(--muted); font-size: .76rem; }
+.pf-acct-b { display: flex; gap: 6px; flex-wrap: wrap; }

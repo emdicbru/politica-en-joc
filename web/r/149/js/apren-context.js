@@ -131,8 +131,8 @@ const AP_CONTEXT_CHAPTERS = [
       { t: "widget", w: "issues" },
       { t: "h", h: "Quines majories poden sortir" },
       { t: "cards", items: [
-        { title: "Un govern del PP", text: "Necessitaria 176 sís, o més sís que nos a la segona votació. Els socis possibles són Vox, UPN i Coalición Canaria. El PP i Vox han pactat en diverses comunitats autònomes." },
-        { title: "Un govern del PSOE", text: "Hauria de reeditar la majoria del 2023, amb Sumar i partits nacionalistes i independentistes. La ruptura de Junts amb el PSOE la fa més difícil." },
+        { title: "Un govern del PP", text: "Necessitaria 176 sís, o més sís que nos a la segona votació. Els socis possibles són Vox i Coalición Canaria (UPN es presenta dins de la llista UPN-PP a Navarra). El PP i Vox han pactat en diverses comunitats autònomes." },
+        { title: "Un govern del PSOE", text: "Hauria de reeditar la majoria del 2023, amb Frente Amplio, Podemos i partits nacionalistes i independentistes. La ruptura de Junts amb el PSOE la fa més difícil." },
         { title: "Una gran coalició", text: "PP i PSOE sumarien de sobres, però mai no han governat junts a l'Estat i tots dos ho descarten." },
         { title: "Bloqueig i repetició", text: "Si en dos mesos ningú no és investit, es tornen a convocar eleccions, com va passar el 2016 i el 2019." },
       ] },
@@ -264,10 +264,10 @@ const AP_ISSUE_NEWS = { hab: "habitatge", ter: "territori", eco: "economia", tre
 const AP_FAMILIES = [
   { t: "Socialdemocràcia", c: "#e3101f", d: "Economia de mercat amb un estat del benestar fort: sanitat, educació i pensions públiques, finançades amb impostos progressius.", p: ["psoe"] },
   { t: "Esquerra alternativa", c: "#e0306f", d: "Més pes de l'Estat i dels serveis públics, i defensa de l'ecologisme, el feminisme i els drets socials. Inclou tradicions comunistes i ecosocialistes.", p: ["fa", "podemos"] },
-  { t: "Liberalisme", c: "#f2b600", d: "Llibertat individual, economia de mercat i un Estat limitat. A Espanya no hi ha cap gran partit purament liberal: és una tradició present en part del centredreta.", p: ["pp", "junts"] },
+  { t: "Liberalisme", c: "#f2b600", d: "Llibertat individual, economia de mercat i un Estat limitat. A Espanya no hi ha cap gran partit purament liberal: és una tradició present en part del centredreta.", p: ["pp", "junts", "d21"] },
   { t: "Conservadorisme i democràcia cristiana", c: "#1e88d6", d: "Defensa de la tradició, la família, l'ordre i l'economia de mercat, sovint amb arrels cristianes.", p: ["pp", "pnv"] },
   { t: "Dreta radical i nacionalpopulisme", c: "#5cbf2a", d: "Nacionalisme fort, control estricte de la immigració, rebuig del que anomena «ideologia de gènere» i desconfiança envers la UE. La majoria de la ciència política hi situa Vox, que es defineix com a patriòtic i conservador.", p: ["vox"] },
-  { t: "Nacionalismes i sobiranismes", c: "#20b8c8", d: "Defensen Catalunya, el País Basc, Galícia o Canàries com a nacions o pobles amb dret a decidir. N'hi ha d'esquerres i de centredreta.", p: ["erc", "junts", "bildu", "pnv", "bng", "cc"] },
+  { t: "Nacionalismes i sobiranismes", c: "#20b8c8", d: "Defensen Catalunya, el País Basc, Galícia o Canàries com a nacions o pobles amb dret a decidir. N'hi ha d'esquerres i de centredreta.", p: ["erc", "junts", "alhora", "bildu", "pnv", "bng", "cc"] },
   { t: "Ecologisme", c: "#00a37a", d: "Situa la crisi climàtica i la protecció del medi ambient al centre de la política. A Espanya, és present sobretot dins de les coalicions d'esquerres.", p: ["fa"] },
   { t: "Populisme", c: "#5d4037", d: "Més que una ideologia, és un estil: presenta la política com un xoc entre «el poble» i «les elits». Pot ser d'esquerres o de dretes, i es combina amb altres ideologies.", p: ["salf"] },
 ];

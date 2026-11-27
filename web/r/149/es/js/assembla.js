@@ -23,13 +23,13 @@ const ASSEMBLA_PARTIES = ["pp", "psoe", "vox", "fa", "podemos", "erc", "junts", 
 // On votes. name: com surt al selector · label: dins d'una frase · sub: «de …» · note: «a …» · text: la llengua
 // pròpia (amb l'article) · short: la llengua sense article. (Noms de camp que l'eina de traducció reconeix com a text.)
 const ASSEMBLA_TERR = {
-  cat: { name: "Cataluña", label: "Cataluña", sub: "de Cataluña", note: "en Cataluña", text: "el catalán", short: "catalán", police: "Los Mossos d'Esquadra", parties: ["psoe", "pp", "vox", "fa", "podemos", "erc", "junts", "salf"] },
+  cat: { name: "Cataluña", label: "Cataluña", sub: "de Cataluña", note: "en Cataluña", text: "el catalán", short: "catalán", police: "Los Mossos d'Esquadra", parties: ["psoe", "pp", "vox", "fa", "erc", "junts", "salf"] },
   eus: { name: "País Vasco", label: "Euskadi", sub: "de Euskadi", note: "en Euskadi", text: "el euskera", short: "euskera", police: "La Ertzaintza", parties: ["psoe", "pp", "vox", "fa", "podemos", "bildu", "pnv", "salf"] },
-  nav: { name: "Navarra", label: "Navarra", sub: "de Navarra", note: "en Navarra", text: "el euskera", short: "euskera", police: "La Policía Foral", parties: ["psoe", "pp", "vox", "fa", "podemos", "bildu", "pnv", "salf"] },
+  nav: { name: "Navarra", label: "Navarra", sub: "de Navarra", note: "en Navarra", text: "el euskera", short: "euskera", police: "La Policía Foral", parties: ["psoe", "pp", "vox", "fa", "podemos", "bildu", "salf"] },
   gal: { name: "Galicia", label: "Galicia", sub: "de Galicia", note: "en Galicia", text: "el gallego", short: "gallego", parties: ["psoe", "pp", "vox", "fa", "podemos", "bng", "salf"] },
-  pv: { name: "Comunitat Valenciana", label: "la Comunitat Valenciana", sub: "de la Comunitat Valenciana", note: "en la Comunitat Valenciana", text: "el valenciano", short: "valenciano", parties: ["psoe", "pp", "vox", "fa", "podemos", "salf"] },
-  ib: { name: "Islas Baleares", label: "las Islas Baleares", sub: "de las Islas Baleares", note: "en las Islas Baleares", text: "el catalán", short: "catalán", parties: ["psoe", "pp", "vox", "fa", "podemos", "salf"] },
-  can: { name: "Canarias", label: "Canarias", sub: "de Canarias", note: "en Canarias", parties: ["psoe", "pp", "vox", "fa", "podemos", "cc", "salf"] },
+  pv: { name: "Comunitat Valenciana", label: "la Comunitat Valenciana", sub: "de la Comunitat Valenciana", note: "en la Comunitat Valenciana", text: "el valenciano", short: "valenciano", parties: ["psoe", "pp", "vox", "fa", "salf"] },
+  ib: { name: "Islas Baleares", label: "las Islas Baleares", sub: "de las Islas Baleares", note: "en las Islas Baleares", text: "el catalán", short: "catalán", parties: ["psoe", "pp", "vox", "fa", "salf"] },
+  can: { name: "Canarias", label: "Canarias", sub: "de Canarias", note: "en Canarias", parties: ["psoe", "pp", "vox", "fa", "cc", "salf"] },
   resta: { name: "Resto del Estado", parties: ["psoe", "pp", "vox", "fa", "podemos", "salf"] },
 };
 const ASSEMBLA_TERR_KEY = "r29n-terr";
@@ -498,9 +498,9 @@ function assemblaResult(ctx, ans, terr, restart) {
         <div class="asb-pod">${[top[1], top[0], top[2]].map((r, k) => r ? `<div class="asb-pc p${[2, 1, 3][k]}" style="--pc:${r.color}"><b>${esc(r.sig)}</b><div class="asb-pb"><strong>${r.pct} %</strong><span>${["2n", "1r", "3r"][k]}</span></div></div>` : "<div></div>").join("")}</div>
         ${yes || no ? `<div class="asb-why"><small>Dónde coincides con ${esc(rows[0].sig)}</small>
           ${yes ? `<p><i class="ok"></i>${esc(yes)}</p>` : ""}${no ? `<p><i class="ko"></i>Discrepas en: ${esc(no)}</p>` : ""}</div>` : ""}
-        <p class="asb-all">Todos los partidos que se presentan ${esc(T.note || "en el resto del Estado")}</p>
+        <p class="asb-all">Los partidos del test que se presentan ${esc(T.note || "en el resto del Estado")}</p>
         <div class="asb-bars">${rows.map((r) => `<details class="asb-row" style="--pc:${r.color}"><summary><b>${esc(r.sig)}</b><span class="asb-bar"><i style="width:${r.pct}%"></i></span><em>${r.pct} %</em></summary>${detail(r)}</details>`).join("")}</div>
-        <p class="muted asb-note">Toca un partido para ver en qué coincides y en qué no. Es orientativo: no es ninguna recomendación de voto.</p>
+        <p class="muted asb-note">Toca un partido para ver en qué coincides y en qué no. Es orientativo: no es ninguna recomendación de voto.${terr === "cat" ? " Alhora (y D21 en Barcelona) también se presentan, pero no están en el test." : terr === "resta" ? " En Madrid también se presenta D21, que no está en el test." : ""}</p>
         <div class="asb-acts2"><button class="btn primary" type="button" data-asb-out="af-share">Comparte la afinidad</button><button class="btn asb-dl-btn" type="button" data-asb-out="af-dl">⬇ Descarga la imagen</button></div>
       </section>
       ${assemblaMethodHtml(terr)}

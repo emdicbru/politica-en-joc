@@ -94,7 +94,7 @@ QUESTIONS.push(...[
     exp: "CDC se coaligó con Unió Democràtica en la federación Convergència i Unió (CiU)." },
   { cat: "catalunya", q: "¿Qué partido liderado por Sílvia Orriols entró en el Parlament de Catalunya en 2024?",
     opts: ["Aliança Catalana", "Junts", "La CUP", "Vox"],
-    exp: "Obtuvo 2 escaños en las elecciones del 12 de mayo de 2024." },
+    exp: "Partido de extrema derecha independentista, obtuvo 2 escaños en las elecciones del 12 de mayo de 2024." },
   { cat: "catalunya", q: "¿Qué partido independentista de izquierdas perdió la representación en el Congreso en 2023?",
     opts: ["La CUP", "ERC", "Junts", "Los Comuns"],
     exp: "La CUP había tenido 2 diputados en el Congreso entre 2019 y 2023." },

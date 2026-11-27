@@ -23,13 +23,13 @@ const ASSEMBLA_PARTIES = ["pp", "psoe", "vox", "fa", "podemos", "erc", "junts", 
 // On votes. name: com surt al selector · label: dins d'una frase · sub: «de …» · note: «a …» · text: la llengua
 // pròpia (amb l'article) · short: la llengua sense article. (Noms de camp que l'eina de traducció reconeix com a text.)
 const ASSEMBLA_TERR = {
-  cat: { name: "Catalunya", label: "Catalunya", sub: "de Catalunya", note: "a Catalunya", text: "el català", short: "català", police: "Els Mossos d'Esquadra", parties: ["psoe", "pp", "vox", "fa", "podemos", "erc", "junts", "salf"] },
+  cat: { name: "Catalunya", label: "Catalunya", sub: "de Catalunya", note: "a Catalunya", text: "el català", short: "català", police: "Els Mossos d'Esquadra", parties: ["psoe", "pp", "vox", "fa", "erc", "junts", "salf"] },
   eus: { name: "País Basc", label: "Euskadi", sub: "d'Euskadi", note: "a Euskadi", text: "l'eusquera", short: "eusquera", police: "L'Ertzaintza", parties: ["psoe", "pp", "vox", "fa", "podemos", "bildu", "pnv", "salf"] },
-  nav: { name: "Navarra", label: "Navarra", sub: "de Navarra", note: "a Navarra", text: "l'eusquera", short: "eusquera", police: "La Policia Foral", parties: ["psoe", "pp", "vox", "fa", "podemos", "bildu", "pnv", "salf"] },
+  nav: { name: "Navarra", label: "Navarra", sub: "de Navarra", note: "a Navarra", text: "l'eusquera", short: "eusquera", police: "La Policia Foral", parties: ["psoe", "pp", "vox", "fa", "podemos", "bildu", "salf"] },
   gal: { name: "Galícia", label: "Galícia", sub: "de Galícia", note: "a Galícia", text: "el gallec", short: "gallec", parties: ["psoe", "pp", "vox", "fa", "podemos", "bng", "salf"] },
-  pv: { name: "País Valencià", label: "el País Valencià", sub: "del País Valencià", note: "al País Valencià", text: "el valencià", short: "valencià", parties: ["psoe", "pp", "vox", "fa", "podemos", "salf"] },
-  ib: { name: "Illes Balears", label: "les Illes Balears", sub: "de les Illes Balears", note: "a les Illes Balears", text: "el català", short: "català", parties: ["psoe", "pp", "vox", "fa", "podemos", "salf"] },
-  can: { name: "Canàries", label: "Canàries", sub: "de Canàries", note: "a Canàries", parties: ["psoe", "pp", "vox", "fa", "podemos", "cc", "salf"] },
+  pv: { name: "País Valencià", label: "el País Valencià", sub: "del País Valencià", note: "al País Valencià", text: "el valencià", short: "valencià", parties: ["psoe", "pp", "vox", "fa", "salf"] },
+  ib: { name: "Illes Balears", label: "les Illes Balears", sub: "de les Illes Balears", note: "a les Illes Balears", text: "el català", short: "català", parties: ["psoe", "pp", "vox", "fa", "salf"] },
+  can: { name: "Canàries", label: "Canàries", sub: "de Canàries", note: "a Canàries", parties: ["psoe", "pp", "vox", "fa", "cc", "salf"] },
   resta: { name: "Resta de l'Estat", parties: ["psoe", "pp", "vox", "fa", "podemos", "salf"] },
 };
 const ASSEMBLA_TERR_KEY = "r29n-terr";
@@ -498,9 +498,9 @@ function assemblaResult(ctx, ans, terr, restart) {
         <div class="asb-pod">${[top[1], top[0], top[2]].map((r, k) => r ? `<div class="asb-pc p${[2, 1, 3][k]}" style="--pc:${r.color}"><b>${esc(r.sig)}</b><div class="asb-pb"><strong>${r.pct} %</strong><span>${["2n", "1r", "3r"][k]}</span></div></div>` : "<div></div>").join("")}</div>
         ${yes || no ? `<div class="asb-why"><small>On hi coincideixes amb ${esc(rows[0].sig)}</small>
           ${yes ? `<p><i class="ok"></i>${esc(yes)}</p>` : ""}${no ? `<p><i class="ko"></i>Hi discrepes: ${esc(no)}</p>` : ""}</div>` : ""}
-        <p class="asb-all">Tots els partits que es presenten ${esc(T.note || "a la resta de l'Estat")}</p>
+        <p class="asb-all">Els partits del test que es presenten ${esc(T.note || "a la resta de l'Estat")}</p>
         <div class="asb-bars">${rows.map((r) => `<details class="asb-row" style="--pc:${r.color}"><summary><b>${esc(r.sig)}</b><span class="asb-bar"><i style="width:${r.pct}%"></i></span><em>${r.pct} %</em></summary>${detail(r)}</details>`).join("")}</div>
-        <p class="muted asb-note">Toca un partit per veure en què hi coincideixes i en què no. És orientatiu: no és cap recomanació de vot.</p>
+        <p class="muted asb-note">Toca un partit per veure en què hi coincideixes i en què no. És orientatiu: no és cap recomanació de vot.${terr === "cat" ? " Alhora (i D21 a Barcelona) també s'hi presenten, però no són al test." : terr === "resta" ? " A Madrid també es presenta D21, que no és al test." : ""}</p>
         <div class="asb-acts2"><button class="btn primary" type="button" data-asb-out="af-share">Comparteix l'afinitat</button><button class="btn asb-dl-btn" type="button" data-asb-out="af-dl">⬇ Descarrega la imatge</button></div>
       </section>
       ${assemblaMethodHtml(terr)}

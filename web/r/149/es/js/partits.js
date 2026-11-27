@@ -135,7 +135,7 @@ const PHOTOS = {
 };
 
 // ---------- Partits que es presenten al 29N ----------
-// Candidatures segons la Viquipèdia (consulta del 20-10-2026), pendents de la proclamació oficial.
+// Candidatures proclamades (BOE del 3-11-2026).
 // x: eix esquerra (0) – dreta (10); y: centralisme (0) – sobiranisme (10). Posicions orientatives.
 // Vots: investidura de Sánchez (16-11-2023) i llei d'amnistia (votació final, 30-5-2024).
 const PARTIES = [
@@ -164,21 +164,21 @@ const PARTIES = [
     seats: 31, votes: 12.3, euro: "Verdes/ALE y La Izquierda", x: 2.6, y: 5.6,
     ideas: ["Izquierda", "Ecologismo", "Feminismo", "Plurinacionalidad"],
     territory: "Defiende un Estado plurinacional.",
-    inv: "sí", amn: "sí", note: "Coalición de IU, Movimiento Sumar, Más Madrid y Catalunya en Comú, entre otros. Los datos de 2023 son los de Sumar.",
+    inv: "sí", amn: "sí", note: "Coalición de IU, Movimiento Sumar, Más Madrid y Catalunya en Comú, entre otros. Se presenta como Comuns-Front Ampli en Cataluña, Compromís en la Comunidad Valenciana (con Podem y EUPV), Ara Més-Front Ampli en Baleares, Frente Amplio-Fronte Ampla en Galicia, CHA-Frente Amplio en Aragón y Unidad del Pueblo Canario en Canarias. No se presenta en Teruel, Ceuta ni Melilla. Los datos de 2023 son los de Sumar.",
     cand: { name: "Ada Colau", info: "Alcaldesa de Barcelona de 2015 a 2023. Fue portavoz de la PAH." },
     leader: null },
   { id: "podemos", sig: "Podemos", name: "Podemos", color: "#6c2b7e", founded: "2014",
     seats: 4, votes: null, euro: "La Izquierda", x: 1, y: 6.9,
     ideas: ["Izquierda", "Republicanismo", "Feminismo"],
     territory: "Defiende la plurinacionalidad y un referéndum pactado en Cataluña.",
-    inv: "sí", amn: "sí", note: "En 2023 fue dentro de Sumar; sus diputados pasaron al Grupo Mixto.",
+    inv: "sí", amn: "sí", note: "No se presenta solo en Cataluña (apoya las listas de ERC), en la Comunidad Valenciana (va dentro de Compromís), en Canarias (dentro de Unidad del Pueblo Canario), en Baleares ni en Melilla. En 2023 fue dentro de Sumar; sus diputados pasaron al Grupo Mixto.",
     cand: { name: "Irene Montero", info: "Ministra de Igualdad (2020–2023) y eurodiputada desde 2024." },
     leader: { name: "Ione Belarra", role: "Secretaria general" } },
   { id: "erc", sig: "ERC", name: "Esquerra Republicana de Catalunya", color: "#f59f24", founded: "1931",
     seats: 7, votes: 1.9, euro: "Verds/ALE", x: 3.2, y: 9.6,
     ideas: ["Independentismo", "Republicanismo", "Izquierda"],
     territory: "Quiere la independencia de Cataluña.",
-    inv: "sí", amn: "sí", note: "",
+    inv: "sí", amn: "sí", note: "Podem Catalunya se integra en sus listas.",
     cand: { name: "Gabriel Rufián", info: "Diputado desde 2016 y portavoz de ERC en el Congreso desde 2019." },
     leader: { name: "Oriol Junqueras", role: "Presidente" } },
   { id: "junts", sig: "Junts", name: "Junts per Catalunya", color: "#20b8c8", founded: "2020",
@@ -192,14 +192,14 @@ const PARTIES = [
     seats: 6, votes: 1.4, euro: "La Izquierda", x: 0.9, y: 9.4,
     ideas: ["Independentismo vasco", "Izquierda abertzale", "Socialismo"],
     territory: "Quiere la independencia de Euskal Herria.",
-    inv: "sí", amn: "sí", note: "",
+    inv: "sí", amn: "sí", note: "En Navarra se presenta en coalición con ERC.",
     cand: { name: "Oskar Matute", info: "Diputado en el Congreso desde 2019." },
     leader: { name: "Arnaldo Otegi", role: "Coordinador general" } },
   { id: "pnv", sig: "PNV", name: "Partido Nacionalista Vasco", color: "#3f8f45", founded: "1895",
     seats: 5, votes: 1.1, euro: "Renew Europe", x: 5.4, y: 8,
     ideas: ["Nacionalismo vasco", "Democracia cristiana", "Centroderecha"],
     territory: "Defiende más autogobierno y el concierto económico.",
-    inv: "sí", amn: "sí", note: "",
+    inv: "sí", amn: "sí", note: "En Navarra va dentro de Geroa Bai.",
     cand: { name: "Maribel Vaquero", info: "Diputada del PNV en el Congreso." },
     leader: { name: "Aitor Esteban", role: "Presidente del EBB" } },
   { id: "bng", sig: "BNG", name: "Bloque Nacionalista Galego", color: "#7bb6e0", founded: "1982",
@@ -220,9 +220,23 @@ const PARTIES = [
     seats: 0, votes: null, euro: "No inscritos", x: 8.6, y: 1.6,
     ideas: ["Populismo", "Antiestablishment", "Derecha"],
     territory: "",
-    inv: "—", amn: "—", note: "Sin diputados en el Congreso. Obtuvo 3 eurodiputados en 2024.",
+    inv: "—", amn: "—", note: "Sin diputados en el Congreso. Obtuvo 3 eurodiputados en 2024. No se presenta en Bizkaia, Gipuzkoa, Girona, Lleida, Cantabria ni Ciudad Real.", v23: "No existía en 2023",
     cand: { name: "Alvise Pérez", info: "Fundador del partido y eurodiputado desde 2024." },
     leader: { name: "Alvise Pérez", role: "Fundador" } },
+  { id: "alhora", sig: "Alhora", name: "Alhora", color: "#8e1b3a", founded: "2024",
+    seats: 0, votes: null, v23: "No existía en 2023", euro: "—", x: 6.8, y: 9.9,
+    ideas: ["Independentismo", "Nacionalismo catalán"],
+    territory: "Quiere la independencia de Cataluña.",
+    inv: "—", amn: "—", note: "Solo se presenta en Barcelona, Girona, Lleida y Tarragona. No tiene representación: en las elecciones al Parlament de 2024 sacó unos 14.000 votos (0,4 %).",
+    cand: { name: "Jordi Graupera", info: "Presidente de Alhora y cabeza de lista por Barcelona." },
+    leader: { name: "Jordi Graupera", role: "Presidente" } },
+  { id: "d21", sig: "D21", name: "Democracia para el Siglo 21", color: "#ff8c1a", founded: "2026",
+    seats: 0, votes: null, v23: "No existía en 2023", euro: "—", x: 5.6, y: 2.4,
+    ideas: ["Centro", "Liberalismo", "Regeneración democrática"],
+    territory: "",
+    inv: "—", amn: "—", note: "Coalición de Democracia 21, Ciudadanos y Unión de Ciudadanos Independientes. Solo se presenta en Madrid y Barcelona.",
+    cand: { name: "Miriam González", info: "Abogada especializada en comercio internacional y derecho europeo, fundadora de Democracia 21 y cabeza de lista por Madrid." },
+    leader: { name: "Miriam González", role: "Presidenta de Democracia 21" } },
 ];
 
 // Fotos reals per als polítics del Match ideològic

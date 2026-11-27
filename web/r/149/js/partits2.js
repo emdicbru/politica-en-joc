@@ -20,11 +20,11 @@ const PARTY_EXTRA = {
   },
   psoe: {
     hist: "Fundat per Pablo Iglesias el 1879. Ha governat amb Felipe González (1982–1996), Zapatero (2004–2011) i Sánchez des del 2018.",
-    gov: "Lidera el Govern d'Espanya (en coalició amb Sumar) i governa a Castella-la Manxa, Astúries i Navarra; a Catalunya governa el PSC amb Salvador Illa.",
+    gov: "Lidera el Govern d'Espanya (en coalició amb Sumar, ara Frente Amplio) i governa a Castella-la Manxa, Astúries i Navarra; a Catalunya governa el PSC amb Salvador Illa.",
     strong: "Andalusia, Catalunya (amb el PSC), Castella-la Manxa, Astúries, Navarra i Extremadura.",
     stars: ["Mantenir i ampliar els drets socials", "Més habitatge públic", "Impostos a banca i energètiques"],
-    allies: "Governa en coalició amb Sumar i depèn de nacionalistes i independentistes (ERC, Junts, PNV, Bildu, BNG) per aprovar lleis.",
-    vs: "Competeix amb el PP pel vot moderat i amb Sumar i Podemos pel vot d'esquerres.",
+    allies: "Governa en coalició amb Sumar (ara Frente Amplio) i depèn de nacionalistes i independentistes (ERC, Junts, PNV, Bildu, BNG) per aprovar lleis.",
+    vs: "Competeix amb el PP pel vot moderat i amb Frente Amplio i Podemos pel vot d'esquerres.",
   },
   vox: {
     hist: "Fundat el 2013 per antics membres del PP. Va entrar al Parlament d'Andalusia el 2018 i al Congrés el 2019, on va ser tercera força.",
@@ -48,7 +48,7 @@ const PARTY_EXTRA = {
     strong: "Sobretot entre votants joves i urbans; presència limitada al territori.",
     stars: ["Nacionalitzar sectors estratègics", "Habitatge: topall de lloguers", "República i plurinacionalitat"],
     allies: "Dona suport puntual al PSOE però es distancia de Sumar i del Govern.",
-    vs: "Competeix amb Sumar/FA pel vot d'esquerra alternativa.",
+    vs: "Competeix amb Frente Amplio pel vot d'esquerra alternativa, tot i que comparteixen llista al País Valencià (Compromís) i a Canàries (Unidad del Pueblo Canario).",
   },
   erc: {
     hist: "Fundada el 1931, va governar la Generalitat amb Companys; ha estat al centre de la política catalana des del 2003 i va presidir la Generalitat amb Aragonès (2021–2024).",
@@ -64,7 +64,7 @@ const PARTY_EXTRA = {
     strong: "Catalunya, sobretot interior, Girona i zones rurals.",
     stars: ["Amnistia i retorn de Puigdemont", "Competències d'immigració i finançament propi", "Més català a l'Administració i a l'Estat"],
     allies: "No pacta amb Vox ni amb el PP; va facilitar la investidura de Sánchez el 2023 amb l'acord de l'amnistia.",
-    vs: "Competeix amb ERC pel vot independentista i amb Aliança Catalana per la dreta sobiranista.",
+    vs: "Competeix amb ERC i amb Alhora pel vot independentista.",
   },
   bildu: {
     hist: "Coalició fundada el 2012 de l'esquerra independentista basca (Sortu, EA, Alternatiba, Aralar). Governa molts ajuntaments i és segona força al País Basc.",

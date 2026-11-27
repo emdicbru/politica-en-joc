@@ -8918,3 +8918,14 @@ h1, h2, h3 { text-wrap: balance; }
 .ep-xmake { margin-top: 12px; }
 @media (max-width: 640px) { .ep-starts.two { grid-template-columns: 1fr 1fr; } .ep-pedit .ep-prows { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .ep-pedit { animation: none; } }
+.ep-mygroups { padding: 12px 16px; margin-top: 12px; }
+.ep-mygroups > summary { cursor: pointer; font-weight: 800; }
+.ep-mygroups > summary small { color: var(--muted); }
+.ep-mygroups ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.ep-mygroups li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--paper); }
+.ep-mygroups li small { grid-column: 1; color: var(--muted); font-size: .76rem; }
+.ep-mygroups li button { grid-column: 2; grid-row: 1 / 3; font-size: .82rem; }
+.ep-mine-a { display: flex; gap: 6px; flex-wrap: wrap; }
+.pf-acct { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--card); border: 2px solid var(--ink); font-size: .9rem; }
+.pf-acct small { display: block; color: var(--muted); font-size: .76rem; }
+.pf-acct-b { display: flex; gap: 6px; flex-wrap: wrap; }

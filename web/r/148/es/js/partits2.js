@@ -20,11 +20,11 @@ const PARTY_EXTRA = {
   },
   psoe: {
     hist: "Fundado por Pablo Iglesias en 1879. Ha gobernado con Felipe González (1982–1996), Zapatero (2004–2011) y Sánchez desde 2018.",
-    gov: "Lidera el Gobierno de España (en coalición con Sumar) y gobierna en Castilla-La Mancha, Asturias y Navarra; en Cataluña gobierna el PSC con Salvador Illa.",
+    gov: "Lidera el Gobierno de España (en coalición con Sumar, ahora Frente Amplio) y gobierna en Castilla-La Mancha, Asturias y Navarra; en Cataluña gobierna el PSC con Salvador Illa.",
     strong: "Andalucía, Cataluña (con el PSC), Castilla-La Mancha, Asturias, Navarra y Extremadura.",
     stars: ["Mantener y ampliar los derechos sociales", "Más vivienda pública", "Impuestos a banca y energéticas"],
-    allies: "Gobierna en coalición con Sumar y depende de nacionalistas e independentistas (ERC, Junts, PNV, Bildu, BNG) para aprobar leyes.",
-    vs: "Compite con el PP por el voto moderado y con Sumar y Podemos por el voto de izquierdas.",
+    allies: "Gobierna en coalición con Sumar (ahora Frente Amplio) y depende de nacionalistas e independentistas (ERC, Junts, PNV, Bildu, BNG) para aprobar leyes.",
+    vs: "Compite con el PP por el voto moderado y con Frente Amplio y Podemos por el voto de izquierdas.",
   },
   vox: {
     hist: "Fundado en 2013 por antiguos miembros del PP. Entró en el Parlamento de Andalucía en 2018 y en el Congreso en 2019, donde fue tercera fuerza.",
@@ -48,7 +48,7 @@ const PARTY_EXTRA = {
     strong: "Sobre todo entre votantes jóvenes y urbanos; presencia limitada en el territorio.",
     stars: ["Nacionalizar sectores estratégicos", "Vivienda: tope a los alquileres", "República y plurinacionalidad"],
     allies: "Da apoyo puntual al PSOE pero se distancia de Sumar y del Gobierno.",
-    vs: "Compite con Sumar/FA por el voto de izquierda alternativa.",
+    vs: "Compite con Frente Amplio por el voto de izquierda alternativa, aunque comparten lista en la Comunidad Valenciana (Compromís) y en Canarias (Unidad del Pueblo Canario).",
   },
   erc: {
     hist: "Fundada en 1931, gobernó la Generalitat con Companys; ha estado en el centro de la política catalana desde 2003 y presidió la Generalitat con Aragonès (2021–2024).",
@@ -64,7 +64,7 @@ const PARTY_EXTRA = {
     strong: "Cataluña, sobre todo el interior, Girona y las zonas rurales.",
     stars: ["Amnistía y regreso de Puigdemont", "Competencias de inmigración y financiación propia", "Más catalán en la Administración y en el Estado"],
     allies: "No pacta con Vox ni con el PP; facilitó la investidura de Sánchez en 2023 con el acuerdo de la amnistía.",
-    vs: "Compite con ERC por el voto independentista y con Aliança Catalana por la derecha soberanista.",
+    vs: "Compite con ERC y con Alhora por el voto independentista.",
   },
   bildu: {
     hist: "Coalición fundada en 2012 por la izquierda independentista vasca (Sortu, EA, Alternatiba, Aralar). Gobierna muchos ayuntamientos y es la segunda fuerza en el País Vasco.",

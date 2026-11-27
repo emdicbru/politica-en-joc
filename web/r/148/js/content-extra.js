@@ -94,7 +94,7 @@ QUESTIONS.push(...[
     exp: "CDC es va coalitzar amb Unió Democràtica en la federació Convergència i Unió (CiU)." },
   { cat: "catalunya", q: "Quin partit liderat per Sílvia Orriols va entrar al Parlament de Catalunya el 2024?",
     opts: ["Aliança Catalana", "Junts", "La CUP", "Vox"],
-    exp: "Va obtenir 2 escons a les eleccions del 12 de maig de 2024." },
+    exp: "Partit d'extrema dreta independentista, va obtenir 2 escons a les eleccions del 12 de maig de 2024." },
   { cat: "catalunya", q: "Quin partit independentista d'esquerres va perdre la representació al Congrés el 2023?",
     opts: ["La CUP", "ERC", "Junts", "Els Comuns"],
     exp: "La CUP havia tingut 2 diputats al Congrés entre el 2019 i el 2023." },

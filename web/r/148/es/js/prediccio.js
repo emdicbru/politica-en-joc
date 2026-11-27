@@ -907,12 +907,12 @@ function prdCvBase(name, sub) {
   c.textAlign = "left"; c.fillStyle = PRD_C.muted; c.font = prdFSans(28, 700);
   c.fillText(sub, 56, 76);
   c.fillStyle = PRD_C.ink; c.font = prdFDisp(50);
-  c.fillText(name ? `La predicción de ${name}` : "Mi predicción", 56, 140, W - 112);
+  c.fillText(name ? `El Congreso de ${name}` : "Mi Congreso", 56, 140, W - 112);
   c.fillStyle = "rgba(23,23,61,.12)"; c.fillRect(56, H - 106, W - 112, 2);
   c.textAlign = "left"; c.fillStyle = PRD_C.ink; c.font = prdFDisp(28); c.fillText("Política en Joc", 56, H - 46);
   c.textAlign = "right"; c.font = prdFSans(21, 600); c.fillStyle = PRD_C.muted;
-  c.fillText("Haz la tuya: politicaenjoc.cat/es/#prediccio", W - 56, H - 60);
-  c.fillText("Predicción personal, no es ninguna encuesta", W - 56, H - 32);
+  c.fillText("Haz el tuyo: politicaenjoc.cat/es/#electoporra", W - 56, H - 60);
+  c.fillText("Electoporra · Pronóstico personal, no es ninguna encuesta", W - 56, H - 32);
   return { cv, c, W, H };
 }
 function prdCvHemi(c, d, cx, cy, R, r, big = true) {

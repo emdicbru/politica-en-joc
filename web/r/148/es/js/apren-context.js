@@ -131,8 +131,8 @@ const AP_CONTEXT_CHAPTERS = [
       { t: "widget", w: "issues" },
       { t: "h", h: "Qué mayorías pueden salir" },
       { t: "cards", items: [
-        { title: "Un gobierno del PP", text: "Necesitaría 176 síes, o más síes que noes en la segunda votación. Los socios posibles son Vox, UPN y Coalición Canaria. El PP y Vox han pactado en varias comunidades autónomas." },
-        { title: "Un gobierno del PSOE", text: "Tendría que reeditar la mayoría de 2023, con Sumar y partidos nacionalistas e independentistas. La ruptura de Junts con el PSOE la hace más difícil." },
+        { title: "Un gobierno del PP", text: "Necesitaría 176 síes, o más síes que noes en la segunda votación. Los socios posibles son Vox y Coalición Canaria (UPN se presenta dentro de la lista UPN-PP en Navarra). PP y Vox han pactado en varias comunidades autónomas." },
+        { title: "Un gobierno del PSOE", text: "Tendría que reeditar la mayoría de 2023, con Frente Amplio, Podemos y partidos nacionalistas e independentistas. La ruptura de Junts con el PSOE la hace más difícil." },
         { title: "Una gran coalición", text: "PP y PSOE sumarían de sobra, pero nunca han gobernado juntos en el Estado y los dos lo descartan." },
         { title: "Bloqueo y repetición", text: "Si en dos meses nadie es investido, se vuelven a convocar elecciones, como pasó en 2016 y 2019." },
       ] },
@@ -264,10 +264,10 @@ const AP_ISSUE_NEWS = { hab: "habitatge", ter: "territori", eco: "economia", tre
 const AP_FAMILIES = [
   { t: "Socialdemocracia", c: "#e3101f", d: "Economía de mercado con un estado del bienestar fuerte: sanidad, educación y pensiones públicas, financiadas con impuestos progresivos.", p: ["psoe"] },
   { t: "Izquierda alternativa", c: "#e0306f", d: "Más peso del Estado y de los servicios públicos, y defensa del ecologismo, el feminismo y los derechos sociales. Incluye tradiciones comunistas y ecosocialistas.", p: ["fa", "podemos"] },
-  { t: "Liberalismo", c: "#f2b600", d: "Libertad individual, economía de mercado y un Estado limitado. En España no hay ningún gran partido puramente liberal: es una tradición presente en parte del centroderecha.", p: ["pp", "junts"] },
+  { t: "Liberalismo", c: "#f2b600", d: "Libertad individual, economía de mercado y un Estado limitado. En España no hay ningún gran partido puramente liberal: es una tradición presente en parte del centroderecha.", p: ["pp", "junts", "d21"] },
   { t: "Conservadurismo y democracia cristiana", c: "#1e88d6", d: "Defensa de la tradición, la familia, el orden y la economía de mercado, a menudo con raíces cristianas.", p: ["pp", "pnv"] },
   { t: "Derecha radical y nacionalpopulismo", c: "#5cbf2a", d: "Nacionalismo fuerte, control estricto de la inmigración, rechazo de lo que llama «ideología de género» y desconfianza hacia la UE. La mayoría de la ciencia política sitúa ahí a Vox, que se define como patriótico y conservador.", p: ["vox"] },
-  { t: "Nacionalismos y soberanismos", c: "#20b8c8", d: "Defienden Cataluña, el País Vasco, Galicia o Canarias como naciones o pueblos con derecho a decidir. Los hay de izquierdas y de centroderecha.", p: ["erc", "junts", "bildu", "pnv", "bng", "cc"] },
+  { t: "Nacionalismos y soberanismos", c: "#20b8c8", d: "Defienden Cataluña, el País Vasco, Galicia o Canarias como naciones o pueblos con derecho a decidir. Los hay de izquierdas y de centroderecha.", p: ["erc", "junts", "alhora", "bildu", "pnv", "bng", "cc"] },
   { t: "Ecologismo", c: "#00a37a", d: "Sitúa la crisis climática y la protección del medio ambiente en el centro de la política. En España, está presente sobre todo dentro de las coaliciones de izquierdas.", p: ["fa"] },
   { t: "Populismo", c: "#5d4037", d: "Más que una ideología, es un estilo: presenta la política como un choque entre «el pueblo» y «las élites». Puede ser de izquierdas o de derechas, y se combina con otras ideologías.", p: ["salf"] },
 ];

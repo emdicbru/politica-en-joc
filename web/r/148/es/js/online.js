@@ -108,7 +108,7 @@ const Online = {
     if (!ready || !Online.user) return false;
     const m = me();
     const photo = typeof m.photo === 'string' && m.photo.length < 60000 ? m.photo : '';
-    try { await F.setDoc(F.doc(db, 'porra', m.uid), { uid: m.uid, name: m.name, photo, t: F.serverTimestamp(), b: doc.b || {}, ...(doc.s ? { s: doc.s, cs: doc.cs || 0 } : {}), x: (doc.x || []).slice(0, 10) }); return true; } catch (e) { console.warn(e); toast("No se ha podido guardar (quizá ya está cerrado)"); return false; }
+    try { await F.setDoc(F.doc(db, 'porra', m.uid), { uid: m.uid, name: m.name, photo, t: F.serverTimestamp(), b: doc.b || {}, ...(doc.s ? { s: doc.s, cs: doc.cs || 0 } : {}), ...(doc.pv ? { pv: doc.pv } : {}), x: (doc.x || []).slice(0, 10) }); return true; } catch (e) { console.warn(e); toast("No se ha podido guardar (quizá ya está cerrado)"); return false; }
   },
   async pronLeagues() { return ready && Online.user ? myLeagues() : []; },
   // Grups de l'Electoporra: són les Lligues d'amics (es creen i s'hi entra des de l'Electoporra mateix)
@@ -117,6 +117,12 @@ const Online = {
     const code = Array.from({ length: LEAGUE_LEN }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
     const lg = { code, name: String(name).slice(0, 30), owner: Online.user.uid, members: [Online.user.uid] };
     try { await F.setDoc(F.doc(db, "leagues", code), { ...lg, createdAt: F.serverTimestamp() }); return lg; } catch (e) { console.warn(e); toast("No se ha podido crear el grupo"); return null; }
+  },
+  async leagueDelete(code) {
+    try { await F.deleteDoc(F.doc(db, "leagues", code)); return true; } catch (e) { console.warn(e); toast("No se ha podido borrar el grupo"); return false; }
+  },
+  async leagueLeave(code) {
+    try { await F.updateDoc(F.doc(db, "leagues", code), { members: F.arrayRemove(Online.user.uid) }); return true; } catch (e) { console.warn(e); toast("No has podido salir"); return false; }
   },
   async leagueJoin(code) {
     if (!ready || !Online.user) return null;

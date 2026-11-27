@@ -135,7 +135,7 @@ const PHOTOS = {
 };
 
 // ---------- Partits que es presenten al 29N ----------
-// Candidatures segons la Viquipèdia (consulta del 20-10-2026), pendents de la proclamació oficial.
+// Candidatures proclamades (BOE del 3-11-2026).
 // x: eix esquerra (0) – dreta (10); y: centralisme (0) – sobiranisme (10). Posicions orientatives.
 // Vots: investidura de Sánchez (16-11-2023) i llei d'amnistia (votació final, 30-5-2024).
 const PARTIES = [
@@ -164,21 +164,21 @@ const PARTIES = [
     seats: 31, votes: 12.3, euro: "Verds/ALE i L'Esquerra", x: 2.6, y: 5.6,
     ideas: ["Esquerra", "Ecologisme", "Feminisme", "Plurinacionalitat"],
     territory: "Defensa un Estat plurinacional.",
-    inv: "sí", amn: "sí", note: "Coalició d'IU, Movimiento Sumar, Más Madrid i Catalunya en Comú, entre d'altres. Les dades de 2023 són les de Sumar.",
+    inv: "sí", amn: "sí", note: "Coalició d'IU, Movimiento Sumar, Más Madrid i Catalunya en Comú, entre d'altres. Es presenta com a Comuns-Front Ampli a Catalunya, Compromís al País Valencià (amb Podem i EUPV), Ara Més-Front Ampli a les Balears, Frente Amplio-Fronte Ampla a Galícia, CHA-Frente Amplio a l'Aragó i Unidad del Pueblo Canario a Canàries. No es presenta a Terol, Ceuta ni Melilla. Les dades de 2023 són les de Sumar.",
     cand: { name: "Ada Colau", info: "Alcaldessa de Barcelona del 2015 al 2023. Va ser portaveu de la PAH." },
     leader: null },
   { id: "podemos", sig: "Podemos", name: "Podemos", color: "#6c2b7e", founded: "2014",
     seats: 4, votes: null, euro: "L'Esquerra", x: 1, y: 6.9,
     ideas: ["Esquerra", "Republicanisme", "Feminisme"],
     territory: "Defensa la plurinacionalitat i un referèndum pactat a Catalunya.",
-    inv: "sí", amn: "sí", note: "El 2023 va anar dins de Sumar; els seus diputats van passar al Grup Mixt.",
+    inv: "sí", amn: "sí", note: "No es presenta sol a Catalunya (dona suport a les llistes d'ERC), al País Valencià (va dins de Compromís), a Canàries (dins d'Unidad del Pueblo Canario), a les Balears ni a Melilla. El 2023 va anar dins de Sumar; els seus diputats van passar al Grup Mixt.",
     cand: { name: "Irene Montero", info: "Ministra d'Igualtat (2020–2023) i eurodiputada des del 2024." },
     leader: { name: "Ione Belarra", role: "Secretària general" } },
   { id: "erc", sig: "ERC", name: "Esquerra Republicana de Catalunya", color: "#f59f24", founded: "1931",
     seats: 7, votes: 1.9, euro: "Verds/ALE", x: 3.2, y: 9.6,
     ideas: ["Independentisme", "Republicanisme", "Esquerra"],
     territory: "Vol la independència de Catalunya.",
-    inv: "sí", amn: "sí", note: "",
+    inv: "sí", amn: "sí", note: "Podem Catalunya s'integra a les seves llistes.",
     cand: { name: "Gabriel Rufián", info: "Diputat des del 2016 i portaveu d'ERC al Congrés des del 2019." },
     leader: { name: "Oriol Junqueras", role: "President" } },
   { id: "junts", sig: "Junts", name: "Junts per Catalunya", color: "#20b8c8", founded: "2020",
@@ -192,14 +192,14 @@ const PARTIES = [
     seats: 6, votes: 1.4, euro: "L'Esquerra", x: 0.9, y: 9.4,
     ideas: ["Independentisme basc", "Esquerra abertzale", "Socialisme"],
     territory: "Vol la independència d'Euskal Herria.",
-    inv: "sí", amn: "sí", note: "",
+    inv: "sí", amn: "sí", note: "A Navarra es presenta en coalició amb ERC.",
     cand: { name: "Oskar Matute", info: "Diputat al Congrés des del 2019." },
     leader: { name: "Arnaldo Otegi", role: "Coordinador general" } },
   { id: "pnv", sig: "PNV", name: "Partido Nacionalista Vasco", color: "#3f8f45", founded: "1895",
     seats: 5, votes: 1.1, euro: "Renew Europe", x: 5.4, y: 8,
     ideas: ["Nacionalisme basc", "Democràcia cristiana", "Centredreta"],
     territory: "Defensa més autogovern i el concert econòmic.",
-    inv: "sí", amn: "sí", note: "",
+    inv: "sí", amn: "sí", note: "A Navarra va dins de Geroa Bai.",
     cand: { name: "Maribel Vaquero", info: "Diputada del PNV al Congrés." },
     leader: { name: "Aitor Esteban", role: "President de l'EBB" } },
   { id: "bng", sig: "BNG", name: "Bloque Nacionalista Galego", color: "#7bb6e0", founded: "1982",
@@ -220,9 +220,23 @@ const PARTIES = [
     seats: 0, votes: null, euro: "No inscrits", x: 8.6, y: 1.6,
     ideas: ["Populisme", "Antiestablishment", "Dreta"],
     territory: "",
-    inv: "—", amn: "—", note: "Sense diputats al Congrés. Va obtenir 3 eurodiputats el 2024.",
+    inv: "—", amn: "—", note: "Sense diputats al Congrés. Va obtenir 3 eurodiputats el 2024. No es presenta a Bizkaia, Gipuzkoa, Girona, Lleida, Cantàbria ni Ciudad Real.", v23: "No existia el 2023",
     cand: { name: "Alvise Pérez", info: "Fundador del partit i eurodiputat des del 2024." },
     leader: { name: "Alvise Pérez", role: "Fundador" } },
+  { id: "alhora", sig: "Alhora", name: "Alhora", color: "#8e1b3a", founded: "2024",
+    seats: 0, votes: null, v23: "No existia el 2023", euro: "—", x: 6.8, y: 9.9,
+    ideas: ["Independentisme", "Nacionalisme català"],
+    territory: "Vol la independència de Catalunya.",
+    inv: "—", amn: "—", note: "Només es presenta a Barcelona, Girona, Lleida i Tarragona. No té representació: a les eleccions al Parlament del 2024 va treure uns 14.000 vots (0,4 %).",
+    cand: { name: "Jordi Graupera", info: "President d'Alhora i cap de llista per Barcelona." },
+    leader: { name: "Jordi Graupera", role: "President" } },
+  { id: "d21", sig: "D21", name: "Democracia para el Siglo 21", color: "#ff8c1a", founded: "2026",
+    seats: 0, votes: null, v23: "No existia el 2023", euro: "—", x: 5.6, y: 2.4,
+    ideas: ["Centre", "Liberalisme", "Regeneració democràtica"],
+    territory: "",
+    inv: "—", amn: "—", note: "Coalició de Democracia 21, Ciudadanos i Unión de Ciudadanos Independientes. Només es presenta a Madrid i Barcelona.",
+    cand: { name: "Miriam González", info: "Advocada especialitzada en comerç internacional i dret europeu, fundadora de Democracia 21 i cap de llista per Madrid." },
+    leader: { name: "Miriam González", role: "Presidenta de Democracia 21" } },
 ];
 
 // Fotos reals per als polítics del Match ideològic

@@ -8,19 +8,23 @@
 
 const APP = "https://politicaenjoc.cat/";
 const P = {
-  podemos: ["PODEMOS", "#6c2b7e"], bildu: ["EH BILDU", "#0f9a83"], bng: ["BNG", "#7bb6e0"], fa: ["FA", "#e0306f"], erc: ["ERC", "#f59f24"],
-  psoe: ["PSOE", "#e3101f"], pnv: ["PNV", "#3f8f45"], cc: ["CC", "#f2d21b"], junts: ["JUNTS", "#20b8c8"], altres: ["ALTRES", "#b5aea0"],
-  pp: ["PP", "#1e88d6"], upn: ["UPN", "#1c3f94"], salf: ["SALF", "#5d4037"], vox: ["VOX", "#5cbf2a"],
+  podemos: ["PODEMOS", "#6c2b7e"], adelante: ["ADELANTE", "#3aa060"], bildu: ["EH BILDU", "#0f9a83"], bng: ["BNG", "#7bb6e0"], fa: ["FA", "#e0306f"],
+  pacma: ["PACMA", "#9cc23a"], erc: ["ERC", "#f59f24"], psoe: ["PSOE", "#e3101f"], te: ["TERUEL EXISTE", "#00826f"], sy: ["SORIA YA", "#2f8f6b"],
+  pnv: ["PNV", "#3f8f45"], cc: ["CC", "#f2d21b"], d21: ["D21", "#ff8c1a"], junts: ["JUNTS", "#20b8c8"], alhora: ["ALHORA", "#8e1b3a"],
+  altres: ["ALTRES", "#b5aea0"], pp: ["PP", "#1e88d6"], upn: ["UPN", "#1c3f94"], salf: ["SALF", "#5d4037"], vox: ["VOX", "#5cbf2a"],
 };
 const ORDER = Object.keys(P); // d'esquerra a dreta a l'hemicicle
-const SIG = { podemos: "Podemos", bildu: "EH Bildu", bng: "BNG", fa: "FA", erc: "ERC", psoe: "PSOE", pnv: "PNV", cc: "CC", junts: "Junts", altres: "Altres", pp: "PP", upn: "UPN", salf: "SALF", vox: "Vox" };
+const SIG = { podemos: "Podemos", adelante: "Adelante", bildu: "EH Bildu", bng: "BNG", fa: "FA", pacma: "PACMA", erc: "ERC", psoe: "PSOE", te: "Teruel Existe", sy: "Soria Ya", pnv: "PNV", cc: "CC", d21: "D21", junts: "Junts", alhora: "Alhora", altres: "Altres", pp: "PP", upn: "UPN", salf: "SALF", vox: "Vox" };
 
 // «pp136.psoe122.vox33…» → { pp: 136, … } (només partits coneguts i, en total, com a molt 350 escons)
 export function parseSeats(s) {
   const out = {};
   let tot = 0;
-  for (const m of String(s || "").slice(0, 200).matchAll(/([a-z]{2,8})(\d{1,3})/g)) {
-    const k = m[1], n = Number(m[2]);
+  // Cada tros és «sigla + escons» (p. ex. «pp136», «d212»): la sigla és una de les conegudes (D21 porta xifres)
+  for (const tok of String(s || "").slice(0, 240).split(".")) {
+    const k = Object.keys(P).find((x) => tok.startsWith(x) && /^\d{1,3}$/.test(tok.slice(x.length)));
+    if (!k) continue;
+    const n = Number(tok.slice(k.length));
     if (!P[k] || out[k] !== undefined || !n) continue;
     if (tot + n > 350) break;
     out[k] = n; tot += n;

@@ -639,6 +639,16 @@ function epStepX(box, D, changed) {
 }
 
 // Pas 6: resum, desar i grup
+// Què impedeix desar (es diu clarament, amb la manera d'arreglar-ho)
+function epProblems(D) {
+  const out = [], left = epAvail() - pronStaked(D);
+  if (left < 0) out.push(`Te pasas de ${epFmt(-left)}. Baja la apuesta al Congreso o quita de alguna pregunta o apuesta propia.`);
+  if (D.s && epSeatSum(D.s) !== 350) out.push(`Tu Congreso tiene ${epSeatSum(D.s)} escaños: tiene que haber 350 (paso 1).`);
+  if (D.s && (D.cs || 0) < EP_STEP) out.push(`Apuesta al menos ${EP_STEP} monedas a tu Congreso (paso 3).`);
+  if (D.pv && epProvMissing(D.pv).length) out.push(`Falta acabar de repartir ${epProvMissing(D.pv).map((q) => q.name).join(", ")} (paso 2).`);
+  if (!D.s && !pronCount(D) && !(D.x || []).length) out.push("Aún no has apostado nada.");
+  return out;
+}
 function epStepFi(box, D, changed) {
   const left = epAvail() - pronStaked(D), dirty = epDirty() || !epHasSaved(), done = PronState.justSaved;
   const mk = PRON_M.filter((m) => D.b[m.id]?.a > 0);
@@ -650,8 +660,9 @@ function epStepFi(box, D, changed) {
         <li><span>✍️ ${(D.x || []).length} ${(D.x || []).length === 1 ? "apuesta propia" : "apuestas propias"}</span><em>${epCoin((D.x || []).reduce((a, x) => a + x.a, 0))}</em><button class="linkish" type="button" data-wgo2="5">Edita</button></li>
         <li class="tot"><span>Total apostado</span><em>${epCoin(pronStaked(D))}</em><span></span></li>
       </ul>
-      ${left < 0 ? `<p class="ep-warn">Te pasas de ${epFmt(-left)}. Quita de alguna apuesta para poder guardar.</p>` : ""}
-      ${done && !dirty ? `<p class="ep-saved">✓ ¡Guardada! Puedes cambiarla hasta las 20:00 del 29N.</p>` : `<button class="btn primary lg ep-go" type="button" data-fsave ${left < 0 || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Guardando…" : epHasSaved() ? "💾 Guarda los cambios" : "💾 Guarda mi Electoporra"}</button>`}
+      <p class="ep-sub">Puedes apostar hasta ${epCoin(epAvail())} (tus monedas y las ${EP_BONUS} de regalo).</p>
+      ${epProblems(D).map((t) => `<p class="ep-warn">⚠️ ${t}</p>`).join("")}
+      ${done && !dirty ? `<p class="ep-saved">✓ ¡Guardada! Puedes cambiarla hasta las 20:00 del 29N.</p>` : `<button class="btn primary lg ep-go" type="button" data-fsave ${epProblems(D).length || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Guardando…" : epHasSaved() ? "💾 Guarda los cambios" : "💾 Guarda mi Electoporra"}</button>`}
     </div>
     ${done && !dirty ? `<div class="ep-friends">
       <h3>👥 Y ahora, juega con amigos</h3>

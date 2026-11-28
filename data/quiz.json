@@ -1,7 +1,35 @@
 {
   "about": "Preguntes del quiz de l'actualitat (secció Notícies). Les genera cada dia tools/update-quiz.js (GitHub Models, capa gratuïta) amb verificació; també se n'hi poden afegir a mà. Han de ser sobre els fets, no sobre els mitjans. La primera resposta de 'a' és la correcta (l'app les barreja). Cada pregunta es fa servir durant 10 dies a partir de 'd'.",
-  "updated": "2026-11-27",
+  "updated": "2026-11-28",
   "questions": [
+    {
+      "d": "2026-11-28",
+      "t": "campanya",
+      "q": "En quina ciutat va realitzar Alberto Núñez Feijóo la seva jornada de reflexió abans del 29‑N?",
+      "a": [
+        "Ceuta",
+        "Sevilla",
+        "Madrid",
+        "València"
+      ],
+      "exp": "Feijóo va visitar Ceuta per a la jornada de reflexió, tal com informen diversos mitjans. La visita es va anunciar com a mostra de suport i solidaritat amb la ciutat.",
+      "u": "https://www.eldebate.com/espana/20261128/feijoo-visitara-ceuta-jornada-reflexion-como-muestra-apoyo-solidaridad_486166.html",
+      "auto": true
+    },
+    {
+      "d": "2026-11-28",
+      "t": "campanya",
+      "q": "Quin esdeveniment va organitzar Vox a la Plaça de Bous de València durant la campanya electoral?",
+      "a": [
+        "Va omplir la plaça amb seguidors per a un acte de suport",
+        "Va celebrar un concert de música tradicional",
+        "Va organitzar una manifestació pacífica contra el govern",
+        "Va presentar una proposta legislativa sobre energia"
+      ],
+      "exp": "Diversos mitjans informen que Vox va omplir la Plaça de Bous de València amb els seus simpatitzants en un acte de campanya, mostrant la seva presència a la ciutat.",
+      "u": "https://www.ara.cat/politica/vox-omple-placa-bous-valencia-tanca-campanya-miting-ple-d-insults-sanchez_1_5925602.html",
+      "auto": true
+    },
     {
       "d": "2026-11-27",
       "t": "campanya",
@@ -491,21 +519,7 @@
       "exp": "Diversos mitjans informen que el PP ha compartit fragments de l'entrevista de Puigdemont i ha afirmat que demostra la 'traïció' de Sánchez.",
       "u": "https://www.vilaweb.cat/noticies/el-pp-comparteix-a-xarxes-un-fragment-de-lentrevista-de-puigdemont-per-quan-sanchez-digui-que-es-mentida/",
       "auto": true
-    },
-    {
-      "d": "2026-11-18",
-      "t": "economia",
-      "q": "Quantes persones ha afirmat Pedro Sánchez que ha blindat el poder adquisitiu?",
-      "a": [
-        "15 milions",
-        "10 milions",
-        "20 milions",
-        "5 milions"
-      ],
-      "exp": "Segons diversos titulars, Sánchez ha declarat que el blindatge del poder adquisitiu beneficia a 15 milions de persones, incloent jubilats, funcionaris i treballadors amb salari mínim.",
-      "u": "https://www.lavanguardia.com/politica/20261117/11686876/sanchez-resalta-blindaje-adquisitivo-15-millones-personas.html",
-      "auto": true
     }
   ],
-  "updatedAuto": "2026-11-27"
+  "updatedAuto": "2026-11-28"
 }

@@ -3361,8 +3361,189 @@
      ]
     }
    ]
+  },
+  "2026-11-28": {
+   "v": 2,
+   "n": 10,
+   "model": "claude",
+   "questions": [
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat ha tancat la campanya Vox, amb un míting a la plaça de bous?",
+     "a": [
+      "València",
+      "Sevilla",
+      "Saragossa",
+      "Múrcia"
+     ],
+     "exp": "Vox va tancar la campanya del 29N amb un míting multitudinari a la plaça de bous de València.",
+     "u": "https://www.ara.cat/politica/eleccions-generals/vox-omple-placa-bous-valencia-tanca-campanya-miting-ple-d-insults-sanchez_1_5925602.html",
+     "s": [
+      "Ara",
+      "El Mundo",
+      "Europa Press"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin director de cinema ha participat al míting de tancament de campanya de Pedro Sánchez?",
+     "a": [
+      "Pedro Almodóvar",
+      "Alejandro Amenábar",
+      "Isabel Coixet",
+      "Fernando León de Aranoa"
+     ],
+     "exp": "Pedro Almodóvar va intervenir a l'acte de tancament del PSOE a la Caja Mágica de Madrid i va llegir un poema.",
+     "u": "https://www.20minutos.es/nacional/almodovar-aparece-mitin-sanchez-para-pedir-voto-psoe-defender-las-politicas-memoria-democratica_7066935_0.html",
+     "s": [
+      "ABC",
+      "El Mundo",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Quin exlíder va reaparèixer al tancament de campanya de Podemos per donar suport a Irene Montero?",
+     "a": [
+      "Pablo Iglesias",
+      "Alberto Garzón",
+      "Íñigo Errejón",
+      "Juan Carlos Monedero"
+     ],
+     "exp": "Pablo Iglesias va aparèixer a l'acte de tancament de Podemos per arropar Irene Montero.",
+     "u": "https://www.elmundo.es/elecciones/elecciones-generales/2026/11/27/6b09ba03e85ecee3358b45b2.html",
+     "s": [
+      "El Mundo",
+      "ABC",
+      "20minutos"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "En quina ciutat andalusa ha fet Feijóo el míting de tancament de campanya del PP?",
+     "a": [
+      "Sevilla",
+      "Màlaga",
+      "Granada",
+      "Còrdova"
+     ],
+     "exp": "Feijóo va tancar la campanya del PP a Sevilla, amb Juanma Moreno i Juan Bravo.",
+     "u": "https://www.lavanguardia.com/politica/20261127/11695380/feijoo-apela-votante-critico-psoe-ultimo-mitin-campana-sevilla-pido-cambieis-ideologia.html",
+     "s": [
+      "La Vanguardia",
+      "Europa Press",
+      "ABC"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Com ha definit Feijóo el PP en un acte a Barcelona de la darrera setmana de campanya?",
+     "a": [
+      "La casa comuna dels catalans",
+      "El partit de la Generalitat",
+      "La veu de Catalunya a Madrid",
+      "El refugi del catalanisme"
+     ],
+     "exp": "A Barcelona, Feijóo va presentar el PP com «la casa comuna dels catalans» i va apel·lar els votants del PSOE i de Junts.",
+     "u": "https://www.lavanguardia.com/politica/20261127/11695154/feijoo-erige-pp-barcelona-casa-comun-catalanes-apela-votante-psoe-junts.html",
+     "s": [
+      "La Vanguardia",
+      "Ara"
+     ]
+    },
+    {
+     "k": "actualitat",
+     "t": "campanya",
+     "q": "Gabriel Rufián ha demanat el vot dels socialistes «defraudats»: de quin partit és portaveu al Congrés?",
+     "a": [
+      "ERC",
+      "Junts",
+      "Compromís",
+      "PNV"
+     ],
+     "exp": "Gabriel Rufián, portaveu d'ERC al Congrés, va tancar la campanya demanant el vot dels socialistes «defraudats».",
+     "u": "https://www.eldiario.es/catalunya/rufian-cierra-campana-pidiendo-voto-socialistas-defraudados-psc-no-merece-voto_1_13700475.html",
+     "s": [
+      "eldiario.es",
+      "VilaWeb"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "historia",
+     "q": "Vox ha evocat Jaume I a València: quin any va conquerir aquest rei la ciutat?",
+     "a": [
+      "1238",
+      "1137",
+      "1276",
+      "1492"
+     ],
+     "exp": "Jaume I el Conqueridor va conquerir la ciutat de València el 1238, cosa que va donar lloc al Regne de València.",
+     "u": "https://www.ara.cat/politica/eleccions-generals/vox-omple-placa-bous-valencia-tanca-campanya-miting-ple-d-insults-sanchez_1_5925602.html",
+     "s": [
+      "Ara",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "cultura",
+     "q": "Quina pel·lícula de Pedro Almodóvar va guanyar l'Oscar a la millor pel·lícula de parla no anglesa el 2000?",
+     "a": [
+      "Todo sobre mi madre",
+      "Volver",
+      "Hable con ella",
+      "Mujeres al borde de un ataque de nervios"
+     ],
+     "exp": "«Todo sobre mi madre» va guanyar l'Oscar a la millor pel·lícula de parla no anglesa a la cerimònia del 2000.",
+     "u": "https://www.20minutos.es/nacional/almodovar-aparece-mitin-sanchez-para-pedir-voto-psoe-defender-las-politicas-memoria-democratica_7066935_0.html",
+     "s": [
+      "20minutos",
+      "ABC"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "geografia",
+     "q": "Ceuta, ciutat al centre del debat polític, és a la costa nord d'Àfrica. Quin estret la separa de la península Ibèrica?",
+     "a": [
+      "Estret de Gibraltar",
+      "Estret de Bonifacio",
+      "Estret del Bòsfor",
+      "Estret de Messina"
+     ],
+     "exp": "Ceuta és a la riba africana de l'estret de Gibraltar, que separa la península Ibèrica d'Àfrica.",
+     "u": "https://www.elespanol.com/espana/politica/20261127/abascal-feijoo-cercan-sanchez-invasion-ceuta-vincula-trump-netanyahu-milei/1003744474269_0.html",
+     "s": [
+      "El Español",
+      "El Mundo"
+     ]
+    },
+    {
+     "k": "cultura",
+     "t": "internacional",
+     "q": "Es negocia la formació de govern a Israel. Com es diu el parlament israelià?",
+     "a": [
+      "Knesset",
+      "Majlis",
+      "Duma",
+      "Sejm"
+     ],
+     "exp": "El parlament d'Israel és la Knesset, de 120 membres, que té seu a Jerusalem.",
+     "u": "https://www.vilaweb.cat/noticies/eisenkot-aliances-partits-religiosos-likud-govern-israel/",
+     "s": [
+      "VilaWeb",
+      "Ara"
+     ]
+    }
+   ]
   }
  },
  "about": "Test d'actualitat del dia (secció Inici i Rànquing). El genera cada matí tools/update-test.js amb la IA de Cloudflare i una verificació. La primera resposta de 'a' és la correcta (l'app les barreja). 'k': actualitat o cultura.",
- "updated": 1795755914198
+ "updated": 1795842292600
 }

@@ -8,13 +8,13 @@
 
 const APP = "https://politicaenjoc.cat/";
 const P = {
-  podemos: ["PODEMOS", "#6c2b7e"], adelante: ["ADELANTE", "#3aa060"], bildu: ["EH BILDU", "#0f9a83"], bng: ["BNG", "#7bb6e0"], fa: ["FA", "#e0306f"],
+  fo: ["FRENTE OBRERO", "#9b1c1c"], podemos: ["PODEMOS", "#6c2b7e"], adelante: ["ADELANTE", "#3aa060"], bildu: ["EH BILDU", "#0f9a83"], bng: ["BNG", "#7bb6e0"], fa: ["FA", "#e0306f"],
   pacma: ["PACMA", "#9cc23a"], erc: ["ERC", "#f59f24"], psoe: ["PSOE", "#e3101f"], te: ["TERUEL EXISTE", "#00826f"], sy: ["SORIA YA", "#2f8f6b"],
   pnv: ["PNV", "#3f8f45"], cc: ["CC", "#f2d21b"], d21: ["D21", "#ff8c1a"], junts: ["JUNTS", "#20b8c8"], alhora: ["ALHORA", "#8e1b3a"],
   altres: ["ALTRES", "#b5aea0"], pp: ["PP", "#1e88d6"], upn: ["UPN", "#1c3f94"], salf: ["SALF", "#5d4037"], vox: ["VOX", "#5cbf2a"],
 };
 const ORDER = Object.keys(P); // d'esquerra a dreta a l'hemicicle
-const SIG = { podemos: "Podemos", adelante: "Adelante", bildu: "EH Bildu", bng: "BNG", fa: "FA", pacma: "PACMA", erc: "ERC", psoe: "PSOE", te: "Teruel Existe", sy: "Soria Ya", pnv: "PNV", cc: "CC", d21: "D21", junts: "Junts", alhora: "Alhora", altres: "Altres", pp: "PP", upn: "UPN", salf: "SALF", vox: "Vox" };
+const SIG = { fo: "Frente Obrero", podemos: "Podemos", adelante: "Adelante", bildu: "EH Bildu", bng: "BNG", fa: "FA", pacma: "PACMA", erc: "ERC", psoe: "PSOE", te: "Teruel Existe", sy: "Soria Ya", pnv: "PNV", cc: "CC", d21: "D21", junts: "Junts", alhora: "Alhora", altres: "Altres", pp: "PP", upn: "UPN", salf: "SALF", vox: "Vox" };
 
 // «pp136.psoe122.vox33…» → { pp: 136, … } (només partits coneguts i, en total, com a molt 350 escons)
 export function parseSeats(s) {

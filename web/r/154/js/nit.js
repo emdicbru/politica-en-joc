@@ -11,7 +11,7 @@ const NIT_MAJ = 176;
 const NIT_EXTRA = {
   upn: ["UPN", "#1c3f94"], cup: ["CUP", "#e8c300"], ncbc: ["NC-BC", "#5fb0c9"], pdecat: ["PDeCAT", "#2a5fa8"], adelante: ["Adelante", "#3aa060"],
   te: ["Teruel Existe", "#00826f"], eva: ["España Vaciada", "#3a9c3a"], pacma: ["PACMA", "#9cc23a"], bqex: ["BQEx", "#3a8c3a"], gbai: ["Geroa Bai", "#d6243a"],
-  par: ["PAR", "#e8b400"], somoscc: ["Somos CyL", "#7a5aa8"], upl: ["UPL", "#b5326a"], xav: ["XAV", "#3a8c8c"], alhora: ["Alhora", "#8e1b3a"], d21: ["D21", "#ff8c1a"], sy: ["Soria Ya", "#2f8f6b"], altres: ["Altres", "#b5aea0"],
+  par: ["PAR", "#e8b400"], somoscc: ["Somos CyL", "#7a5aa8"], upl: ["UPL", "#b5326a"], xav: ["XAV", "#3a8c8c"], alhora: ["Alhora", "#8e1b3a"], d21: ["D21", "#ff8c1a"], sy: ["Soria Ya", "#2f8f6b"], fo: ["Frente Obrero", "#9b1c1c"], altres: ["Altres", "#b5aea0"],
 };
 const nitParty = (k) => {
   const p = espParty(k);

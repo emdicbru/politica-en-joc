@@ -128,7 +128,7 @@ const Online = {
           await F.setDoc(ref, body(nm)); return true;
         } catch (e2) {
           console.warn("Electoporra: segon intent", e2);
-          try { await F.setDoc(ref, body(m.name, false)); toast("Desada, però sense el repartiment per províncies"); return true; } catch (e3) { console.warn("Electoporra: tercer intent", e3); }
+          try { const ud = await F.getDoc(F.doc(db, "users", m.uid)); await F.setDoc(ref, body(ud.exists() ? ud.data().name || "Jugador" : "Jugador", false)); toast("Desada, però sense el repartiment per províncies"); return true; } catch (e3) { console.warn("Electoporra: tercer intent", e3); }
         }
       }
       toast(e.code === "unavailable" ? "No hi ha connexió: torna-ho a provar en un moment" : `No s'ha pogut desar (${e.code || e.message || "error"})`);      return false;

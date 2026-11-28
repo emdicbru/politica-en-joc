@@ -8929,3 +8929,34 @@ h1, h2, h3 { text-wrap: balance; }
 .pf-acct { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--card); border: 2px solid var(--ink); font-size: .9rem; }
 .pf-acct small { display: block; color: var(--muted); font-size: .76rem; }
 .pf-acct-b { display: flex; gap: 6px; flex-wrap: wrap; }
+.ep-pn { flex-direction: column; align-items: flex-start; gap: 0; }
+.ep-pn small { font-size: .68rem; font-weight: 600; color: var(--muted); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ep-grp.top { border-color: var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.ep-gtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
+.ep-gtabs button { font: 800 .85rem var(--sans); color: var(--ink); background: var(--card); border: 2px solid var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.ep-gtabs button[aria-selected="true"] { background: var(--ink); color: var(--card); }
+.ep-gtabs button small { opacity: .7; }
+/* v154 · la teva porra, ben visible */
+.ep-mine-t { font-family: var(--display); font-size: 1rem; margin: 18px 0 8px; padding-top: 14px; border-top: 2px dashed var(--paper-2); }
+.ep-mine-t:first-of-type { border-top: 0; padding-top: 0; }
+.ep-seat-l.full { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 10px; }
+.ep-seat-l small.down { color: var(--ko); }
+.ep-mine-bet { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--yellow) 22%, var(--card)); border: 2px dashed #c99400; font-size: .86rem; }
+.ep-mine-bet small { color: var(--muted); }
+.ep-mine-bet b.up { color: var(--ok); } .ep-mine-bet b.down { color: var(--ko); }
+.ep-mine-map { margin-top: 10px; }
+.ep-mine-map > summary { cursor: pointer; font-weight: 800; padding: 6px 0; }
+.ep-mine-prov { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-size: .86rem; }
+.ep-mine-prov span { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.ep-mine-prov i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.ep-mine-img { margin-top: 10px; display: inline-block; }
+.ep-mine-q { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ep-mine-q li { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--paper); }
+.ep-mine-q li.win { background: var(--ok-soft); }
+.ep-mine-q li.lose { opacity: .72; }
+.ep-mq { font-size: .86rem; font-weight: 600; }
+.ep-ma { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ep-ma b { font-size: .95rem; padding: 2px 10px; border-radius: 999px; background: var(--ink); color: var(--card); }
+.ep-ma em { font-style: normal; font-weight: 900; }
+.ep-xa em { font-style: normal; font-weight: 800; font-size: .8rem; }
+@media (max-width: 640px) { .ep-seat-l.full { grid-template-columns: 1fr 1fr; } }

@@ -8929,3 +8929,10 @@ h1, h2, h3 { text-wrap: balance; }
 .pf-acct { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--card); border: 2px solid var(--ink); font-size: .9rem; }
 .pf-acct small { display: block; color: var(--muted); font-size: .76rem; }
 .pf-acct-b { display: flex; gap: 6px; flex-wrap: wrap; }
+.ep-pn { flex-direction: column; align-items: flex-start; gap: 0; }
+.ep-pn small { font-size: .68rem; font-weight: 600; color: var(--muted); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ep-grp.top { border-color: var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.ep-gtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
+.ep-gtabs button { font: 800 .85rem var(--sans); color: var(--ink); background: var(--card); border: 2px solid var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.ep-gtabs button[aria-selected="true"] { background: var(--ink); color: var(--card); }
+.ep-gtabs button small { opacity: .7; }

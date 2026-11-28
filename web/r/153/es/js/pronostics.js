@@ -22,10 +22,18 @@ const EP_CONG = [[97, 4], [94, 2], [90, 1]];   // encert mínim (%) → multipli
 const PRON_INV23 = ["psoe", "fa", "podemos", "erc", "junts", "bildu", "pnv", "bng", "cc"]; // investidura del 2023
 const EP_CAT = ["B", "GI", "L", "T"];
 // Partits del Congrés que es reparteixen (els petits, plegats a «Més partits»)
-const EP_PARTIES = ["pp", "psoe", "vox", "fa", "podemos", "salf", "erc", "junts", "bildu", "pnv", "alhora", "d21", "bng", "cc"];
-const EP_MORE = ["pacma", "adelante", "te", "sy"];
+const EP_PARTIES = ["pp", "psoe", "vox", "fa", "podemos", "salf", "erc", "junts", "bildu", "pnv", "alhora", "d21", "adelante", "bng", "cc"];
+const EP_MORE = ["fo", "pacma", "te", "sy"];
+// Com es presenta cada partit el 29N (BOE del 3-11-2026): surt sota el nom, al repartir el Congrés
+const EP_NOTE = {
+  pp: "En Navarra, con UPN (lista UPN-PP)", psoe: "PSC en Cataluña", fa: "Comuns, Compromís, Ara Més, CHA, UPC… No en Teruel, Ceuta ni Melilla",
+  podemos: "No solo en Cataluña, Comunidad Valenciana, Baleares ni Canarias", salf: "No en Bizkaia, Gipuzkoa, Girona, Lleida, Cantabria ni Ciudad Real",
+  erc: "Cataluña", junts: "Cataluña", alhora: "Cataluña", bildu: "País Vasco, y en Navarra con ERC", pnv: "País Vasco (en Navarra, dentro de Geroa Bai)",
+  d21: "Democracia 21 y Ciudadanos · Madrid y Barcelona", adelante: "Andalucía", bng: "Galicia", cc: "Canarias",
+  fo: "En las 52 circunscripciones", pacma: "30 circunscripciones", te: "Teruel", sy: "Soria",
+};
 const pronRange = (party, cuts) => ({
-  opts: [["a", cuts[0] === 1 ? "Cap" : `Menys de ${cuts[0]}`], ["b", cuts[1] - 1 === cuts[0] ? `${cuts[0]}` : `De ${cuts[0]} a ${cuts[1] - 1}`], ["c", `De ${cuts[1]} a ${cuts[2] - 1}`], ["d", `${cuts[2]} o més`]],
+  opts: [["a", cuts[0] === 1 ? "Ninguna" : `Menos de ${cuts[0]}`], ["b", cuts[1] - 1 === cuts[0] ? `${cuts[0]}` : `De ${cuts[0]} a ${cuts[1] - 1}`], ["c", `De ${cuts[1]} a ${cuts[2] - 1}`], ["d", `${cuts[2]} o más`]],
   res: (d) => { const n = d.seats[party] || 0; return n < cuts[0] ? "a" : n < cuts[1] ? "b" : n < cuts[2] ? "c" : "d"; },
 });
 const epCatTop = (d) => {
@@ -34,22 +42,22 @@ const epCatTop = (d) => {
   return Object.entries(v).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 };
 const PRON_M = [
-  { id: "m1", e: "🥇", q: "Qui serà la primera força?", opts: [["pp", "PP"], ["psoe", "PSOE"], ["vox", "Vox"], ["altre", "Un altre partit"]], res: (d) => (["pp", "psoe", "vox"].includes(d.ranking[0]) ? d.ranking[0] : "altre") },
-  { id: "m6", e: "🔵", q: "PP i Vox sumaran majoria absoluta (176)?", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.pp || 0) + (d.seats.vox || 0) >= 176 ? "si" : "no") },
-  { id: "m7", e: "🔴", q: "Els partits que van investir Sánchez el 2023 tornaran a sumar 176?", hint: "PSOE, FA, Podemos, ERC, Junts, EH Bildu, PNV, BNG i CC", opts: [["si", "Sí"], ["no", "No"]], res: (d) => (PRON_INV23.reduce((a, k) => a + (d.seats[k] || 0), 0) >= 176 ? "si" : "no") },
-  { id: "m2", e: "🏛️", q: "Quants escons traurà el PP?", ...pronRange("pp", [120, 140, 160]) },
-  { id: "m3", e: "🏛️", q: "Quants escons traurà el PSOE?", ...pronRange("psoe", [100, 120, 140]) },
-  { id: "m4", e: "🏛️", q: "Quants escons traurà Vox?", ...pronRange("vox", [30, 45, 60]) },
-  { id: "m8", e: "🏛️", q: "Quants escons traurà Frente Amplio?", hint: "Amb Comuns-Front Ampli, Compromís, CHA i les altres marques de FA", ...pronRange("fa", [15, 25, 35]) },
-  { id: "m9", e: "🟣", q: "Quants escons traurà Podemos?", ...pronRange("podemos", [1, 3, 6]) },
-  { id: "m10", e: "🟤", q: "Quants escons traurà SALF (Se Acabó La Fiesta)?", ...pronRange("salf", [1, 3, 6]) },
-  { id: "m11", e: "🗳️", q: "Alhora traurà algun escó?", hint: "Es presenta a Barcelona, Girona, Lleida i Tarragona", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.alhora || 0) > 0 ? "si" : "no") },
-  { id: "m12", e: "🗳️", q: "D21 (Democracia 21 amb Ciudadanos) traurà algun escó?", hint: "Es presenta a Madrid i Barcelona", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.d21 || 0) > 0 ? "si" : "no") },
-  { id: "m13", e: "⚖️", q: "Junts o ERC: qui traurà més escons?", opts: [["junts", "Junts"], ["erc", "ERC"], ["empat", "Empataran"]], res: (d) => { const j = d.seats.junts || 0, e = d.seats.erc || 0; return j > e ? "junts" : e > j ? "erc" : "empat"; } },
-  { id: "m14", e: "📍", q: "Quin partit serà el més votat a Catalunya?", opts: [["psoe", "PSC"], ["junts", "Junts"], ["erc", "ERC"], ["pp", "PP"], ["altre", "Un altre"]], res: (d) => { const k = epCatTop(d); return ["psoe", "junts", "erc", "pp"].includes(k) ? k : "altre"; } },
-  { id: "m5", e: "📈", q: "La participació serà més alta o més baixa que el 2023 (66,6 %)?", opts: [["alta", "Més alta"], ["baixa", "Més baixa"]], res: (d) => (d.participacio == null ? null : d.participacio >= 66.6 ? "alta" : "baixa") },
+  { id: "m1", e: "🥇", q: "¿Quién será la primera fuerza?", opts: [["pp", "PP"], ["psoe", "PSOE"], ["vox", "Vox"], ["altre", "Otro partido"]], res: (d) => (["pp", "psoe", "vox"].includes(d.ranking[0]) ? d.ranking[0] : "altre") },
+  { id: "m6", e: "🔵", q: "¿PP y Vox sumarán mayoría absoluta (176)?", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.pp || 0) + (d.seats.vox || 0) >= 176 ? "si" : "no") },
+  { id: "m7", e: "🔴", q: "¿Los partidos que invistieron a Sánchez en 2023 volverán a sumar 176?", hint: "PSOE, FA, Podemos, ERC, Junts, EH Bildu, PNV, BNG y CC", opts: [["si", "Sí"], ["no", "No"]], res: (d) => (PRON_INV23.reduce((a, k) => a + (d.seats[k] || 0), 0) >= 176 ? "si" : "no") },
+  { id: "m2", e: "🏛️", q: "¿Cuántos escaños sacará el PP?", ...pronRange("pp", [120, 140, 160]) },
+  { id: "m3", e: "🏛️", q: "¿Cuántos escaños sacará el PSOE?", ...pronRange("psoe", [100, 120, 140]) },
+  { id: "m4", e: "🏛️", q: "¿Cuántos escaños sacará Vox?", ...pronRange("vox", [30, 45, 60]) },
+  { id: "m8", e: "🏛️", q: "¿Cuántos escaños sacará Frente Amplio?", hint: "Con Comuns-Front Ampli, Compromís, CHA y las otras marcas de FA", ...pronRange("fa", [15, 25, 35]) },
+  { id: "m9", e: "🟣", q: "¿Cuántos escaños sacará Podemos?", ...pronRange("podemos", [1, 3, 6]) },
+  { id: "m10", e: "🟤", q: "¿Cuántos escaños sacará SALF (Se Acabó La Fiesta)?", ...pronRange("salf", [1, 3, 6]) },
+  { id: "m11", e: "🗳️", q: "¿Sacará Alhora algún escaño?", hint: "Se presenta en Barcelona, Girona, Lleida y Tarragona", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.alhora || 0) > 0 ? "si" : "no") },
+  { id: "m12", e: "🗳️", q: "¿Sacará D21 (Democracia 21 con Ciudadanos) algún escaño?", hint: "Se presenta en Madrid y Barcelona", opts: [["si", "Sí"], ["no", "No"]], res: (d) => ((d.seats.d21 || 0) > 0 ? "si" : "no") },
+  { id: "m13", e: "⚖️", q: "Junts o ERC: ¿quién sacará más escaños?", opts: [["junts", "Junts"], ["erc", "ERC"], ["empat", "Empatarán"]], res: (d) => { const j = d.seats.junts || 0, e = d.seats.erc || 0; return j > e ? "junts" : e > j ? "erc" : "empat"; } },
+  { id: "m14", e: "📍", q: "¿Qué partido será el más votado en Cataluña?", opts: [["psoe", "PSC"], ["junts", "Junts"], ["erc", "ERC"], ["pp", "PP"], ["altre", "Otro"]], res: (d) => { const k = epCatTop(d); return ["psoe", "junts", "erc", "pp"].includes(k) ? k : "altre"; } },
+  { id: "m5", e: "📈", q: "¿La participación será más alta o más baja que en 2023 (66,6 %)?", opts: [["alta", "Más alta"], ["baixa", "Más baja"]], res: (d) => (d.participacio == null ? null : d.participacio >= 66.6 ? "alta" : "baixa") },
 ];
-const EP_STEPS = [["congres", "🏛️", "El teu Congrés"], ["preguntes", "🎯", "Preguntes"], ["apostes", "✍️", "Les teves apostes"], ["grup", "👥", "Grup"]];
+const EP_STEPS = [["congres", "🏛️", "Tu Congreso"], ["preguntes", "🎯", "Preguntas"], ["apostes", "✍️", "Tus apuestas"], ["grup", "👥", "Grupo"]];
 const PronState = { mine: null, draft: null, step: "congres", league: null, leagues: [], saving: false, uid: null };
 const EP_GROUP_KEY = "r29n-ep-grup";
 
@@ -102,7 +110,7 @@ const epCongMul = (pct) => (EP_CONG.find(([p]) => pct >= p) || [0, 0])[1];
 // qui fallen amb aquell partit es reparteixen entre els qui l'encerten, amb més part com més precís (pes = monedes / (2t + 1)).
 // Si l'encerta tothom, ningú no guanya res; si no l'encerta ningú, tothom recupera les seves. Així no hi ha apostes «segures»
 // que donin monedes: una aposta òbvia l'encerta tothom i només et torna el que hi has posat.
-const EP_XT = [[0, "exactament"], [1, "±1 escó"], [3, "±3 escons"]];
+const EP_XT = [[0, "exactament"], [1, "±1 escaño"], [3, "±3 escaños"]];
 const epXValid = (x) => x && typeof x.n === "number" && [0, 1, 3].includes(x.t) && x.a > 0;
 const epXOk = (x, seats) => epXValid(x) && Math.abs((seats?.[x.p] || 0) - x.n) <= x.t;
 function epXQ(x, seats, pots) {
@@ -128,7 +136,7 @@ function pronBalance(p, r, pots = Esp.cfg.pronPots || PronState.pots, d = Esp.da
   total = Math.round(total);
   return { staked, total, net: total - staked, partial: !pots };
 }
-const epFmt = (n) => `${fmt(Math.round(n))} ${Math.round(n) === 1 ? "moneda" : "monedes"}`;
+const epFmt = (n) => `${fmt(Math.round(n))} ${Math.round(n) === 1 ? "moneda" : "monedas"}`;
 const epCoin = (n) => `<span class="ep-coin">🪙 ${fmt(Math.round(n))}</span>`;
 function pronCountdown() {
   const s = Math.max(0, Math.round((PRON_CLOSE - espNow()) / 1000));
@@ -204,13 +212,13 @@ const epProvD = (pv) => prdCompute(prdStart("2023"), {}, pv);
 // La primera vegada: què és i com es juga, i un sol botó per començar. Després, pas a pas (WIZ), amb «Enrere» i «Següent»;
 // al final es desa tot de cop i es proposa jugar-hi amb amics. Qui ja ha jugat veu el resum (i el pot editar) i el seu grup.
 const WIZ = [
-  { id: "cong", t: "Reparteix el teu Congrés", d: "Com quedaran els 350 escons? Reparteix-los entre els partits." },
-  { id: "prov", t: "I per províncies?", d: "Opcional: reparteix els escons circumscripció per circumscripció en un mapa.", opt: true },
-  { id: "cs", t: "Aposta-hi monedes", d: "Quantes monedes hi apostes? Com més escons encertis, més en cobraràs." },
-  { id: "img", t: "Comparteix el teu Congrés", d: "Descarrega la imatge o comparteix-la a les xarxes. Ho pots fer ara o més tard." },
-  { id: "preg", t: "Respon les preguntes", d: "Opcional: aposta monedes a les preguntes que vulguis.", opt: true },
-  { id: "x", t: "Fes les teves apostes", d: "Opcional: «aquest partit traurà tants escons».", opt: true },
-  { id: "fi", t: "Desa-ho i juga amb amics", d: "Revisa-ho, desa-ho i, si vols, crea un grup o entra al dels teus amics." },
+  { id: "cong", t: "Reparte tu Congreso", d: "¿Cómo quedarán los 350 escaños? Repártelos entre los partidos." },
+  { id: "prov", t: "¿Y por provincias?", d: "Opcional: reparte los escaños circunscripción por circunscripción en un mapa.", opt: true },
+  { id: "cs", t: "Apuesta monedas", d: "¿Cuántas monedas apuestas? Cuantos más escaños aciertes, más cobrarás." },
+  { id: "img", t: "Comparte tu Congreso", d: "Descarga la imagen o compártela en las redes. Puedes hacerlo ahora o más tarde." },
+  { id: "preg", t: "Responde las preguntas", d: "Opcional: apuesta monedas en las preguntas que quieras.", opt: true },
+  { id: "x", t: "Haz tus apuestas", d: "Opcional: «este partido sacará tantos escaños».", opt: true },
+  { id: "fi", t: "Guárdalo y juega con amigos", d: "Revísalo, guárdalo y, si quieres, crea un grupo o entra en el de tus amigos." },
 ];
 const EP_DRAFT_KEY = "r29n-ep-esborrany";
 const epSaveDraft = () => { if (PronState.draft && PronState.uid) store.set(EP_DRAFT_KEY, { uid: PronState.uid, d: PronState.draft, t: Date.now() }); };
@@ -226,7 +234,7 @@ async function renderPronostics(arg) {
   const logged = !!O?.user;
   if (logged && PronState.uid !== O.user.uid) {
     PronState.uid = O.user.uid;
-    root.innerHTML = `<div class="card ep-load"><p class="muted">Carregant l'Electoporra…</p></div>`;
+    root.innerHTML = `<div class="card ep-load"><p class="muted">Cargando la Electoporra…</p></div>`;
     PronState.mine = await O.pronGet();
     const dr = store.get(EP_DRAFT_KEY, null);
     PronState.draft = dr && dr.uid === O.user.uid && st === "oberta" ? dr.d : null;
@@ -239,7 +247,7 @@ async function renderPronostics(arg) {
   if (logged && join) {
     if (!PronState.leagues.some((l) => l.code === join)) {
       const lg = await O.leagueJoin(join);
-      if (lg) { PronState.leagues.push(lg); toast(`Ja ets al grup «${lg.name}»`); Sfx.play("unlock"); }
+      if (lg) { PronState.leagues.push(lg); toast(`Ya estás en el grupo «${lg.name}»`); Sfx.play("unlock"); }
     }
     if (PronState.leagues.some((l) => l.code === join)) { PronState.league = join; store.set(EP_GROUP_KEY, join); }
     history.replaceState(null, "", "#electoporra");
@@ -256,17 +264,18 @@ async function renderPronostics(arg) {
   if (!open) PronState.mode = "home";
   else if (!PronState.mode) PronState.mode = epHasSaved() ? "home" : "intro";
   if (arg === "congres" && open && logged) { PronState.mode = "wiz"; PronState.wi = 0; }
-  const status = st === "aviat" ? "S'obre el 23 de novembre" : open ? `Es tanca d'aquí a <b>${pronCountdown()}</b> · 29N, 20:00` : st === "off" ? "No disponible" : r?.final ? "Resultat final" : r ? "Tancada · es resol en directe amb l'escrutini" : "Tancada · es resoldrà amb l'escrutini";
+  if (["grup", "amics", "lligues"].includes(arg) && logged && epHasSaved()) { PronState.mode = "home"; setTimeout(() => document.getElementById("ep-grup")?.scrollIntoView({ behavior: "smooth", block: "start" }), 600); }
+  const status = st === "aviat" ? "Se abre el 23 de noviembre" : open ? `Se cierra dentro de <b>${pronCountdown()}</b> · 29N, 20:00` : st === "off" ? "No disponible" : r?.final ? "Resultado final" : r ? "Cerrada · se resuelve en directo con el escrutinio" : "Cerrada · se resolverá con el escrutinio";
   const wiz = PronState.mode === "wiz";
   root.innerHTML = `${espPreviewBar()}
     <header class="ep-hero ${wiz ? "slim" : ""}">
-      <div class="ep-hero-t"><p class="ep-k">29N · Eleccions generals</p><h1>Electoporra</h1>
-        ${wiz ? "" : `<p>Endevina com quedarà el Congrés, aposta-hi monedes del joc i mira qui l'encerta més entre els teus amics.</p>`}
+      <div class="ep-hero-t"><p class="ep-k">29N · Elecciones generales</p><h1>Electoporra</h1>
+        ${wiz ? "" : `<p>Adivina cómo quedará el Congreso, apuesta monedas del juego y mira quién acierta más entre tus amigos.</p>`}
         <p class="ep-status">${status}</p></div>
-      ${logged ? `<div class="ep-wallet" aria-live="polite"><small>${open ? "Et queden per apostar" : "Les teves monedes"}</small><b data-ep-wallet>0</b><span>🪙 monedes</span></div>` : ""}
+      ${logged ? `<div class="ep-wallet" aria-live="polite"><small>${open ? "Te quedan para apostar" : "Tus monedas"}</small><b data-ep-wallet>0</b><span>🪙 monedas</span></div>` : ""}
     </header>
     <div data-pbody class="ep-body"></div>
-    <p class="sim-fiction">Les monedes són una moneda inventada de Política en Joc: no es poden comprar, no tenen cap valor i no es poden bescanviar per res. Fins a les 20:00 del 29N ningú veu què han apostat els altres.</p>`;
+    <p class="sim-fiction">Las monedas son una moneda inventada de Política en Joc: no se pueden comprar, no tienen ningún valor y no se pueden canjear por nada. Hasta las 20:00 del 29N nadie ve qué han apostado los demás.</p>`;
   espBind(root);
   const body = $("[data-pbody]", root);
   if (!logged || PronState.mode === "intro") epIntro(body, logged, st);
@@ -284,18 +293,18 @@ function epWalletSync() {
 
 // ---------- La primera vegada ----------
 function epIntro(body, logged, st) {
-  const steps = [["🏛️", "Reparteix el teu Congrés", "Com quedaran els 350 escons? Tu decideixes quants en treu cada partit i, si vols, província a província en un mapa."], ["🪙", "Aposta-hi monedes", `Tens ${EP_BONUS} monedes de regal. Com més escons encertis, més en guanyes.`], ["📸", "Comparteix-lo", "Descarrega la imatge del teu Congrés (o del teu mapa) per penjar-la a les xarxes."], ["👥", "Juga amb amics", "Crea un grup i, la nit electoral, mireu en directe qui s'hi acosta més."]];
+  const steps = [["🏛️", "Reparte tu Congreso", "¿Cómo quedarán los 350 escaños? Tú decides cuántos saca cada partido y, si quieres, provincia a provincia en un mapa."], ["🪙", "Apuesta monedas", `Tienes ${EP_BONUS} monedas de regalo. Cuantos más escaños aciertes, más ganas.`], ["📸", "Compártelo", "Descarga la imagen de tu Congreso (o de tu mapa) para colgarla en las redes."], ["👥", "Juega con amigos", "Crea un grupo y, la noche electoral, mirad en directo quién se acerca más."]];
   body.innerHTML = `<section class="card ep-intro">
-      <h2>Com es juga?</h2>
+      <h2>¿Cómo se juega?</h2>
       <ol class="ep-how">${steps.map(([e, t, d], i) => `<li style="--i:${i}"><span class="ep-how-n">${i + 1}</span><span class="ep-how-e" aria-hidden="true">${e}</span><div><b>${t}</b><p>${d}</p></div></li>`).join("")}</ol>
-      <p class="ep-sub">També hi ha preguntes i apostes pròpies, si en vols més. Es tanca a les 20:00 del 29N.</p>
-      ${st === "aviat" ? `<p class="ep-sub"><b>S'obre el 23 de novembre.</b></p>` : st !== "oberta" ? `<p class="ep-sub"><b>Ja està tancada.</b></p>` : logged ? `<button class="btn primary lg ep-go" type="button" data-start>Comença ›</button>${PronState.draft ? `<p class="ep-sub">Tens una Electoporra a mig fer: continuaràs per on la vas deixar.</p>` : ""}` : `<button class="btn primary lg ep-go" type="button" data-plogin>Entra per començar</button><p class="ep-sub">Cal un compte perquè es desi i la puguis comparar amb els teus amics.</p>`}
+      <p class="ep-sub">También hay preguntas y apuestas propias, si quieres más. Se cierra a las 20:00 del 29N.</p>
+      ${st === "aviat" ? `<p class="ep-sub"><b>Se abre el 23 de noviembre.</b></p>` : st !== "oberta" ? `<p class="ep-sub"><b>Ya está cerrada.</b></p>` : logged ? `<button class="btn primary lg ep-go" type="button" data-start>Empieza ›</button>${PronState.draft ? `<p class="ep-sub">Tienes una Electoporra a medias: seguirás donde la dejaste.</p>` : ""}` : `<button class="btn primary lg ep-go" type="button" data-plogin>Entra para empezar</button><p class="ep-sub">Hace falta una cuenta para que se guarde y puedas compararla con tus amigos.</p>`}
     </section>`;
   if (logged && PronState.leagues.length) {
-    body.insertAdjacentHTML("beforeend", `<details class="card ep-mygroups"><summary>👥 Els teus grups <small>${PronState.leagues.length}</small></summary><ul>${PronState.leagues.map((l) => `<li><b>${esc(l.name)}</b><small>${l.members.length} ${l.members.length === 1 ? "membre" : "membres"} · codi ${esc(l.code)}</small>${l.owner === window.Online.user.uid ? `<button class="linkish" type="button" data-mgdel="${l.code}">🗑️ Esborra'l</button>` : `<button class="linkish" type="button" data-mgleave="${l.code}">Surt-ne</button>`}</li>`).join("")}</ul></details>`);
+    body.insertAdjacentHTML("beforeend", `<details class="card ep-mygroups"><summary>👥 Tus grupos <small>${PronState.leagues.length}</small></summary><ul>${PronState.leagues.map((l) => `<li><b>${esc(l.name)}</b><small>${l.members.length} ${l.members.length === 1 ? "miembro" : "miembros"} · código ${esc(l.code)}</small>${l.owner === window.Online.user.uid ? `<button class="linkish" type="button" data-mgdel="${l.code}">🗑️ Bórralo</button>` : `<button class="linkish" type="button" data-mgleave="${l.code}">Sal de él</button>`}</li>`).join("")}</ul></details>`);
     const drop = (code) => { PronState.leagues = PronState.leagues.filter((l) => l.code !== code); if (PronState.league === code) { PronState.league = PronState.leagues[0]?.code || "sol"; store.set(EP_GROUP_KEY, PronState.league); } renderPronostics(); };
-    $$("[data-mgdel]", body).forEach((b) => b.addEventListener("click", async () => { const l = PronState.leagues.find((x) => x.code === b.dataset.mgdel); if (confirm(`Vols esborrar el grup «${l.name}»? S'esborrarà per a tots els membres.`) && (await window.Online.leagueDelete(l.code))) { toast("Grup esborrat"); drop(l.code); } }));
-    $$("[data-mgleave]", body).forEach((b) => b.addEventListener("click", async () => { const l = PronState.leagues.find((x) => x.code === b.dataset.mgleave); if (confirm(`Vols sortir del grup «${l.name}»?`) && (await window.Online.leagueLeave(l.code))) { toast("Has sortit del grup"); drop(l.code); } }));
+    $$("[data-mgdel]", body).forEach((b) => b.addEventListener("click", async () => { const l = PronState.leagues.find((x) => x.code === b.dataset.mgdel); if (confirm(`¿Quieres borrar el grupo «${l.name}»? Se borrará para todos los miembros.`) && (await window.Online.leagueDelete(l.code))) { toast("Grupo borrado"); drop(l.code); } }));
+    $$("[data-mgleave]", body).forEach((b) => b.addEventListener("click", async () => { const l = PronState.leagues.find((x) => x.code === b.dataset.mgleave); if (confirm(`¿Quieres salir del grupo «${l.name}»?`) && (await window.Online.leagueLeave(l.code))) { toast("Has salido del grupo"); drop(l.code); } }));
   }
   $("[data-start]", body)?.addEventListener("click", () => { PronState.mode = "wiz"; PronState.wi = PronState.wi || 0; Sfx.play("pick"); renderPronostics(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   $("[data-plogin]", body)?.addEventListener("click", () => window.Online?.accountClick?.());
@@ -306,8 +315,8 @@ function epWiz(body, st, r) {
   const D = epDraft();
   const i = Math.max(0, Math.min(WIZ.length - 1, PronState.wi || 0)), S = WIZ[i];
   body.innerHTML = `<section class="ep-wiz">
-      <div class="ep-prog" aria-label="Pas ${i + 1} de ${WIZ.length}">${WIZ.map((w, j) => `<button type="button" class="${j < i ? "done" : j === i ? "on" : ""}" data-wgo="${j}" ${j > i && !epWizCan(j) ? "disabled" : ""} aria-label="${esc(w.t)}"><i></i></button>`).join("")}</div>
-      <header class="ep-wiz-h"><p class="ep-wiz-n">Pas ${i + 1} de ${WIZ.length}${S.opt ? " · opcional" : ""}</p><h2>${esc(S.t)}</h2><p>${esc(S.d)}</p></header>
+      <div class="ep-prog" aria-label="Paso ${i + 1} de ${WIZ.length}">${WIZ.map((w, j) => `<button type="button" class="${j < i ? "done" : j === i ? "on" : ""}" data-wgo="${j}" ${j > i && !epWizCan(j) ? "disabled" : ""} aria-label="${esc(w.t)}"><i></i></button>`).join("")}</div>
+      <header class="ep-wiz-h"><p class="ep-wiz-n">Paso ${i + 1} de ${WIZ.length}${S.opt ? " · opcional" : ""}</p><h2>${esc(S.t)}</h2><p>${esc(S.d)}</p></header>
       <div class="ep-wiz-b" data-wstep></div>
     </section>
     <nav class="ep-wnav" data-wnav></nav>`;
@@ -316,9 +325,9 @@ function epWiz(body, st, r) {
     const ok = epWizOk(S.id), last = i === WIZ.length - 1;
     const n = $("[data-wnav]", body);
     const left = epAvail() - pronStaked(D);
-    n.innerHTML = `<button class="btn ghost" type="button" data-wprev>${i ? "‹ Enrere" : "Surt"}</button>
-      <div class="ep-wnav-m"><b>🪙 ${fmt(pronStaked(D))}</b> apostades · ${left >= 0 ? `et queden ${fmt(left)}` : `<span class="down">et passes de ${fmt(-left)}</span>`}</div>
-      ${last ? "" : `<button class="btn primary" type="button" data-wnext ${ok ? "" : "disabled"}>${S.opt && !epWizHas(S.id) ? "Salta-ho ›" : "Següent ›"}</button>`}`;
+    n.innerHTML = `<button class="btn ghost" type="button" data-wprev>${i ? "‹ Atrás" : "Salir"}</button>
+      <div class="ep-wnav-m"><b>🪙 ${fmt(pronStaked(D))}</b> apostadas · ${left >= 0 ? `te quedan ${fmt(left)}` : `<span class="down">te pasas de ${fmt(-left)}</span>`}</div>
+      ${last ? "" : `<button class="btn primary" type="button" data-wnext ${ok ? "" : "disabled"}>${S.opt && !epWizHas(S.id) ? "Sáltalo ›" : "Siguiente ›"}</button>`}`;
     $("[data-wprev]", n).addEventListener("click", () => { if (i) epWizGo(i - 1); else { PronState.mode = epHasSaved() ? "home" : "intro"; renderPronostics(); } });
     $("[data-wnext]", n)?.addEventListener("click", () => epWizGo(i + 1));
     epWalletSync();
@@ -338,11 +347,11 @@ const epWizHas = (id) => { const D = epDraft(); return id === "preg" ? pronCount
 function epStepCong(box, D, changed) {
   if (!D.s) {
     const prev = typeof prdFinal === "function" ? prdFinal() : null;
-    box.innerHTML = `<p class="ep-ask">Per on vols començar?</p>
+    box.innerHTML = `<p class="ep-ask">¿Por dónde quieres empezar?</p>
       <div class="ep-starts">
-        <button type="button" data-from="2023"><span>🏛️</span><b>El Congrés d'ara</b><small>Els escons del 2023, i el canvies</small></button>
-        ${prev ? `<button type="button" data-from="prd"><span>🔮</span><b>La teva predicció</b><small>La que vas fer amb els vots</small></button>` : ""}
-        <button type="button" data-from="zero"><span>✏️</span><b>De zero</b><small>Tots els partits a 0</small></button>
+        <button type="button" data-from="2023"><span>🏛️</span><b>El Congreso actual</b><small>Los escaños de 2023 (el de UPN, dentro del PP), y lo cambias</small></button>
+        ${prev ? `<button type="button" data-from="prd"><span>🔮</span><b>Tu predicción</b><small>La que hiciste con los votos</small></button>` : ""}
+        <button type="button" data-from="zero"><span>✏️</span><b>De cero</b><small>Todos los partidos a 0</small></button>
       </div>`;
     $$("[data-from]", box).forEach((b) => b.addEventListener("click", () => {
       const f = b.dataset.from;
@@ -354,27 +363,27 @@ function epStepCong(box, D, changed) {
   }
   if (D.pv) {
     box.innerHTML = `<div class="ep-cong-g"><div class="ep-hemi">${nitHemi({ seats: { ...D.s }, totalSeats: epSeatSum(D.s) }, "")}</div>
-      <div class="ep-cong-side"><p class="ep-left ok">🗺️ L'estàs repartint per províncies<small>El total és la suma de les circumscripcions.</small></p>
-        <button class="btn" type="button" data-goprov>Edita'l al mapa</button></div></div>
+      <div class="ep-cong-side"><p class="ep-left ok">🗺️ Lo estás repartiendo por provincias<small>El total es la suma de las circunscripciones.</small></p>
+        <button class="btn" type="button" data-goprov>Edítalo en el mapa</button></div></div>
       <ul class="ep-seat-l">${Object.keys(D.s).filter((k) => D.s[k]).sort((a, b) => D.s[b] - D.s[a]).map((k) => `<li style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))}<b>${D.s[k]}</b></li>`).join("")}</ul>`;
     $("[data-goprov]", box).addEventListener("click", () => epWizGo(1));
     return;
   }
   const s = D.s, sum = epSeatSum(s), left = 350 - sum;
-  const sums = [["PP + Vox", ["pp", "vox"]], ["Els de la investidura del 2023", PRON_INV23]].map(([t, ids]) => [t, ids.reduce((a, k) => a + (s[k] || 0), 0)]);
-  const row = (k) => { const p = nitParty(k), n = s[k] || 0; return `<div class="ep-prow" style="--c:${p.color}" data-k="${k}"><span class="ep-pn"><b>${esc(p.sig)}</b></span>
-    <div class="ep-seatbox"><button type="button" data-ss="-1" aria-label="Un escó menys a ${esc(p.sig)}" ${n ? "" : "disabled"}>−</button><input type="text" inputmode="numeric" value="${n}" data-sn aria-label="Escons de ${esc(p.sig)}"><button type="button" data-ss="1" aria-label="Un escó més a ${esc(p.sig)}" ${left > 0 && n < epMax(k) ? "" : "disabled"}>+</button></div><span class="ep-seatu">escons</span></div>`; };
+  const sums = [["PP + Vox", ["pp", "vox"]], ["Los de la investidura de 2023", PRON_INV23]].map(([t, ids]) => [t, ids.reduce((a, k) => a + (s[k] || 0), 0)]);
+  const row = (k) => { const p = nitParty(k), n = s[k] || 0; return `<div class="ep-prow" style="--c:${p.color}" data-k="${k}"><span class="ep-pn"><b>${esc(p.sig)}</b>${EP_NOTE[k] ? `<small>${esc(EP_NOTE[k])}</small>` : ""}</span>
+    <div class="ep-seatbox"><button type="button" data-ss="-1" aria-label="Un escaño menos a ${esc(p.sig)}" ${n ? "" : "disabled"}>−</button><input type="text" inputmode="numeric" value="${n}" data-sn aria-label="Escaños de ${esc(p.sig)}"><button type="button" data-ss="1" aria-label="Un escaño más a ${esc(p.sig)}" ${left > 0 && n < epMax(k) ? "" : "disabled"}>+</button></div><span class="ep-seatu">escaños</span></div>`; };
   box.innerHTML = `<div class="ep-cong-g">
-      <div class="ep-hemi">${nitHemi({ seats: { ...s }, totalSeats: sum }, "").replace(/<div class="nt-hemi-c">[\s\S]*?<\/div>/, `<div class="nt-hemi-c"><b>${sum}</b><small>de 350 escons</small></div>`)}</div>
+      <div class="ep-hemi">${nitHemi({ seats: { ...s }, totalSeats: sum }, "").replace(/<div class="nt-hemi-c">[\s\S]*?<\/div>/, `<div class="nt-hemi-c"><b>${sum}</b><small>de 350 escaños</small></div>`)}</div>
       <div class="ep-cong-side">
         <p class="ep-left ${left === 0 ? "ok" : left < 0 ? "ko" : ""}" aria-live="polite" data-left>${epLeftHtml(left)}</p>
         <ul class="ep-sums">${sums.map(([t, n]) => `<li class="${n >= 176 ? "maj" : ""}"><span>${esc(t)}</span><b>${n}</b>${n >= 176 ? "<em>majoria</em>" : ""}</li>`).join("")}</ul>
-        <button class="linkish ep-reset" type="button" data-creset>Torna a començar</button>
+        <button class="linkish ep-reset" type="button" data-creset>Volver a empezar</button>
       </div>
     </div>
-    <p class="ep-tip">Toca <b>+</b> i <b>−</b>, mantén-los premuts per anar més de pressa, o escriu el número.</p>
+    <p class="ep-tip">Toca <b>+</b> i <b>−</b>, mantenlos pulsados para ir más rápido, o escribe el número.</p>
     <div class="ep-prows">${EP_PARTIES.map(row).join("")}</div>
-    <details class="ep-more" ${EP_MORE.some((k) => s[k]) ? "open" : ""}><summary>Més partits <small>${EP_MORE.map((k) => esc(nitSig(k))).join(", ")}</small></summary><div class="ep-prows">${EP_MORE.map(row).join("")}</div></details>`;
+    <details class="ep-more" ${EP_MORE.some((k) => s[k]) ? "open" : ""}><summary>Más partidos <small>${EP_MORE.map((k) => esc(nitSig(k))).join(", ")}</small></summary><div class="ep-prows">${EP_MORE.map(row).join("")}</div></details>`;
   const redraw = () => { const y = scrollY; epStepCong(box, D, changed); changed(); scrollTo(0, y); };
   const clamp = (k, v) => Math.max(0, Math.min(epMax(k), 350 - (epSeatSum(D.s) - (D.s[k] || 0)), Math.round(v) || 0));
   $$(".ep-prow", box).forEach((rw) => {
@@ -389,20 +398,20 @@ function epStepCong(box, D, changed) {
   });
   $("[data-creset]", box).addEventListener("click", () => { D.s = null; redraw(); });
 }
-const epLeftHtml = (left) => (left === 0 ? "✓ Tots els escons repartits<small>Per donar-ne més a un partit, primer treu-ne a un altre.</small>" : left > 0 ? `Queden <b>${left}</b> ${left === 1 ? "escó" : "escons"} per repartir` : `Te'n sobren <b>${-left}</b>`);
+const epLeftHtml = (left) => (left === 0 ? "✓ Todos los escaños repartidos<small>Para dar más a un partido, primero quita a otro.</small>" : left > 0 ? `Quedan <b>${left}</b> ${left === 1 ? "escaño" : "escaños"} por repartir` : `Te sobran <b>${-left}</b>`);
 
 // Pas opcional: per províncies, en un mapa
 function epStepProv(box, D, changed) {
   if (!D.pv) {
     box.innerHTML = `<div class="ep-provask">
         <div class="ep-provask-map" aria-hidden="true">${simSpainMap("prd-map ep-minimap")}</div>
-        <p>Si vols, pots dir també <b>quants escons treu cada partit a cada circumscripció</b>. Començaràs amb un repartiment que ja suma el teu Congrés, i el retoques on vulguis.</p>
-        <p class="ep-sub">No compta per a l'aposta (que és pel total del Congrés), però tindràs el mapa per compartir-lo.</p>
-        <div class="ep-starts two"><button type="button" data-pvyes><span>🗺️</span><b>Sí, al mapa</b><small>Circumscripció per circumscripció</small></button>
-        <button type="button" data-pvno><span>⏭️</span><b>No cal</b><small>Em quedo amb el total</small></button></div>
+        <p>Si quieres, también puedes decir <b>cuántos escaños saca cada partido en cada circunscripción</b>. Empezarás con un reparto que ya suma tu Congreso, y lo retocas donde quieras.</p>
+        <p class="ep-sub">No cuenta para la apuesta (que es por el total del Congreso), pero tendrás el mapa para compartirlo.</p>
+        <div class="ep-starts two"><button type="button" data-pvyes><span>🗺️</span><b>Sí, en el mapa</b><small>Circunscripción por circunscripción</small></button>
+        <button type="button" data-pvno><span>⏭️</span><b>No hace falta</b><small>Me quedo con el total</small></button></div>
       </div>`;
     $("[data-pvyes]", box).addEventListener("click", () => {
-      box.innerHTML = `<p class="ep-sub" style="text-align:center">Repartint els escons per províncies…</p>`;
+      box.innerHTML = `<p class="ep-sub" style="text-align:center">Repartiendo los escaños por provincias…</p>`;
       setTimeout(() => { D.pv = epAutoProv(D.s); D.s = epProvSum(D.pv); PronState.psel = null; Sfx.play("pick"); epStepProv(box, D, changed); changed(); }, 30);
     });
     $("[data-pvno]", box).addEventListener("click", () => epWizGo(PronState.wi + 1));
@@ -417,23 +426,23 @@ function epStepProv(box, D, changed) {
     const x = D.pv[p.code] || {}, tot = epSeatSum(x), left = p.seats - tot;
     const ks = [...EP_PARTIES, ...EP_MORE].filter((k) => prdRuns(k, p.code) || x[k]);
     edit = `<div class="ep-pedit" style="--c:${nitParty(p.winner || "pp").color}">
-      <header><h3>${esc(p.name)}</h3><span>${p.seats} ${p.seats === 1 ? "escó" : "escons"}</span><button class="ep-x" type="button" data-pclose aria-label="Tanca">✕</button></header>
-      <p class="ep-left ${left ? "ko" : "ok"}">${left > 0 ? `Hi queden <b>${left}</b> per repartir` : left < 0 ? `N'hi sobren <b>${-left}</b>` : "✓ Tots repartits"}</p>
-      <div class="ep-prows">${ks.map((k) => { const pp = nitParty(k), n = x[k] || 0; return `<div class="ep-prow" style="--c:${pp.color}" data-pk="${k}"><span class="ep-pn"><b>${esc(pp.sig)}</b></span><div class="ep-seatbox"><button type="button" data-ps="-1" aria-label="Un escó menys a ${esc(pp.sig)}" ${n ? "" : "disabled"}>−</button><input type="text" inputmode="numeric" value="${n}" data-pn aria-label="Escons de ${esc(pp.sig)} a ${esc(p.name)}"><button type="button" data-ps="1" aria-label="Un escó més a ${esc(pp.sig)}" ${left > 0 ? "" : "disabled"}>+</button></div></div>`; }).join("")}</div>
+      <header><h3>${esc(p.name)}</h3><span>${p.seats} ${p.seats === 1 ? "escaño" : "escaños"}</span><button class="ep-x" type="button" data-pclose aria-label="Cierra">✕</button></header>
+      <p class="ep-left ${left ? "ko" : "ok"}">${left > 0 ? `Quedan <b>${left}</b> por repartir` : left < 0 ? `Sobran <b>${-left}</b>` : "✓ Todos repartidos"}</p>
+      <div class="ep-prows">${ks.map((k) => { const pp = nitParty(k), n = x[k] || 0; return `<div class="ep-prow" style="--c:${pp.color}" data-pk="${k}"><span class="ep-pn"><b>${esc(pp.sig)}</b></span><div class="ep-seatbox"><button type="button" data-ps="-1" aria-label="Un escaño menos a ${esc(pp.sig)}" ${n ? "" : "disabled"}>−</button><input type="text" inputmode="numeric" value="${n}" data-pn aria-label="Escaños de ${esc(pp.sig)} en ${esc(p.name)}"><button type="button" data-ps="1" aria-label="Un escaño más a ${esc(pp.sig)}" ${left > 0 ? "" : "disabled"}>+</button></div></div>`; }).join("")}</div>
     </div>`;
   }
-  box.innerHTML = `<p class="ep-tip">Toca una circumscripció del mapa (o tria-la a la llista) per canviar-ne els escons.</p>
-    <label class="ep-psel">Circumscripció <select data-psel><option value="">Tria-la…</option>${provs.map((q) => `<option value="${q.i}" ${q.i === PronState.psel ? "selected" : ""}>${esc(q.name)} (${q.seats})${epSeatSum(D.pv[q.code]) !== q.seats ? " ⚠️" : ""}</option>`).join("")}</select></label>
+  box.innerHTML = `<p class="ep-tip">Toca una circunscripción del mapa (o elígela en la lista) para cambiar sus escaños.</p>
+    <label class="ep-psel">Circunscripción <select data-psel><option value="">Elígela…</option>${provs.map((q) => `<option value="${q.i}" ${q.i === PronState.psel ? "selected" : ""}>${esc(q.name)} (${q.seats})${epSeatSum(D.pv[q.code]) !== q.seats ? " ⚠️" : ""}</option>`).join("")}</select></label>
     <div class="ep-provmap">${prdMapSvg(d)}</div>
     ${edit}
     ${miss.length ? `<p class="ep-warn">⚠️ Falta acabar de repartir: ${miss.map((q) => esc(q.name)).join(", ")}.</p>` : ""}
-    <div class="ep-ptot"><b>El teu Congrés</b>${Object.keys(D.s).filter((k) => D.s[k]).sort((a, b) => D.s[b] - D.s[a]).map((k) => `<span style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))} <b>${D.s[k]}</b></span>`).join("")}</div>
-    <button class="linkish ep-reset" type="button" data-pvoff>Deixa-ho estar: em quedo amb el total, sense províncies</button>`;
+    <div class="ep-ptot"><b>Tu Congreso</b>${Object.keys(D.s).filter((k) => D.s[k]).sort((a, b) => D.s[b] - D.s[a]).map((k) => `<span style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))} <b>${D.s[k]}</b></span>`).join("")}</div>
+    <button class="linkish ep-reset" type="button" data-pvoff>Déjalo: me quedo con el total, sin provincias</button>`;
   const redraw = () => { const y = scrollY; epStepProv(box, D, changed); changed(); scrollTo(0, y); };
   prdPaintMap(box, d, (i) => { PronState.psel = PronState.psel === i ? null : i; Sfx.play("pick"); redraw(); setTimeout(() => $(".ep-pedit", box)?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 60); });
   $("[data-psel]", box).addEventListener("change", (e) => { PronState.psel = e.target.value === "" ? null : Number(e.target.value); redraw(); });
   $("[data-pclose]", box)?.addEventListener("click", () => { PronState.psel = null; redraw(); });
-  $("[data-pvoff]", box).addEventListener("click", () => { if (!confirm("Vols deixar el repartiment per províncies? El teu Congrés es manté com ara.")) return; D.pv = null; PronState.psel = null; redraw(); });
+  $("[data-pvoff]", box).addEventListener("click", () => { if (!confirm("¿Quieres dejar el reparto por provincias? Tu Congreso se mantiene como ahora.")) return; D.pv = null; PronState.psel = null; redraw(); });
   if (p) {
     const x = (D.pv[p.code] ||= {});
     const set = (k, v) => { const others = epSeatSum(x) - (x[k] || 0); x[k] = Math.max(0, Math.min(p.seats - others, Math.round(v) || 0)); if (!x[k]) delete x[k]; D.s = epProvSum(D.pv); redraw(); };
@@ -450,49 +459,50 @@ function epStepStake(box, D, changed) {
   if (!D.cs) D.cs = 100;
   const cs = D.cs;
   box.innerHTML = `<div class="ep-betcard">
-      <p class="ep-sub">Això són <b>monedes</b>, no escons. Les recuperes multiplicades segons quants escons del teu Congrés coincideixin amb el resultat.</p>
-      ${epStakeHtml("cs", cs, "Hi aposto")}
+      <p class="ep-sub">Esto son <b>monedas</b>, no escaños. Las recuperas multiplicadas según cuántos escaños de tu Congreso coincidan con el resultado.</p>
+      ${epStakeHtml("cs", cs, "Apuesto")}
       <ul class="ep-pay">
-        <li><span>Si n'encertes el 97 % o més</span><b>cobres ×4</b><em>${epCoin(cs * 4)}</em></li>
-        <li><span>Del 94 al 97 %</span><b>cobres ×2</b><em>${epCoin(cs * 2)}</em></li>
-        <li><span>Del 90 al 94 %</span><b>les recuperes</b><em>${epCoin(cs)}</em></li>
-        <li><span>Menys del 90 %</span><b>les perds</b><em>${epCoin(0)}</em></li>
+        <li><span>Si aciertas el 97 % o más</span><b>cobras ×4</b><em>${epCoin(cs * 4)}</em></li>
+        <li><span>Del 94 al 97 %</span><b>cobras ×2</b><em>${epCoin(cs * 2)}</em></li>
+        <li><span>Del 90 al 94 %</span><b>las recuperas</b><em>${epCoin(cs)}</em></li>
+        <li><span>Menos del 90 %</span><b>las pierdes</b><em>${epCoin(0)}</em></li>
       </ul>
-      <p class="ep-note">L'encert és la part dels 350 escons que coincideix amb el resultat, partit per partit. Per fer-te'n una idea: qui repetís el Congrés del 2023 a les eleccions del 2023 l'hauria encertat al 100 %.</p>
+      <p class="ep-note">El acierto es la parte de los 350 escaños que coincide con el resultado, partido por partido. Para hacerte una idea: quien repitiera el Congreso de 2023 en las elecciones de 2023 habría acertado al 100 %.</p>
     </div>`;
   epStakeBind(box, () => D.cs, (k, v) => { D.cs = v; const y = scrollY; epStepStake(box, D, changed); changed(); scrollTo(0, y); });
 }
 
 // Pas 3: la imatge per compartir (amb el nom que vulguis, o cap)
-const EP_IMGS = [["congres", "🏛️ El Congrés"], ["partits", "📊 Partit per partit"], ["mapa", "🗺️ El mapa"]];
+const EP_IMGS = [["congres", "🏛️ El Congreso"], ["partits", "📊 Partido a partido"], ["mapa", "🗺️ El mapa"]];
 function epStepImg(box, D) {
   const kinds = EP_IMGS.filter(([k]) => k !== "mapa" || D.pv);
   if (!kinds.some(([k]) => k === PronState.img)) PronState.img = "congres";
   if (PronState.imgName === undefined) PronState.imgName = window.Online?.profile?.handle || "";
   box.innerHTML = `<div class="ep-imgs">
-      <div class="ep-imgk" role="radiogroup" aria-label="Imatge">${kinds.map(([k, t]) => `<button type="button" role="radio" aria-checked="${PronState.img === k}" data-ik="${k}">${t}</button>`).join("")}</div>
-      ${D.pv ? "" : `<p class="ep-sub">Per tenir també el mapa, reparteix el Congrés per províncies (pas 2).</p>`}
-      <label class="ep-iname">Títol de la imatge
-        <span><em>El Congrés de</em><input type="text" maxlength="30" value="${esc(PronState.imgName)}" placeholder="el teu nom (o deixa-ho buit)" data-iname></span>
-        <small>Si ho deixes buit, posarà «El meu Congrés».</small></label>
+      <div class="ep-imgk" role="radiogroup" aria-label="Imagen">${kinds.map(([k, t]) => `<button type="button" role="radio" aria-checked="${PronState.img === k}" data-ik="${k}">${t}</button>`).join("")}</div>
+      ${D.pv ? "" : `<p class="ep-sub">Para tener también el mapa, reparte el Congreso por provincias (paso 2).</p>`}
+      <label class="ep-iname">Título de la imagen
+        <span><em>El Congreso de</em><input type="text" maxlength="30" value="${esc(PronState.imgName)}" placeholder="tu nombre (o déjalo vacío)" data-iname></span>
+        <small>Si lo dejas vacío, pondrá «Mi Congreso».</small></label>
       <figure class="ep-prev" data-iprev></figure>
       <div class="ep-imgact">
-        ${navigator.share ? `<button class="btn primary" type="button" data-ishare>📤 Comparteix-la</button>` : ""}
-        <button class="btn ${navigator.share ? "" : "primary"}" type="button" data-idown>⬇️ Descarrega la imatge</button>
+        ${navigator.share ? `<button class="btn primary" type="button" data-ishare>📤 Compártela</button>` : ""}
+        <button class="btn ${navigator.share ? "" : "primary"}" type="button" data-idown>⬇️ Descarga la imagen</button>
       </div>
     </div>`;
   let tm = 0;
   const draw = async () => {
     try { await document.fonts?.ready; } catch { /* sense fonts */ }
     const cv = epCanvas(PronState.img, D.s, PronState.imgName.trim(), D.pv);
-    cv.setAttribute("role", "img"); cv.setAttribute("aria-label", "El teu Congrés");
+    cv.setAttribute("role", "img"); cv.setAttribute("aria-label", "Tu Congreso");
     $("[data-iprev]", box).replaceChildren(cv);
     return cv;
   };
   draw();
   $$("[data-ik]", box).forEach((b) => b.addEventListener("click", () => { PronState.img = b.dataset.ik; $$("[data-ik]", box).forEach((x) => x.setAttribute("aria-checked", String(x === b))); draw(); }));
   $("[data-iname]", box).addEventListener("input", (e) => { PronState.imgName = e.target.value; clearTimeout(tm); tm = setTimeout(draw, 250); });
-  const text = () => { const ids = Object.keys(D.s).filter((k) => D.s[k]).sort((a, b) => D.s[b] - D.s[a]), [a, b] = ids; return `El meu Congrés per al 29N: ${nitSig(a)} ${D.s[a]}, ${nitSig(b)} ${D.s[b]}. I el teu? Fes-lo a l'Electoporra de Política en Joc:\n${location.origin}${location.pathname}#electoporra`; };
+  const text = () => { const ids = Object.keys(D.s).filter((k) => D.s[k]).sort((a, b) => D.s[b] - D.s[a]), [a, b] = ids; return `Mi Congreso para el 29N: ${nitSig(a)} ${D.s[a]}, ${nitSig(b)} ${D.s[b]}. ¿Y el tuyo? Hazlo en la Electoporra de Política en Joc:
+${location.origin}${location.pathname}#electoporra`; };
   $("[data-ishare]", box)?.addEventListener("click", async () => { const cv = await draw(); shareCanvas(cv, `electoporra-${PronState.img}.png`, text(), "electoporra"); });
   $("[data-idown]", box).addEventListener("click", async () => {
     const cv = await draw();
@@ -500,14 +510,14 @@ function epStepImg(box, D) {
     if (!blob) return;
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `electoporra-${PronState.img}.png`; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    toast("Imatge descarregada"); window.Stats?.add("sh", 1, "electoporra_img");
+    toast("Imagen descargada"); window.Stats?.add("sh", 1, "electoporra_img");
   });
 }
 // Les imatges (1080 × 1350): el Congrés amb les majories, partit per partit, o el mapa per províncies
 function epCanvas(kind, s0, name, pv) {
   const s = Object.fromEntries(Object.entries(s0 || {}).filter(([, n]) => n > 0));
   const ids = Object.keys(s).sort((a, b) => s[b] - s[a] || (ESP_ORDER.indexOf(a) - ESP_ORDER.indexOf(b)));
-  const sub = { congres: "Eleccions generals · 29N · Així quedaria el Congrés", partits: "Eleccions generals · 29N · Partit per partit", mapa: "Eleccions generals · 29N · Província a província" }[kind];
+  const sub = { congres: "Elecciones generales · 29N · Así quedaría el Congreso", partits: "Elecciones generales · 29N · Partido a partido", mapa: "Elecciones generales · 29N · Provincia a provincia" }[kind];
   const { cv, c, W, H } = prdCvBase(name, sub);
   const L = 56, R = W - 56;
   // Llegenda en una graella de columnes iguals: ● PP 140
@@ -523,11 +533,11 @@ function epCanvas(kind, s0, name, pv) {
   };
   const bars = (y, w) => {
     const sc = w / 350;
-    [["PP + Vox", ["pp", "vox"]], ["PSOE i els partits de la investidura del 2023", PRON_INV23], ["PP + PSOE", ["pp", "psoe"]]].forEach(([t, ks]) => {
+    [["PP + Vox", ["pp", "vox"]], ["PSOE y los partidos de la investidura de 2023", PRON_INV23], ["PP + PSOE", ["pp", "psoe"]]].forEach(([t, ks]) => {
       const n = ks.reduce((a, k) => a + (s[k] || 0), 0), ok = n >= NIT_MAJ;
       c.textAlign = "left"; c.fillStyle = PRD_C.ink; c.font = prdFSans(26, 800); c.fillText(t, L, y, w - 230);
       c.textAlign = "right"; c.font = prdFDisp(30); c.fillText(String(n), R - 140, y + 2);
-      c.font = prdFSans(22, 800); c.fillStyle = ok ? PRD_C.up : PRD_C.down; c.fillText(ok ? "✔ majoria" : "✘ no arriba", R, y);
+      c.font = prdFSans(22, 800); c.fillStyle = ok ? PRD_C.up : PRD_C.down; c.fillText(ok ? "✔ mayoría" : "✘ no llega", R, y);
       const by = y + 16;
       c.fillStyle = "rgba(23,23,61,.08)"; c.fillRect(L, by, w, 18);
       let bx = L;
@@ -542,14 +552,14 @@ function epCanvas(kind, s0, name, pv) {
     const seats = hemicycleSeats(350);
     let n = 0;
     ids.slice().sort((a, b) => (ESP_ORDER.indexOf(a) + 1 || 50) - (ESP_ORDER.indexOf(b) + 1 || 50)).forEach((k) => { c.fillStyle = nitParty(k).color; for (let j = 0; j < s[k]; j++) { const q = seats[n++]; if (!q) return; c.beginPath(); c.arc(cx + q.x * Rr, cy + q.y * Rr, r, 0, Math.PI * 2); c.fill(); } });
-    c.textAlign = "center"; c.fillStyle = PRD_C.ink; c.font = prdFSans(22, 700); c.fillStyle = PRD_C.muted; c.fillText("350 diputats · majoria absoluta: 176", cx, cy + 44);
+    c.textAlign = "center"; c.fillStyle = PRD_C.ink; c.font = prdFSans(22, 700); c.fillStyle = PRD_C.muted; c.fillText("350 diputados · mayoría absoluta: 176", cx, cy + 44);
   };
   if (kind === "congres") {
     hemi(W / 2, 510, 330, 7.8);
     const cols = ids.length > 12 ? 3 : 2;
     let y = legend(620, cols, ids.length > 12 ? 26 : 28);
     y = Math.max(y + 30, 860);
-    c.textAlign = "left"; c.fillStyle = PRD_C.muted; c.font = prdFSans(22, 800); c.fillText("MAJORIES (176 ESCONS)", L, y);
+    c.textAlign = "left"; c.fillStyle = PRD_C.muted; c.font = prdFSans(22, 800); c.fillText("MAYORÍAS (176 ESCAÑOS)", L, y);
     bars(y + 56, R - L);
     return cv;
   }
@@ -557,7 +567,7 @@ function epCanvas(kind, s0, name, pv) {
     const n = ids.length, top = 200, lh = Math.min(60, 620 / Math.max(1, n));
     const maxS = Math.max(...ids.map((k) => s[k]), 1), bx = 250, bw = R - 230 - bx;
     c.textAlign = "right"; c.font = prdFSans(18, 800); c.fillStyle = PRD_C.muted;
-    c.fillText("ESCONS", R - 120, top + 10); c.fillText("VS 2023", R, top + 10);
+    c.fillText("ESCAÑOS", R - 120, top + 10); c.fillText("VS 2023", R, top + 10);
     const ref = epCong2023();
     ids.forEach((k, j) => {
       const y = top + 50 + j * lh, col = nitParty(k).color, sz = Math.min(28, lh * 0.5);
@@ -573,7 +583,7 @@ function epCanvas(kind, s0, name, pv) {
     // A sota, les majories
     const y0 = top + 50 + n * lh + 20;
     c.fillStyle = "rgba(23,23,61,.12)"; c.fillRect(L, y0, R - L, 2);
-    c.textAlign = "left"; c.fillStyle = PRD_C.muted; c.font = prdFSans(20, 800); c.fillText("MAJORIES (176 ESCONS)", L, y0 + 44);
+    c.textAlign = "left"; c.fillStyle = PRD_C.muted; c.font = prdFSans(20, 800); c.fillText("MAYORÍAS (176 ESCAÑOS)", L, y0 + 44);
     bars(y0 + 92, R - L);
     return cv;
   }
@@ -581,7 +591,7 @@ function epCanvas(kind, s0, name, pv) {
   const d = epProvD(pv);
   const y = prdCvMap(c, d, 40, 170, W - 80, 860);
   c.textAlign = "center"; c.fillStyle = PRD_C.muted; c.font = prdFSans(20, 600);
-  c.fillText("Cada punt és un diputat.", W / 2, y + 30);
+  c.fillText("Cada punto es un diputado.", W / 2, y + 30);
   legend(y + 76, 4, 22);
   return cv;
 }
@@ -589,12 +599,12 @@ function epCanvas(kind, s0, name, pv) {
 // Pas 4: preguntes
 function epStepPreg(box, D, changed) {
   const B = D.b;
-  box.innerHTML = `<div class="ep-howto"><b>Com funciona</b><p>Tria una resposta i decideix quantes monedes hi apostes. Si l'encertes, recuperes les teves monedes i et quedes part de les dels qui l'han fallada (com més hi apostis, més part).</p></div>
+  box.innerHTML = `<div class="ep-howto"><b>Cómo funciona</b><p>Elige una respuesta y decide cuántas monedas apuestas. Si aciertas, recuperas tus monedas y te quedas parte de las de quienes han fallado (cuanto más apuestes, más parte).</p></div>
     <div class="ep-list">${PRON_M.map((m) => { const b = B[m.id]; return `<section class="card ep-m ${b ? "has" : ""}">
       <header><span class="ep-e" aria-hidden="true">${m.e}</span><h3>${esc(m.q)}</h3>${b?.a ? epCoin(b.a) : ""}</header>
       ${m.hint ? `<p class="ep-hint">${esc(m.hint)}</p>` : ""}
       <div class="ep-opts">${m.opts.map(([o, t]) => `<button type="button" data-mo="${m.id}" data-o="${o}" aria-pressed="${b?.o === o}">${esc(t)}</button>`).join("")}</div>
-      ${b ? epStakeHtml(m.id, b.a) + `<button type="button" class="ep-del" data-del="${m.id}">Treu aquesta aposta</button>` : ""}
+      ${b ? epStakeHtml(m.id, b.a) + `<button type="button" class="ep-del" data-del="${m.id}">Quita esta apuesta</button>` : ""}
     </section>`; }).join("")}</div>`;
   const redraw = () => { const y = scrollY; epStepPreg(box, D, changed); changed(); scrollTo(0, y); };
   $$("[data-mo]", box).forEach((btn) => btn.addEventListener("click", () => { const m = btn.dataset.mo, o = btn.dataset.o; if (B[m]?.o === o) delete B[m]; else B[m] = { o, a: B[m]?.a || 50 }; Sfx.play("pick"); redraw(); }));
@@ -603,24 +613,24 @@ function epStepPreg(box, D, changed) {
 }
 
 // Pas 5: apostes pròpies
-const epXLine = (x) => `<b>${esc(nitSig(x.p))}</b> traurà ${x.t ? `entre <b>${Math.max(0, x.n - x.t)} i ${x.n + x.t}</b>` : `exactament <b>${x.n}</b>`} escons`;
+const epXLine = (x) => `<b>${esc(nitSig(x.p))}</b> sacará ${x.t ? `entre <b>${Math.max(0, x.n - x.t)} i ${x.n + x.t}</b>` : `exactamente <b>${x.n}</b>`} escaños`;
 function epStepX(box, D, changed) {
   const xs = D.x;
   const f = (PronState.xf ||= { p: "vox", n: 40, t: 1, a: 50 });
-  box.innerHTML = `<div class="ep-howto"><b>Com funciona</b><p>Tria un partit i quants escons creus que traurà. Les monedes dels qui fallen amb aquell partit es reparteixen entre els qui l'encerten, i com més precís siguis, més part t'emportes. Si l'encerta tothom, ningú no guanya res: només recuperes les teves monedes.</p></div>
+  box.innerHTML = `<div class="ep-howto"><b>Cómo funciona</b><p>Elige un partido y cuántos escaños crees que sacará. Las monedas de quienes fallan con ese partido se reparten entre quienes aciertan, y cuanto más preciso seas, más parte te llevas. Si acierta todo el mundo, nadie gana nada: solo recuperas tus monedas.</p></div>
     <div class="ep-xmake">
       <div class="ep-sentence">
-        <select data-xp aria-label="Partit">${[...EP_PARTIES, ...EP_MORE].map((k) => `<option value="${k}" ${f.p === k ? "selected" : ""}>${esc(nitSig(k))}</option>`).join("")}</select>
-        <span>traurà</span>
-        <span class="ep-seatbox sm"><button type="button" data-xn="-1" aria-label="Un escó menys">−</button><input type="text" inputmode="numeric" value="${f.n}" data-xnv aria-label="Escons"><button type="button" data-xn="1" aria-label="Un escó més">+</button></span>
-        <span>escons</span>
+        <select data-xp aria-label="Partido">${[...EP_PARTIES, ...EP_MORE].map((k) => `<option value="${k}" ${f.p === k ? "selected" : ""}>${esc(nitSig(k))}</option>`).join("")}</select>
+        <span>sacará</span>
+        <span class="ep-seatbox sm"><button type="button" data-xn="-1" aria-label="Un escaño menos">−</button><input type="text" inputmode="numeric" value="${f.n}" data-xnv aria-label="Escaños"><button type="button" data-xn="1" aria-label="Un escaño más">+</button></span>
+        <span>escaños</span>
       </div>
-      <div class="ep-xt" role="radiogroup" aria-label="Precisió">${EP_XT.map(([t, l]) => `<button type="button" role="radio" aria-checked="${f.t === t}" data-xt="${t}">${l}${t === 0 ? " <small>més part</small>" : t === 3 ? " <small>menys part</small>" : ""}</button>`).join("")}</div>
-      ${epStakeHtml("x", f.a, "Hi aposto")}
+      <div class="ep-xt" role="radiogroup" aria-label="Precisión">${EP_XT.map(([t, l]) => `<button type="button" role="radio" aria-checked="${f.t === t}" data-xt="${t}">${l}${t === 0 ? " <small>más parte</small>" : t === 3 ? " <small>menos parte</small>" : ""}</button>`).join("")}</div>
+      ${epStakeHtml("x", f.a, "Apuesto")}
       <p class="ep-xwin" data-xwin>${epXLine(f)}</p>
-      <button class="btn primary" type="button" data-xadd ${xs.length >= EP_XN ? "disabled" : ""}>＋ Afegeix l'aposta</button>
+      <button class="btn primary" type="button" data-xadd ${xs.length >= EP_XN ? "disabled" : ""}>＋ Añade la apuesta</button>
     </div>
-    ${xs.length ? `<ul class="ep-xul">${xs.map((x, j) => `<li style="--c:${nitParty(x.p).color}"><span class="ep-xs">${epXLine(x)}</span><span class="ep-xa">${epCoin(x.a)}</span><button type="button" class="ep-del" data-xdel="${j}" aria-label="Treu-la">✕</button></li>`).join("")}</ul>` : ""}`;
+    ${xs.length ? `<ul class="ep-xul">${xs.map((x, j) => `<li style="--c:${nitParty(x.p).color}"><span class="ep-xs">${epXLine(x)}</span><span class="ep-xa">${epCoin(x.a)}</span><button type="button" class="ep-del" data-xdel="${j}" aria-label="Quítala">✕</button></li>`).join("")}</ul>` : ""}`;
   const redraw = () => { const y = scrollY; epStepX(box, D, changed); changed(); scrollTo(0, y); };
   const line = () => { const el = $("[data-xwin]", box); if (el) el.innerHTML = epXLine(f); };
   $("[data-xp]", box).addEventListener("change", (e) => { f.p = e.target.value; f.n = Math.min(f.n, epMax(f.p)); $("[data-xnv]", box).value = f.n; line(); });
@@ -631,32 +641,43 @@ function epStepX(box, D, changed) {
   epStakeBind(box, () => f.a, (k, v) => { f.a = v; $("[data-stake] [data-sv]", box).value = v; });
   $("[data-xadd]", box).addEventListener("click", () => {
     if (D.x.length >= EP_XN) return;
-    if (D.x.some((x) => x.p === f.p)) return toast(`Ja tens una aposta sobre ${nitSig(f.p)}: treu-la si la vols canviar`);
-    D.x.push({ p: f.p, n: f.n, t: f.t, a: f.a }); Sfx.play("pick"); toast("Aposta afegida"); redraw();
+    if (D.x.some((x) => x.p === f.p)) return toast(`Ya tienes una apuesta sobre ${nitSig(f.p)}: quítala si la quieres cambiar`);
+    D.x.push({ p: f.p, n: f.n, t: f.t, a: f.a }); Sfx.play("pick"); toast("Apuesta añadida"); redraw();
   });
   $$("[data-xdel]", box).forEach((b) => b.addEventListener("click", () => { D.x.splice(Number(b.dataset.xdel), 1); redraw(); }));
 }
 
 // Pas 6: resum, desar i grup
+// Què impedeix desar (es diu clarament, amb la manera d'arreglar-ho)
+function epProblems(D) {
+  const out = [], left = epAvail() - pronStaked(D);
+  if (left < 0) out.push(`Te pasas de ${epFmt(-left)}. Baja la apuesta al Congreso o quita de alguna pregunta o apuesta propia.`);
+  if (D.s && epSeatSum(D.s) !== 350) out.push(`Tu Congreso tiene ${epSeatSum(D.s)} escaños: tiene que haber 350 (paso 1).`);
+  if (D.s && (D.cs || 0) < EP_STEP) out.push(`Apuesta al menos ${EP_STEP} monedas a tu Congreso (paso 3).`);
+  if (D.pv && epProvMissing(D.pv).length) out.push(`Falta acabar de repartir ${epProvMissing(D.pv).map((q) => q.name).join(", ")} (paso 2).`);
+  if (!D.s && !pronCount(D) && !(D.x || []).length) out.push("Aún no has apostado nada.");
+  return out;
+}
 function epStepFi(box, D, changed) {
   const left = epAvail() - pronStaked(D), dirty = epDirty() || !epHasSaved(), done = PronState.justSaved;
   const mk = PRON_M.filter((m) => D.b[m.id]?.a > 0);
   box.innerHTML = `<div class="ep-ticket">
-      <h3>🎟️ La teva Electoporra</h3>
+      <h3>🎟️ Tu Electoporra</h3>
       <ul>
-        <li><span>🏛️ El teu Congrés</span><em>${epCoin(D.cs || 0)}</em><button class="linkish" type="button" data-wgo2="0">Edita</button></li>
-        <li><span>🎯 ${mk.length} ${mk.length === 1 ? "pregunta" : "preguntes"}</span><em>${epCoin(epMk(D))}</em><button class="linkish" type="button" data-wgo2="4">Edita</button></li>
-        <li><span>✍️ ${(D.x || []).length} ${(D.x || []).length === 1 ? "aposta pròpia" : "apostes pròpies"}</span><em>${epCoin((D.x || []).reduce((a, x) => a + x.a, 0))}</em><button class="linkish" type="button" data-wgo2="5">Edita</button></li>
-        <li class="tot"><span>Total apostat</span><em>${epCoin(pronStaked(D))}</em><span></span></li>
+        <li><span>🏛️ Tu Congreso</span><em>${epCoin(D.cs || 0)}</em><button class="linkish" type="button" data-wgo2="0">Edita</button></li>
+        <li><span>🎯 ${mk.length} ${mk.length === 1 ? "pregunta" : "preguntas"}</span><em>${epCoin(epMk(D))}</em><button class="linkish" type="button" data-wgo2="4">Edita</button></li>
+        <li><span>✍️ ${(D.x || []).length} ${(D.x || []).length === 1 ? "apuesta propia" : "apuestas propias"}</span><em>${epCoin((D.x || []).reduce((a, x) => a + x.a, 0))}</em><button class="linkish" type="button" data-wgo2="5">Edita</button></li>
+        <li class="tot"><span>Total apostado</span><em>${epCoin(pronStaked(D))}</em><span></span></li>
       </ul>
-      ${left < 0 ? `<p class="ep-warn">Et passes de ${epFmt(-left)}. Treu-ne d'alguna aposta per poder desar.</p>` : ""}
-      ${done && !dirty ? `<p class="ep-saved">✓ Desada! Pots canviar-la fins a les 20:00 del 29N.</p>` : `<button class="btn primary lg ep-go" type="button" data-fsave ${left < 0 || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Desant…" : epHasSaved() ? "💾 Desa els canvis" : "💾 Desa la meva Electoporra"}</button>`}
+      <p class="ep-sub">Puedes apostar hasta ${epCoin(epAvail())} (tus monedas y las ${EP_BONUS} de regalo).</p>
+      ${epProblems(D).map((t) => `<p class="ep-warn">⚠️ ${t}</p>`).join("")}
+      ${done && !dirty ? `<p class="ep-saved">✓ ¡Guardada! Puedes cambiarla hasta las 20:00 del 29N.</p>` : `<button class="btn primary lg ep-go" type="button" data-fsave ${epProblems(D).length || PronState.saving ? "disabled" : ""}>${PronState.saving ? "Guardando…" : epHasSaved() ? "💾 Guarda los cambios" : "💾 Guarda mi Electoporra"}</button>`}
     </div>
     ${done && !dirty ? `<div class="ep-friends">
-      <h3>👥 I ara, juga amb amics</h3>
-      <p class="ep-sub">Crea un grup i passa'ls el codi, o entra al d'algú. La nit electoral veureu en directe qui s'acosta més al resultat.</p>
+      <h3>👥 Y ahora, juega con amigos</h3>
+      <p class="ep-sub">Crea un grupo y pásales el código, o entra en el de alguien. La noche electoral veréis en directo quién se acerca más al resultado.</p>
       ${epGroupFormsHtml()}
-      <button class="btn ghost" type="button" data-fhome>${PronState.leagues.length ? "Fet ›" : "Ara no, jugo sol ›"}</button>
+      <button class="btn ghost" type="button" data-fhome>${PronState.leagues.length ? "Hecho ›" : "Ahora no, juego solo ›"}</button>
     </div>` : ""}`;
   $$("[data-wgo2]", box).forEach((b) => b.addEventListener("click", () => epWizGo(Number(b.dataset.wgo2))));
   $("[data-fsave]", box)?.addEventListener("click", async () => { if (await epSave()) { PronState.justSaved = true; epStepFi(box, D, changed); changed(); if (typeof confetti === "function") confetti(80); } });
@@ -664,7 +685,7 @@ function epStepFi(box, D, changed) {
   epGroupFormsBind(box, () => { PronState.mode = "home"; PronState.justSaved = false; renderPronostics(); window.scrollTo({ top: 0, behavior: "smooth" }); });
 }
 async function epSave() {
-  if (espPreview()) { toast("Vista prèvia: no es desa"); return false; }
+  if (espPreview()) { toast("Vista previa: no se guarda"); return false; }
   const D = epDraft();
   const b = {};
   PRON_M.forEach((m) => { if (D.b[m.id] && D.b[m.id].a > 0) b[m.id] = { o: D.b[m.id].o, a: D.b[m.id].a }; });
@@ -680,15 +701,15 @@ async function epSave() {
   PronState.draft = null; store.set(EP_DRAFT_KEY, null);
   epSyncCoins(null);
   if (pronStaked(PronState.mine) > prev) window.Stats?.add("aposta", pronStaked(PronState.mine) - prev);
-  Sfx.play("unlock"); toast("Electoporra desada"); Progress.unlock("pron-fet");
+  Sfx.play("unlock"); toast("Electoporra guardada"); Progress.unlock("pron-fet");
   return true;
 }
 
 // Control de monedes: clarament una aposta, no un nombre d'escons
-const epStakeHtml = (key, a, label = "Hi aposto") => `<div class="ep-stake" data-stake="${key}">
+const epStakeHtml = (key, a, label = "Apuesto") => `<div class="ep-stake" data-stake="${key}">
   <span class="ep-stake-l">${label}</span>
-  <div class="ep-coinbox"><button type="button" data-sd="-10" aria-label="10 monedes menys">−</button><span class="ep-coinv"><i aria-hidden="true">🪙</i><input type="text" inputmode="numeric" value="${a}" data-sv aria-label="Monedes que hi aposto"></span><button type="button" data-sd="10" aria-label="10 monedes més">+</button></div>
-  <span class="ep-stake-u">monedes</span>
+  <div class="ep-coinbox"><button type="button" data-sd="-10" aria-label="10 monedas menos">−</button><span class="ep-coinv"><i aria-hidden="true">🪙</i><input type="text" inputmode="numeric" value="${a}" data-sv aria-label="Monedas que apuesto"></span><button type="button" data-sd="10" aria-label="10 monedas más">+</button></div>
+  <span class="ep-stake-u">monedas</span>
   <div class="ep-quick">${[50, 100].map((n) => `<button type="button" data-sq="${n}">+${n}</button>`).join("")}</div>
 </div>`;
 function epStakeBind(box, get, set) {
@@ -703,8 +724,8 @@ function epStakeBind(box, get, set) {
 
 // ---------- Grups ----------
 const epGroupFormsHtml = () => `<div class="ep-gforms">
-    <form class="ep-gform" data-gnew><label>Crea un grup<input type="text" maxlength="30" required placeholder="Nom del grup: p. ex. Els de la feina" data-gname></label><button class="btn primary" type="submit">Crea'l</button></form>
-    <form class="ep-gform" data-gjoin><label>O entra-hi amb un codi<input type="text" maxlength="5" required placeholder="ABCDE" autocapitalize="characters" data-gcode></label><button class="btn" type="submit">Entra-hi</button></form>
+    <form class="ep-gform" data-gnew><label>Crea un grupo<input type="text" maxlength="30" required placeholder="Nombre del grupo: p. ej. Los del trabajo" data-gname></label><button class="btn primary" type="submit">Créalo</button></form>
+    <form class="ep-gform" data-gjoin><label>O entra con un código<input type="text" maxlength="5" required placeholder="ABCDE" autocapitalize="characters" data-gcode></label><button class="btn" type="submit">Entra</button></form>
   </div>`;
 function epGroupFormsBind(box, after) {
   const O = window.Online;
@@ -715,24 +736,24 @@ function epGroupFormsBind(box, after) {
     const lg = await O.leagueCreate(name);
     if (!lg) return;
     PronState.leagues.push(lg); PronState.league = lg.code; store.set(EP_GROUP_KEY, lg.code);
-    toast("Grup creat! Ara convida-hi els teus amics"); Sfx.play("unlock"); after();
+    toast("¡Grupo creado! Ahora invita a tus amigos"); Sfx.play("unlock"); after();
   });
   $("[data-gjoin]", box)?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const code = $("[data-gcode]", box).value.trim().toUpperCase();
-    if (!/^[A-Z2-9]{5}$/.test(code)) return toast("El codi té 5 lletres o xifres");
+    if (!/^[A-Z2-9]{5}$/.test(code)) return toast("El código tiene 5 letras o cifras");
     const lg = await O.leagueJoin(code);
     if (!lg) return;
     if (!PronState.leagues.some((l) => l.code === lg.code)) PronState.leagues.push(lg);
     PronState.league = lg.code; store.set(EP_GROUP_KEY, lg.code);
-    toast(`Ja ets al grup «${lg.name}»`); Sfx.play("unlock"); after();
+    toast(`Ya estás en el grupo «${lg.name}»`); Sfx.play("unlock"); after();
   });
 }
 async function epInvite(lg) {
   const url = `${location.origin}${location.pathname}#electoporra/${lg.code}`;
-  const text = `Juguem a l'Electoporra del 29N? Entra al grup «${lg.name}» (codi ${lg.code}):\n${url}`;
+  const text = `¿Jugamos a la Electoporra del 29N? Entra en el grupo «${lg.name}» (código ${lg.code}):\n${url}`;
   if (navigator.share) { try { await navigator.share({ text }); return; } catch { /* cancel·lat */ } }
-  try { await navigator.clipboard.writeText(text); toast("Invitació copiada: enganxa-la al grup de WhatsApp"); } catch { prompt("Copia la invitació:", text); }
+  try { await navigator.clipboard.writeText(text); toast("Invitación copiada: pégala en el grupo de WhatsApp"); } catch { prompt("Copia la invitación:", text); }
 }
 
 // ---------- Qui ja ha jugat: el resum i el grup ----------
@@ -746,26 +767,29 @@ async function epHome(body, st, r) {
   const unsaved = open && PronState.draft && epDirty();
   const mk = PRON_M.filter((m) => epBets(M)[m.id]?.a > 0);
   const ids = s ? Object.keys(s).filter((k) => s[k]).sort((a, b) => s[b] - s[a]) : [];
-  body.innerHTML = `${unsaved ? `<div class="ep-unsaved"><span>✏️ Tens canvis sense desar.</span><button class="btn sm primary" type="button" data-cont>Continua</button></div>` : ""}
+  // Qui ja hi juga amb amics veu primer el seu grup
+  const grpFirst = PronState.leagues.length > 0;
+  body.innerHTML = `${unsaved ? `<div class="ep-unsaved"><span>✏️ Tienes cambios sin guardar.</span><button class="btn sm primary" type="button" data-cont>Continúa</button></div>` : ""}
+    ${grpFirst ? `<section class="card ep-grp top" data-grp id="ep-grup"></section>` : ""}
     <section class="card ep-mine">
-      <header class="ep-mine-h"><h2>${open ? "La teva Electoporra" : "Com t'està anant"}</h2>${open ? `<span class="ep-mine-a"><button class="btn sm" type="button" data-edit>✏️ Edita-la</button><button class="btn sm ghost" type="button" data-restart>🔄 Comença de zero</button></span>` : ""}</header>
+      <header class="ep-mine-h"><h2>${open ? "Tu Electoporra" : "Cómo te está yendo"}</h2>${open ? `<span class="ep-mine-a"><button class="btn sm" type="button" data-edit>✏️ Edítala</button><button class="btn sm ghost" type="button" data-restart>🔄 Empieza de cero</button></span>` : ""}</header>
       ${s ? `<div class="ep-mine-g">
-        <div class="ep-hemi sm">${nitHemi({ seats: { ...s }, totalSeats: epSeatSum(s) }, "").replace(/<div class="nt-hemi-c">[\s\S]*?<\/div>/, `<div class="nt-hemi-c"><b>${pct != null ? `${fmt(pct)} %` : "350"}</b><small>${pct != null ? "d'encert" : "escons"}</small></div>`)}</div>
+        <div class="ep-hemi sm">${nitHemi({ seats: { ...s }, totalSeats: epSeatSum(s) }, "").replace(/<div class="nt-hemi-c">[\s\S]*?<\/div>/, `<div class="nt-hemi-c"><b>${pct != null ? `${fmt(pct)} %` : "350"}</b><small>${pct != null ? "de acierto" : "escaños"}</small></div>`)}</div>
         <div><ul class="ep-seat-l">${ids.slice(0, 8).map((k) => `<li style="--c:${nitParty(k).color}"><i></i>${esc(nitSig(k))}<b>${s[k]}</b>${real ? `<small class="${(real[k] || 0) === s[k] ? "up" : ""}">${real[k] || 0}</small>` : ""}</li>`).join("")}</ul>
-          ${real ? `<p class="ep-sub">Entre parèntesis, els que surten ara de l'escrutini.</p>` : ""}</div>
-      </div>` : `<p class="ep-sub">No has repartit el Congrés.</p>`}
+          ${real ? `<p class="ep-sub">Al lado, los que salen ahora del escrutinio.</p>` : ""}</div>
+      </div>` : `<p class="ep-sub">No has repartido el Congreso.</p>`}
       <ul class="ep-tk">
-        <li><span>🏛️ Aposta al Congrés</span>${epCoin(M.cs || 0)}${real && s ? `<b class="${epCongMul(pct) > 1 ? "up" : epCongMul(pct) === 1 ? "" : "down"}">${epCongMul(pct) ? `×${epCongMul(pct)}` : "perduda"}</b>` : ""}</li>
-        <li><span>🎯 ${mk.length} ${mk.length === 1 ? "pregunta" : "preguntes"}</span>${epCoin(epMk(M))}${real ? `<b>${mk.filter((m) => r.res[m.id] === epBets(M)[m.id].o).length} encertades</b>` : ""}</li>
-        <li><span>✍️ ${(M.x || []).length} ${(M.x || []).length === 1 ? "aposta pròpia" : "apostes pròpies"}</span>${epCoin((M.x || []).reduce((a, x) => a + x.a, 0))}${real ? `<b>${(M.x || []).filter((x) => epXOk(x, real)).length} encertades</b>` : ""}</li>
-        ${bal && !bal.partial ? `<li class="tot"><span>${r.final ? "Has acabat amb" : "Ara mateix en tindries"}</span>${epCoin(bal.total)}<b class="${bal.net >= 0 ? "up" : "down"}">${bal.net >= 0 ? "+" : "−"}${fmt(Math.abs(bal.net))}</b></li>` : ""}
+        <li><span>🏛️ Apuesta al Congreso</span>${epCoin(M.cs || 0)}${real && s ? `<b class="${epCongMul(pct) > 1 ? "up" : epCongMul(pct) === 1 ? "" : "down"}">${epCongMul(pct) ? `×${epCongMul(pct)}` : "perduda"}</b>` : ""}</li>
+        <li><span>🎯 ${mk.length} ${mk.length === 1 ? "pregunta" : "preguntas"}</span>${epCoin(epMk(M))}${real ? `<b>${mk.filter((m) => r.res[m.id] === epBets(M)[m.id].o).length} acertadas</b>` : ""}</li>
+        <li><span>✍️ ${(M.x || []).length} ${(M.x || []).length === 1 ? "apuesta propia" : "apuestas propias"}</span>${epCoin((M.x || []).reduce((a, x) => a + x.a, 0))}${real ? `<b>${(M.x || []).filter((x) => epXOk(x, real)).length} acertadas</b>` : ""}</li>
+        ${bal && !bal.partial ? `<li class="tot"><span>${r.final ? "Has acabado con" : "Ahora mismo tendrías"}</span>${epCoin(bal.total)}<b class="${bal.net >= 0 ? "up" : "down"}">${bal.net >= 0 ? "+" : "−"}${fmt(Math.abs(bal.net))}</b></li>` : ""}
       </ul>
-      ${open && s ? `<button class="linkish" type="button" data-img>📸 Descarrega o comparteix la imatge del teu Congrés</button>` : ""}
+      ${open && s ? `<button class="linkish" type="button" data-img>📸 Descarga o comparte la imagen de tu Congreso</button>` : ""}
     </section>
-    <section class="card ep-grp" data-grp></section>`;
+    ${grpFirst ? "" : `<section class="card ep-grp" data-grp id="ep-grup"></section>`}`;
   $("[data-cont]", body)?.addEventListener("click", () => { PronState.mode = "wiz"; PronState.wi = 0; renderPronostics(); });
   $("[data-restart]", body)?.addEventListener("click", () => {
-    if (!confirm("Vols tornar a començar l'Electoporra de zero? El que tens desat no canvia fins que tornis a desar.")) return;
+    if (!confirm("¿Quieres volver a empezar la Electoporra de cero? Lo que tienes guardado no cambia hasta que vuelvas a guardar.")) return;
     PronState.draft = { b: {}, s: null, pv: null, cs: 0, x: [] }; PronState.xf = null; PronState.psel = null; epSaveDraft();
     PronState.mode = "wiz"; PronState.wi = 0; Sfx.play("pick"); renderPronostics(); window.scrollTo({ top: 0, behavior: "smooth" });
   });
@@ -778,14 +802,15 @@ async function epGroupCard(box, st, r) {
   const real = closed && r && Esp.data ? Esp.data.seats : null;
   const lg = PronState.leagues.find((l) => l.code === PronState.league) || PronState.leagues[0];
   const meUid = window.Online.user.uid;
-  const head = `<header class="ep-mine-h"><h2>👥 ${lg ? esc(lg.name) : "Juga amb amics"}</h2>${PronState.leagues.length > 1 ? `<select data-gsel aria-label="Grup">${PronState.leagues.map((l) => `<option value="${l.code}" ${l.code === lg?.code ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select>` : ""}</header>`;
-  const forms = `<details class="ep-gmore" ${lg ? "" : "open"}><summary>${lg ? "Crea un altre grup o entra-hi amb un codi" : "Crea un grup o entra-hi amb un codi"}</summary>${epGroupFormsHtml()}</details>`;
+  const head = `<header class="ep-mine-h"><h2>👥 ${lg ? `Tu grupo: ${esc(lg.name)}` : "Juega con amigos"}</h2></header>
+    ${PronState.leagues.length > 1 ? `<div class="ep-gtabs" role="tablist" aria-label="Tus grupos">${PronState.leagues.map((l) => `<button type="button" role="tab" aria-selected="${l.code === lg?.code}" data-gtab="${l.code}">${esc(l.name)} <small>${l.members.length}</small></button>`).join("")}</div>` : ""}`;
+  const forms = `<details class="ep-gmore" ${lg ? "" : "open"}><summary>${lg ? "Crea otro grupo o entra con un código" : "Crea un grupo o entra con un código"}</summary>${epGroupFormsHtml()}</details>`;
   if (!lg) {
-    box.innerHTML = `${head}<p class="ep-sub">La gràcia és jugar-hi amb amics: la nit electoral veureu en directe qui s'acosta més al resultat.</p>${forms}`;
+    box.innerHTML = `${head}<p class="ep-sub">La gracia es jugar con amigos: la noche electoral veréis en directo quién se acerca más al resultado.</p>${forms}`;
     epGroupFormsBind(box, () => renderPronostics());
     return;
   }
-  box.innerHTML = `${head}<p class="muted">Carregant…</p>`;
+  box.innerHTML = `${head}<p class="muted">Cargando…</p>`;
   const docs = await window.Online.pronMembers(lg.members);
   if (closed && r && !Esp.cfg.pronPots && !PronState.pots && Date.now() - (PronState.allAt || 0) > 60000) {
     PronState.allAt = Date.now();
@@ -802,19 +827,19 @@ async function epGroupCard(box, st, r) {
   else rows.sort((a, b) => Number(b.played) - Number(a.played));
   const av = (x) => (x.photo ? `<img src="${esc(x.photo)}" alt="" referrerpolicy="no-referrer">` : `<span class="ep-av">${esc((x.name || "?")[0])}</span>`);
   box.innerHTML = `${head}
-    <p class="ep-sub">${real ? (r.final ? "Resultat final: qui s'ha acostat més al Congrés." : "En directe: qui s'acosta més al Congrés que surt de l'escrutini.") : closed ? "Ja està tancat. Quan comenci l'escrutini, aquí veureu qui s'acosta més." : "Fins a les 20:00 del 29N només es veu qui ja ha jugat. La nit electoral, en directe, qui s'acosta més al resultat."}</p>
+    <p class="ep-sub">${real ? (r.final ? "Resultado final: quién se ha acercado más al Congreso." : "En directo: quién se acerca más al Congreso que sale del escrutinio.") : closed ? "Ya está cerrado. Cuando empiece el escrutinio, aquí veréis quién se acerca más." : "Hasta las 20:00 del 29N solo se ve quién ya ha jugado. La noche electoral, en directo, quién se acerca más al resultado."}</p>
     <ol class="ep-rank">${rows.map((x, i) => `<li class="${x.uid === meUid ? "me" : ""}" style="--i:${i}">
       <span class="ep-pos">${real ? (i < 3 && x.pct != null ? ["🥇", "🥈", "🥉"][i] : i + 1) : ""}</span>${av(x)}
-      <span class="ep-nm"><b>${esc(x.name)}</b>${real ? (x.pct != null ? `<span class="ep-meter" aria-hidden="true"><i style="--p:${x.pct}%"></i></span><small>${x.hits} de 350 escons${x.net != null ? ` · ${x.net >= 0 ? "+" : "−"}${fmt(Math.abs(x.net))} monedes` : ""}</small>` : `<small>No va repartir el Congrés</small>`) : `<small>${x.played ? (x.cong ? "Ja ha fet el seu Congrés ✓" : "Ha jugat, sense Congrés") : "Encara no ha jugat"}</small>`}</span>
+      <span class="ep-nm"><b>${esc(x.name)}</b>${real ? (x.pct != null ? `<span class="ep-meter" aria-hidden="true"><i style="--p:${x.pct}%"></i></span><small>${x.hits} de 350 escaños${x.net != null ? ` · ${x.net >= 0 ? "+" : "−"}${fmt(Math.abs(x.net))} monedas` : ""}</small>` : `<small>No repartió el Congreso</small>`) : `<small>${x.played ? (x.cong ? "Ya ha hecho su Congreso ✓" : "Ha jugado, sin Congreso") : "Aún no ha jugado"}</small>`}</span>
       <b class="ep-pts">${real ? (x.pct != null ? `${fmt(x.pct)} %` : "—") : x.played ? "✔" : "…"}</b></li>`).join("")}</ol>
-    ${!closed ? `<div class="ep-ginv"><span>Codi del grup: <b>${esc(lg.code)}</b></span><button class="btn sm primary" type="button" data-ginv>🔗 Convida-hi amics</button></div>` : ""}
+    ${!closed ? `<div class="ep-ginv"><span>Código del grupo: <b>${esc(lg.code)}</b></span><button class="btn sm primary" type="button" data-ginv>🔗 Invita a amigos</button></div>` : ""}
     ${!closed ? forms : ""}
-    <p class="ep-gown">${lg.owner === meUid ? `<button class="linkish" type="button" data-gdel>🗑️ Esborra el grup</button>` : `<button class="linkish" type="button" data-gleave>Surt del grup</button>`}</p>`;
-  $("[data-gsel]", box)?.addEventListener("change", (e) => { PronState.league = e.target.value; store.set(EP_GROUP_KEY, PronState.league); epGroupCard(box, st, r); });
+    <p class="ep-gown">${lg.owner === meUid ? `<button class="linkish" type="button" data-gdel>🗑️ Borra el grupo</button>` : `<button class="linkish" type="button" data-gleave>Sal del grupo</button>`}</p>`;
+  $$("[data-gtab]", box).forEach((b) => b.addEventListener("click", () => { PronState.league = b.dataset.gtab; store.set(EP_GROUP_KEY, PronState.league); Sfx.play("pick"); epGroupCard(box, st, r); }));
   $("[data-ginv]", box)?.addEventListener("click", () => epInvite(lg));
   const drop = () => { PronState.leagues = PronState.leagues.filter((l) => l.code !== lg.code); PronState.league = PronState.leagues[0]?.code || "sol"; store.set(EP_GROUP_KEY, PronState.league); renderPronostics(); };
-  $("[data-gdel]", box)?.addEventListener("click", async () => { if (!confirm(`Vols esborrar el grup «${lg.name}»? S'esborrarà per a tots els membres.`)) return; if (await window.Online.leagueDelete(lg.code)) { toast("Grup esborrat"); drop(); } });
-  $("[data-gleave]", box)?.addEventListener("click", async () => { if (!confirm(`Vols sortir del grup «${lg.name}»?`)) return; if (await window.Online.leagueLeave(lg.code)) { toast("Has sortit del grup"); drop(); } });
+  $("[data-gdel]", box)?.addEventListener("click", async () => { if (!confirm(`¿Quieres borrar el grupo «${lg.name}»? Se borrará para todos los miembros.`)) return; if (await window.Online.leagueDelete(lg.code)) { toast("Grupo borrado"); drop(); } });
+  $("[data-gleave]", box)?.addEventListener("click", async () => { if (!confirm(`¿Quieres salir del grupo «${lg.name}»?`)) return; if (await window.Online.leagueLeave(lg.code)) { toast("Has salido del grupo"); drop(); } });
   epGroupFormsBind(box, () => renderPronostics());
 }
 
@@ -823,11 +848,11 @@ function pronNitCard(d) {
   const st = pronState();
   if (st === "off" || st === "aviat") return "";
   const mine = PronState.mine;
-  if (!window.Online?.user || !mine) return `<section class="card pron-nit"><h2 class="section-title sm">🎰 Electoporra</h2><p class="muted">${st === "oberta" ? "Endevina el Congrés i aposta-hi monedes abans de les 20:00!" : "Mira qui s'acosta més entre els teus amics."}</p><a class="btn" href="#electoporra">${st === "oberta" ? "Juga a l'Electoporra" : "Obre l'Electoporra"}</a></section>`;
+  if (!window.Online?.user || !mine) return `<section class="card pron-nit"><h2 class="section-title sm">🎰 Electoporra</h2><p class="muted">${st === "oberta" ? "¡Adivina el Congreso y apuesta monedas antes de las 20:00!" : "Mira quién se acerca más entre tus amigos."}</p><a class="btn" href="#electoporra">${st === "oberta" ? "Juega a la Electoporra" : "Abre la Electoporra"}</a></section>`;
   const hits = mine.s && d ? epHits(mine.s, d.seats) : null;
-  return `<section class="card pron-nit"><h2 class="section-title sm">🎰 La teva Electoporra</h2>
-    ${hits != null ? `<p class="pron-nit-n"><b>${fmt(epPct(hits))} %</b> d'encert del teu Congrés</p>` : `<p class="muted">${fmt(pronStaked(mine))} monedes en joc</p>`}
-    <a class="btn" href="#electoporra">Mira el teu grup</a></section>`;
+  return `<section class="card pron-nit"><h2 class="section-title sm">🎰 Tu Electoporra</h2>
+    ${hits != null ? `<p class="pron-nit-n"><b>${fmt(epPct(hits))} %</b> de acierto de tu Congreso</p>` : `<p class="muted">${fmt(pronStaked(mine))} monedas en juego</p>`}
+    <a class="btn" href="#electoporra">Mira tu grupo</a></section>`;
 }
 
-ACHIEVEMENTS.push({ id: "pron-fet", name: "Electoporrista", desc: "Juga a l'Electoporra del 29N." });
+ACHIEVEMENTS.push({ id: "pron-fet", name: "Electoporrista", desc: "Juega a la Electoporra del 29N." });

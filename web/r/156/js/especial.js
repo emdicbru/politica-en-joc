@@ -100,18 +100,18 @@ async function espLoadConfig() {
 // ---------- Avís de l'Electoporra (es llança des de la Sala de control) ----------
 const ESP_AVIS_KEY = "r29n-avis";
 const ESP_AVIS_STEPS = [
-  "Entra con tu cuenta y abre la Electoporra.",
-  "Apuesta monedas en las preguntas que quieras: tienes 300 monedas de regalo.",
-  "Si aciertas, te quedas parte de las monedas de quienes fallan, en proporción a lo que has puesto.",
-  "Envía tu predicción de escaños y mira quién acierta más entre tus amigos.",
-  "Con tus ligas de amigos, también podéis hacer apuestas vuestras.",
+  "Entra amb el teu compte i obre l'Electoporra.",
+  "Aposta monedes a les preguntes que vulguis: tens 300 monedes de regal.",
+  "Si l'encertes, et quedes part de les monedes dels qui fallen, en proporció al que hi has posat.",
+  "Envia-hi la teva predicció d'escons i mira qui l'encerta més entre els teus amics.",
+  "Amb les teves lligues d'amics, també podeu fer apostes vostres.",
 ];
 const espAvisOn = () => !!(Esp.cfg.avisOn && Esp.cfg.avisId);
 // Diapositiva per al carrusel de la primera visita
 function espAvisSlide() {
   const t = Date.now();
   if (!espAvisOn() && !(t >= PRON_OPEN && t < PRON_CLOSE)) return null;
-  return { t: "Nuevo: la Electoporra del 29N", d: "Apuesta monedas de juego (sin ningún valor) a los resultados del 29N, envía tu predicción de escaños y compite con tus amigos. Se cierra a las 20:00 del 29N.", art: "majoria", steps: ESP_AVIS_STEPS };
+  return { t: "Nou: l'Electoporra del 29N", d: "Aposta monedes de joc (sense cap valor) als resultats del 29N, envia la teva predicció d'escons i competeix amb els teus amics. Es tanca a les 20:00 del 29N.", art: "majoria", steps: ESP_AVIS_STEPS };
 }
 const espAvisSeen = () => { if (Esp.cfg.avisId) store.set(ESP_AVIS_KEY, Esp.cfg.avisId); };
 function espAvis() {
@@ -121,11 +121,11 @@ function espAvis() {
   if (["joc", "control", "pronostics", "electoporra", "legal"].includes(v) || document.querySelector(".onb, .esp-avis")) return;
   espAvisSeen();
   const box = h(`<div class="onb esp-avis" role="dialog" aria-modal="true" aria-label="Electoporra"><div class="onb-card card">
-    <div class="onb-art esp-avis-art"><span>🎰</span><b>300</b><small>monedas de regalo</small></div>
-    <div class="onb-body"><p class="kicker">Nuevo</p><h3>Electoporra</h3>
-      <p>Apuesta monedas de juego (no tienen ningún valor) a los resultados del 29N y compite con tus amigos. Así se juega:</p>
+    <div class="onb-art esp-avis-art"><span>🎰</span><b>300</b><small>monedes de regal</small></div>
+    <div class="onb-body"><p class="kicker">Nou</p><h3>Electoporra</h3>
+      <p>Aposta monedes de joc (no tenen cap valor) als resultats del 29N i competeix amb els teus amics. Així es juga:</p>
       <ol class="esp-avis-steps">${ESP_AVIS_STEPS.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
-      <div class="row"><button class="btn ghost" type="button" data-later>Más tarde</button><a class="btn primary" href="#electoporra" data-go>Juega a la Electoporra</a></div></div>
+      <div class="row"><button class="btn ghost" type="button" data-later>Més tard</button><a class="btn primary" href="#electoporra" data-go>Juga a l'Electoporra</a></div></div>
   </div></div>`);
   document.body.appendChild(box);
   const close = () => box.remove();
@@ -156,14 +156,31 @@ async function espFetchResults() {
     raw = espSimulacre(Math.max(0, Math.min(1, (Date.now() - start) / dur)));
   } else if (mode === "oficial") {
     try {
-      const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Math.floor(Date.now() / 15000)}`, { cache: "no-cache" });
+      const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Math.floor(Date.now() / 15000)}`, { cache: "no-cache" });
       if (r.ok) raw = await r.json();
     } catch { /* encara no hi ha dades */ }
   }
   Esp.fetchedAt = Date.now();
-  const d = raw && raw.provs?.length ? espCompute(raw) : null;
+  // Correcció a mà des de la Sala de control (escons, participació, escrutat): mana si és més recent que el fitxer
+  const man = Esp.cfg.manual;
+  if (mode === "oficial" && man?.seats && (!raw || !raw.actualitzat || man.t > raw.actualitzat)) raw = { nacional: { seats: man.seats, pct: man.pct || raw?.nacional?.pct || null }, escrutat: man.escrutat ?? raw?.escrutat ?? null, participacio: man.participacio ?? raw?.participacio ?? null, actualitzat: man.t, font: "Sala de control" };
+  const d = raw && raw.provs?.length ? espCompute(raw) : raw?.nacional?.seats ? espNacional(raw) : null;
   if (d) { espEvents(Esp.data, d); Esp.prev = Esp.data; }
   Esp.data = d;
+  return d;
+}
+// Nit electoral sense dades per circumscripció: només els totals d'Espanya (de la Viquipèdia, tools/nit-electoral.js
+// --viquipedia, o entrats a mà a la Sala de control). Té la mateixa forma que espCompute, amb provs buit.
+function espNacional(raw) {
+  const seats = Object.fromEntries(Object.entries(raw.nacional.seats || {}).filter(([, n]) => n > 0).map(([k, n]) => [k, Math.round(n)]));
+  const pct = raw.nacional.pct || {};
+  const tot = Object.fromEntries(Object.keys({ ...seats, ...pct }).map((k) => [k, pct[k] != null ? pct[k] * 1000 : (seats[k] || 0)]));
+  const valid = Object.keys(pct).length ? 100000 : Object.values(tot).reduce((a, b) => a + b, 0) || 1;
+  const totalSeats = Object.values(seats).reduce((a, b) => a + b, 0);
+  const ranking = Object.keys(tot).sort((a, b) => (seats[b] || 0) - (seats[a] || 0) || tot[b] - tot[a]);
+  const d = { escrutat: raw.escrutat ?? (totalSeats >= 350 ? null : 0), participacio: raw.participacio ?? null, actualitzat: raw.actualitzat, simulacre: false, nacional: true, font: raw.font || "Viquipèdia", tot, valid, seats, totalSeats, provs: [], ranking, ballen: [] };
+  d.range = Object.fromEntries(Object.keys(seats).map((k) => [k, [seats[k], seats[k]]]));
+  d.sums = nitSums(d);
   return d;
 }
 // ---------- Última hora: què ha canviat respecte a l'actualització anterior ----------
@@ -171,16 +188,16 @@ function espEvents(a, b) {
   const add = (kind, text) => Esp.feed.unshift({ kind, text, t: Date.now() });
   const sig = (k) => espParty(k).sig;
   if (!a) {
-    if (b.escrutat > 0) add("info", `Escrutinio en marcha: ${espPct(b.escrutat)} escrutado.`);
+    if (b.escrutat > 0) add("info", `Escrutini en marxa: ${espPct(b.escrutat)} escrutat.`);
     return;
   }
-  [5, 10, 25, 50, 75, 90, 95, 100].forEach((m) => { if (a.escrutat < m && b.escrutat >= m) add("fita", m === 100 ? "Escrutinio completado al 100 %." : `Ya se ha escrutado el ${m} % de los votos.`); });
-  if (a.ranking[0] !== b.ranking[0] && b.seats[b.ranking[0]]) add("lider", `${sig(b.ranking[0])} pasa a ser la primera fuerza, con ${b.seats[b.ranking[0]]} escaños.`);
+  [5, 10, 25, 50, 75, 90, 95, 100].forEach((m) => { if (a.escrutat < m && b.escrutat >= m) add("fita", m === 100 ? "Escrutini completat al 100 %." : `Ja s'ha escrutat el ${m} % dels vots.`); });
+  if (a.ranking[0] !== b.ranking[0] && b.seats[b.ranking[0]]) add("lider", `${sig(b.ranking[0])} passa a ser la primera força, amb ${b.seats[b.ranking[0]]} escons.`);
   const changes = Object.keys({ ...a.seats, ...b.seats }).map((k) => [k, (b.seats[k] || 0) - (a.seats[k] || 0)]).filter(([, d]) => d);
-  changes.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1])).slice(0, 3).forEach(([k, d]) => add(d > 0 ? "puja" : "baixa", `${sig(k)} ${d > 0 ? "gana" : "pierde"} ${Math.abs(d)} ${Math.abs(d) === 1 ? "escaño" : "escaños"} y tiene ${b.seats[k] || 0}.`));
+  changes.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1])).slice(0, 3).forEach(([k, d]) => add(d > 0 ? "puja" : "baixa", `${sig(k)} ${d > 0 ? "guanya" : "perd"} ${Math.abs(d)} ${Math.abs(d) === 1 ? "escó" : "escons"} i en té ${b.seats[k] || 0}.`));
   b.provs.forEach((p) => {
     const o = a.provs.find((x) => x.code === p.code);
-    if (o && o.winner && p.winner && o.winner !== p.winner && p.escrutat > 20) add("gir", `Giro en ${p.name}: ahora gana ${sig(p.winner)}.`);
+    if (o && o.winner && p.winner && o.winner !== p.winner && p.escrutat > 20) add("gir", `Gir a ${p.name}: ara hi guanya ${sig(p.winner)}.`);
   });
   Esp.feed = Esp.feed.slice(0, 30);
 }
@@ -210,7 +227,7 @@ document.addEventListener("visibilitychange", () => {
 
 // ---------- Utilitats ----------
 const espParty = (k) => PARTIES.find((p) => p.id === k) || { id: k, sig: k.toUpperCase(), name: k, color: "#9a95a8" };
-const espPct = (x, d = 1) => `${(Math.round(x * 10 ** d) / 10 ** d).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} %`;
+const espPct = (x, d = 1) => `${(Math.round(x * 10 ** d) / 10 ** d).toLocaleString("ca-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} %`;
 function espCountdown(to) {
   const s = Math.max(0, Math.round((to - espNow()) / 1000));
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
@@ -218,7 +235,7 @@ function espCountdown(to) {
 }
 function espAgo(t) {
   const s = Math.max(0, Math.round((Date.now() - t) / 1000));
-  return s < 60 ? `hace ${s} s` : `hace ${Math.round(s / 60)} min`;
+  return s < 60 ? `fa ${s} s` : `fa ${Math.round(s / 60)} min`;
 }
 function espHemi(d) {
   const ids = Object.keys(d.seats).filter((k) => d.seats[k]).sort((a, b) => (ESP_ORDER.indexOf(a) + 1 || 50) - (ESP_ORDER.indexOf(b) + 1 || 50));
@@ -232,13 +249,13 @@ function espParticipacioHtml() {
   if (!rows.length) return "";
   return `<div class="esp-part">${rows.map((x) => {
     const diff = x.ref ? Number(x.v) - Number(x.ref) : null;
-    return `<div><small>Participación a las ${esc(x.h)}</small><b>${espPct(Number(x.v), 2)}</b>${diff !== null ? `<span class="${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : "−"}${espPct(Math.abs(diff), 2)} respecto a 2023</span>` : ""}</div>`;
+    return `<div><small>Participació a les ${esc(x.h)}</small><b>${espPct(Number(x.v), 2)}</b>${diff !== null ? `<span class="${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : "−"}${espPct(Math.abs(diff), 2)} respecte al 2023</span>` : ""}</div>`;
   }).join("")}</div>`;
 }
 const espMsg = () => (Esp.cfg.missatge ? `<p class="esp-msg">${esc(Esp.cfg.missatge)}</p>` : "");
 function espPreviewBar() {
   const pv = espPreview();
-  return pv ? `<div class="esp-preview">👁 Previsualización: ${esc(pv.label || "Sala de control")} · solo la ves tú <button type="button" data-esp-exit>Vuelve a la Sala de control</button></div>` : "";
+  return pv ? `<div class="esp-preview">👁 Previsualització: ${esc(pv.label || "Sala de control")} · només la veus tu <button type="button" data-esp-exit>Torna a la Sala de control</button></div>` : "";
 }
 function espBind(root) {
   $("[data-esp-exit]", root)?.addEventListener("click", () => { sessionStorage.removeItem(ESP_PREVIEW_KEY); Esp.data = null; Esp.prev = null; Esp.feed = []; location.hash = "#control"; });
@@ -255,32 +272,32 @@ function renderHomeEspecial() {
   const f = espFase();
   const lliga = (typeof pronState === "function" && pronState() === "oberta" ? `<a class="btn" href="#electoporra">🎰 Electoporra</a>` : "") ;
   if (f === "off") {
-    el.innerHTML = espPreviewBar() + (lliga ? `<section class="esp-home esp-pron">${espMsg()}<p class="esp-k">🎰 Nuevo · hasta las 20:00 del 29N</p><h2>Electoporra</h2><p>Apuesta monedas en las preguntas del 29N, envía tu predicción de escaños y mira quién acierta más entre tus amigos.</p><div class="esp-go"><a class="btn primary" href="#electoporra">🎰 Haz tu Electoporra</a></div></section>` : "");
+    el.innerHTML = espPreviewBar() + (lliga ? `<section class="esp-home esp-pron">${espMsg()}<p class="esp-k">🎰 Nou · fins a les 20:00 del 29N</p><h2>Electoporra</h2><p>Aposta monedes a les preguntes del 29N, envia la teva predicció d'escons i mira qui l'encerta més entre els teus amics.</p><div class="esp-go"><a class="btn primary" href="#electoporra">🎰 Fes la teva Electoporra</a></div></section>` : "");
     espBind(el);
     return;
   }
   const porra = lliga;
   let body = "";
   if (f === "previa") {
-    body = `<p class="esp-k"><span class="dot-live"></span>Jornada de reflexión</p>
-      <h2>Mañana se vota</h2>
-      <p>Los colegios abren a las 9 de la mañana y cierran a las 8 de la tarde. Repasa cómo se vota y qué hay que llevar.</p>
-      <div class="esp-go"><a class="btn primary" href="#apren">Cómo se vota</a>${porra}</div>`;
+    body = `<p class="esp-k"><span class="dot-live"></span>Jornada de reflexió</p>
+      <h2>Demà es vota</h2>
+      <p>Els col·legis obren a les 9 del matí i tanquen a les 8 del vespre. Repassa com es vota i què cal portar.</p>
+      <div class="esp-go"><a class="btn primary" href="#apren">Com es vota</a>${porra}</div>`;
   } else if (f === "dia") {
     const open = espNow() >= ESP_T.obre, onTime = espNow() >= ESP_T.dia && espNow() < ESP_T.nit;
-    body = `<p class="esp-k"><span class="dot-live"></span>Jornada electoral · 29 de noviembre</p>
-      <h2>Hoy se vota</h2>
-      <p>${!onTime ? "Los colegios abren a las 9:00 y cierran a las 20:00. A partir de las 20:00, la noche electoral en directo aquí mismo." : open ? `Los colegios cierran dentro de <b>${espCountdown(ESP_T.nit)}</b>. A partir de las 20:00, la noche electoral en directo aquí mismo.` : `Los colegios abren dentro de <b>${espCountdown(ESP_T.obre)}</b>.`}</p>
+    body = `<p class="esp-k"><span class="dot-live"></span>Jornada electoral · 29 de novembre</p>
+      <h2>Avui es vota</h2>
+      <p>${!onTime ? "Els col·legis obren a les 9:00 i tanquen a les 20:00. A partir de les 20:00, la nit electoral en directe aquí mateix." : open ? `Els col·legis tanquen d'aquí a <b>${espCountdown(ESP_T.nit)}</b>. A partir de les 20:00, la nit electoral en directe aquí mateix.` : `Els col·legis obren d'aquí a <b>${espCountdown(ESP_T.obre)}</b>.`}</p>
       ${espParticipacioHtml()}
-      <div class="esp-go"><a class="btn primary" href="#apren">Cómo se vota</a><a class="btn" href="#nit/joc">🎯 Escaños a vigilar</a>${porra}</div>`;
+      <div class="esp-go"><a class="btn primary" href="#apren">Com es vota</a><a class="btn" href="#nit/joc">🎯 Escons a vigilar</a>${porra}</div>`;
   } else {
     const d = espResultsMode() === "off" ? null : Esp.data;
     const live = f === "nit";
     const lead = d?.ranking?.[0] && d.seats[d.ranking[0]] ? espParty(d.ranking[0]) : null;
-    body = `<p class="esp-k">${live ? `<span class="dot-live"></span>En directo` : "Elecciones generales del 29N"}${d?.simulacre ? " · SIMULACRO" : ""}</p>
-      <h2>${live ? "Noche electoral" : "Los resultados del 29N"}</h2>
-      ${d ? `${(() => { const t = typeof nitTitular === "function" ? nitTitular(d) : null; return t ? `<p class="esp-tit"><b>${esc(t.t1)}.</b> ${esc(t.t2)}</p>` : ""; })()}<div class="esp-mini">${espHemi(d)}<div><b>${espPct(d.escrutat)}</b><small>escrutado</small>${lead ? `<p class="esp-mini-l"><i style="background:${lead.color}"></i>${esc(lead.sig)} · ${d.seats[lead.id]} escaños</p>` : ""}${typeof nitGov === "function" ? NIT_GOV.map((g) => { const x = nitGov(d, g); return `<p class="esp-mini-g v-${x.st}"><b>${esc(nitAnd(x.core.map(nitSig)))}: ${x.sum}</b> ${x.st === "maj" ? "✔ mayoría" : x.st === "fil" ? "✔ al filo" : x.st === "suports" ? `· con apoyos (faltan ${x.need})` : `✘ faltan ${x.need}`}</p>`; }).join("") : ""}${d.ballen?.length ? `<p class="esp-mini-j">🎯 <b>${d.ballen.length}</b> ${d.ballen.length === 1 ? "escaño en juego" : "escaños en juego"}</p>` : ""}${Esp.feed[0] ? `<p class="esp-mini-f">⚡ ${esc(Esp.feed[0].text)}</p>` : ""}</div></div>` : `<p>${live ? "Los primeros resultados llegarán en unos minutos." : "Consulta los resultados y haz tu mayoría."}</p>`}
-      <div class="esp-go"><a class="btn primary" href="#nit">${live ? "Síguela en directo" : "Resultados y mayorías"}</a></div>`;
+    body = `<p class="esp-k">${live ? `<span class="dot-live"></span>En directe` : "Eleccions generals del 29N"}${d?.simulacre ? " · SIMULACRE" : ""}</p>
+      <h2>${live ? "Nit electoral" : "Els resultats del 29N"}</h2>
+      ${d ? `${(() => { const t = typeof nitTitular === "function" ? nitTitular(d) : null; return t ? `<p class="esp-tit"><b>${esc(t.t1)}.</b> ${esc(t.t2)}</p>` : ""; })()}<div class="esp-mini">${espHemi(d)}<div><b>${espPct(d.escrutat)}</b><small>escrutat</small>${lead ? `<p class="esp-mini-l"><i style="background:${lead.color}"></i>${esc(lead.sig)} · ${d.seats[lead.id]} escons</p>` : ""}${typeof nitGov === "function" ? NIT_GOV.map((g) => { const x = nitGov(d, g); return `<p class="esp-mini-g v-${x.st}"><b>${esc(nitAnd(x.core.map(nitSig)))}: ${x.sum}</b> ${x.st === "maj" ? "✔ majoria" : x.st === "fil" ? "✔ al fil" : x.st === "suports" ? `· amb suports (en falten ${x.need})` : `✘ en falten ${x.need}`}</p>`; }).join("") : ""}${d.ballen?.length ? `<p class="esp-mini-j">🎯 <b>${d.ballen.length}</b> ${d.ballen.length === 1 ? "escó en joc" : "escons en joc"}</p>` : ""}${Esp.feed[0] ? `<p class="esp-mini-f">⚡ ${esc(Esp.feed[0].text)}</p>` : ""}</div></div>` : `<p>${live ? "Els primers resultats arribaran en uns minuts." : "Consulta els resultats i fes la teva majoria."}</p>`}
+      <div class="esp-go"><a class="btn primary" href="#nit">${live ? "Segueix-la en directe" : "Resultats i majories"}</a></div>`;
   }
   const dn = ["nit", "despres"].includes(f) && espResultsMode() !== "off" ? Esp.data : null;
   el.innerHTML = dn && typeof nitHomeHtml === "function"
@@ -302,16 +319,16 @@ function espPorraHtml(d) {
   const mine = espPorra();
   const ids = espPorraIds();
   // La porra d'escons ara es juga a l'Electoporra (amb la predicció de «La teva predicció»)
-  if (st === "oberta" && typeof renderPronostics === "function") return `<section class="card esp-porra" id="esp-porra"><h2 class="section-title sm">🎯 La porra de escaños</h2><p class="muted">Ahora se juega en la Electoporra: haz tu predicción, envíala y mira quién acierta más entre tus amigos.</p><a class="btn primary" href="#electoporra/escons">Abre la Electoporra</a></section>`;
+  if (st === "oberta" && typeof renderPronostics === "function") return `<section class="card esp-porra" id="esp-porra"><h2 class="section-title sm">🎯 La porra d'escons</h2><p class="muted">Ara es juga a l'Electoporra: fes la teva predicció, envia-la i mira qui l'encerta més entre els teus amics.</p><a class="btn primary" href="#electoporra/escons">Obre l'Electoporra</a></section>`;
   if (st === "oberta") {
     const s = mine?.s || Object.fromEntries(ids.map((k) => [k, ESP_2023[k]?.[0] || 0]));
     const total = Object.values(s).reduce((a, b) => a + b, 0);
     return `<section class="card esp-porra" id="esp-porra" data-porra>
-      <h2 class="section-title sm">🎯 Tu porra</h2>
-      <p class="muted">¿Cuántos escaños sacará cada partido? Se cierra a las 20:00 del 29N y por la noche verás en directo cuánto te acercas. Solo se guarda en este dispositivo y no se publica en ningún sitio.</p>
-      <div class="esp-porra-list">${ids.map((k) => { const p = espParty(k); return `<div class="esp-pr" style="--c:${p.color}"><i></i><b>${esc(p.sig)}</b><button type="button" data-pm="${k}" aria-label="Menos ${esc(p.sig)}">−</button><input type="text" inputmode="numeric" maxlength="3" data-pv="${k}" value="${s[k] || 0}" aria-label="Escaños de ${esc(p.sig)}"><button type="button" data-pp="${k}" aria-label="Más ${esc(p.sig)}">+</button></div>`; }).join("")}</div>
+      <h2 class="section-title sm">🎯 La teva porra</h2>
+      <p class="muted">Quants escons traurà cada partit? Es tanca a les 20:00 del 29N i a la nit veuràs en directe quant t'hi acostes. Només es guarda en aquest dispositiu i no es publica enlloc.</p>
+      <div class="esp-porra-list">${ids.map((k) => { const p = espParty(k); return `<div class="esp-pr" style="--c:${p.color}"><i></i><b>${esc(p.sig)}</b><button type="button" data-pm="${k}" aria-label="Menys ${esc(p.sig)}">−</button><input type="text" inputmode="numeric" maxlength="3" data-pv="${k}" value="${s[k] || 0}" aria-label="Escons de ${esc(p.sig)}"><button type="button" data-pp="${k}" aria-label="Més ${esc(p.sig)}">+</button></div>`; }).join("")}</div>
       <p class="esp-porra-tot">Total: <b data-ptot>${total}</b> de 350 <span data-pmsg></span></p>
-      <button class="btn primary" type="button" data-psave>Guarda la porra</button>
+      <button class="btn primary" type="button" data-psave>Desa la porra</button>
     </section>`;
   }
   if (!mine || st === "off") return "";
@@ -319,8 +336,8 @@ function espPorraHtml(d) {
   const dev = real ? ids.reduce((a, k) => a + Math.abs((mine.s[k] || 0) - (real[k] || 0)), 0) : null;
   const done = d && d.escrutat >= 100;
   return `<section class="card esp-porra" id="esp-porra">
-    <h2 class="section-title sm">🎯 Tu porra</h2>
-    ${real ? `<p class="esp-porra-res">${done ? "Resultado final" : "Ahora mismo"}: te has desviado <b>${dev}</b> ${dev === 1 ? "escaño" : "escaños"}${done ? ` · ${dev <= 10 ? "¡Brutal! 🏆" : dev <= 25 ? "¡Muy bien! 👏" : dev <= 50 ? "No está mal" : "Hay margen"}` : ""}</p>` : `<p class="muted">Se puntuará con los resultados de la noche electoral.</p>`}
+    <h2 class="section-title sm">🎯 La teva porra</h2>
+    ${real ? `<p class="esp-porra-res">${done ? "Resultat final" : "Ara mateix"}: t'has desviat <b>${dev}</b> ${dev === 1 ? "escó" : "escons"}${done ? ` · ${dev <= 10 ? "Brutal! 🏆" : dev <= 25 ? "Molt bé! 👏" : dev <= 50 ? "No està malament" : "Hi ha marge"}` : ""}</p>` : `<p class="muted">Es puntuarà amb els resultats de la nit electoral.</p>`}
     <div class="esp-porra-cmp">${ids.filter((k) => mine.s[k] || real?.[k]).map((k) => { const p = espParty(k); return `<span style="--c:${p.color}"><i></i>${esc(p.sig)} <b>${mine.s[k] || 0}</b>${real ? ` <small class="${(real[k] || 0) === (mine.s[k] || 0) ? "up" : ""}">(${real[k] || 0})</small>` : ""}</span>`; }).join("")}</div>
   </section>`;
 }
@@ -332,7 +349,7 @@ function espPorraBind(root) {
   const upd = () => {
     const t = Object.values(s).reduce((a, b) => a + b, 0);
     $("[data-ptot]", box).textContent = t;
-    $("[data-pmsg]", box).textContent = t === 350 ? "✔" : t > 350 ? `(sobran ${t - 350})` : `(faltan ${350 - t})`;
+    $("[data-pmsg]", box).textContent = t === 350 ? "✔" : t > 350 ? `(en sobren ${t - 350})` : `(en falten ${350 - t})`;
     $("[data-psave]", box).disabled = t !== 350;
   };
   const set = (k, v) => { s[k] = Math.max(0, Math.min(350, v)); $(`[data-pv="${k}"]`, box).value = s[k]; upd(); };
@@ -340,11 +357,11 @@ function espPorraBind(root) {
   $$("[data-pp]", box).forEach((b) => b.addEventListener("click", () => set(b.dataset.pp, s[b.dataset.pp] + 1)));
   $$("[data-pv]", box).forEach((i) => i.addEventListener("input", () => set(i.dataset.pv, Math.round(Number(i.value.replace(/\D/g, "")) || 0))));
   $("[data-psave]", box).addEventListener("click", () => {
-    if (espPorraState() !== "oberta") return toast("La porra ya está cerrada");
-    if (espPreview()) return toast("Vista previa: la porra no se guarda");
+    if (espPorraState() !== "oberta") return toast("La porra ja està tancada");
+    if (espPreview()) return toast("Vista prèvia: la porra no es desa");
     store.set(ESP_PORRA_KEY, { s: { ...s }, t: Date.now() });
     Sfx.play("pick");
-    toast("Porra guardada");
+    toast("Porra desada");
   });
   upd();
 }
@@ -356,14 +373,14 @@ function espPredBuild(d) {
   // Es fan amb l'escrutini del moment; les respostes es tanquen quan passa del 60 %
   const top = d.ranking.filter((k) => d.seats[k]);
   const qs = [];
-  if (top.length >= 2) qs.push({ id: "primer", q: "¿Quién acabará siendo la primera fuerza?", opts: top.slice(0, 3), kind: "first" });
+  if (top.length >= 2) qs.push({ id: "primer", q: "Qui acabarà sent la primera força?", opts: top.slice(0, 3), kind: "first" });
   if (top[1]) {
     const k = top[1], n = d.seats[k], lo = Math.max(0, Math.floor(n / 10) * 10 - 10);
-    qs.push({ id: "escons", q: `¿Cuántos escaños sacará ${espParty(k).sig}?`, party: k, opts: [`menos de ${lo + 10}`, `${lo + 10}–${lo + 19}`, `${lo + 20} o más`], cuts: [lo + 10, lo + 20], kind: "range" });
+    qs.push({ id: "escons", q: `Quants escons traurà ${espParty(k).sig}?`, party: k, opts: [`menys de ${lo + 10}`, `${lo + 10}–${lo + 19}`, `${lo + 20} o més`], cuts: [lo + 10, lo + 20], kind: "range" });
   }
   const air = d.provs.filter((p) => p.air).sort((a, b) => a.air.need - b.air.need)[0];
-  if (air) qs.push({ id: "aire", q: `El último escaño de ${air.name}: ¿quién se lo quedará?`, code: air.code, opts: [air.air.holder, air.air.rival], kind: "air" });
-  qs.push({ id: "part", q: "¿La participación final será más alta o más baja que en 2023 (66,6 %)?", opts: ["Más alta", "Más baja"], kind: "turnout" });
+  if (air) qs.push({ id: "aire", q: `L'últim escó de ${air.name}: qui se'l quedarà?`, code: air.code, opts: [air.air.holder, air.air.rival], kind: "air" });
+  qs.push({ id: "part", q: "La participació final serà més alta o més baixa que el 2023 (66,6 %)?", opts: ["Més alta", "Més baixa"], kind: "turnout" });
   return { at: Date.now(), qs, a: {}, done: false };
 }
 function espPredResolve(st, d) {
@@ -374,7 +391,7 @@ function espPredResolve(st, d) {
     if (q.kind === "first") ok = d.ranking[0];
     if (q.kind === "range") { const n = d.seats[q.party] || 0; ok = q.opts[n < q.cuts[0] ? 0 : n < q.cuts[1] ? 1 : 2]; }
     if (q.kind === "air") { const p = d.provs.find((x) => x.code === q.code); ok = p?.air && q.opts.includes(p.air.holder) ? p.air.holder : null; }
-    if (q.kind === "turnout") ok = (d.participacio || 0) >= 66.6 ? "Más alta" : "Más baja";
+    if (q.kind === "turnout") ok = (d.participacio || 0) >= 66.6 ? "Més alta" : "Més baixa";
     q.ok = ok;
     if (ok && st.a[q.id] === ok) hits++;
   });
@@ -385,7 +402,7 @@ function espPredResolve(st, d) {
     Progress.act(hits * ESP_PRED_XP, false);
     Progress.save();
     renderLevel();
-    toast(`Predicciones de la noche: ${hits} aciertos · +${hits * ESP_PRED_XP} XP`, "ach");
+    toast(`Prediccions de la nit: ${hits} encerts · +${hits * ESP_PRED_XP} XP`, "ach");
   }
   store.set(ESP_PRED_KEY, st);
   return st;
@@ -396,14 +413,14 @@ function espPredHtml(d) {
   if (st && st.sim !== !!d.simulacre) st = null; // les d'un simulacre no es barregen amb les de debò
   if (st && st.sim && st.simInici !== (Esp.cfg.simInici || espPreview()?.simInici)) st = null;
   if (!st && d.escrutat < 60) { st = espPredBuild(d); st.sim = !!d.simulacre; st.simInici = Esp.cfg.simInici || espPreview()?.simInici; store.set(ESP_PRED_KEY, st); }
-  if (!st) return `<section class="card esp-pred" id="esp-pred"><h2 class="section-title sm">🎲 Predicciones de la noche</h2><p class="muted">Las predicciones se cierran cuando el escrutinio pasa del 60 %.</p></section>`;
+  if (!st) return `<section class="card esp-pred" id="esp-pred"><h2 class="section-title sm">🎲 Prediccions de la nit</h2><p class="muted">Les prediccions es tanquen quan l'escrutini passa del 60 %.</p></section>`;
   st = espPredResolve(st, d);
   const open = !st.done && d.escrutat < 60;
   const answered = Object.keys(st.a).length;
   const lbl = (q, o) => (q.kind === "first" || q.kind === "air" ? espParty(o).sig : o);
   return `<section class="card esp-pred" id="esp-pred">
-    <h2 class="section-title sm">🎲 Predicciones de la noche</h2>
-    <p class="muted">${st.done ? `Has acertado <b>${st.hits || 0}</b> de ${st.qs.length}.${st.sim ? " Era un simulacro: no cuenta XP." : ""}` : open ? `Acierta y gana <b>${ESP_PRED_XP} XP</b> por acierto. Se cierran cuando el escrutinio pasa del 60 % (${answered}/${st.qs.length} respuestas).` : "Predicciones cerradas: se resuelven cuando el escrutinio llegue al 100 %."}</p>
+    <h2 class="section-title sm">🎲 Prediccions de la nit</h2>
+    <p class="muted">${st.done ? `Has encertat <b>${st.hits || 0}</b> de ${st.qs.length}.${st.sim ? " Era un simulacre: no compta XP." : ""}` : open ? `Encerta-les i guanya <b>${ESP_PRED_XP} XP</b> per encert. Es tanquen quan l'escrutini passa del 60 % (${answered}/${st.qs.length} respostes).` : "Prediccions tancades: es resolen quan l'escrutini arribi al 100 %."}</p>
     <div class="esp-pred-list">${st.qs.map((q) => `<div class="esp-q"><b>${esc(q.q)}</b><div class="esp-q-o">${q.opts.map((o) => {
       const mine = st.a[q.id] === o, right = st.done && q.ok === o;
       return `<button type="button" class="${mine ? "on" : ""} ${right ? "ok" : ""} ${st.done && mine && !right ? "ko" : ""}" data-pred="${q.id}" data-o="${esc(o)}" ${open ? "" : "disabled"}>${esc(lbl(q, o))}</button>`;

@@ -100,7 +100,7 @@ function ctlChanges() {
 }
 async function ctlCheckFile() {
   try {
-    const r = await fetch(`${window.PEJ_DATA || "../data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(`${window.PEJ_DATA || "data/"}resultats.json?t=${Date.now()}`, { cache: "no-store" });
     ctlFile = r.ok ? await r.json() : { missing: true };
   } catch { ctlFile = { missing: true }; }
 }
@@ -245,6 +245,7 @@ function renderControlPage(fromLive = false) {
       <section class="card"><h2 class="section-title sm">Resultats</h2>${seg("resultats", CTL_RES, D.resultats)}
         ${D.resultats === "simulacre" ? `<p class="ctl-alert">⚠️ Tothom veurà un escrutini inventat (amb l'avís "SIMULACRE"). Fes-lo servir només per a proves.</p>` : ""}
         <p class="ctl-file ${fileWarn ? "bad" : ""}">Fitxer de resultats oficials: <b>${fileTxt}</b> <button type="button" class="linklike" data-file>Torna a comprovar</button></p></section>
+      ${ctlManualHtml()}
       <section class="card ctl-partbox">
         <h2 class="section-title sm">Participació oficial</h2>
         <div class="ctl-parts">${(D.participacio || ESP_DEFAULT.participacio).map((x, i) => {
@@ -331,10 +332,11 @@ function renderControlPage(fromLive = false) {
           <li>"Automàtic" vol dir que l'app canvia sola segons l'horari oficial. És el que convé gairebé sempre.</li>
           <li>"Previsualitza" només ho veus tu: no afecta ningú.</li></ul>
         <h2 class="section-title sm">La nit del 29N</h2>
-        <ol><li>Abans de les 20:00, engega <code>node tools/nit-electoral.js --url …</code> al teu ordinador: va publicant <code>data/resultats.json</code>.</li>
+        <ol><li>Abans de les 20:00, engega <code>node tools/nit-electoral.js --viquipedia</code> al teu ordinador i deixa-ho obert tota la nit: cada 2 minuts llegeix els escons de la Viquipèdia i publica <code>data/resultats.json</code>.</li>
+          <li>Si la Viquipèdia va endarrerida respecte de la web oficial o de la tele, corregeix-ho a «Nit electoral › Resultats a mà».</li>
           <li>A les 20:00 la web canvia sola a la nit electoral. Comprova a "Nit electoral" que arriba el fitxer.</li>
           <li>A "Porra i pronòstics", publica els pots.</li>
-          <li>Quan l'escrutini arribi al 100 %, liquida els pronòstics.</li>
+          <li>Quan l'escrutini arribi al 100 %, liquida l'Electoporra (comprova a mà «el partit més votat a Catalunya»).</li>
           <li>Si alguna cosa falla: "Resultats: Cap" i un missatge destacat.</li></ol>
       </section>`)}
 
@@ -368,6 +370,7 @@ function renderControlPage(fromLive = false) {
   $("[data-simgo]", root)?.addEventListener("click", () => { D.simInici = Date.now(); redraw(); });
   $("[data-simstop]", root)?.addEventListener("click", () => { D.simInici = 0; redraw(); });
   $$("[data-file]", root).forEach((x) => x.addEventListener("click", () => { ctlFile = null; redraw(); }));
+  ctlManualBind(root, redraw);
   $$("[data-avis]", root).forEach((btn) => btn.addEventListener("click", async () => {
     const k = btn.dataset.avis;
     if (k === "test") { store.set(ESP_AVIS_KEY, null); const prev = Esp.cfg; Esp.cfg = { ...prev, avisOn: true, avisId: prev.avisId || Date.now() }; location.hash = "#inici"; setTimeout(() => { espAvis(); Esp.cfg = prev; store.set(ESP_AVIS_KEY, prev.avisId || null); }, 500); return; }
@@ -409,7 +412,7 @@ function renderControlPage(fromLive = false) {
     const risky = (["nit", "despres"].includes(D.fase) && D.fase !== Esp.cfg.fase) || (D.resultats === "simulacre" && Esp.cfg.resultats !== "simulacre");
     if (risky && !confirm(`Això ho veurà tothom ara mateix:\n\n${ctlChanges().join("\n")}\n\nVols publicar-ho?`)) return;
     const what = ctlChanges().join(" · ");
-    const next = { ...D, actualitzat: Date.now(), log: [{ t: Date.now(), what }, ...(Esp.cfg.log || [])].slice(0, 15) };
+    const next = { ...D, manual: Esp.cfg.manual || null, actualitzat: Date.now(), log: [{ t: Date.now(), what }, ...(Esp.cfg.log || [])].slice(0, 15) };
     const btn = $("[data-publish]", root);
     btn.disabled = true; btn.textContent = "Publicant…";
     if (await O.setConfig("especial", next)) {
@@ -589,7 +592,7 @@ function ctlNotifHtml() {
         ${d.rep === "dies" ? `<div class="ctl-days">${CTL_WD.map(([n, t]) => `<label><input type="checkbox" data-pday="${n}" ${d.days.includes(n) ? "checked" : ""}> ${t}</label>`).join("")}</div>` : ""}
         ${d.rep !== "cap" ? `<label>Fins a (opcional) <input type="date" data-puntil value="${esc(d.until)}"></label>` : ""}
       </div>` : ""}
-      <div class="push-prev"><span aria-hidden="true"><img src="../img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
+      <div class="push-prev"><span aria-hidden="true"><img src="img/icon-192.png" alt=""></span><div><b>${esc(d.title || "Títol de l'avís")}</b><p>${esc(d.body || "El text de l'avís")}</p></div><small>${d.when === "prog" && d.at ? esc(d.at.replace("T", " ")) : "ara"}</small></div>
       <div class="row"><button class="btn primary" type="button" data-psend ${d.title.trim() ? "" : "disabled"}>${d.when === "prog" ? "Programa l'avís" : "Envia l'avís"}</button></div>
     </section>
     <section class="card">
@@ -850,4 +853,43 @@ function ctlRptBind(root) {
     if (!confirm("Esborrar aquest avís?")) return;
     if (await window.Online.reportDel(b.dataset.rptDel)) { ctlRpt.list = ctlRpt.list.filter((x) => x.id !== b.dataset.rptDel); renderControl(true); }
   }));
+}
+
+// ---------- Nit electoral: resultats a mà ----------
+// Sense el fitxer del Ministeri, l'app llegeix els totals d'Espanya de la Viquipèdia (tools/nit-electoral.js --viquipedia).
+// Aquí es poden corregir o completar a mà: escons de cada partit, participació i escrutat. La correcció mana mentre sigui
+// més recent que el fitxer (espFetchResults, especial.js); «Torna a la Viquipèdia» l'esborra.
+const CTL_MAN_IDS = ["pp", "psoe", "vox", "fa", "podemos", "salf", "erc", "junts", "bildu", "pnv", "alhora", "d21", "adelante", "bng", "cc", "fo", "pacma", "te", "sy"];
+function ctlManualHtml() {
+  const m = Esp.cfg.manual, d = Esp.data;
+  const val = (k) => (m?.seats?.[k] ?? d?.seats?.[k] ?? "");
+  const sum = CTL_MAN_IDS.reduce((a, k) => a + (Number(val(k)) || 0), 0);
+  return `<section class="card ctl-man">
+    <h2 class="section-title sm">✍️ Resultats a mà</h2>
+    <p class="muted">L'app agafa els escons de la Viquipèdia, amb uns minuts de retard. Si veus a la web oficial o a la tele que van endarrerits o hi ha una errada, corregeix-los aquí i publica: mana el que posis tu fins que la Viquipèdia s'actualitzi després. ${d ? `Ara: <b>${esc(d.font || "fitxer")}</b>${d.actualitzat ? `, ${ctlRel(d.actualitzat)}` : ""}.` : "Encara no hi ha dades."}</p>
+    <div class="ctl-man-g">${CTL_MAN_IDS.map((k) => `<label style="--c:${nitParty(k).color}"><span><i></i>${esc(nitSig(k))}</span><input inputmode="numeric" data-man="${k}" value="${val(k)}" placeholder="0"></label>`).join("")}</div>
+    <p class="ctl-man-sum" data-mansum>Total: <b>${sum}</b> de 350</p>
+    <div class="ctl-man-x"><label>Participació (%)<input inputmode="decimal" data-manpart value="${m?.participacio ?? d?.participacio ?? ""}"></label><label>Escrutat (%)<input inputmode="decimal" data-manesc value="${m?.escrutat ?? d?.escrutat ?? ""}"></label></div>
+    <div class="row"><button class="btn primary" type="button" data-mango>Publica la correcció</button>${m ? `<button class="btn ghost" type="button" data-manoff>Treu-la (torna a la Viquipèdia)</button><span class="muted">Correcció publicada ${ctlRel(m.t)}</span>` : ""}</div>
+  </section>`;
+}
+function ctlManualBind(root, redraw) {
+  const box = $(".ctl-man", root);
+  if (!box) return;
+  const read = () => Object.fromEntries(CTL_MAN_IDS.map((k) => [k, Math.max(0, Math.round(Number($(`[data-man="${k}"]`, box).value) || 0))]).filter(([, n]) => n > 0));
+  box.addEventListener("input", () => { const n = Object.values(read()).reduce((a, b) => a + b, 0); $("[data-mansum]", box).innerHTML = `Total: <b>${n}</b> de 350${n > 350 ? " ⚠️ massa escons" : ""}`; });
+  const num = (el) => { const v = Number(String(el.value).replace(",", ".")); return el.value === "" || !Number.isFinite(v) ? null : v; };
+  $("[data-mango]", box).addEventListener("click", async () => {
+    const seats = read(), n = Object.values(seats).reduce((a, b) => a + b, 0);
+    if (n > 350) return toast("Hi ha més de 350 escons");
+    if (n < 300 && !confirm(`Només hi ha ${n} escons. Publicar-ho igualment?`)) return;
+    const manual = { seats, participacio: num($("[data-manpart]", box)), escrutat: num($("[data-manesc]", box)), t: Date.now() };
+    const next = { ...Esp.cfg, manual, log: [{ t: Date.now(), what: `Resultats a mà: ${n} escons` }, ...(Esp.cfg.log || [])].slice(0, 15) };
+    if (await window.Online.setConfig("especial", next)) { Esp.cfg = Object.assign({}, ESP_DEFAULT, next); toast("Correcció publicada"); await espFetchResults(); redraw(); }
+  });
+  $("[data-manoff]", box)?.addEventListener("click", async () => {
+    if (!confirm("Treure la correcció i tornar a les dades de la Viquipèdia?")) return;
+    const next = { ...Esp.cfg, manual: null, log: [{ t: Date.now(), what: "Resultats a mà retirats" }, ...(Esp.cfg.log || [])].slice(0, 15) };
+    if (await window.Online.setConfig("especial", next)) { Esp.cfg = Object.assign({}, ESP_DEFAULT, next); toast("Tornem a la Viquipèdia"); await espFetchResults(); redraw(); }
+  });
 }

@@ -25,7 +25,7 @@ const ESP_DEFAULT = {
   simInici: 0, simDurada: 20, log: [],
 };
 // Ordre a l'hemicicle (d'esquerra a dreta, aproximat) i referència del 2023 (escons, % de vots)
-const ESP_ORDER = ["podemos", "adelante", "bildu", "bng", "fa", "pacma", "erc", "psoe", "te", "sy", "pnv", "cc", "d21", "junts", "alhora", "pp", "upn", "salf", "vox"];
+const ESP_ORDER = ["fo", "podemos", "adelante", "bildu", "bng", "fa", "pacma", "erc", "psoe", "te", "sy", "pnv", "cc", "d21", "junts", "alhora", "pp", "upn", "salf", "vox"];
 const ESP_2023 = { pp: [137, 33.05], psoe: [121, 31.7], vox: [33, 12.39], fa: [31, 12.31], erc: [7, 1.89], junts: [7, 1.6], bildu: [6, 1.36], pnv: [5, 1.12], bng: [1, 0.62], cc: [1, 0.47] };
 const ESP_POLL = { simulacre: 12000, oficial: 25000 };
 
@@ -161,9 +161,26 @@ async function espFetchResults() {
     } catch { /* encara no hi ha dades */ }
   }
   Esp.fetchedAt = Date.now();
-  const d = raw && raw.provs?.length ? espCompute(raw) : null;
+  // Correcció a mà des de la Sala de control (escons, participació, escrutat): mana si és més recent que el fitxer
+  const man = Esp.cfg.manual;
+  if (mode === "oficial" && man?.seats && (!raw || !raw.actualitzat || man.t > raw.actualitzat)) raw = { nacional: { seats: man.seats, pct: man.pct || raw?.nacional?.pct || null }, escrutat: man.escrutat ?? raw?.escrutat ?? null, participacio: man.participacio ?? raw?.participacio ?? null, actualitzat: man.t, font: "Sala de control" };
+  const d = raw && raw.provs?.length ? espCompute(raw) : raw?.nacional?.seats ? espNacional(raw) : null;
   if (d) { espEvents(Esp.data, d); Esp.prev = Esp.data; }
   Esp.data = d;
+  return d;
+}
+// Nit electoral sense dades per circumscripció: només els totals d'Espanya (de la Viquipèdia, tools/nit-electoral.js
+// --viquipedia, o entrats a mà a la Sala de control). Té la mateixa forma que espCompute, amb provs buit.
+function espNacional(raw) {
+  const seats = Object.fromEntries(Object.entries(raw.nacional.seats || {}).filter(([, n]) => n > 0).map(([k, n]) => [k, Math.round(n)]));
+  const pct = raw.nacional.pct || {};
+  const tot = Object.fromEntries(Object.keys({ ...seats, ...pct }).map((k) => [k, pct[k] != null ? pct[k] * 1000 : (seats[k] || 0)]));
+  const valid = Object.keys(pct).length ? 100000 : Object.values(tot).reduce((a, b) => a + b, 0) || 1;
+  const totalSeats = Object.values(seats).reduce((a, b) => a + b, 0);
+  const ranking = Object.keys(tot).sort((a, b) => (seats[b] || 0) - (seats[a] || 0) || tot[b] - tot[a]);
+  const d = { escrutat: raw.escrutat ?? (totalSeats >= 350 ? null : 0), participacio: raw.participacio ?? null, actualitzat: raw.actualitzat, simulacre: false, nacional: true, font: raw.font || "Wikipedia", tot, valid, seats, totalSeats, provs: [], ranking, ballen: [] };
+  d.range = Object.fromEntries(Object.keys(seats).map((k) => [k, [seats[k], seats[k]]]));
+  d.sums = nitSums(d);
   return d;
 }
 // ---------- Última hora: què ha canviat respecte a l'actualització anterior ----------

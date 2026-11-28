@@ -20,13 +20,13 @@
 const PRD_WHERE = {
   pp: "*", psoe: "*", vox: "*", fa: "-TE,CE,ML", podemos: "-B,GI,L,T,V,A,CS,PM,GC,TF,ML", salf: "-BI,SS,GI,L,S,CR",
   erc: "B,GI,L,T", junts: "B,GI,L,T", alhora: "B,GI,L,T", bildu: "VI,BI,SS,NA", pnv: "VI,BI,SS", bng: "C,LU,OR,PO", cc: "GC,TF",
-  d21: "M,B", pacma: "-PO,TO,BA,S,CR,BU,CC,LU,AV,GU,P,ZA,SO,CE,ML,PM,B,C,MU,OR,SA,Z", adelante: "AL,CA,CO,GR,H,J,MA,SE", te: "TE", sy: "SO",
+  d21: "M,B", pacma: "-PO,TO,BA,S,CR,BU,CC,LU,AV,GU,P,ZA,SO,CE,ML,PM,B,C,MU,OR,SA,Z", adelante: "AL,CA,CO,GR,H,J,MA,SE", te: "TE", sy: "SO", fo: "*",
 };
 const PRD_IDS = Object.keys(PRD_WHERE);
-const PRD_MORE = ["pacma", "adelante", "te", "sy"]; // candidatures petites, plegades a «Més candidatures»
+const PRD_MORE = ["pacma", "adelante", "te", "sy", "fo"]; // candidatures petites, plegades a «Més candidatures»
 const PRD_IDS_V1 = ["pp", "psoe", "vox", "fa", "podemos", "salf", "erc", "junts", "bildu", "pnv", "bng", "cc", "upn"]; // ordre dels enllaços v1
 // Amb quins vots del 2023 es reparteix cada partit entre les circumscripcions on es presenta (null: segons el total de vots)
-const PRD_HIST = { podemos: "fa", alhora: null, d21: null, adelante: null };
+const PRD_HIST = { podemos: "fa", alhora: null, d21: null, adelante: null, fo: null };
 const prdRuns = (k, code) => { const w = PRD_WHERE[k]; if (!w) return false; if (w === "*") return true; return w.startsWith("-") ? !w.slice(1).split(",").includes(code) : w.split(",").includes(code); };
 const PRD_KEY = "r29n-escons";
 const PRD_FINAL_KEY = "r29n-escons-final"; // la predicció tal com era a les 20:00 del 29N (la que es compara amb el resultat)
